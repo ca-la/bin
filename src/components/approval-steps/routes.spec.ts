@@ -31,6 +31,7 @@ import * as NotificationsDAO from "../notifications/dao";
 import "./listeners";
 import "../cala-components";
 import { taskTypes } from "../tasks/templates";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 test("GET /design-approval-steps?designId=:designId", async (t: Test) => {
   const designer = await createUser();
@@ -363,7 +364,7 @@ test("PATCH /design-approval-steps/:stepId", async (t: Test) => {
   });
 });
 
-test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) => {
+test("PATCH /design-approval-steps/:stepId updates collaboratorId", async (t: Test) => {
   const { user: actor, session } = await createUser({ withSession: true });
   const { user: assignee } = await createUser({ withSession: false });
 
@@ -467,7 +468,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
   });
 });
 
-test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) => {
+test("PATCH /design-approval-steps/:stepId updates teamUserId", async (t: Test) => {
   const { user: actor, session } = await createUser({ withSession: true });
   const { user: assignee } = await createUser({ withSession: false });
 
@@ -475,10 +476,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
     staticProductDesign({ id: "d1", userId: actor.id })
   );
 
-  const { collaborator } = await generateCollaborator({
-    userId: assignee.id,
-    designId: d1.id,
-  });
+  const { teamUser } = await generateTeam(assignee.id);
 
   const as1: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -503,13 +501,13 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
   const [response, body] = await patch(`/design-approval-steps/${as1.id}`, {
     headers: authHeader(session.id),
     body: {
-      collaboratorId: collaborator.id,
+      teamUserId: teamUser.id,
     },
   });
   t.is(response.status, 200, "responds with 200");
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify({ ...as1, collaboratorId: collaborator.id })),
+    JSON.parse(JSON.stringify({ ...as1, teamUserId: teamUser.id })),
     "returns updated step"
   );
 
@@ -554,7 +552,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
         "actorUserId",
         "approvalStepId",
         "approvalStepTitle",
-        "collaboratorId",
+        "recipientTeamUserId",
         "designId",
         "type"
       ),
@@ -562,7 +560,7 @@ test("PATCH /design-approval-steps/:stepId updates assignee", async (t: Test) =>
         actorUserId: actor.id,
         approvalStepId: as1.id,
         approvalStepTitle: as1.title,
-        collaboratorId: collaborator.id,
+        recipientTeamUserId: teamUser.id,
         designId: d1.id,
         type: "APPROVAL_STEP_ASSIGNMENT",
       },

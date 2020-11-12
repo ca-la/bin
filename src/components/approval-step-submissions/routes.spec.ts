@@ -1,5 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import { omit } from "lodash";
+
 import { authHeader, get, patch, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
@@ -23,7 +25,7 @@ import Session from "../../domain-objects/session";
 import { DesignEventWithMeta } from "../../published-types";
 import * as IrisService from "../iris/send-message";
 import { templateDesignEventWithMeta } from "../design-events/types";
-import { omit } from "lodash";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 async function setupSubmission(
   approvalSubmission: Partial<ApprovalStepSubmission> = {}
@@ -199,6 +201,76 @@ test("PATCH /design-approval-step-submissions/:submissionId with collaboratorId"
       headers: authHeader(other.session.id),
       body: {
         collaboratorId: collaborator2.id,
+      },
+    }
+  );
+
+  t.is(otherRes[0].status, 403);
+});
+
+test("PATCH /design-approval-step-submissions/:submissionId with teamUserId", async (t: Test) => {
+  const { design, designer, submission } = await setupSubmission();
+  const { user: user2 } = await createUser();
+  const { user: user3 } = await createUser();
+  const other = await createUser();
+
+  const { teamUser: teamUser2 } = await generateTeam(user2.id);
+  const { teamUser: teamUser3 } = await generateTeam(user3.id);
+
+  const [response, body] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        teamUserId: teamUser2.id,
+      },
+    }
+  );
+  t.is(response.status, 200);
+  t.is(body.teamUserId, teamUser2.id);
+
+  const [response2, body2] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        teamUserId: teamUser3.id,
+      },
+    }
+  );
+  t.is(response2.status, 200);
+  t.is(body2.teamUserId, teamUser3.id);
+
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const assignmentEvent = events.find(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_ASSIGNMENT"
+  );
+  if (!assignmentEvent) {
+    return t.fail("Could not find design event for review assignment");
+  }
+  t.is(
+    assignmentEvent.approvalSubmissionId,
+    submission.id,
+    "Submission event has an approvalSubmissionId"
+  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const notifications = await NotificationsDAO.findByUserId(trx, user3.id, {
+      limit: 10,
+      offset: 0,
+    });
+    t.is(notifications.length, 1);
+    t.is(notifications[0].approvalSubmissionId, submission.id);
+  });
+
+  const otherRes = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(other.session.id),
+      body: {
+        teamUserId: teamUser2.id,
       },
     }
   );

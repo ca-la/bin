@@ -13,8 +13,8 @@ import {
 
 export interface NotificationLayerSchema {
   [NotificationType.APPROVAL_STEP_ASSIGNMENT]: {
-    required: "designId" | "approvalStepId" | "collaboratorId";
-    optional: "collectionId";
+    required: "designId" | "approvalStepId";
+    optional: "collectionId" | "collaboratorId";
   };
   [NotificationType.APPROVAL_STEP_COMPLETION]: {
     required: "designId" | "approvalStepId";

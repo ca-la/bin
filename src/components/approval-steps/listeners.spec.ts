@@ -475,7 +475,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
         ...as,
         collaboratorId: "c1",
       },
-      findCollaboratorArgs: [["c1"]],
+      findCollaboratorArgs: [["c1", false, trx]],
       findCollaboratorResult: {
         id: "c1",
         userId: null,
@@ -518,7 +518,7 @@ test("route.updated.collaboratorId", async (t: Test) => {
         ...as,
         collaboratorId: "c1",
       },
-      findCollaboratorArgs: [["c1"]],
+      findCollaboratorArgs: [["c1", false, trx]],
       findCollaboratorResult: {
         id: "c1",
         userId: "u1",

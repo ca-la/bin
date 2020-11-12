@@ -9,7 +9,10 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
-import ApprovalStepSubmission, { ApprovalStepSubmissionState } from "./types";
+import ApprovalStepSubmission, {
+  ApprovalStepSubmissionState,
+  approvalStepSubmissionDomain,
+} from "./types";
 import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
@@ -30,7 +33,9 @@ import DesignsDAO from "../product-designs/dao";
 import useTransaction from "../../middleware/use-transaction";
 import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
+import { emit } from "../../services/pubsub";
 import Comment from "../comments/types";
+import { RouteUpdated } from "../../services/pubsub/cala-events";
 
 const router = new Router();
 
@@ -238,15 +243,17 @@ export function* createApprovalSubmission(
   this.status = 200;
 }
 
-const ALLOWED_UPDATE_KEYS = ["collaboratorId"];
+const ALLOWED_UPDATE_KEYS = ["collaboratorId", "teamUserId"];
 
 export function* updateApprovalSubmission(
-  this: AuthedContext<
-    { collaboratorId: string },
-    PermittedState & SubmissionState & DesignIdState
+  this: TrxContext<
+    AuthedContext<
+      { collaboratorId?: string | null; teamUserId?: string | null },
+      PermittedState & SubmissionState & DesignIdState
+    >
   >
 ): Iterator<any, any, any> {
-  const { submission, userId } = this.state;
+  const { submission, trx } = this.state;
   if (!this.state.permissions.canView) {
     this.throw(403, `Cannot view design for step ${submission.stepId}`);
   }
@@ -256,72 +263,47 @@ export function* updateApprovalSubmission(
     this.throw(400, `Keys ${Object.keys(restKeys).join(", ")} are not allowed`);
   }
 
-  if (this.request.body.hasOwnProperty("collaboratorId")) {
-    if (submission.state === ApprovalStepSubmissionState.APPROVED) {
-      this.throw(
-        400,
-        "Changing assignee is not allowed after submission has been approved"
-      );
-    }
-    if (submission.collaboratorId === this.request.body.collaboratorId) {
-      this.body = submission;
-      this.status = 200;
-      return;
-    }
-    yield db.transaction(async (trx: Knex.Transaction) => {
-      const collaborator = this.request.body.collaboratorId
-        ? await CollaboratorsDAO.findById(this.request.body.collaboratorId)
-        : null;
-      const { updated } = await ApprovalSubmissionsDAO.update(
-        trx,
-        submission.id,
-        {
-          collaboratorId: this.request.body.collaboratorId,
-        }
-      );
-      await DesignEventsDAO.create(trx, {
-        ...templateDesignEvent,
-        actorId: userId,
-        approvalStepId: this.state.submission.stepId,
-        approvalSubmissionId: submission.id,
-        createdAt: new Date(),
-        designId: this.state.designId,
-        id: uuid.v4(),
-        targetId: collaborator && collaborator.userId,
-        type: "STEP_SUBMISSION_ASSIGNMENT",
-      });
-      if (collaborator) {
-        const design = await DesignsDAO.findById(this.state.designId);
-        if (!design) {
-          throw new Error(
-            `Could not find a design with id: ${this.state.designId}`
-          );
-        }
-        await notifications[
-          NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT
-        ].send(
-          trx,
-          userId,
-          {
-            recipientUserId: collaborator.userId,
-            recipientCollaboratorId: collaborator.id,
-            recipientTeamUserId: null,
-          },
-          {
-            approvalStepId: updated.stepId,
-            approvalSubmissionId: updated.id,
-            designId: this.state.designId,
-            collectionId: design.collectionIds[0] || null,
-            collaboratorId: collaborator.id,
-          }
-        );
-      }
-      this.body = updated;
-    });
-  } else {
-    // todo: put state change logic here
-    this.throw("Not implemented");
+  if (submission.state === ApprovalStepSubmissionState.APPROVED) {
+    this.throw(
+      400,
+      "Changing assignee is not allowed after submission has been approved"
+    );
   }
+
+  const { collaboratorId = null, teamUserId = null } = this.request.body;
+
+  if (
+    submission.collaboratorId === collaboratorId &&
+    submission.teamUserId === teamUserId
+  ) {
+    this.body = submission;
+    this.status = 200;
+    return;
+  }
+
+  const { before, updated } = yield ApprovalSubmissionsDAO.update(
+    trx,
+    submission.id,
+    {
+      collaboratorId,
+      teamUserId,
+    }
+  );
+
+  yield emit<
+    ApprovalStepSubmission,
+    RouteUpdated<ApprovalStepSubmission, typeof approvalStepSubmissionDomain>
+  >({
+    type: "route.updated",
+    domain: approvalStepSubmissionDomain,
+    actorId: this.state.userId,
+    trx,
+    before,
+    updated,
+  });
+
+  this.status = 200;
+  this.body = updated;
 }
 
 type StringGetter<State> = (this: AuthedContext<{}, State>) => string;
@@ -542,6 +524,7 @@ router.patch(
     })
   ),
   canAccessDesignInState,
+  useTransaction,
   updateApprovalSubmission
 );
 

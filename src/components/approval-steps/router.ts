@@ -53,7 +53,7 @@ const standardRouter = buildRouter<ApprovalStep>(
           canAccessDesignInState,
           canEditDesign,
         ],
-        allowedAttributes: ["collaboratorId", "state"],
+        allowedAttributes: ["collaboratorId", "teamUserId", "state"],
       },
     },
   }

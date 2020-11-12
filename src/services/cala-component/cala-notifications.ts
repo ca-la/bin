@@ -13,7 +13,7 @@ import { replaceNotifications } from "../create-notifications";
 interface Recipient {
   recipientUserId: string | null;
   recipientCollaboratorId: string | null;
-  recipientTeamUserId: null;
+  recipientTeamUserId: string | null;
 }
 
 export type AllNotificationKeys = keyof BaseNotification;
@@ -121,8 +121,8 @@ export const buildNotificationComponent = <
           type,
           actorUserId,
           ...templateNotification,
-          ...recipient,
           ...data,
+          ...recipient,
         },
       });
     },

@@ -1,3 +1,9 @@
+import {
+  BaseNotification,
+  BaseFullNotification,
+} from "../notifications/models/base";
+import { NotificationType } from "../notifications/domain-object";
+
 export enum ApprovalStepSubmissionArtifactType {
   TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
   SAMPLE = "SAMPLE",
@@ -35,3 +41,38 @@ export interface ApprovalStepSubmissionRow {
 }
 
 export const approvalStepSubmissionDomain = "ApprovalStepSubmission" as "ApprovalStepSubmission";
+
+type Base = Omit<
+  BaseNotification,
+  | "collaboratorId"
+  | "collectionId"
+  | "designId"
+  | "approvalSubmissionId"
+  | "approvalStepId"
+  | "recipientUserId"
+  | "recipientCollaboratorId"
+  | "recipientTeamUserId"
+>;
+
+export interface ApprovalStepSubmissionAssignmentNotification extends Base {
+  collaboratorId: string | null;
+  collectionId: string | null;
+  designId: string;
+  approvalStepId: string;
+  approvalSubmissionId: string;
+  recipientUserId: string | null;
+  recipientCollaboratorId: string | null;
+  recipientTeamUserId: string | null;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & ApprovalStepSubmissionAssignmentNotification,
+  "collectionTitle" | "designTitle"
+>;
+
+export interface FullApprovalStepSubmissionAssignmentNotification
+  extends BaseFull {
+  collectionTitle: string | null;
+  designTitle: string | null;
+  type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT;
+}

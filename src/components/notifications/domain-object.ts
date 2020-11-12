@@ -129,6 +129,14 @@ import {
   FullShipmentTrackingCreateNotification,
   FullShipmentTrackingUpdateNotification,
 } from "../shipment-trackings/notifications";
+import {
+  ApprovalStepAssignmentNotification,
+  FullApprovalStepAssignmentNotification,
+} from "../approval-steps/types";
+import {
+  ApprovalStepSubmissionAssignmentNotification,
+  FullApprovalStepSubmissionAssignmentNotification,
+} from "../approval-step-submissions/types";
 
 export enum NotificationType {
   ANNOTATION_COMMENT_CREATE = "ANNOTATION_COMMENT_CREATE",
@@ -187,6 +195,8 @@ export type Notification =
   | ApprovalStepCommentMentionNotification
   | ApprovalStepCommentReplyNotification
   | ApprovalStepCommentCreateNotification
+  | ApprovalStepAssignmentNotification
+  | ApprovalStepSubmissionAssignmentNotification
   | CalaNotificationsUnion;
 
 export type FullNotification =
@@ -211,7 +221,9 @@ export type FullNotification =
   | FullApprovalStepCommentReplyNotification
   | FullApprovalStepCommentCreateNotification
   | FullShipmentTrackingCreateNotification
-  | FullShipmentTrackingUpdateNotification;
+  | FullShipmentTrackingUpdateNotification
+  | FullApprovalStepAssignmentNotification
+  | FullApprovalStepSubmissionAssignmentNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow

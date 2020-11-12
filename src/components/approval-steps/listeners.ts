@@ -19,13 +19,15 @@ import {
 
 import Logger from "../../services/logger";
 import DesignEventsDAO from "../design-events/dao";
-import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import * as CollaboratorsDAO from "../collaborators/dao";
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
-import notifications from "./notifications";
-import * as IrisService from "../../components/iris/send-message";
+import * as IrisService from "../iris/send-message";
 import { realtimeApprovalStepUpdated } from "./realtime";
 import { templateDesignEvent } from "../design-events/types";
+
+import notifications from "./notifications";
 
 export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
   "dao.updating": async (
@@ -97,7 +99,11 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
       event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
     ): Promise<void> => {
       const collaborator = event.updated.collaboratorId
-        ? await CollaboratorsDAO.findById(event.updated.collaboratorId)
+        ? await CollaboratorsDAO.findById(
+            event.updated.collaboratorId,
+            false,
+            event.trx
+          )
         : null;
 
       if (event.updated.collaboratorId && !collaborator) {
@@ -142,6 +148,56 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
           designId: design.id,
           collectionId: design.collectionIds[0] || null,
           collaboratorId: collaborator.id,
+        }
+      );
+    },
+    teamUserId: async (
+      event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
+    ): Promise<void> => {
+      const teamUser = event.updated.teamUserId
+        ? await RawTeamUsersDAO.findById(event.trx, event.updated.teamUserId)
+        : null;
+
+      if (event.updated.teamUserId && !teamUser) {
+        throw new Error(`Wrong teamUserId: ${event.updated.teamUserId}`);
+      }
+
+      await DesignEventsDAO.create(event.trx, {
+        ...templateDesignEvent,
+        actorId: event.actorId,
+        approvalStepId: event.updated.id,
+        createdAt: new Date(),
+        designId: event.updated.designId,
+        id: uuid.v4(),
+        targetId: (teamUser && teamUser.userId) || null,
+        type: "STEP_ASSIGNMENT",
+      });
+
+      if (!teamUser) {
+        return;
+      }
+
+      const approvalStep = event.updated;
+
+      const design = await DesignsDAO.findById(approvalStep.designId);
+      if (!design) {
+        throw new Error(
+          `Could not find a design with id: ${approvalStep.designId}`
+        );
+      }
+      await notifications[NotificationType.APPROVAL_STEP_ASSIGNMENT].send(
+        event.trx,
+        event.actorId,
+        {
+          recipientCollaboratorId: null,
+          recipientUserId: teamUser.userId,
+          recipientTeamUserId: teamUser.id,
+        },
+        {
+          approvalStepId: approvalStep.id,
+          designId: design.id,
+          collectionId: design.collectionIds[0] || null,
+          collaboratorId: null,
         }
       );
     },

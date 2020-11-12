@@ -1,3 +1,9 @@
+import {
+  BaseNotification,
+  BaseFullNotification,
+} from "../notifications/models/base";
+import { NotificationType } from "../notifications/domain-object";
+
 export interface BaseApprovalStep {
   id: string;
   title: string;
@@ -88,3 +94,35 @@ export interface ApprovalStepRow {
 }
 
 export const approvalStepDomain = "ApprovalStep" as "ApprovalStep";
+
+type Base = Omit<
+  BaseNotification,
+  | "collaboratorId"
+  | "collectionId"
+  | "designId"
+  | "approvalStepId"
+  | "recipientUserId"
+  | "recipientCollaboratorId"
+  | "recipientTeamUserId"
+>;
+
+export interface ApprovalStepAssignmentNotification extends Base {
+  collaboratorId: string | null;
+  collectionId: string | null;
+  designId: string;
+  approvalStepId: string;
+  recipientUserId: string | null;
+  recipientCollaboratorId: string | null;
+  recipientTeamUserId: string | null;
+}
+
+type BaseFull = Omit<
+  BaseFullNotification & ApprovalStepAssignmentNotification,
+  "collectionTitle" | "designTitle"
+>;
+
+export interface FullApprovalStepAssignmentNotification extends BaseFull {
+  collectionTitle: string | null;
+  designTitle: string | null;
+  type: NotificationType.APPROVAL_STEP_ASSIGNMENT;
+}
