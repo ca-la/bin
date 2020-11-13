@@ -241,6 +241,41 @@ export async function findUnpaidByUserId(
   return dataAdapter.fromDbArray(bids);
 }
 
+export async function findUnpaidByTeamId(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<Bid[]> {
+  const bids = await trx("teams")
+    .select(selectWithAcceptedAt)
+    .join("design_events", "teams.id", "design_events.target_team_id")
+    .join("product_designs as d", "design_events.design_id", "d.id")
+    .join("collection_designs as c", "d.id", "c.design_id")
+    .join("pricing_bids", "design_events.bid_id", "pricing_bids.id")
+    .leftJoin("partner_payout_logs as l", "pricing_bids.id", "l.bid_id")
+    .where({
+      "design_events.type": "ACCEPT_SERVICE_BID",
+      "design_events.target_team_id": teamId,
+    })
+    .whereNotIn(
+      "pricing_bids.id",
+      trx
+        .select("bid_id")
+        .from("design_events")
+        .where({ type: "REMOVE_PARTNER" })
+    )
+    .groupBy(["pricing_bids.id", "design_events.bid_id"])
+    .having(
+      db.raw(
+        "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
+      )
+    )
+    .modify(withAssignee)
+    .orderBy("pricing_bids.id")
+    .orderBy("pricing_bids.created_at", "desc");
+
+  return dataAdapter.fromDbArray(bids);
+}
+
 function withAssignee(query: Knex.QueryBuilder) {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery

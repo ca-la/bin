@@ -483,6 +483,24 @@ function* postPayOut(
   this.status = 204;
 }
 
+function* getUnpaidBids(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { userId, teamId } = this.query;
+  const { trx } = this.state;
+
+  if (!userId && !teamId) {
+    this.throw(400, "query param 'userId' or 'teamId' is required");
+  }
+
+  const bids = userId
+    ? yield BidsDAO.findUnpaidByUserId(trx, userId)
+    : yield BidsDAO.findUnpaidByTeamId(trx, teamId);
+
+  this.body = bids;
+  this.status = 200;
+}
+
 router.post(
   "/",
   requireAdmin,
@@ -491,6 +509,8 @@ router.post(
   createAndAssignBid
 );
 router.get("/", requireAuth, useTransaction, listBids);
+router.get("/unpaid", requireAdmin, useTransaction, getUnpaidBids);
+
 router.get(
   "/unpaid/:userId",
   requireAdmin,

@@ -19,6 +19,7 @@ import {
   findByQuoteId,
   findOpenByTargetId,
   findRejectedByTargetId,
+  findUnpaidByTeamId,
   findUnpaidByUserId,
 } from "./dao";
 import { templateDesignEvent } from "../design-events/types";
@@ -224,13 +225,15 @@ async function bidToPartner({
 async function removePartner({
   bidId,
   designId,
-  targetId,
   actorId,
+  targetId = null,
+  targetTeamId = null,
 }: {
   bidId: string;
   designId: string;
-  targetId: string;
   actorId: string;
+  targetId?: string | null;
+  targetTeamId?: string | null;
 }) {
   return db.transaction((trx: Knex.Transaction) =>
     DesignEventsDAO.create(trx, {
@@ -242,6 +245,7 @@ async function removePartner({
       id: uuid.v4(),
       createdAt: new Date(),
       targetId,
+      targetTeamId,
     })
   );
 }
@@ -272,10 +276,12 @@ async function acceptBid({
   bidId,
   designId,
   actorId,
+  targetTeamId = null,
 }: {
   bidId: string;
   designId: string;
   actorId: string;
+  targetTeamId?: string | null;
 }) {
   return db.transaction((trx: Knex.Transaction) => {
     return DesignEventsDAO.create(trx, {
@@ -286,6 +292,7 @@ async function acceptBid({
       bidId,
       id: uuid.v4(),
       createdAt: new Date(),
+      targetTeamId,
     });
   });
 }
@@ -296,7 +303,7 @@ async function payPartner({
   bidId,
   initiatorUserId,
 }: {
-  payoutAccountId: string;
+  payoutAccountId: string | null;
   payoutAmountCents: number;
   bidId: string;
   initiatorUserId: string;
@@ -310,7 +317,7 @@ async function payPartner({
       message: "Get yo money",
       initiatorUserId,
       bidId,
-      isManual: true,
+      isManual: !payoutAccountId,
     })
   );
 }
@@ -384,7 +391,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   clock.tick(1000);
   const deRemovedRemove = await removePartner({
     actorId: admin.id,
-    bidId: removed.id,
+    bidId: removed!.id,
     designId: design1.id,
     targetId: partner1.id,
   });
@@ -428,7 +435,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   });
   clock.tick(1000);
   const deRejectedReject = await rejectBid({
-    bidId: rejectedBid.id,
+    bidId: rejectedBid!.id,
     designId: design2.id,
     actorId: partner1.id,
   });
@@ -451,12 +458,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
   clock.setSystemTime(acceptedAt);
   const deAccepted1Accept = await acceptBid({
-    bidId: accepted1.id,
+    bidId: accepted1!.id,
     designId: design2.id,
     actorId: partner2.id,
   });
   const deAccepted2Accept = await acceptBid({
-    bidId: accepted2.id,
+    bidId: accepted2!.id,
     designId: design2.id,
     actorId: partner2.id,
   });
@@ -464,14 +471,14 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   clock.tick(daysToMs(1));
   await payPartner({
     payoutAccountId: payoutAccount2.id,
-    payoutAmountCents: accepted1.bidPriceCents,
-    bidId: accepted1.id,
+    payoutAmountCents: accepted1!.bidPriceCents,
+    bidId: accepted1!.id,
     initiatorUserId: admin.id,
   });
   await payPartner({
     payoutAccountId: payoutAccount2.id,
-    payoutAmountCents: accepted2.bidPriceCents - 1,
-    bidId: accepted2.id,
+    payoutAmountCents: accepted2!.bidPriceCents - 1,
+    bidId: accepted2!.id,
     initiatorUserId: admin.id,
   });
 
@@ -701,9 +708,9 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findById(trx, open1.id),
+      await findById(trx, open1!.id),
       {
-        ...open1,
+        ...open1!,
         assignee: {
           type: "USER",
           id: partner1.id,
@@ -715,7 +722,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findById(trx, accepted1.id),
+      await findById(trx, accepted1!.id),
       {
         ...accepted1,
         acceptedAt,
@@ -730,7 +737,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findById(trx, accepted2.id),
+      await findById(trx, accepted2!.id),
       {
         ...accepted2,
         acceptedAt,
@@ -745,7 +752,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findByBidIdAndUser(trx, teamBid.id, partner1.id),
+      await findByBidIdAndUser(trx, teamBid!.id, partner1.id),
       {
         ...teamBid,
         assignee: {
@@ -759,13 +766,13 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findByBidIdAndUser(trx, teamBid.id, partner2.id),
+      await findByBidIdAndUser(trx, teamBid!.id, partner2.id),
       null,
       "findByBidIdAndUser / returns null if you are not in the team"
     );
 
     t.deepEqual(
-      await findByBidIdAndUser(trx, open1.id, partner1.id),
+      await findByBidIdAndUser(trx, open1!.id, partner1.id),
       {
         ...open1,
         assignee: {
@@ -779,7 +786,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findByBidIdAndUser(trx, accepted1.id, partner2.id),
+      await findByBidIdAndUser(trx, accepted1!.id, partner2.id),
       {
         ...accepted1,
         acceptedAt,
@@ -837,4 +844,148 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
     findUnpaidByUserId(trx, partner.id)
   );
   t.equal(bids.length, 0);
+});
+
+test("findUnpaidByTeamId", async () => {
+  test("finds unpaid bids", async (t: Test) => {
+    const {
+      users: { admin, partner1 },
+      team,
+      designs: [design],
+      quotes,
+      clock,
+    } = await setup();
+    const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
+    clock.setSystemTime(acceptedAt);
+
+    const { bid } = await bidToPartner({
+      designId: design.id,
+      quoteId: quotes[0].id,
+      actorId: admin.id,
+      targetTeamId: team.id,
+    });
+    await acceptBid({
+      bidId: bid!.id,
+      designId: design.id,
+      actorId: partner1.id,
+      targetTeamId: team.id,
+    });
+
+    await db.transaction(async (trx: Knex.Transaction) =>
+      t.deepEquals(
+        await findUnpaidByTeamId(trx, team.id),
+        [
+          {
+            ...bid,
+            acceptedAt,
+            assignee: {
+              id: team.id,
+              name: team.title,
+              type: "TEAM",
+            },
+          },
+        ],
+        "Returns bid that has recieved no payment"
+      )
+    );
+
+    await payPartner({
+      payoutAccountId: null,
+      payoutAmountCents: bid!.bidPriceCents / 2,
+      initiatorUserId: admin.id,
+      bidId: bid!.id,
+    });
+
+    await db.transaction(async (trx: Knex.Transaction) =>
+      t.deepEquals(
+        await findUnpaidByTeamId(trx, team.id),
+        [
+          {
+            ...bid,
+            acceptedAt,
+            assignee: {
+              id: team.id,
+              name: team.title,
+              type: "TEAM",
+            },
+          },
+        ],
+        "Returns bid that has recieved partial payment"
+      )
+    );
+
+    await payPartner({
+      payoutAccountId: null,
+      payoutAmountCents: bid!.bidPriceCents / 2,
+      initiatorUserId: admin.id,
+      bidId: bid!.id,
+    });
+
+    await db.transaction(async (trx: Knex.Transaction) =>
+      t.deepEquals(
+        await findUnpaidByTeamId(trx, team.id),
+        [],
+        "Does not return paid bids"
+      )
+    );
+  });
+
+  test("does not return bids the team was removed ", async (t: Test) => {
+    const {
+      users: { admin, partner1 },
+      team,
+      designs: [design],
+      quotes,
+      clock,
+    } = await setup();
+    const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
+    clock.setSystemTime(acceptedAt);
+
+    const { bid } = await bidToPartner({
+      designId: design.id,
+      quoteId: quotes[0].id,
+      actorId: admin.id,
+      targetTeamId: team.id,
+    });
+
+    await acceptBid({
+      bidId: bid!.id,
+      designId: design.id,
+      actorId: partner1.id,
+      targetTeamId: team.id,
+    });
+
+    await db.transaction(async (trx: Knex.Transaction) =>
+      t.deepEquals(
+        await findUnpaidByTeamId(trx, team.id),
+        [
+          {
+            ...bid,
+            acceptedAt,
+            assignee: {
+              id: team.id,
+              name: team.title,
+              type: "TEAM",
+            },
+          },
+        ],
+        "Returns bid before being removed"
+      )
+    );
+
+    await removePartner({
+      bidId: bid!.id,
+      designId: design.id,
+      targetTeamId: team.id,
+      actorId: admin.id,
+    });
+
+    await db.transaction(async (trx: Knex.Transaction) =>
+      t.deepEquals(
+        await findUnpaidByTeamId(trx, team.id),
+        [],
+        "Does not return removed bid"
+      )
+    );
+  });
 });

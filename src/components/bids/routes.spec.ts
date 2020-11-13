@@ -56,8 +56,11 @@ function setup(role: string = "PARTNER") {
       .stub(ProductDesignsDAO, "findByQuoteId")
       .resolves(d1),
     createStub: sandbox().stub(CreateBidService, "createBid").resolves(b1),
-    findUnpaidBidsStub: sandbox()
+    findUnpaidBidsByUserStub: sandbox()
       .stub(BidsDAO, "findUnpaidByUserId")
+      .resolves([b1d1]),
+    findUnpaidBidsByTeamStub: sandbox()
+      .stub(BidsDAO, "findUnpaidByTeamId")
       .resolves([b1d1]),
     lockQuoteStub: sandbox().stub(LockQuoteService, "default").resolves(),
   };
@@ -1011,7 +1014,7 @@ test("POST /bids blocks concurrent bid creation", async (t: Test) => {
 test("GET /unpaid/:userId", async (t: Test) => {
   const mockTransaction = await db.transaction();
   sandbox().stub(db, "transaction").resolves(mockTransaction);
-  const { sessionStub, findUnpaidBidsStub } = setup("ADMIN");
+  const { sessionStub, findUnpaidBidsByUserStub } = setup("ADMIN");
 
   const [response, body] = await get("/bids/unpaid/a-user-id", {
     headers: authHeader("a-session-id"),
@@ -1020,7 +1023,7 @@ test("GET /unpaid/:userId", async (t: Test) => {
   t.equal(response.status, 200, "returns a success status");
   t.deepEqual(body, [b1d1], "returns bids");
   t.deepEqual(
-    findUnpaidBidsStub.args,
+    findUnpaidBidsByUserStub.args,
     [[mockTransaction, "a-user-id"]],
     "passes a transaction to the DAO function"
   );
@@ -1035,4 +1038,63 @@ test("GET /unpaid/:userId", async (t: Test) => {
     403,
     "returns an Unauthorized status for non-admins"
   );
+});
+
+test("GET /unpaid?userId=", async (t: Test) => {
+  const mockTransaction = await db.transaction();
+  sandbox().stub(db, "transaction").resolves(mockTransaction);
+  const { sessionStub, findUnpaidBidsByUserStub } = setup("ADMIN");
+
+  const [response, body] = await get("/bids/unpaid?userId=a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "returns a success status");
+  t.deepEqual(body, [b1d1], "returns bids");
+  t.deepEqual(
+    findUnpaidBidsByUserStub.args,
+    [[mockTransaction, "a-user-id"]],
+    "passes a transaction to the DAO function"
+  );
+
+  sessionStub.resolves({ role: "USER", userId: "a-user-id" });
+  const [unauthorized] = await get("/bids/unpaid?userId=a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(
+    unauthorized.status,
+    403,
+    "returns an Unauthorized status for non-admins"
+  );
+});
+
+test("GET /unpaid?teamId=", async (t: Test) => {
+  const mockTransaction = await db.transaction();
+  sandbox().stub(db, "transaction").resolves(mockTransaction);
+  const { findUnpaidBidsByTeamStub } = setup("ADMIN");
+
+  const [response, body] = await get("/bids/unpaid?teamId=a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 200, "returns a success status");
+  t.deepEqual(body, [b1d1], "returns bids");
+  t.deepEqual(
+    findUnpaidBidsByTeamStub.args,
+    [[mockTransaction, "a-team-id"]],
+    "passes a transaction to the DAO function"
+  );
+});
+
+test("GET /unpaid with missing query", async (t: Test) => {
+  const mockTransaction = await db.transaction();
+  sandbox().stub(db, "transaction").resolves(mockTransaction);
+  setup("ADMIN");
+
+  const [response] = await get("/bids/unpaid", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 400, "Requires userId or teamId");
 });
