@@ -196,17 +196,6 @@ function* listBids(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-function* getUnpaidBidsByUserId(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { userId } = this.params;
-  const { trx } = this.state;
-
-  const bids = yield BidsDAO.findUnpaidByUserId(trx, userId);
-  this.body = bids;
-  this.status = 200;
-}
-
 function* listBidAssignees(this: AuthedContext): Iterator<any, any, any> {
   const { bidId } = this.params;
   const assignees = yield UsersDAO.findByBidId(bidId);
@@ -510,13 +499,6 @@ router.post(
 );
 router.get("/", requireAuth, useTransaction, listBids);
 router.get("/unpaid", requireAdmin, useTransaction, getUnpaidBids);
-
-router.get(
-  "/unpaid/:userId",
-  requireAdmin,
-  useTransaction,
-  getUnpaidBidsByUserId
-);
 
 router.get("/:bidId", requireAuth, useTransaction, getById);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);

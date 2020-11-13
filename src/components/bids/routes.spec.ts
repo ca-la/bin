@@ -1011,35 +1011,6 @@ test("POST /bids blocks concurrent bid creation", async (t: Test) => {
   );
 });
 
-test("GET /unpaid/:userId", async (t: Test) => {
-  const mockTransaction = await db.transaction();
-  sandbox().stub(db, "transaction").resolves(mockTransaction);
-  const { sessionStub, findUnpaidBidsByUserStub } = setup("ADMIN");
-
-  const [response, body] = await get("/bids/unpaid/a-user-id", {
-    headers: authHeader("a-session-id"),
-  });
-
-  t.equal(response.status, 200, "returns a success status");
-  t.deepEqual(body, [b1d1], "returns bids");
-  t.deepEqual(
-    findUnpaidBidsByUserStub.args,
-    [[mockTransaction, "a-user-id"]],
-    "passes a transaction to the DAO function"
-  );
-
-  sessionStub.resolves({ role: "USER", userId: "a-user-id" });
-  const [unauthorized] = await get("/bids/unpaid/a-user-id", {
-    headers: authHeader("a-session-id"),
-  });
-
-  t.equal(
-    unauthorized.status,
-    403,
-    "returns an Unauthorized status for non-admins"
-  );
-});
-
 test("GET /unpaid?userId=", async (t: Test) => {
   const mockTransaction = await db.transaction();
   sandbox().stub(db, "transaction").resolves(mockTransaction);
