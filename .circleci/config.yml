@@ -20,7 +20,11 @@ jobs:
           keys:
           - v3-dependencies-{{ checksum "package-lock.json" }}
 
-      - run: npm ci
+      - run:
+          name: Install dependencies
+          command: |
+            bin/set_up_npmrc
+            npm ci
 
       - save_cache:
           paths:

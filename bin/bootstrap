@@ -73,9 +73,12 @@ First we're going to check that you have the required tools installed.
     print_green "OK"
 
     if [[ $(xargs --version | grep -o findutils) != "findutils" ]]; then
-      fail_fatal "Even after installation, we couldn't access findutils. Please \
-      ensure that your \$PATH is set up correctly to include Homebrew packages: \
-      https://sourabhbajaj.com/mac-setup/Homebrew/README.html"
+      fail_fatal "Even after installation, we couldn't access findutils. Please ensure that your \$PATH is set up correctly to include Homebrew packages, \
+and \`findutils\` specifically: https://sourabhbajaj.com/mac-setup/Homebrew/README.html
+
+This may require adding a line to your ~/.bash_profile or ~/.zshrc as follows:
+
+export PATH=/usr/local/opt/findutils/libexec/gnubin:\$PATH"
     fi
   fi
   print_green "OK"
@@ -83,8 +86,8 @@ First we're going to check that you have the required tools installed.
   echo -n "Checking node.js and npm versions... "
   if [[ $(node -v) != "v10.15.0" ]] || [[ $(npm -v) != "6.4.1" ]]; then
     fail_fatal "CALA applications use node.js version 10.15.0 and npm 6.4.1. \
-      Please install these versions and try again. We recommend \
-      https://github.com/tj/n \for managing different installations."
+Please install these versions and try again. We recommend \
+https://github.com/tj/n for managing different installations."
   fi
   print_green "OK"
 
@@ -110,17 +113,10 @@ parse your local .env file, please make sure it's formatted correctly"
   print_green "OK"
 
 
-  echo -n "Checking for \$NPM_TOKEN..."
-  local token=${NPM_TOKEN:-""}
-  if [[ $token == "" ]]; then
-    fail_fatal "It looks like you don't have an \$NPM_TOKEN set. Generate a token \
-at npmjs.com and make sure this is available on your \$PATH - e.g. by adding \
-something like this to your ~/.zshrc or ~/.bash_profile:
-
-export NPM_TOKEN=your-token-goes-here"
-  fi
+  echo -n "Checking npm access... "
+  npm info @cala/ts-lib &>/dev/null || fail_fatal "It looks like you don't \
+have access to CALA npm packages. Pleas run \`npm login\`."
   print_green "OK"
-
 
   echo -n "Checking Heroku access... "
   heroku ps -a cala-api-stg >/dev/null || fail_fatal "It looks like you don't \

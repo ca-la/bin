@@ -78,6 +78,7 @@
   },
   "scripts": {
     "start": "bin/start",
+    "heroku-prebuild": "bin/set_up_npmrc",
     "test": "bin/test"
   },
   "nyc": {

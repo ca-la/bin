@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Creates an `.npmrc` file to provide the npm token from an environment variable
+#
+# Generally only useful in non-development enviroments; locally you can just
+# `npm login`. To make development seamless, this file is not committed to git.
+
+echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
