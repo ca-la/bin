@@ -36,6 +36,7 @@ export const listeners: Listeners<
     >
   ): Promise<void> =>
     IrisService.sendMessage(realtimeApprovalSubmissionCreated(event.created)),
+
   "dao.updated": (
     event: DaoUpdated<
       ApprovalStepSubmission,
@@ -43,6 +44,7 @@ export const listeners: Listeners<
     >
   ): Promise<void> =>
     IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
+
   "route.updated.*": {
     collaboratorId: async (
       event: RouteUpdated<

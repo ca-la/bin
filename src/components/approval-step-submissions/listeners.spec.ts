@@ -21,95 +21,104 @@ const submission: ApprovalStepSubmission = {
   title: "Garment Sample",
 };
 
-test("dao.updated.state", async (t: Test) => {
-  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+function setup() {
+  return {
+    irisStub: sandbox().stub(IrisService, "sendMessage").resolves(),
+    clock: sandbox().useFakeTimers(now),
+  };
+}
 
-  sandbox().useFakeTimers(now);
+test("dao.updated.state", async (t: Test) => {
+  const { irisStub } = setup();
 
   const trx = await db.transaction();
 
-  const event: DaoUpdated<
-    ApprovalStepSubmission,
-    typeof approvalStepSubmissionDomain
-  > = {
-    trx,
-    type: "dao.updated",
-    domain: approvalStepSubmissionDomain,
-    before: submission,
-    updated: {
-      ...submission,
-      state: ApprovalStepSubmissionState.SUBMITTED,
-      collaboratorId: "collabo-id",
-    },
-  };
-
-  if (!listeners["dao.updated"]) {
-    throw new Error("dao.updated is empty");
-  }
-
-  await listeners["dao.updated"](event);
-
-  t.deepEquals(
-    irisStub.args[0][0],
-    {
-      type: "approval-step-submission/updated",
-      resource: {
-        id: "sub-1",
-        stepId: "step-1",
-        createdAt: now,
-        artifactType: "CUSTOM",
+  try {
+    const event: DaoUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "dao.updated",
+      domain: approvalStepSubmissionDomain,
+      before: submission,
+      updated: {
+        ...submission,
         state: ApprovalStepSubmissionState.SUBMITTED,
         collaboratorId: "collabo-id",
-        teamUserId: null,
-        title: "Garment Sample",
       },
-      approvalStepId: "step-1",
-    },
-    "Updates via realtime on state change"
-  );
-  await trx.rollback();
+    };
+
+    if (!listeners["dao.updated"]) {
+      throw new Error("dao.updated is empty");
+    }
+
+    await listeners["dao.updated"](event);
+
+    t.deepEquals(
+      irisStub.args[0][0],
+      {
+        type: "approval-step-submission/updated",
+        resource: {
+          id: "sub-1",
+          stepId: "step-1",
+          createdAt: now,
+          artifactType: "CUSTOM",
+          state: ApprovalStepSubmissionState.SUBMITTED,
+          collaboratorId: "collabo-id",
+          teamUserId: null,
+          title: "Garment Sample",
+        },
+        approvalStepId: "step-1",
+      },
+      "Updates via realtime on state change"
+    );
+  } finally {
+    await trx.rollback();
+  }
 });
 
 test("dao.created", async (t: Test) => {
-  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
-
-  sandbox().useFakeTimers(now);
+  const { irisStub } = setup();
 
   const trx = await db.transaction();
 
-  const event: DaoCreated<
-    ApprovalStepSubmission,
-    typeof approvalStepSubmissionDomain
-  > = {
-    trx,
-    type: "dao.created",
-    domain: approvalStepSubmissionDomain,
-    created: submission,
-  };
+  try {
+    const event: DaoCreated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "dao.created",
+      domain: approvalStepSubmissionDomain,
+      created: submission,
+    };
 
-  if (!listeners["dao.created"]) {
-    throw new Error("dao.updated.*.state is empty");
-  }
+    if (!listeners["dao.created"]) {
+      throw new Error("dao.updated.*.state is empty");
+    }
 
-  await listeners["dao.created"](event);
+    await listeners["dao.created"](event);
 
-  t.deepEquals(
-    irisStub.args[0][0],
-    {
-      type: "approval-step-submission/created",
-      resource: {
-        id: "sub-1",
-        stepId: "step-1",
-        createdAt: now,
-        artifactType: "CUSTOM",
-        state: ApprovalStepSubmissionState.UNSUBMITTED,
-        collaboratorId: null,
-        teamUserId: null,
-        title: "Garment Sample",
+    t.deepEquals(
+      irisStub.args[0][0],
+      {
+        type: "approval-step-submission/created",
+        resource: {
+          id: "sub-1",
+          stepId: "step-1",
+          createdAt: now,
+          artifactType: "CUSTOM",
+          state: ApprovalStepSubmissionState.UNSUBMITTED,
+          collaboratorId: null,
+          teamUserId: null,
+          title: "Garment Sample",
+        },
+        approvalStepId: "step-1",
       },
-      approvalStepId: "step-1",
-    },
-    "Sends message via realtime on create"
-  );
-  await trx.rollback();
+      "Sends message via realtime on create"
+    );
+  } finally {
+    await trx.rollback();
+  }
 });
