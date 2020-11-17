@@ -17,6 +17,7 @@ import {
 import { listeners } from "./listeners";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
 import * as CollaboratorsDAO from "../collaborators/dao";
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import DesignEventsDAO from "../design-events/dao";
 import DesignsDAO from "../product-designs/dao";
 import { NotificationType } from "../notifications/domain-object";
@@ -29,7 +30,7 @@ const as: ApprovalStep = {
   id: uuid.v4(),
   title: "Checkout",
   ordering: 0,
-  designId: "",
+  designId: "d1",
   reason: null,
   type: ApprovalStepType.CHECKOUT,
   collaboratorId: null,
@@ -389,7 +390,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
     updated: ApprovalStep;
     findCollaboratorArgs: any[][];
     findCollaboratorResult?: object;
-    createDesignEventArgs: any[][];
     sendNotificationArgs: any[][];
   }
   const actorId = "a1";
@@ -403,19 +403,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
         designId: "d2",
       },
       findCollaboratorArgs: [],
-      createDesignEventArgs: [
-        [
-          trx,
-          {
-            ...templateDesignEvent,
-            actorId,
-            approvalStepId: as.id,
-            createdAt: now,
-            designId: "d2",
-            type: "STEP_ASSIGNMENT",
-          },
-        ],
-      ],
       sendNotificationArgs: [],
     },
     {
@@ -429,19 +416,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
         collaboratorId: null,
       },
       findCollaboratorArgs: [],
-      createDesignEventArgs: [
-        [
-          trx,
-          {
-            ...templateDesignEvent,
-            actorId,
-            approvalStepId: as.id,
-            createdAt: now,
-            designId: as.designId,
-            type: "STEP_ASSIGNMENT",
-          },
-        ],
-      ],
       sendNotificationArgs: [],
     },
     {
@@ -453,19 +427,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
         collaboratorId: "c1",
       },
       findCollaboratorArgs: [["c1"]],
-      createDesignEventArgs: [
-        [
-          trx,
-          {
-            ...templateDesignEvent,
-            actorId,
-            approvalStepId: as.id,
-            createdAt: now,
-            designId: as.designId,
-            type: "STEP_ASSIGNMENT",
-          },
-        ],
-      ],
       sendNotificationArgs: [],
     },
     {
@@ -480,19 +441,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
         id: "c1",
         userId: null,
       },
-      createDesignEventArgs: [
-        [
-          trx,
-          {
-            ...templateDesignEvent,
-            actorId,
-            approvalStepId: as.id,
-            createdAt: now,
-            designId: as.designId,
-            type: "STEP_ASSIGNMENT",
-          },
-        ],
-      ],
       sendNotificationArgs: [
         [
           trx,
@@ -524,20 +472,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
         userId: "u1",
         user: { id: "u1" },
       },
-      createDesignEventArgs: [
-        [
-          trx,
-          {
-            ...templateDesignEvent,
-            actorId,
-            approvalStepId: as.id,
-            createdAt: now,
-            designId: as.designId,
-            targetId: "u1",
-            type: "STEP_ASSIGNMENT",
-          },
-        ],
-      ],
       sendNotificationArgs: [
         [
           trx,
@@ -569,7 +503,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
       const findCollaboratorStub = sandbox()
         .stub(CollaboratorsDAO, "findById")
         .returns(testCase.findCollaboratorResult);
-      const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
       const sendNotificationStub = sandbox().stub(
         NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
         "send"
@@ -612,14 +545,6 @@ test("route.updated.collaboratorId", async (t: Test) => {
           `${testCase.title}: find collaborator`
         );
         t.deepEqual(
-          createDesignEventStub.args.map((callArgs: any[]) => [
-            callArgs[0],
-            omit(callArgs[1], "id"),
-          ]),
-          testCase.createDesignEventArgs,
-          `${testCase.title}: create design event`
-        );
-        t.deepEqual(
           sendNotificationStub.args,
           testCase.sendNotificationArgs,
           `${testCase.title}: send notification`
@@ -627,6 +552,319 @@ test("route.updated.collaboratorId", async (t: Test) => {
       }
 
       findCollaboratorStub.restore();
+      sendNotificationStub.restore();
+    }
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("route.updated", async (t: Test) => {
+  const now = new Date();
+  sandbox().useFakeTimers(now);
+
+  const trx = await db.transaction();
+  interface TestCase {
+    title: string;
+    error?: string;
+    before: ApprovalStep;
+    updated: ApprovalStep;
+    findCollaboratorArgs: any[][];
+    findCollaboratorResult?: Record<string, any>;
+    findTeamUserArgs: any[][];
+    findTeamUserResult?: Record<string, any>;
+    createDesignEventArgs: any[][];
+  }
+  const actorId = "a1";
+
+  const testCases: TestCase[] = [
+    {
+      title: "Update not changing the assignee",
+      before: as,
+      updated: {
+        ...as,
+        designId: "d2",
+      },
+      findCollaboratorArgs: [],
+      findTeamUserArgs: [],
+      createDesignEventArgs: [],
+    },
+    {
+      title: "Update assign to collaborator",
+      before: as,
+      updated: {
+        ...as,
+        collaboratorId: "c1",
+      },
+      findCollaboratorArgs: [["c1", false, trx]],
+      findCollaboratorResult: {
+        id: "c1",
+        userId: "u1",
+        user: { id: "u1" },
+      },
+      findTeamUserArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: "u1",
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Update assign to team user",
+      before: as,
+      updated: {
+        ...as,
+        teamUserId: "tu1",
+      },
+      findCollaboratorArgs: [],
+      findTeamUserArgs: [[trx, "tu1"]],
+      findTeamUserResult: {
+        id: "tu1",
+        userId: "u1",
+      },
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: "u1",
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Update re-assign to team user from collaborator",
+      before: {
+        ...as,
+        collaboratorId: "c1",
+      },
+      updated: {
+        ...as,
+        teamUserId: "tu1",
+      },
+      findCollaboratorArgs: [],
+      findTeamUserArgs: [[trx, "tu1"]],
+      findTeamUserResult: {
+        id: "tu1",
+        userId: "u1",
+      },
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: "u1",
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Update re-assign to collaborator from team user",
+      before: {
+        ...as,
+        teamUserId: "tu1",
+      },
+      updated: {
+        ...as,
+        collaboratorId: "c1",
+      },
+      findCollaboratorArgs: [["c1", false, trx]],
+      findCollaboratorResult: {
+        id: "c1",
+        userId: "u1",
+        user: { id: "u1" },
+      },
+      findTeamUserArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: "u1",
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Invalid reassignment to both team user and collaborator",
+      before: {
+        ...as,
+        teamUserId: "tu1",
+      },
+      updated: {
+        ...as,
+        collaboratorId: "c1",
+        teamUserId: "tu1",
+      },
+      findCollaboratorArgs: [["c1", false, trx]],
+      findCollaboratorResult: {
+        id: "c1",
+        userId: "u1",
+        user: { id: "u1" },
+      },
+      findTeamUserArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: "u1",
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Update unassign from team user",
+      before: {
+        ...as,
+        teamUserId: "tu1",
+      },
+      updated: {
+        ...as,
+        teamUserId: null,
+      },
+      findCollaboratorArgs: [],
+      findTeamUserArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+    {
+      title: "Update unassign from collaborator",
+      before: {
+        ...as,
+        collaboratorId: "c1",
+      },
+      updated: {
+        ...as,
+        collaboratorId: null,
+      },
+      findCollaboratorArgs: [],
+      findTeamUserArgs: [],
+      createDesignEventArgs: [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId,
+            approvalStepId: as.id,
+            createdAt: now,
+            designId: "d1",
+            targetId: null,
+            type: "STEP_ASSIGNMENT",
+          },
+        ],
+      ],
+    },
+  ];
+
+  sandbox()
+    .stub(DesignsDAO, "findById")
+    .returns({
+      id: as.designId,
+      collectionIds: ["c1"],
+    });
+  try {
+    for (const testCase of testCases) {
+      const findCollaboratorStub = sandbox()
+        .stub(CollaboratorsDAO, "findById")
+        .returns(testCase.findCollaboratorResult);
+      const findTeamUserStub = sandbox()
+        .stub(RawTeamUsersDAO, "findById")
+        .returns(testCase.findTeamUserResult);
+      const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
+      const sendNotificationStub = sandbox().stub(
+        NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
+        "send"
+      );
+
+      const event: RouteUpdated<ApprovalStep, typeof approvalStepDomain> = {
+        type: "route.updated",
+        trx,
+        actorId,
+        domain: approvalStepDomain,
+        before: testCase.before,
+        updated: testCase.updated,
+      };
+
+      let error: Error | null = null;
+      try {
+        await listeners["route.updated"]!(event);
+      } catch (err) {
+        error = err;
+      }
+      if (testCase.error) {
+        t.is(
+          error && error.message,
+          testCase.error,
+          `${testCase.title}: throws the error`
+        );
+      } else {
+        if (error) {
+          throw error;
+        }
+        t.deepEqual(
+          findCollaboratorStub.args,
+          testCase.findCollaboratorArgs,
+          `${testCase.title}: find collaborator`
+        );
+        t.deepEqual(
+          findTeamUserStub.args,
+          testCase.findTeamUserArgs,
+          `${testCase.title}: find team user`
+        );
+        t.deepEqual(
+          createDesignEventStub.args.map((callArgs: any[]) => [
+            callArgs[0],
+            omit(callArgs[1], "id"),
+          ]),
+          testCase.createDesignEventArgs,
+          `${testCase.title}: create design event`
+        );
+      }
+
+      findCollaboratorStub.restore();
+      findTeamUserStub.restore();
       createDesignEventStub.restore();
       sendNotificationStub.restore();
     }

@@ -78,6 +78,44 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
     );
   },
 
+  "route.updated": async (
+    event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
+  ) => {
+    const { updated, before, actorId, trx } = event;
+
+    if (
+      updated.collaboratorId === before.collaboratorId &&
+      updated.teamUserId === before.teamUserId
+    ) {
+      return;
+    }
+
+    let targetId = null;
+
+    if (updated.collaboratorId) {
+      const collaborator = await CollaboratorsDAO.findById(
+        updated.collaboratorId,
+        false,
+        trx
+      );
+      targetId = collaborator && collaborator.userId;
+    } else if (updated.teamUserId) {
+      const teamUser = await RawTeamUsersDAO.findById(trx, updated.teamUserId);
+      targetId = teamUser && teamUser.userId;
+    }
+
+    await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      actorId,
+      approvalStepId: updated.id,
+      createdAt: new Date(),
+      designId: updated.designId,
+      id: uuid.v4(),
+      targetId,
+      type: "STEP_ASSIGNMENT",
+    });
+  },
+
   "route.updated.*": {
     state: async (
       event: RouteUpdated<ApprovalStep, typeof approvalStepDomain>
@@ -111,17 +149,6 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
           `Wrong collaboratorId: ${event.updated.collaboratorId}`
         );
       }
-
-      await DesignEventsDAO.create(event.trx, {
-        ...templateDesignEvent,
-        actorId: event.actorId,
-        approvalStepId: event.updated.id,
-        createdAt: new Date(),
-        designId: event.updated.designId,
-        id: uuid.v4(),
-        targetId: (collaborator && collaborator.userId) || null,
-        type: "STEP_ASSIGNMENT",
-      });
 
       if (!collaborator) {
         return;
@@ -161,17 +188,6 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
       if (event.updated.teamUserId && !teamUser) {
         throw new Error(`Wrong teamUserId: ${event.updated.teamUserId}`);
       }
-
-      await DesignEventsDAO.create(event.trx, {
-        ...templateDesignEvent,
-        actorId: event.actorId,
-        approvalStepId: event.updated.id,
-        createdAt: new Date(),
-        designId: event.updated.designId,
-        id: uuid.v4(),
-        targetId: (teamUser && teamUser.userId) || null,
-        type: "STEP_ASSIGNMENT",
-      });
 
       if (!teamUser) {
         return;
