@@ -45,6 +45,58 @@ export const listeners: Listeners<
   ): Promise<void> =>
     IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
 
+  "route.updated": async (
+    event: RouteUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    >
+  ) => {
+    const { updated, before, actorId, trx } = event;
+
+    if (
+      updated.collaboratorId === before.collaboratorId &&
+      updated.teamUserId === before.teamUserId
+    ) {
+      return;
+    }
+
+    const approvalStep = await ApprovalStepsDAO.findById(
+      event.trx,
+      event.updated.stepId
+    );
+    if (!approvalStep) {
+      throw new Error(
+        `Could not find an approval step with id: ${event.updated.stepId}`
+      );
+    }
+
+    let targetId = null;
+
+    if (updated.collaboratorId) {
+      const collaborator = await CollaboratorsDAO.findById(
+        updated.collaboratorId,
+        false,
+        trx
+      );
+      targetId = collaborator && collaborator.userId;
+    } else if (updated.teamUserId) {
+      const teamUser = await RawTeamUsersDAO.findById(trx, updated.teamUserId);
+      targetId = teamUser && teamUser.userId;
+    }
+
+    await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      actorId,
+      approvalStepId: updated.stepId,
+      approvalSubmissionId: updated.id,
+      createdAt: new Date(),
+      designId: approvalStep.designId,
+      id: uuid.v4(),
+      targetId,
+      type: "STEP_SUBMISSION_ASSIGNMENT",
+    });
+  },
+
   "route.updated.*": {
     collaboratorId: async (
       event: RouteUpdated<
@@ -52,13 +104,17 @@ export const listeners: Listeners<
         typeof approvalStepSubmissionDomain
       >
     ) => {
-      const collaborator = event.updated.collaboratorId
-        ? await CollaboratorsDAO.findById(
-            event.updated.collaboratorId,
-            false,
-            event.trx
-          )
-        : null;
+      const collaborator =
+        event.updated.collaboratorId &&
+        (await CollaboratorsDAO.findById(
+          event.updated.collaboratorId,
+          false,
+          event.trx
+        ));
+
+      if (!collaborator) {
+        return;
+      }
 
       const approvalStep = await ApprovalStepsDAO.findById(
         event.trx,
@@ -76,26 +132,11 @@ export const listeners: Listeners<
         undefined,
         event.trx
       );
+
       if (!design) {
         throw new Error(
           `Could not find a design with id: ${approvalStep.designId}`
         );
-      }
-
-      await DesignEventsDAO.create(event.trx, {
-        ...templateDesignEvent,
-        actorId: event.actorId,
-        approvalStepId: event.updated.stepId,
-        approvalSubmissionId: event.updated.id,
-        createdAt: new Date(),
-        designId: design.id,
-        id: uuid.v4(),
-        targetId: collaborator && collaborator.userId,
-        type: "STEP_SUBMISSION_ASSIGNMENT",
-      });
-
-      if (!collaborator) {
-        return;
       }
 
       await notifications[
@@ -123,9 +164,13 @@ export const listeners: Listeners<
         typeof approvalStepSubmissionDomain
       >
     ) => {
-      const teamUser = event.updated.teamUserId
-        ? await RawTeamUsersDAO.findById(event.trx, event.updated.teamUserId)
-        : null;
+      const teamUser =
+        event.updated.teamUserId &&
+        (await RawTeamUsersDAO.findById(event.trx, event.updated.teamUserId));
+
+      if (!teamUser) {
+        return;
+      }
 
       if (event.updated.teamUserId && !teamUser) {
         throw new Error(`Wrong teamUserId: ${event.updated.teamUserId}`);
@@ -151,22 +196,6 @@ export const listeners: Listeners<
         throw new Error(
           `Could not find a design with id: ${approvalStep.designId}`
         );
-      }
-
-      await DesignEventsDAO.create(event.trx, {
-        ...templateDesignEvent,
-        actorId: event.actorId,
-        approvalStepId: event.updated.stepId,
-        approvalSubmissionId: event.updated.id,
-        createdAt: new Date(),
-        designId: design.id,
-        id: uuid.v4(),
-        targetId: teamUser && teamUser.userId,
-        type: "STEP_SUBMISSION_ASSIGNMENT",
-      });
-
-      if (!teamUser) {
-        return;
       }
 
       await notifications[
