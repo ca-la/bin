@@ -52,6 +52,8 @@ export const STRIPE_SECRET_KEY: string;
 export const FINANCING_MARGIN: number;
 
 export const LOG_ALL_QUERIES: boolean;
+export const LOG_NON_TRANSACTION_QUERIES: boolean;
+export const LOG_DATABASE_TIMING: boolean;
 
 export const ADMIN_EMAIL: string;
 

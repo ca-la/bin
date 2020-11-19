@@ -22,6 +22,11 @@ function timeEnd(label) {
   console.timeEnd(label);
 }
 
+function timeLog(label, ...args) {
+  // eslint-disable-next-line no-console
+  console.timeLog(label, ...args);
+}
+
 function logServerError(...args) {
   // eslint-disable-next-line no-console
   console.log(COLORS.red, "SERVER ERROR:", ...args, COLORS.reset);
@@ -44,4 +49,5 @@ module.exports = {
   logClientError,
   time,
   timeEnd,
+  timeLog,
 };

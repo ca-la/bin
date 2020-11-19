@@ -122,6 +122,7 @@ const config = {
   LOG_ALL_QUERIES: process.env.LOG_ALL_QUERIES === "true",
   LOG_NON_TRANSACTION_QUERIES:
     process.env.LOG_NON_TRANSACTION_QUERIES === "true",
+  LOG_DATABASE_TIMING: process.env.LOG_DATABASE_TIMING === "true",
 
   ADMIN_EMAIL,
 
