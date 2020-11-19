@@ -24,6 +24,7 @@ export * from "../components/comments/types";
 export * from "../components/templates/categories/types";
 export * from "../components/iris/types";
 export * from "../components/teams/types";
+export * from "../components/non-bid-team-costs/types";
 export {
   Role as TeamUserRole,
   TeamUser,

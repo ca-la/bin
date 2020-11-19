@@ -1,6 +1,8 @@
-interface WithCreatedDate {
+interface WithInitialDates {
   created_at?: Date | string;
   createdAt?: Date;
+  updated_at?: Date | string;
+  updatedAt?: Date;
 }
 
 interface WithShortId {
@@ -8,23 +10,33 @@ interface WithShortId {
   shortId?: string | null;
 }
 
-type Uninserted<T extends WithCreatedDate> = Omit<
+type Uninserted<T extends WithInitialDates> = Omit<
   T,
-  "created_at" | "createdAt"
+  "created_at" | "createdAt" | "updated_at" | "updatedAt"
 >;
 
-type UninsertedWithoutShortId<T extends WithCreatedDate & WithShortId> = Omit<
+type UninsertedWithoutShortId<T extends WithInitialDates & WithShortId> = Omit<
   T,
   "created_at" | "createdAt" | "short_id" | "shortId"
 >;
 
 type Unsaved<
-  T extends { createdAt?: Date; id?: string; deletedAt?: Date | null }
-> = Omit<T, "createdAt" | "id" | "deletedAt">;
+  T extends {
+    createdAt?: Date;
+    id?: string;
+    deletedAt?: Date | null;
+    updatedAt?: Date;
+  }
+> = Omit<T, "createdAt" | "id" | "deletedAt" | "updatedAt">;
 
 type MaybeUnsaved<
-  T extends { createdAt?: Date; id?: string; deletedAt?: Date | null }
-> = Omit<T, "createdAt" | "id" | "deletedAt"> & { id?: string };
+  T extends {
+    createdAt?: Date;
+    id?: string;
+    deletedAt?: Date | null;
+    updatedAt?: Date;
+  }
+> = Omit<T, "createdAt" | "id" | "deletedAt" | "updatedAt"> & { id?: string };
 
 interface WithRouter {
   params: {
