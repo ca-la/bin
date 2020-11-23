@@ -952,21 +952,27 @@ test("findAllForUserThroughDesign team permissions", async (t: Test) => {
       userEmail: null,
     });
 
-    const design = await ProductDesignsDAO.create({
-      productType: "TEESHIRT",
-      title: "A product design",
-      userId: user.id,
-    });
+    const design = await ProductDesignsDAO.create(
+      {
+        productType: "TEESHIRT",
+        title: "A product design",
+        userId: user.id,
+      },
+      trx
+    );
 
-    const { collaborator } = await generateCollaborator({
-      collectionId: null,
-      designId: design.id,
-      invitationMessage: "",
-      role: "PREVIEW",
-      userEmail: null,
-      userId: null,
-      teamId: team.id,
-    });
+    const { collaborator } = await generateCollaborator(
+      {
+        collectionId: null,
+        designId: design.id,
+        invitationMessage: "",
+        role: "PREVIEW",
+        userEmail: null,
+        userId: null,
+        teamId: team.id,
+      },
+      trx
+    );
 
     const foundAdminPreviewCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
       design.id,
@@ -1014,7 +1020,7 @@ test("findAllForUserThroughDesign team permissions", async (t: Test) => {
       "Viewers can only view accepted-bid designs"
     );
   } finally {
-    trx.rollback();
+    await trx.rollback();
   }
 });
 
@@ -1034,21 +1040,27 @@ test("findByDesignAndUser team permissions", async (t: Test) => {
       userEmail: null,
     });
 
-    const design = await ProductDesignsDAO.create({
-      productType: "TEESHIRT",
-      title: "A product design",
-      userId: user.id,
-    });
+    const design = await ProductDesignsDAO.create(
+      {
+        productType: "TEESHIRT",
+        title: "A product design",
+        userId: user.id,
+      },
+      trx
+    );
 
-    const { collaborator } = await generateCollaborator({
-      collectionId: null,
-      designId: design.id,
-      invitationMessage: "",
-      role: "PREVIEW",
-      userEmail: null,
-      userId: null,
-      teamId: team.id,
-    });
+    const { collaborator } = await generateCollaborator(
+      {
+        collectionId: null,
+        designId: design.id,
+        invitationMessage: "",
+        role: "PREVIEW",
+        userEmail: null,
+        userId: null,
+        teamId: team.id,
+      },
+      trx
+    );
 
     const foundAdminPreviewCollaborator = await CollaboratorsDAO.findByDesignAndUser(
       design.id,
@@ -1096,6 +1108,6 @@ test("findByDesignAndUser team permissions", async (t: Test) => {
       "Viewers can only view accepted-bid designs"
     );
   } finally {
-    trx.rollback();
+    await trx.rollback();
   }
 });
