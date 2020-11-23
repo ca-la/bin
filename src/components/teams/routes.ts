@@ -9,8 +9,14 @@ import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import { createTeamWithOwner } from "./service";
+import { requireTeamRoles } from "../team-users/service";
+import { Role as TeamUserRole } from "../team-users/types";
 
 const domain = "Team" as "Team";
+
+async function findTeamById(context: TrxContext<AuthedContext>) {
+  return context.params.id;
+}
 
 function* createTeam(this: TrxContext<AuthedContext>) {
   const { trx, userId: actorId } = this.state;
@@ -114,7 +120,22 @@ function* findTeam(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
   const { id } = this.params;
 
-  const team = yield RawTeamsDAO.findOne(trx, { id });
+  const team = yield RawTeamsDAO.findById(trx, id);
+  if (!team) {
+    this.throw(404, `Team not found with ID: ${id}`);
+  }
+
+  this.body = team;
+  this.status = 200;
+}
+
+function* deleteTeam(this: TrxContext<AuthedContext>) {
+  const { trx } = this.state;
+  const { id } = this.params;
+
+  const { updated: team } = yield RawTeamsDAO.update(trx, id, {
+    deletedAt: new Date(),
+  });
   if (!team) {
     this.throw(404, `Team not found with ID: ${id}`);
   }
@@ -143,6 +164,14 @@ export default {
     "/:id": {
       ...standardRouter.routes["/:id"],
       get: [useTransaction, requireAdmin, findTeam],
+      del: [
+        useTransaction,
+        requireTeamRoles(
+          [TeamUserRole.ADMIN, TeamUserRole.OWNER],
+          findTeamById
+        ),
+        deleteTeam,
+      ],
     },
   },
 };

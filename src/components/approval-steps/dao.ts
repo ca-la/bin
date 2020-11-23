@@ -12,6 +12,7 @@ const dao = {
     adapter,
     {
       orderColumn: "ordering",
+      excludeDeletedAt: false,
     }
   ),
   async findBySubmissionId(

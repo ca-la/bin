@@ -8,5 +8,6 @@ export default buildDao<TemplateCategory, TemplateCategoryRow>(
   adapter,
   {
     orderColumn: "ordering",
+    excludeDeletedAt: false,
   }
 );

@@ -15,6 +15,7 @@ const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
   adapter,
   {
     orderColumn: "created_at",
+    excludeDeletedAt: false,
   }
 );
 

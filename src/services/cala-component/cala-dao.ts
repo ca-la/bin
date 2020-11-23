@@ -13,6 +13,7 @@ export function identity<T>(a: T): T {
 interface DaoOptions<ModelRow> {
   orderColumn: keyof ModelRow;
   orderDirection?: "ASC" | "DESC";
+  excludeDeletedAt?: boolean;
   queryModifier?: QueryModifier;
   insertModifier?: QueryModifier;
 }
@@ -31,6 +32,7 @@ export function buildDao<
   {
     orderColumn,
     orderDirection = "ASC",
+    excludeDeletedAt = true,
     queryModifier = identity,
     insertModifier = identity,
   }: DaoOptions<ModelRow>
@@ -41,6 +43,10 @@ export function buildDao<
     const transformed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(adapter.toDbPartial(filter))) {
       transformed[`${tableName}.${key}`] = value;
+    }
+
+    if (excludeDeletedAt) {
+      transformed.deleted_at = null;
     }
 
     return transformed;

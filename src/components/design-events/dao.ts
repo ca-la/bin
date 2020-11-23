@@ -20,6 +20,7 @@ const TABLE_NAME = "design_events";
 const baseDao = {
   ...buildDao<DesignEvent, DesignEventRow>(domain, TABLE_NAME, adapter, {
     orderColumn: "created_at",
+    excludeDeletedAt: false,
   }),
 };
 
@@ -76,6 +77,7 @@ const withMetaDao = {
     {
       orderColumn: "created_at",
       queryModifier: addMeta,
+      excludeDeletedAt: false,
     }
   ),
 };

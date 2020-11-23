@@ -10,6 +10,7 @@ const dao = buildDao<AftershipTracking, AftershipTrackingRow>(
   adapter,
   {
     orderColumn: "created_at",
+    excludeDeletedAt: false,
   }
 );
 

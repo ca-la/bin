@@ -11,6 +11,7 @@ const standardDao = buildDao<ShipmentTracking, ShipmentTrackingRow>(
   adapter,
   {
     orderColumn: "created_at",
+    excludeDeletedAt: false,
   }
 );
 

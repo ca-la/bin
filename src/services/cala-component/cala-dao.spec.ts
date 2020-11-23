@@ -147,6 +147,7 @@ test(
     const dao = buildDao<Widget, WidgetRow>(domain, tableName, adapter, {
       orderColumn: "created_at",
       queryModifier: addMeta,
+      excludeDeletedAt: false,
     });
 
     const emitStub = sandbox().stub(PubSub, "emit");

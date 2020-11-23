@@ -15,6 +15,7 @@ const standardDao = buildDao<ShipmentTrackingEvent, ShipmentTrackingEventRow>(
   adapter,
   {
     orderColumn: "courier_timestamp",
+    excludeDeletedAt: false,
   }
 );
 

@@ -102,4 +102,37 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
       trx.rollback();
     }
   });
+
+  test("does not return deleted teams", async (t: Test) => {
+    const { team } = await setup();
+    const trx = await db.transaction();
+
+    try {
+      t.deepEquals(
+        await RawTeamsDAO.find(trx, { id: team.id }),
+        [team],
+        "Returns team before being deleted"
+      );
+
+      await RawTeamsDAO.update(trx, team.id, { deletedAt: new Date() });
+
+      t.deepEquals(
+        await RawTeamsDAO.find(trx, { id: team.id }),
+        [],
+        "find does not return deleted team"
+      );
+      t.deepEquals(
+        await RawTeamsDAO.findOne(trx, { id: team.id }),
+        null,
+        "findOne does not return deleted team"
+      );
+      t.deepEquals(
+        await RawTeamsDAO.findById(trx, team.id),
+        null,
+        "findById does not return deleted team"
+      );
+    } finally {
+      trx.rollback();
+    }
+  });
 });
