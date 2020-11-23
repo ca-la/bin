@@ -46,7 +46,7 @@ export function buildDao<
     }
 
     if (excludeDeletedAt) {
-      transformed.deleted_at = null;
+      transformed[`${tableName}.deleted_at`] = null;
     }
 
     return transformed;

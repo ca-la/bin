@@ -13,7 +13,6 @@ export const rawDao = buildDao<TeamUserDb, TeamUserDbRow>(
   rawAdapter,
   {
     orderColumn: "user_id",
-    excludeDeletedAt: false,
   }
 );
 
@@ -23,7 +22,6 @@ const dao = buildDao<TeamUser, TeamUserRow>(
   adapter,
   {
     orderColumn: "user_id",
-    excludeDeletedAt: false,
     queryModifier: (query: Knex.QueryBuilder) =>
       query
         .select(db.raw("to_json(users.*) as user"))
