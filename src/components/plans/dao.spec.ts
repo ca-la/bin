@@ -1,7 +1,7 @@
 import uuid from "node-uuid";
 
 import * as PlansDAO from "./dao";
-import { Plan } from "./domain-object";
+import { Plan, BillingInterval } from "./domain-object";
 import { test, Test } from "../../test-helpers/fresh";
 
 test("PlansDAO supports creation and retrieval", async (t: Test) => {
@@ -9,7 +9,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
 
   await PlansDAO.create({
     id: p1id,
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 1234,
     revenueShareBasisPoints: 1200,
     costOfGoodsShareBasisPoints: 0,
@@ -23,7 +23,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
 
   await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     revenueShareBasisPoints: 5000,
     costOfGoodsShareBasisPoints: 0,
@@ -55,7 +55,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
 test("PlansDAO.findPublic lists public plans", async (t: Test) => {
   await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 1234,
     revenueShareBasisPoints: 1200,
     costOfGoodsShareBasisPoints: 0,
@@ -69,7 +69,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
 
   await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 1234,
     revenueShareBasisPoints: 1200,
     costOfGoodsShareBasisPoints: 0,
@@ -83,7 +83,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
 
   await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     revenueShareBasisPoints: 5000,
     costOfGoodsShareBasisPoints: 0,
@@ -112,7 +112,7 @@ test("PlansDAO.findById returns null if not found", async (t: Test) => {
 test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
   await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 1234,
     revenueShareBasisPoints: 1200,
     costOfGoodsShareBasisPoints: 0,
@@ -127,7 +127,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
   try {
     await PlansDAO.create({
       id: uuid.v4(),
-      billingInterval: "MONTHLY",
+      billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
       revenueShareBasisPoints: 1200,
       costOfGoodsShareBasisPoints: 0,

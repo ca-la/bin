@@ -10,7 +10,7 @@ import { validate, validateEvery } from "../../services/validate-from-db";
 
 const TABLE_NAME = "plans";
 
-export async function create(data: Uninserted<Plan>): Promise<Plan> {
+export async function create(data: MaybeUnsaved<Plan>): Promise<Plan> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,

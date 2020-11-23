@@ -13,7 +13,7 @@ import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User from "../users/domain-object";
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
-import { Plan } from "../plans/domain-object";
+import { Plan, BillingInterval } from "../plans/domain-object";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 interface SetupOptions {
@@ -41,7 +41,7 @@ async function setup(
   const { planOptions } = options;
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     revenueShareBasisPoints: 5000,
     costOfGoodsShareBasisPoints: 0,

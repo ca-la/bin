@@ -11,6 +11,7 @@ import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
 import * as PlansDAO from "../../plans/dao";
+import { BillingInterval } from "../../plans/domain-object";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";
@@ -457,7 +458,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
 
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 5000,

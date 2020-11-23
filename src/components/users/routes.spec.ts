@@ -14,6 +14,7 @@ import * as TeamUsersDAO from "../../components/team-users/dao";
 import * as SessionsDAO from "../../dao/sessions";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import * as UsersDAO from "./dao";
+import { BillingInterval } from "../plans/domain-object";
 import createUser = require("../../test-helpers/create-user");
 import db from "../../services/db";
 import InvalidDataError = require("../../errors/invalid-data");
@@ -619,7 +620,7 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
 
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     revenueShareBasisPoints: 5000,
     costOfGoodsShareBasisPoints: 0,

@@ -1,4 +1,7 @@
-export type BillingInterval = "MONTHLY" | "ANNUALLY";
+export enum BillingInterval {
+  MONTHLY = "MONTHLY",
+  ANNUALLY = "ANNUALLY",
+}
 
 export interface Plan {
   id: string;

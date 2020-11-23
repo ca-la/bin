@@ -7,13 +7,14 @@ import createUser = require("../../test-helpers/create-user");
 import db from "../../services/db";
 import * as SubscriptionsDAO from "./dao";
 import * as PlansDAO from "../plans/dao";
+import { BillingInterval } from "../plans/domain-object";
 import PaymentMethodsDAO from "../payment-methods/dao";
 
 test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 1200,
@@ -56,7 +57,7 @@ test("SubscriptionsDAO supports waiving payment on a new subscription", async (t
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 1200,
@@ -93,7 +94,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 1200,
@@ -163,7 +164,7 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const plan = await PlansDAO.create({
     id: uuid.v4(),
-    billingInterval: "MONTHLY",
+    billingInterval: BillingInterval.MONTHLY,
     monthlyCostCents: 4567,
     costOfGoodsShareBasisPoints: 0,
     revenueShareBasisPoints: 1200,

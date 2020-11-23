@@ -63,3 +63,28 @@ export function isPlan(data: object): data is Plan {
     "ordering"
   );
 }
+
+function isBillingInterval(
+  billingInterval: any
+): billingInterval is BillingInterval {
+  return Object.values(BillingInterval).includes(billingInterval);
+}
+
+export function isCreatePlanInputRequest(
+  plan: Record<string, any>
+): plan is Unsaved<Plan> {
+  const keyset = new Set(Object.keys(plan));
+
+  const isRequiredFieldsProvided = [
+    "billingInterval",
+    "monthlyCostCents",
+    "revenueShareBasisPoints",
+    "costOfGoodsShareBasisPoints",
+    "stripePlanId",
+    "title",
+    "isDefault",
+    "description",
+  ].every(keyset.has.bind(keyset));
+
+  return isRequiredFieldsProvided && isBillingInterval(plan.billingInterval);
+}
