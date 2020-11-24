@@ -24,6 +24,9 @@ export async function createTeamWithOwner(
     userEmail: null,
     id: uuid.v4(),
     role: Role.OWNER,
+    createdAt: new Date(),
+    deletedAt: null,
+    updatedAt: new Date(),
   });
 
   return created;

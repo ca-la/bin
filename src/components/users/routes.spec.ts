@@ -10,7 +10,7 @@ import * as CreditsDAO from "../../components/credits/dao";
 import * as DuplicationService from "../../services/duplicate";
 import * as PlansDAO from "../plans/dao";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
-import * as TeamUsersDAO from "../../components/team-users/dao";
+import TeamUsersDAO from "../../components/team-users/dao";
 import * as SessionsDAO from "../../dao/sessions";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import * as UsersDAO from "./dao";

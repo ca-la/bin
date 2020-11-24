@@ -508,6 +508,9 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
       userId: teamAdmin.id,
       userEmail: null,
       role: TeamUserRole.ADMIN,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     })
   );
 
@@ -950,6 +953,9 @@ test("findAllForUserThroughDesign team permissions", async (t: Test) => {
       userId: teamViewer.id,
       role: TeamUserRole.VIEWER,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
 
     const design = await ProductDesignsDAO.create(
@@ -1038,6 +1044,9 @@ test("findByDesignAndUser team permissions", async (t: Test) => {
       userId: teamViewer.id,
       role: TeamUserRole.VIEWER,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
 
     const design = await ProductDesignsDAO.create(

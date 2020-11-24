@@ -33,19 +33,20 @@ async function deleteById(trx: Knex.Transaction, teamUserId: string) {
   return trx(TABLE_NAME).del().where({ id: teamUserId });
 }
 
-export default {
-  ...dao,
-  deleteById,
-};
-
 export async function claimAllByEmail(
   trx: Knex.Transaction,
   email: string,
   userId: string
-): Promise<TeamUser[]> {
+): Promise<TeamUserDb[]> {
   const rows = await trx(TABLE_NAME)
     .update({ user_email: null, user_id: userId }, "*")
     .where({ user_email: email });
 
-  return rows.map(adapter.fromDb);
+  return rows.map(rawAdapter.fromDb);
 }
+
+export default {
+  ...dao,
+  deleteById,
+  claimAllByEmail,
+};

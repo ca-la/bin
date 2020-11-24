@@ -102,12 +102,18 @@ export async function createTeamUser(
       ...partialUserData,
       userId: user.id,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
   } else {
     await RawTeamUsersDAO.create(trx, {
       ...partialUserData,
       userEmail,
       userId: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
   }
 

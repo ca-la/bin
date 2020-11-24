@@ -83,6 +83,9 @@ async function setup() {
       teamId: team.id,
       userId: teamViewer.id,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     })
   );
   const teamUser3 = await db.transaction((trx: Knex.Transaction) =>
@@ -92,6 +95,9 @@ async function setup() {
       teamId: team.id,
       userId: null,
       userEmail: "non-user-team-user@example.com",
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     })
   );
 

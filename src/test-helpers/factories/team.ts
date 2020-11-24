@@ -32,6 +32,9 @@ export async function generateTeam(
       teamId: team.id,
       userId: adminUserId,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
       ...teamUserOptions,
     });
 

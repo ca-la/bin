@@ -123,6 +123,9 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
       teamId: team.id,
       userId: teamViewerSession.userId,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     })
   );
   const body = {

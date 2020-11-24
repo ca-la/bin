@@ -19,6 +19,9 @@ const tuDb1: TeamUserDb = {
   userId: "a-user-id",
   userEmail: null,
   role: Role.ADMIN,
+  createdAt: new Date(),
+  deletedAt: null,
+  updatedAt: new Date(),
 };
 const tu1: TeamUser = {
   ...tuDb1,
@@ -355,6 +358,9 @@ test("/team-users end-to-end", async (t: Test) => {
       teamId: unusedTeam.id,
       userId: teamAdmin.user.id,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
 
     await RawTeamsDAO.create(trx, {
@@ -370,6 +376,9 @@ test("/team-users end-to-end", async (t: Test) => {
       teamId,
       userId: teamAdmin.user.id,
       userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
     });
   } catch (err) {
     await trx.rollback();

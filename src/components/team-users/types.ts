@@ -14,70 +14,91 @@ export const PARTNER_TEAM_BID_EDITORS: Role[] = [
   Role.EDITOR,
 ];
 
-export type TeamUserDb = {
+export interface BaseTeamUserDb {
   id: string;
   teamId: string;
   role: Role;
-} & (
-  | {
-      userId: null;
-      userEmail: string;
-    }
-  | {
-      userId: string;
-      userEmail: null;
-    }
-);
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
 
-export type TeamUserDbRow = {
+interface BaseTeamUserDbRow {
   id: string;
   team_id: string;
   role: Role;
-} & (
-  | {
-      user_email: null;
-      user_id: string;
-    }
-  | {
-      user_id: null;
-      user_email: string;
-    }
-);
+  created_at: Date;
+  updated_at: Date;
+  deleted_at: Date | null;
+}
 
-export type TeamUser = TeamUserDb &
-  (
-    | {
-        // a partial constraint; "either userId and user are both present, or neither are"
-        userId: string;
-        user: User;
-      }
-    | {
-        userId: null;
-        user: null;
-      }
-  );
+interface Registered extends BaseTeamUserDb {
+  userId: string;
+  userEmail: null;
+}
+
+interface RegisteredRow extends BaseTeamUserDbRow {
+  user_id: string;
+  user_email: null;
+}
+
+interface Invited extends BaseTeamUserDb {
+  userId: null;
+  userEmail: string;
+}
+
+interface InvitedRow extends BaseTeamUserDbRow {
+  user_id: null;
+  user_email: string;
+}
+
+export type TeamUserDb = Registered | Invited;
+
+export type TeamUserDbRow = RegisteredRow | InvitedRow;
+
+export function isRegisteredTeamUserDb(
+  candidate: TeamUserDb
+): candidate is Registered {
+  return candidate.userId !== null;
+}
+
+export function isRegisteredTeamUserDbRow(
+  candidate: TeamUserDbRow
+): candidate is RegisteredRow {
+  return candidate.user_id !== null;
+}
+
+interface RegisteredTeamUser extends Registered {
+  user: User;
+}
+
+interface InvitedTeamUser extends Invited {
+  user: null;
+}
+
+interface RegisteredTeamUserRow extends RegisteredRow {
+  user: UserRow;
+}
+
+interface InvitedTeamUserRow extends InvitedRow {
+  user: null;
+}
+
+export type TeamUser = RegisteredTeamUser | InvitedTeamUser;
+
+export type TeamUserRow = RegisteredTeamUserRow | InvitedTeamUserRow;
 
 export function isRegisteredTeamUser(
   candidate: TeamUser
-): candidate is TeamUserDb & {
-  userId: string;
-  user: User;
-  userEmail: null;
-} {
-  return Boolean(candidate.user && candidate.userId && !candidate.userEmail);
+): candidate is RegisteredTeamUser {
+  return candidate.user !== null;
 }
 
-export type TeamUserRow = TeamUserDbRow &
-  (
-    | {
-        user_id: string;
-        user: UserRow;
-      }
-    | {
-        user_id: null;
-        user: null;
-      }
-  );
+export function isRegisteredTeamUserRow(
+  candidate: TeamUserRow
+): candidate is RegisteredTeamUserRow {
+  return candidate.user !== null;
+}
 
 export interface UnsavedTeamUser {
   teamId: string;

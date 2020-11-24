@@ -18,7 +18,7 @@ import MailChimp = require("../../services/mailchimp");
 import MultipleErrors from "../../errors/multiple-errors";
 import requireAuth = require("../../middleware/require-auth");
 import SessionsDAO = require("../../dao/sessions");
-import { claimAllByEmail as claimTeamUsers } from "../../components/team-users/dao";
+import TeamUsersDAO from "../../components/team-users/dao";
 import User, { Role, ROLES, UserIO } from "./domain-object";
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from "../../config";
 import { hasProperties } from "../../services/require-properties";
@@ -97,7 +97,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
       await createTeamWithOwner(trx, `${name}'s Team`, userInTrx.id);
     }
 
-    await claimTeamUsers(trx, email, userInTrx.id);
+    await TeamUsersDAO.claimAllByEmail(trx, email, userInTrx.id);
 
     return userInTrx;
   });
