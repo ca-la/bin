@@ -48,8 +48,8 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .stub(TeamUsersDAO, "findById")
       .resolves(tu1),
     updateStub: sandbox()
-      .stub(TeamUsersDAO, "update")
-      .resolves({ before: tu1, updated: tu1 }),
+      .stub(RawTeamUsersDAO, "update")
+      .resolves({ before: tuDb1, updated: tuDb1 }),
     deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
   };
 }

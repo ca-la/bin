@@ -132,7 +132,7 @@ export async function updateTeamUser(
     );
   }
 
-  await TeamUsersDAO.update(trx, teamUserId, patch);
+  await RawTeamUsersDAO.update(trx, teamUserId, patch);
 
   const updated = await TeamUsersDAO.findById(trx, teamUserId);
   if (!updated) {
