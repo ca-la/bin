@@ -42,7 +42,7 @@ export async function findByTeamId(trx: Knex.Transaction, teamId: string) {
     .select("partner_payout_accounts.*")
     .join("team_users", "team_users.user_id", "partner_payout_accounts.user_id")
     .where({
-      deleted_at: null,
+      "partner_payout_accounts.deleted_at": null,
       "team_users.team_id": teamId,
     })
     .then((payoutAccounts: any) => payoutAccounts.map(instantiate))
