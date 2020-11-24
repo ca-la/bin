@@ -35,15 +35,25 @@ export async function attachDeliveryStatus(
   _: Knex.Transaction,
   shipmentTracking: ShipmentTracking
 ): Promise<ShipmentTracking & { deliveryStatus: DeliveryStatus }> {
-  const { tracking } = await Aftership.getTracking(
-    shipmentTracking.courier,
-    shipmentTracking.trackingId
-  );
+  let tag = "Pending";
+
+  try {
+    const { tracking } = await Aftership.getTracking(
+      shipmentTracking.courier,
+      shipmentTracking.trackingId
+    );
+
+    if (tracking && tracking.tag) {
+      tag = tracking.tag;
+    }
+  } catch (err) {
+    Logger.logWarning(err.message);
+  }
 
   return {
     ...shipmentTracking,
     deliveryStatus: {
-      tag: tracking ? tracking.tag : "Pending",
+      tag,
       expectedDelivery: shipmentTracking.expectedDelivery,
       deliveryDate: shipmentTracking.deliveryDate,
     },

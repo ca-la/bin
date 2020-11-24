@@ -6,9 +6,10 @@ import * as DesignEventsDAO from "../design-events/dao";
 import * as ProductDesignsDAO from "../product-designs/dao/dao";
 import { NotificationType } from "../notifications/domain-object";
 import { ShipmentTrackingTag } from "../integrations/aftership/types";
+import * as AftershipService from "../integrations/aftership/service";
 
 import NotificationsLayer from "./notifications";
-import { createNotificationsAndEvents } from "./service";
+import { createNotificationsAndEvents, attachDeliveryStatus } from "./service";
 import { ShipmentTracking } from "./types";
 
 function setup({
@@ -114,5 +115,59 @@ test("createNotificationsAndEvents prevents duplicate events", async (t: Test) =
     t.equal(createDesignEventStub.callCount, 0, "Does not create an event");
   } finally {
     trx.rollback();
+  }
+});
+
+test("attachDeliveryStatus", async (t: Test) => {
+  const shipmentTracking: ShipmentTracking = {
+    approvalStepId: "an-approval-step-id",
+    courier: "a-courier-slug",
+    createdAt: new Date(),
+    deliveryDate: null,
+    description: "A shipment",
+    expectedDelivery: null,
+    id: "a-shipment-tracking-id",
+    trackingId: "a-courier-tracking-id",
+  };
+
+  const trx = await db.transaction();
+
+  try {
+    const aftershipStub = sandbox()
+      .stub(AftershipService, "getTracking")
+      .resolves({
+        tracking: {
+          tag: "A NEW TAG",
+        },
+      });
+
+    t.deepEqual(
+      await attachDeliveryStatus(trx, shipmentTracking),
+      {
+        ...shipmentTracking,
+        deliveryStatus: {
+          tag: "A NEW TAG",
+          expectedDelivery: null,
+          deliveryDate: null,
+        },
+      },
+      "valid response / Attaches the tag from Aftership response"
+    );
+
+    aftershipStub.throws(new Error("Some message to log"));
+    t.deepEqual(
+      await attachDeliveryStatus(trx, shipmentTracking),
+      {
+        ...shipmentTracking,
+        deliveryStatus: {
+          tag: "Pending",
+          expectedDelivery: null,
+          deliveryDate: null,
+        },
+      },
+      "invalid response / Uses a fallback tag"
+    );
+  } finally {
+    await trx.rollback();
   }
 });
