@@ -4,8 +4,7 @@ import { authHeader, get, patch, post, del } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO from "../team-users/dao";
-import { Role as TeamUserRole } from "../team-users/types";
-import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
+import TeamsDAO from "./dao";
 import { TeamDb, TeamType } from "./types";
 import createUser from "../../test-helpers/create-user";
 import { Role } from "../users/types";
@@ -41,17 +40,16 @@ function setup({
       .resolves(),
     findStub: sandbox()
       .stub(TeamsDAO, "find")
-      .resolves([{ ...t1, role: TeamUserRole.ADMIN }]),
+      .resolves([{ ...t1 }]),
+    findByUserStub: sandbox()
+      .stub(TeamsDAO, "findByUser")
+      .resolves([{ ...t1 }]),
     findByIdStub: sandbox()
       .stub(TeamsDAO, "findById")
-      .resolves({ ...t1, role: TeamUserRole.ADMIN }),
-    findByIdRawStub: sandbox().stub(RawTeamsDAO, "findById").resolves(t1),
-    findRawStub: sandbox().stub(RawTeamsDAO, "find").resolves([t1]),
-    findUnpaidStub: sandbox()
-      .stub(RawTeamsDAO, "findUnpaidTeams")
-      .resolves([t1]),
-    findOneRawStub: sandbox().stub(RawTeamsDAO, "findOne").resolves([t1]),
-    updateRawStub: sandbox().stub(RawTeamsDAO, "update").resolves({
+      .resolves({ ...t1 }),
+    findUnpaidStub: sandbox().stub(TeamsDAO, "findUnpaidTeams").resolves([t1]),
+    findOneStub: sandbox().stub(TeamsDAO, "findOne").resolves([t1]),
+    updateStub: sandbox().stub(TeamsDAO, "update").resolves({
       updated: t1,
     }),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
@@ -72,7 +70,7 @@ test("POST /teams", async (t: Test) => {
   t.equal(response.status, 201);
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
+    JSON.parse(JSON.stringify(t1)),
     "returns the created team from the DAO"
   );
   t.deepEqual(
@@ -110,9 +108,7 @@ test("GET /teams", async (t: Test) => {
   });
 
   t.equal(response.status, 200, "responds successfully");
-  t.deepEqual(body, [
-    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.ADMIN })),
-  ]);
+  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
 
   const [unauthorized] = await get("/teams?userId=not-me", {
     headers: authHeader("a-session-id"),
@@ -191,19 +187,19 @@ test("GET /teams/:id as USER", async (t: Test) => {
 });
 
 test("PATCH /teams/:id as ADMIN", async (t: Test) => {
-  const { updateRawStub } = setup({ role: "ADMIN" });
+  const { updateStub } = setup({ role: "ADMIN" });
 
   const [response] = await patch("/teams/a-team-id", {
     headers: authHeader("a-session-id"),
     body: { type: "PARTNER" },
   });
   t.equal(response.status, 200, "responds successfully");
-  t.equal(updateRawStub.args[0][1], "a-team-id");
-  t.deepEqual(updateRawStub.args[0][2], { type: "PARTNER" });
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { type: "PARTNER" });
 });
 
 test("DELETE /teams/:id as random USER", async (t: Test) => {
-  const { updateRawStub } = setup();
+  const { updateStub } = setup();
 
   sandbox().stub(TeamUsersDAO, "findOne").resolves(null);
 
@@ -211,11 +207,11 @@ test("DELETE /teams/:id as random USER", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 403, "Does not allow random users to delete teams");
-  t.deepEqual(updateRawStub.args, []);
+  t.deepEqual(updateStub.args, []);
 });
 
 test("DELETE /teams/:id as team EDITOR", async (t: Test) => {
-  const { updateRawStub } = setup();
+  const { updateStub } = setup();
 
   sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "EDITOR" });
 
@@ -223,11 +219,11 @@ test("DELETE /teams/:id as team EDITOR", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 403, "Does not allow team editors to delete teams");
-  t.deepEqual(updateRawStub.args, []);
+  t.deepEqual(updateStub.args, []);
 });
 
 test("DELETE /teams/:id as team OWNER", async (t: Test) => {
-  const { updateRawStub } = setup();
+  const { updateStub } = setup();
 
   sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "OWNER" });
 
@@ -235,19 +231,67 @@ test("DELETE /teams/:id as team OWNER", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 200, "responds successfully");
-  t.equal(updateRawStub.args[0][1], "a-team-id");
-  t.deepEqual(updateRawStub.args[0][2], { deletedAt: now });
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { deletedAt: now });
 });
 
 test("DELETE /teams/:id as ADMIN", async (t: Test) => {
-  const { updateRawStub } = setup({ role: "ADMIN" });
+  const { updateStub } = setup({ role: "ADMIN" });
 
   const [response] = await del("/teams/a-team-id", {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 200, "responds successfully");
-  t.equal(updateRawStub.args[0][1], "a-team-id");
-  t.deepEqual(updateRawStub.args[0][2], { deletedAt: now });
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { deletedAt: now });
+});
+
+test("DELETE /teams/:id as random USER", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves(null);
+
+  const [response] = await del("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 403, "Does not allow random users to delete teams");
+  t.deepEqual(updateStub.args, []);
+});
+
+test("DELETE /teams/:id as team EDITOR", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "EDITOR" });
+
+  const [response] = await del("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 403, "Does not allow team editors to delete teams");
+  t.deepEqual(updateStub.args, []);
+});
+
+test("DELETE /teams/:id as team OWNER", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "OWNER" });
+
+  const [response] = await del("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { deletedAt: now });
+});
+
+test("DELETE /teams/:id as ADMIN", async (t: Test) => {
+  const { updateStub } = setup({ role: "ADMIN" });
+
+  const [response] = await del("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { deletedAt: now });
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {
@@ -263,11 +307,6 @@ test("POST -> GET /teams end-to-end", async (t: Test) => {
 
   t.equal(postResponse[0].status, 201, "returns correct status code");
   t.equal(postResponse[1].title, t1.title, "sets title");
-  t.equal(
-    postResponse[1].role,
-    TeamUserRole.OWNER,
-    "returns your role on the team"
-  );
 
   const getResponse = await get(`/teams?userId=${designer.user.id}`, {
     headers: authHeader(designer.session.id),

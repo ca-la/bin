@@ -1,7 +1,7 @@
 import uuid from "node-uuid";
 
 import db from "../../services/db";
-import { rawDao as RawTeamsDAO } from "../../components/teams/dao";
+import TeamsDAO from "../../components/teams/dao";
 import { rawDao as RawTeamUsersDAO } from "../../components/team-users/dao";
 import { TeamDb, TeamType } from "../../components/teams/types";
 import {
@@ -18,7 +18,7 @@ export async function generateTeam(
 ) {
   const trx = await db.transaction();
   try {
-    const team = await RawTeamsDAO.create(trx, {
+    const team = await TeamsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
       id: uuid.v4(),

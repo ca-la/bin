@@ -6,7 +6,7 @@ import db from "../../services/db";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role } from "../team-users/types";
 
-import { rawDao as RawTeamsDAO } from "./dao";
+import TeamsDAO from "./dao";
 import { TeamType, TeamDb } from "./types";
 import * as TeamsService from "./service";
 
@@ -22,7 +22,7 @@ const t1: TeamDb = {
 test("createTeamWithOwner", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
   sandbox().stub(uuid, "v4").returns("a-uuid");
-  const createTeamStub = sandbox().stub(RawTeamsDAO, "create").resolves(t1);
+  const createTeamStub = sandbox().stub(TeamsDAO, "create").resolves(t1);
   const createTeamUserStub = sandbox()
     .stub(RawTeamUsersDAO, "create")
     .resolves();

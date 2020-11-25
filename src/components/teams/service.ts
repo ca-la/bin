@@ -3,7 +3,7 @@ import Knex from "knex";
 
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role } from "../team-users/types";
-import { rawDao as RawTeamsDAO } from "./dao";
+import TeamsDAO from "./dao";
 import { TeamDb, TeamType } from "./types";
 
 export async function createTeamWithOwner(
@@ -11,7 +11,7 @@ export async function createTeamWithOwner(
   title: string,
   ownerUserId: string
 ): Promise<TeamDb> {
-  const created = await RawTeamsDAO.create(trx, {
+  const created = await TeamsDAO.create(trx, {
     id: uuid.v4(),
     title,
     createdAt: new Date(),

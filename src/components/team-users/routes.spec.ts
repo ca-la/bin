@@ -7,7 +7,7 @@ import db from "../../services/db";
 import * as UsersDAO from "../users/dao";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
-import { rawDao as RawTeamsDAO } from "../teams/dao";
+import TeamsDAO from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import { Role, TeamUser, TeamUserDb } from "./types";
 import { TeamType, TeamUserRole } from "../../published-types";
@@ -345,7 +345,7 @@ test("/team-users end-to-end", async (t: Test) => {
   const teamId = uuid.v4();
 
   try {
-    const unusedTeam = await RawTeamsDAO.create(trx, {
+    const unusedTeam = await TeamsDAO.create(trx, {
       id: uuid.v4(),
       title: "Test Team",
       createdAt: now,
@@ -363,7 +363,7 @@ test("/team-users end-to-end", async (t: Test) => {
       updatedAt: new Date(),
     });
 
-    await RawTeamsDAO.create(trx, {
+    await TeamsDAO.create(trx, {
       id: teamId,
       title: "Test Team",
       createdAt: now,

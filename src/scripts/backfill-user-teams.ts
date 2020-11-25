@@ -6,7 +6,7 @@ import { chunk } from "lodash";
 import { log, logServerError } from "../services/logger";
 import { green, reset } from "../services/colors";
 import db from "../services/db";
-import { rawDao as RawTeamsDAO } from "../components/teams/dao";
+import TeamsDAO from "../components/teams/dao";
 import { TeamDb, TeamType } from "../components/teams/types";
 import { rawDao as RawTeamUsersDAO } from "../components/team-users/dao";
 import { TeamUserDb, Role } from "../components/team-users/types";
@@ -51,7 +51,7 @@ async function backfillUserTeams() {
     }
 
     for (const teamChunk of chunk(teamsToCreate, 1000)) {
-      await RawTeamsDAO.createAll(trx, teamChunk);
+      await TeamsDAO.createAll(trx, teamChunk);
     }
     for (const ownerChunk of chunk(teamOwnersToCreate, 1000)) {
       await RawTeamUsersDAO.createAll(trx, ownerChunk);

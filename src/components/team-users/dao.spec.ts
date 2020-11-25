@@ -4,7 +4,7 @@ import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import { test, Test } from "../../test-helpers/fresh";
 import TeamUsersDAO, { rawDao } from "./dao";
-import { rawDao as RawTeamsDAO } from "../teams/dao";
+import TeamsDAO from "../teams/dao";
 import { TeamType } from "../teams/types";
 import { Role } from "./types";
 
@@ -13,7 +13,7 @@ test("TeamUsersDAO.claimAllByEmail", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   try {
-    const team = await RawTeamsDAO.create(trx, {
+    const team = await TeamsDAO.create(trx, {
       id: uuid.v4(),
       title: "Test Team",
       createdAt: new Date(),

@@ -4,7 +4,7 @@ import { emit } from "../../services/pubsub";
 import { RouteCreated } from "../../services/pubsub/cala-events";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
-import TeamsDAO, { rawDao as RawTeamsDAO } from "./dao";
+import TeamsDAO from "./dao";
 import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
@@ -91,8 +91,8 @@ function* findTeams(this: TrxContext<AuthedContext>) {
       const modifier = searchAndPageModifer({ limit, offset, search, type });
       this.body =
         filter === TeamFilter.UNPAID
-          ? yield RawTeamsDAO.findUnpaidTeams(trx, modifier)
-          : yield RawTeamsDAO.find(trx, {}, modifier);
+          ? yield TeamsDAO.findUnpaidTeams(trx, modifier)
+          : yield TeamsDAO.find(trx, {}, modifier);
 
       this.status = 200;
       return;
@@ -108,11 +108,7 @@ function* findTeams(this: TrxContext<AuthedContext>) {
     );
   }
 
-  this.body = yield TeamsDAO.find(trx, {}, (query: Knex.QueryBuilder) =>
-    query.where({
-      "team_users.user_id": userId,
-    })
-  );
+  this.body = yield TeamsDAO.findByUser(trx, userId);
   this.status = 200;
 }
 
@@ -120,7 +116,7 @@ function* findTeam(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
   const { id } = this.params;
 
-  const team = yield RawTeamsDAO.findById(trx, id);
+  const team = yield TeamsDAO.findById(trx, id);
   if (!team) {
     this.throw(404, `Team not found with ID: ${id}`);
   }
@@ -133,7 +129,7 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
   const { id } = this.params;
 
-  const { updated: team } = yield RawTeamsDAO.update(trx, id, {
+  const { updated: team } = yield TeamsDAO.update(trx, id, {
     deletedAt: new Date(),
   });
   if (!team) {
@@ -144,7 +140,7 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
-const standardRouter = buildRouter<TeamDb>("Team", "/teams", RawTeamsDAO, {
+const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
   pickRoutes: ["update"],
   routeOptions: {
     update: {

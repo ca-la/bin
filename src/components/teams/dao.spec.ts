@@ -2,7 +2,7 @@ import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
-import { rawDao as RawTeamsDAO } from "./dao";
+import TeamsDAO from "./dao";
 import { generateTeam } from "../../test-helpers/factories/team";
 import createUser from "../../test-helpers/create-user";
 import { generateDesign } from "../../test-helpers/factories/product-design";
@@ -10,30 +10,30 @@ import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import uuid from "node-uuid";
 
-test("RawTeamsDAO.findUnpaidTeams", async () => {
-  async function setup() {
-    const { user } = await createUser();
-    const { user: designer } = await createUser();
-    const { team } = await generateTeam(user.id);
-    const design = await generateDesign({ userId: designer.id });
-    const { bid } = await generateBid({ bidOptions: { bidPriceCents: 10000 } });
+async function setup() {
+  const { user } = await createUser();
+  const { user: designer } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const design = await generateDesign({ userId: designer.id });
+  const { bid } = await generateBid({ bidOptions: { bidPriceCents: 10000 } });
 
-    await generateDesignEvent({
-      bidId: bid.id,
-      targetTeamId: team.id,
-      type: "ACCEPT_SERVICE_BID",
-    });
+  await generateDesignEvent({
+    bidId: bid.id,
+    targetTeamId: team.id,
+    type: "ACCEPT_SERVICE_BID",
+  });
 
-    return { design, user, team, bid, designer };
-  }
+  return { design, user, team, bid, designer };
+}
 
+test("TeamsDAO.findUnpaidTeams", async () => {
   test("finds unpaid teams", async (t: Test) => {
     const { team, bid, designer } = await setup();
     const trx = await db.transaction();
 
     try {
       t.deepEquals(
-        await RawTeamsDAO.findUnpaidTeams(trx),
+        await TeamsDAO.findUnpaidTeams(trx),
         [team],
         "Returns teams that have recieved no payment"
       );
@@ -50,7 +50,7 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
       });
 
       t.deepEquals(
-        await RawTeamsDAO.findUnpaidTeams(trx),
+        await TeamsDAO.findUnpaidTeams(trx),
         [team],
         "Returns teams that have recieved partial payment"
       );
@@ -67,7 +67,7 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
       });
 
       t.deepEquals(
-        await RawTeamsDAO.findUnpaidTeams(trx),
+        await TeamsDAO.findUnpaidTeams(trx),
         [],
         "Does not return paid teams"
       );
@@ -82,7 +82,7 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
 
     try {
       t.deepEquals(
-        await RawTeamsDAO.findUnpaidTeams(trx),
+        await TeamsDAO.findUnpaidTeams(trx),
         [team],
         "Returns team before being removed"
       );
@@ -94,7 +94,7 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
       });
 
       t.deepEquals(
-        await RawTeamsDAO.findUnpaidTeams(trx),
+        await TeamsDAO.findUnpaidTeams(trx),
         [],
         "Does not return removed team"
       );
@@ -109,27 +109,86 @@ test("RawTeamsDAO.findUnpaidTeams", async () => {
 
     try {
       t.deepEquals(
-        await RawTeamsDAO.find(trx, { id: team.id }),
+        await TeamsDAO.find(trx, { id: team.id }),
         [team],
         "Returns team before being deleted"
       );
 
-      await RawTeamsDAO.update(trx, team.id, { deletedAt: new Date() });
+      await TeamsDAO.update(trx, team.id, { deletedAt: new Date() });
 
       t.deepEquals(
-        await RawTeamsDAO.find(trx, { id: team.id }),
+        await TeamsDAO.find(trx, { id: team.id }),
         [],
         "find does not return deleted team"
       );
       t.deepEquals(
-        await RawTeamsDAO.findOne(trx, { id: team.id }),
+        await TeamsDAO.findOne(trx, { id: team.id }),
         null,
         "findOne does not return deleted team"
       );
       t.deepEquals(
-        await RawTeamsDAO.findById(trx, team.id),
+        await TeamsDAO.findById(trx, team.id),
         null,
         "findById does not return deleted team"
+      );
+    } finally {
+      trx.rollback();
+    }
+  });
+});
+
+test("TeamsDAO.find", async () => {
+  test("does not return deleted teams", async (t: Test) => {
+    const { team } = await setup();
+    const trx = await db.transaction();
+
+    try {
+      t.deepEquals(
+        await TeamsDAO.find(trx, { id: team.id }),
+        [team],
+        "Returns team before being deleted"
+      );
+
+      await TeamsDAO.update(trx, team.id, { deletedAt: new Date() });
+
+      t.deepEquals(
+        await TeamsDAO.find(trx, { id: team.id }),
+        [],
+        "find does not return deleted team"
+      );
+      t.deepEquals(
+        await TeamsDAO.findOne(trx, { id: team.id }),
+        null,
+        "findOne does not return deleted team"
+      );
+      t.deepEquals(
+        await TeamsDAO.findById(trx, team.id),
+        null,
+        "findById does not return deleted team"
+      );
+    } finally {
+      trx.rollback();
+    }
+  });
+});
+
+test("TeamsDAO.findByUser", async () => {
+  test("returns only related teams", async (t: Test) => {
+    const { team, user } = await setup();
+    const trx = await db.transaction();
+    try {
+      const { user: anotherUser } = await createUser();
+      const { team: anotherTeam } = await generateTeam(anotherUser.id);
+
+      t.deepEquals(
+        await TeamsDAO.findByUser(trx, user.id),
+        [team],
+        "Returns only initial team"
+      );
+      t.deepEquals(
+        await TeamsDAO.findByUser(trx, anotherUser.id),
+        [anotherTeam],
+        "Returns only another team"
       );
     } finally {
       trx.rollback();
