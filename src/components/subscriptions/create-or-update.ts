@@ -5,7 +5,7 @@ import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import createPaymentMethod from "../payment-methods/create-payment-method";
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import { Subscription } from "./domain-object";
 
 interface Options {
@@ -29,7 +29,7 @@ export default async function createOrUpdateSubscription(
     trx,
   } = options;
 
-  const plan = await PlansDAO.findById(planId);
+  const plan = await PlansDAO.findById(trx, planId);
   if (!plan) {
     throw new InvalidDataError(`Invalid plan ID: ${planId}`);
   }

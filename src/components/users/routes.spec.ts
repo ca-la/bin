@@ -15,9 +15,9 @@ import * as SessionsDAO from "../../dao/sessions";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import * as UsersDAO from "./dao";
 import { BillingInterval } from "../plans/domain-object";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import MailChimp = require("../../services/mailchimp");
 import Stripe = require("../../services/stripe");
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
@@ -618,19 +618,21 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
 
   sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
 
-  const plan = await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 4567,
-    revenueShareBasisPoints: 5000,
-    costOfGoodsShareBasisPoints: 0,
-    stripePlanId: "plan_456",
-    title: "Some More",
-    isDefault: true,
-    isPublic: false,
-    ordering: null,
-    description: null,
-  });
+  const plan = await db.transaction((trx: Knex.Transaction) =>
+    PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      revenueShareBasisPoints: 5000,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_456",
+      title: "Some More",
+      isDefault: true,
+      isPublic: false,
+      ordering: null,
+      description: null,
+    })
+  );
 
   const [response, body] = await post("/users", {
     body: {

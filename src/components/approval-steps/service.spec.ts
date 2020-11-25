@@ -117,7 +117,7 @@ const describeSetApprovalStepsDueAtByPricingQuote = (): void => {
         findStub.resetHistory();
         updateStub.resetHistory();
       } finally {
-        trx.rollback();
+        await trx.rollback();
       }
     });
   }

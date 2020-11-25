@@ -2,30 +2,34 @@ import Router from "koa-router";
 
 import * as PlansDAO from "./dao";
 import requireAdmin = require("../../middleware/require-admin");
+import useTransaction from "../../middleware/use-transaction";
 import { Plan } from "./plan";
 import { isCreatePlanInputRequest } from "./domain-object";
 import { typeGuard } from "../../middleware/type-guard";
 
 const router = new Router();
 
-function* getPlans(this: AuthedContext): Iterator<any, any, any> {
+function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const { withPrivate } = this.query;
-  const isAdmin = this.state.role === "ADMIN";
+  const { trx, role } = this.state;
+  const isAdmin = role === "ADMIN";
 
   if (!isAdmin && withPrivate) {
     this.throw(403, "Private plans cannot be listed.");
   }
 
   const plans = withPrivate
-    ? yield PlansDAO.findAll()
-    : yield PlansDAO.findPublic();
+    ? yield PlansDAO.findAll(trx)
+    : yield PlansDAO.findPublic(trx);
 
   this.status = 200;
   this.body = plans;
 }
 
-function* getById(this: AuthedContext): Iterator<any, any, any> {
-  const plan = yield PlansDAO.findById(this.params.planId);
+function* getById(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+  const { trx } = this.state;
+
+  const plan = yield PlansDAO.findById(trx, this.params.planId);
   if (!plan) {
     this.throw(404, "Plan not found");
   }
@@ -34,7 +38,7 @@ function* getById(this: AuthedContext): Iterator<any, any, any> {
 }
 
 function* createPlan(
-  this: AuthedContext<Unsaved<Plan>>
+  this: TrxContext<AuthedContext<Unsaved<Plan>>>
 ): Iterator<any, any, any> {
   const {
     billingInterval,
@@ -47,7 +51,9 @@ function* createPlan(
     description,
   } = this.request.body;
 
-  const createdPlan = yield PlansDAO.create({
+  const { trx } = this.state;
+
+  const createdPlan = yield PlansDAO.create(trx, {
     // we don't allow people to create public plans via this API in general
     // those are very visible and it would be very bad if someone accidentally made one
     isPublic: false,
@@ -66,8 +72,14 @@ function* createPlan(
   this.body = createdPlan;
 }
 
-router.get("/", getPlans);
-router.get("/:planId", getById);
-router.post("/", requireAdmin, typeGuard(isCreatePlanInputRequest), createPlan);
+router.get("/", useTransaction, getPlans);
+router.get("/:planId", useTransaction, getById);
+router.post(
+  "/",
+  requireAdmin,
+  typeGuard(isCreatePlanInputRequest),
+  useTransaction,
+  createPlan
+);
 
 export default router.routes();

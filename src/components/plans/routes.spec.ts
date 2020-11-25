@@ -1,161 +1,11 @@
 import uuid from "node-uuid";
-import { omit } from "lodash";
 
 import * as PlansDAO from "./dao";
 import { Plan, BillingInterval } from "./plan";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
-import createUser from "../../test-helpers/create-user";
 import { Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
-
-test("GET /plans lists public plans in order", async (t: Test) => {
-  await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 1234,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_123",
-    title: "The Second One",
-    isDefault: true,
-    isPublic: true,
-    description: "The Second One",
-    ordering: 2,
-  });
-
-  await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 4567,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_456",
-    title: "The Secret One",
-    isDefault: false,
-    isPublic: false,
-    description: "The Secret One",
-    ordering: null,
-  });
-
-  await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 7890,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_789",
-    title: "The First One",
-    isDefault: false,
-    isPublic: true,
-    description: "The First One",
-    ordering: 1,
-  });
-
-  const [response, body] = await get("/plans");
-
-  t.equal(response.status, 200);
-
-  t.equal(body.length, 2);
-  t.equal(body[0].title, "The First One");
-  t.equal(body[0].monthlyCostCents, 7890);
-  t.equal(body[0].revenueShareBasisPoints, 1234);
-
-  t.equal(body[1].title, "The Second One");
-  t.equal(body[1].monthlyCostCents, 1234);
-});
-
-test("GET /plans/:id returns a plan", async (t: Test) => {
-  const planData: Uninserted<Plan> = {
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 1234,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_123",
-    title: "A little Bit",
-    isDefault: false,
-    isPublic: false,
-    description: null,
-    ordering: null,
-  };
-
-  const plan = await PlansDAO.create(planData);
-
-  const [response, body] = await get(`/plans/${plan.id}`);
-
-  t.equal(response.status, 200);
-
-  t.deepEqual(omit(body, "createdAt"), planData);
-});
-
-test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {
-  await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 1234,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_123",
-    title: "A little Bit",
-    isDefault: false,
-    isPublic: true,
-    ordering: 1,
-    description: null,
-  });
-
-  const [response, body] = await get(
-    "/plans/00000000-0000-0000-0000-000000000000"
-  );
-
-  t.equal(response.status, 404);
-  t.equal(body.message, "Plan not found");
-});
-
-test("GET /plans?includePrivate=true returns all plans for admins", async (t: Test) => {
-  const publicPlan = await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 1234,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_123",
-    title: "A little Bit",
-    isDefault: false,
-    isPublic: true,
-    ordering: 1,
-    description: null,
-  });
-
-  const privatePlan = await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 1000,
-    revenueShareBasisPoints: 1234,
-    costOfGoodsShareBasisPoints: 5678,
-    stripePlanId: "plan_456",
-    title: "A little bit more",
-    isDefault: false,
-    isPublic: false,
-    ordering: null,
-    description: null,
-  });
-
-  const { session } = await createUser({ role: "ADMIN" });
-
-  const [adminResponse, adminBody] = await get("/plans?withPrivate=true", {
-    headers: authHeader(session.id),
-  });
-
-  t.equal(adminResponse.status, 200);
-  t.equal(adminBody.length, 2);
-  t.equal(adminBody[0].id, publicPlan.id);
-  t.equal(adminBody[1].id, privatePlan.id);
-
-  const [userResponse] = await get("/plans?withPrivate=true");
-
-  t.equal(userResponse.status, 403);
-});
 
 const now = new Date();
 const planDataToCreate: Unsaved<Plan> = {
@@ -180,6 +30,48 @@ const createdPlan: Plan = {
   ordering: null,
 };
 
+const firstPlan = {
+  id: uuid.v4(),
+  billingInterval: BillingInterval.MONTHLY,
+  monthlyCostCents: 7890,
+  revenueShareBasisPoints: 1234,
+  costOfGoodsShareBasisPoints: 5678,
+  stripePlanId: "plan_789",
+  title: "The First One",
+  isDefault: false,
+  isPublic: true,
+  description: "The First One",
+  ordering: 1,
+};
+
+const secretPlan = {
+  id: uuid.v4(),
+  billingInterval: BillingInterval.MONTHLY,
+  monthlyCostCents: 4567,
+  revenueShareBasisPoints: 1234,
+  costOfGoodsShareBasisPoints: 5678,
+  stripePlanId: "plan_456",
+  title: "The Secret One",
+  isDefault: false,
+  isPublic: false,
+  description: "The Secret One",
+  ordering: null,
+};
+
+const littleBitPlan = {
+  id: uuid.v4(),
+  billingInterval: BillingInterval.MONTHLY,
+  monthlyCostCents: 1234,
+  revenueShareBasisPoints: 1234,
+  costOfGoodsShareBasisPoints: 5678,
+  stripePlanId: "plan_123",
+  title: "A little Bit",
+  isDefault: false,
+  isPublic: false,
+  description: null,
+  ordering: null,
+};
+
 function setup({ role = "USER" }: { role?: UserRole } = {}) {
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-plan-id");
@@ -189,8 +81,74 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       userId: "a-user-id",
     }),
     createStub: sandbox().stub(PlansDAO, "create").resolves(createdPlan),
+    findPublicStub: sandbox()
+      .stub(PlansDAO, "findPublic")
+      .resolves([firstPlan, littleBitPlan]),
+    findAllStub: sandbox()
+      .stub(PlansDAO, "findAll")
+      .resolves([firstPlan, secretPlan, littleBitPlan]),
+    findByIdStub: sandbox().stub(PlansDAO, "findById").resolves(littleBitPlan),
   };
 }
+
+test("GET /plans lists public plans in order", async (t: Test) => {
+  setup();
+
+  const [response, body] = await get("/plans");
+
+  t.equal(response.status, 200);
+
+  t.equal(body.length, 2);
+  t.equal(body[0].title, "The First One");
+  t.equal(body[0].monthlyCostCents, 7890);
+  t.equal(body[0].revenueShareBasisPoints, 1234);
+
+  t.equal(body[1].title, "A little Bit");
+  t.equal(body[1].monthlyCostCents, 1234);
+});
+
+test("GET /plans/:id returns a plan", async (t: Test) => {
+  const { findByIdStub } = setup();
+
+  const [response, body] = await get(`/plans/${littleBitPlan.id}`);
+
+  t.equal(response.status, 200);
+
+  t.deepEqual(body, JSON.parse(JSON.stringify(littleBitPlan)), "Returns plan");
+  t.deepEqual(findByIdStub.args[0][1], littleBitPlan.id, "Finds plan by id");
+});
+
+test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {
+  sandbox().stub(PlansDAO, "findById").resolves(null);
+
+  const [response, body] = await get(
+    "/plans/00000000-0000-0000-0000-000000000000"
+  );
+
+  t.equal(response.status, 404);
+  t.equal(body.message, "Plan not found");
+});
+
+test("GET /plans?withPrivate=true returns all plans for admins", async (t: Test) => {
+  const { sessionsStub } = setup({ role: "ADMIN" });
+
+  const [adminResponse, adminBody] = await get("/plans?withPrivate=true", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(adminResponse.status, 200);
+  t.equal(adminBody.length, 3);
+  t.deepEqual(
+    adminBody,
+    JSON.parse(JSON.stringify([firstPlan, secretPlan, littleBitPlan])),
+    "returns public and private plans"
+  );
+
+  sessionsStub.resolves(null);
+  const [userResponse] = await get("/plans?withPrivate=true");
+
+  t.equal(userResponse.status, 403);
+});
 
 test("POST /plans valid for the admin", async (t: Test) => {
   const { createStub } = setup({ role: "ADMIN" });
@@ -219,7 +177,7 @@ test("POST /plans valid for the admin", async (t: Test) => {
     "returns the created plan from the DAO"
   );
   t.deepEqual(
-    createStub.args[0][0],
+    createStub.args[0][1],
     planDataToCreate,
     "calls create with the correct values"
   );

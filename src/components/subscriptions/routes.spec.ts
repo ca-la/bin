@@ -6,7 +6,7 @@ import * as attachSource from "../../services/stripe/attach-source";
 import * as createStripeSubscription from "../../services/stripe/create-subscription";
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import PaymentMethodsDAO = require("../payment-methods/dao");
 import Session = require("../../domain-objects/session");
@@ -39,20 +39,23 @@ async function setup(
 
   const { session, user } = await createUser();
   const { planOptions } = options;
-  const plan = await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 4567,
-    revenueShareBasisPoints: 5000,
-    costOfGoodsShareBasisPoints: 0,
-    stripePlanId: "plan_456",
-    title: "Some More",
-    isDefault: true,
-    isPublic: false,
-    ordering: null,
-    description: null,
-    ...planOptions,
-  });
+
+  const plan = await db.transaction((trx: Knex.Transaction) =>
+    PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      revenueShareBasisPoints: 5000,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_456",
+      title: "Some More",
+      isDefault: true,
+      isPublic: false,
+      ordering: null,
+      description: null,
+      ...planOptions,
+    })
+  );
 
   return { session, user, plan };
 }

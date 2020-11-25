@@ -72,7 +72,7 @@ test("TeamsDAO.findUnpaidTeams", async () => {
         "Does not return paid teams"
       );
     } finally {
-      trx.rollback();
+      await trx.rollback();
     }
   });
 
@@ -99,7 +99,7 @@ test("TeamsDAO.findUnpaidTeams", async () => {
         "Does not return removed team"
       );
     } finally {
-      trx.rollback();
+      await trx.rollback();
     }
   });
 
@@ -132,7 +132,7 @@ test("TeamsDAO.findUnpaidTeams", async () => {
         "findById does not return deleted team"
       );
     } finally {
-      trx.rollback();
+      await trx.rollback();
     }
   });
 });

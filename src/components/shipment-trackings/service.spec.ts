@@ -91,7 +91,7 @@ test("createNotificationsAndEvents creates notifications and events", async (t: 
       "Sends a notification for the non-duplicate event"
     );
   } finally {
-    trx.rollback();
+    await trx.rollback();
   }
 });
 
@@ -114,7 +114,7 @@ test("createNotificationsAndEvents prevents duplicate events", async (t: Test) =
 
     t.equal(createDesignEventStub.callCount, 0, "Does not create an event");
   } finally {
-    trx.rollback();
+    await trx.rollback();
   }
 });
 

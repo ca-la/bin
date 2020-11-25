@@ -1,22 +1,26 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 import rethrow = require("pg-rethrow");
 
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import first from "../../services/first";
 import { dataAdapter, isPlanRow, Plan, PlanRow } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 
 const TABLE_NAME = "plans";
 
-export async function create(data: MaybeUnsaved<Plan>): Promise<Plan> {
+export async function create(
+  trx: Knex.Transaction,
+  data: MaybeUnsaved<Plan>
+): Promise<Plan> {
   const rowData = dataAdapter.forInsertion({
     id: uuid.v4(),
     ...data,
   });
 
-  const result = await db(TABLE_NAME)
+  const result = await trx(TABLE_NAME)
     .insert(rowData, "*")
     .then((rows: PlanRow[]) => first(rows))
     .catch(rethrow)
@@ -35,8 +39,8 @@ export async function create(data: MaybeUnsaved<Plan>): Promise<Plan> {
   return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
 }
 
-export async function findAll(): Promise<Plan[]> {
-  const result = await db(TABLE_NAME).select("*");
+export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
+  const result = await trx(TABLE_NAME).select("*");
 
   return validateEvery<PlanRow, Plan>(
     TABLE_NAME,
@@ -46,8 +50,9 @@ export async function findAll(): Promise<Plan[]> {
   );
 }
 
-export async function findPublic(): Promise<Plan[]> {
+export async function findPublic(trx: Knex.Transaction): Promise<Plan[]> {
   const result = await db(TABLE_NAME)
+    .transacting(trx)
     .where({ is_public: true }, "*")
     .orderBy("ordering", "asc");
 
@@ -59,8 +64,11 @@ export async function findPublic(): Promise<Plan[]> {
   );
 }
 
-export async function findById(id: string): Promise<Plan | null> {
-  const result = await db(TABLE_NAME)
+export async function findById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<Plan | null> {
+  const result = await trx(TABLE_NAME)
     .where({ id })
     .then((rows: PlanRow[]) => first(rows));
 

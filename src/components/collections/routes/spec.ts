@@ -459,19 +459,22 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
   const owner = await createUser();
   const collaborator = await createUser();
 
-  const plan = await PlansDAO.create({
-    id: uuid.v4(),
-    billingInterval: BillingInterval.MONTHLY,
-    monthlyCostCents: 4567,
-    costOfGoodsShareBasisPoints: 0,
-    revenueShareBasisPoints: 5000,
-    stripePlanId: "plan_456",
-    title: "Some More",
-    isDefault: true,
-    isPublic: false,
-    ordering: null,
-    description: null,
-  });
+  const plan = await db.transaction(
+    async (trx: Knex.Transaction) =>
+      await PlansDAO.create(trx, {
+        id: uuid.v4(),
+        billingInterval: BillingInterval.MONTHLY,
+        monthlyCostCents: 4567,
+        costOfGoodsShareBasisPoints: 0,
+        revenueShareBasisPoints: 5000,
+        stripePlanId: "plan_456",
+        title: "Some More",
+        isDefault: true,
+        isPublic: false,
+        ordering: null,
+        description: null,
+      })
+  );
 
   const paymentMethod = await PaymentMethodsDAO.create({
     userId: owner.user.id,
