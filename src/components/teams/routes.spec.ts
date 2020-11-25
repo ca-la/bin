@@ -186,6 +186,60 @@ test("GET /teams/:id as USER", async (t: Test) => {
   t.equal(response.status, 403, "only adminds can view");
 });
 
+test("PATCH /teams/:id as random USER", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves(null);
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { title: "new title" },
+  });
+  t.equal(response.status, 403, "Does not allow random users to patch teams");
+  t.deepEqual(updateStub.args, []);
+});
+
+test("PATCH /teams/:id as team VIEWER", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "VIEWER" });
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { title: "new title" },
+  });
+  t.equal(response.status, 403, "Does not allow VIEWERs to patch teams");
+  t.deepEqual(updateStub.args, []);
+});
+
+test("PATCH /teams/:id as team EDITOR", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "EDITOR" });
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { title: "new title" },
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { title: "new title" });
+});
+
+test("PATCH /teams/:id as team OWNER", async (t: Test) => {
+  const { updateStub } = setup();
+
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "OWNER" });
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { title: "new title" },
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.equal(updateStub.args[0][1], "a-team-id");
+  t.deepEqual(updateStub.args[0][2], { title: "new title" });
+});
+
 test("PATCH /teams/:id as ADMIN", async (t: Test) => {
   const { updateStub } = setup({ role: "ADMIN" });
 

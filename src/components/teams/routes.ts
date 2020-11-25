@@ -140,12 +140,26 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
+function* checkUpdateRights(
+  this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
+  next: () => Promise<any>
+) {
+  if (this.request.body.hasOwnProperty("type")) {
+    return yield requireAdmin.call(this, next);
+  }
+
+  yield requireTeamRoles(
+    [TeamUserRole.ADMIN, TeamUserRole.OWNER, TeamUserRole.EDITOR],
+    findTeamById
+  ).call(this, next);
+}
+
 const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
   pickRoutes: ["update"],
   routeOptions: {
     update: {
-      middleware: [requireAdmin],
-      allowedAttributes: ["type"],
+      middleware: [requireAuth, checkUpdateRights],
+      allowedAttributes: ["type", "title"],
     },
   },
 });
@@ -162,6 +176,7 @@ export default {
       get: [useTransaction, requireAdmin, findTeam],
       del: [
         useTransaction,
+        requireAuth,
         requireTeamRoles(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
           findTeamById
