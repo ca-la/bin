@@ -30,7 +30,9 @@ import { addDesign } from "../../test-helpers/collections";
 import generateCollection from "../../test-helpers/factories/collection";
 import { generateTeam } from "../../test-helpers/factories/team";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
-import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
+import PartnerPayoutsDAO = require("../partner-payouts/dao");
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
+import { Role as TeamUserRole } from "../team-users/types";
 import { BidDb } from "./types";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
 
@@ -44,11 +46,15 @@ async function setup() {
     withSession: false,
   });
   const { user: partner1 } = await createUser({
-    role: "ADMIN",
+    role: "PARTNER",
     withSession: false,
   });
   const { user: partner2 } = await createUser({
-    role: "ADMIN",
+    role: "PARTNER",
+    withSession: false,
+  });
+  const { user: partner3 } = await createUser({
+    role: "PARTNER",
     withSession: false,
   });
   const { user: designer1 } = await createUser({
@@ -60,6 +66,18 @@ async function setup() {
     withSession: false,
   });
   const { team } = await generateTeam(partner1.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: partner3.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
 
   const payoutAccount1 = await PayoutAccountsDAO.create({
     id: uuid.v4(),
@@ -165,6 +183,7 @@ async function setup() {
       admin,
       partner1,
       partner2,
+      partner3,
       designer1,
       designer2,
     },
@@ -366,7 +385,7 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
 test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
   const {
     clock,
-    users: { admin, partner1, partner2 },
+    users: { admin, partner1, partner2, partner3 },
     designs: [design1, design2],
     team,
     payoutAccounts: [, payoutAccount2],
@@ -763,6 +782,12 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         partnerUserId: null,
       },
       "findByBidIdAndUser / returns bid to a team for team users"
+    );
+
+    t.deepEqual(
+      await findByBidIdAndUser(trx, teamBid!.id, partner3.id),
+      null,
+      "findByBidIdAndUser / returns null if you are removed from a team"
     );
 
     t.deepEqual(

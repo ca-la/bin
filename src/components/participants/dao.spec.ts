@@ -79,7 +79,7 @@ async function setup() {
   const teamUser2 = await db.transaction((trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
-      role: TeamUserRole.OWNER,
+      role: TeamUserRole.ADMIN,
       teamId: team.id,
       userId: teamViewer.id,
       userEmail: null,
@@ -91,12 +91,24 @@ async function setup() {
   const teamUser3 = await db.transaction((trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
-      role: TeamUserRole.OWNER,
+      role: TeamUserRole.ADMIN,
       teamId: team.id,
       userId: null,
       userEmail: "non-user-team-user@example.com",
       createdAt: new Date(),
       deletedAt: null,
+      updatedAt: new Date(),
+    })
+  );
+  const deletedTeamUser = await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: null,
+      userEmail: "another@example.com",
+      createdAt: new Date(),
+      deletedAt: new Date(),
       updatedAt: new Date(),
     })
   );
@@ -195,6 +207,7 @@ async function setup() {
       admin: teamUser1,
       viewer: teamUser2,
       nonUser: teamUser3,
+      deletedUser: deletedTeamUser,
     },
     users: [user, user2, user3, user4, user5],
   };

@@ -34,6 +34,7 @@ COALESCE(
     .leftJoin("users", "team_users.user_id", "users.id")
     .where({
       "collection_designs.design_id": designId,
+      "team_users.deleted_at": null,
     })
     .orderBy([{ column: "users.created_at", order: "asc" }]);
 

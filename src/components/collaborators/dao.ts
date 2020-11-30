@@ -427,7 +427,13 @@ export async function findByDesignAndUser(
       )`,
       { designId, userId, allowedRoles: PARTNER_TEAM_BID_PREVIEWERS }
     )
-    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
+    .andWhereRaw(
+      `(
+         collaborators_forcollaboratorsviewraw.cancelled_at IS null
+         OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
+       ) AND
+       team_users.deleted_at IS NULL`
+    )
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
@@ -514,6 +520,7 @@ export async function findAllForUserThroughDesign(
           collaborators_forcollaboratorsviewraw.cancelled_at IS null
           OR collaborators_forcollaboratorsviewraw.cancelled_at > now()
         )
+        AND team_users.deleted_at IS NULL
     `,
       {
         userId,

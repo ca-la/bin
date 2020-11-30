@@ -134,6 +134,7 @@ export async function findByUser(
   AND (collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())
 ) OR (
   team_users.user_id = :userId
+  AND team_users.deleted_at IS NULL
 ))`,
       { userId: options.userId }
     )

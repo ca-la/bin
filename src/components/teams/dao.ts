@@ -57,7 +57,7 @@ async function findByUser(
   return standardDao.find(trx, filter, (query: QueryBuilder) =>
     modifier(query)
       .join("team_users", "team_users.team_id", "teams.id")
-      .where({ "team_users.user_id": userId })
+      .where({ "team_users.user_id": userId, "team_users.deleted_at": null })
   );
 }
 

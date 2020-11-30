@@ -25,6 +25,8 @@ import {
 import { deleteById } from "../../../test-helpers/designs";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
+import { Role as TeamUserRole } from "../../team-users/types";
 
 test("CollectionsDAO#create creates a collection", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -89,7 +91,20 @@ test("CollectionsDAO#findById does not find deleted collections", async (t: Test
 test("CollectionsDAO#findByUser finds all collections and searches", async (t: Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
+  const { user: user3 } = await createUser({ withSession: false });
   const { team } = await generateTeam(user1.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: user3.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
@@ -199,6 +214,15 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
     });
 
     t.equal(limitedOffsetCollections.length, 1);
+
+    const deletedTeamUserCollections = await CollectionsDAO.findByUser(trx, {
+      userId: user3.id,
+    });
+    t.deepEqual(
+      deletedTeamUserCollections,
+      [],
+      "does not find the team's collections"
+    );
   });
 });
 

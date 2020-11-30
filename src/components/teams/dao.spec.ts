@@ -1,19 +1,36 @@
+import Knex from "knex";
+import uuid from "node-uuid";
+
 import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 
-import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
+import PartnerPayoutsDAO = require("../partner-payouts/dao");
+import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
+import { Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO from "./dao";
 import { generateTeam } from "../../test-helpers/factories/team";
 import createUser from "../../test-helpers/create-user";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
-import uuid from "node-uuid";
 
 async function setup() {
   const { user } = await createUser();
+  const { user: deletedTeamUser } = await createUser();
   const { user: designer } = await createUser();
   const { team } = await generateTeam(user.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: deletedTeamUser.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
   const design = await generateDesign({ userId: designer.id });
   const { bid } = await generateBid({ bidOptions: { bidPriceCents: 10000 } });
 
@@ -23,7 +40,7 @@ async function setup() {
     type: "ACCEPT_SERVICE_BID",
   });
 
-  return { design, user, team, bid, designer };
+  return { design, user, deletedTeamUser, team, bid, designer };
 }
 
 test("TeamsDAO.findUnpaidTeams", async () => {
@@ -174,7 +191,7 @@ test("TeamsDAO.find", async () => {
 
 test("TeamsDAO.findByUser", async () => {
   test("returns only related teams", async (t: Test) => {
-    const { team, user } = await setup();
+    const { team, user, deletedTeamUser } = await setup();
     const trx = await db.transaction();
     try {
       const { user: anotherUser } = await createUser();
@@ -189,6 +206,12 @@ test("TeamsDAO.findByUser", async () => {
         await TeamsDAO.findByUser(trx, anotherUser.id),
         [anotherTeam],
         "Returns only another team"
+      );
+
+      t.deepEquals(
+        await TeamsDAO.findByUser(trx, deletedTeamUser.id),
+        [],
+        "Does not find teams for deleted team user"
       );
     } finally {
       trx.rollback();

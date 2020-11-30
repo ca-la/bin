@@ -44,6 +44,7 @@ export async function findByTeamId(trx: Knex.Transaction, teamId: string) {
     .where({
       "partner_payout_accounts.deleted_at": null,
       "team_users.team_id": teamId,
+      "team_users.deleted_at": null,
     })
     .then((payoutAccounts: any) => payoutAccounts.map(instantiate))
     .catch(rethrow);

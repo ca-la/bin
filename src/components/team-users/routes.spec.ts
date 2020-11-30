@@ -19,9 +19,9 @@ const tuDb1: TeamUserDb = {
   userId: "a-user-id",
   userEmail: null,
   role: Role.ADMIN,
-  createdAt: new Date(),
+  createdAt: now,
   deletedAt: null,
-  updatedAt: new Date(),
+  updatedAt: now,
 };
 const tu1: TeamUser = {
   ...tuDb1,

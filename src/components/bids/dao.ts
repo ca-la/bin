@@ -91,7 +91,10 @@ const assigneeSubquery = (
       "team_users.team_id",
       "design_events.target_team_id"
     )
-    .where({ "design_events.type": "BID_DESIGN" })
+    .where({
+      "design_events.type": "BID_DESIGN",
+      "team_users.deleted_at": null,
+    })
     .modify((q: Knex.QueryBuilder): void => {
       if (statusEvent.andAlsoContains.length > 0) {
         q.whereIn(

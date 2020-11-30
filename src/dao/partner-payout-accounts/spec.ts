@@ -1,4 +1,5 @@
 import uuid from "node-uuid";
+import Knex from "knex";
 
 import db from "../../services/db";
 import { test, Test } from "../../test-helpers/fresh";
@@ -6,6 +7,8 @@ import PartnerPayoutAccount from "../../domain-objects/partner-payout-account";
 import createUser from "../../test-helpers/create-user";
 import * as PartnerPayoutAccountsDAO from "./index";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { rawDao as RawTeamUsersDAO } from "../../components/team-users/dao";
+import { Role as TeamUserRole } from "../../components/team-users/types";
 
 async function setup() {
   const { user: partner } = await createUser({
@@ -16,7 +19,23 @@ async function setup() {
     role: "PARTNER",
     withSession: false,
   });
+  const { user: deletedTeamUser } = await createUser({
+    role: "PARTNER",
+    withSession: false,
+  });
   const { team } = await generateTeam(teamUser.id);
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: deletedTeamUser.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
 
   const userPayoutAccount: PartnerPayoutAccount = {
     createdAt: new Date(),
@@ -38,15 +57,29 @@ async function setup() {
     stripeUserId: "another-stripe-user-id",
     userId: teamUser.id,
   };
+  const deletedTeamUserPayoutAccount: PartnerPayoutAccount = {
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    stripeAccessToken: "another-stripe-access-token",
+    stripePublishableKey: "another-stripe-publishable-key",
+    stripeRefreshToken: "another-stripe-refresh-token",
+    stripeUserId: "another-stripe-user-id",
+    userId: deletedTeamUser.id,
+  };
 
   return {
     users: {
       partner,
       teamUser,
+      deletedTeamUser,
     },
     payoutAccounts: {
       user: await PartnerPayoutAccountsDAO.create(userPayoutAccount),
       teamUser: await PartnerPayoutAccountsDAO.create(teamUserPayoutAccount),
+      deletedTeamUser: await PartnerPayoutAccountsDAO.create(
+        deletedTeamUserPayoutAccount
+      ),
     },
     team,
   };
@@ -85,6 +118,12 @@ test("PartnerPayoutAccountsDAO.findByUserId", async (t: Test) => {
   t.deepEquals(
     await PartnerPayoutAccountsDAO.findByUserId(users.partner.id),
     [payoutAccounts.user],
+    "found user returns user's payout account"
+  );
+
+  t.deepEquals(
+    await PartnerPayoutAccountsDAO.findByUserId(users.deletedTeamUser.id),
+    [payoutAccounts.deletedTeamUser],
     "found user returns user's payout account"
   );
 });

@@ -63,6 +63,8 @@ import ProductDesignWithApprovalSteps from "../domain-objects/product-design-wit
 import generateBid from "../../../test-helpers/factories/bid";
 import * as Aftership from "../../../components/integrations/aftership/service";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
+import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
 
 test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
@@ -834,9 +836,22 @@ test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) 
 });
 
 test("findAllDesignsThroughCollaborator find designs through a team", async (t: tape.Test) => {
-  const { user } = await createUser();
-  const { user: partner } = await createUser();
+  const { user } = await createUser({ withSession: false });
+  const { user: partner } = await createUser({ withSession: false });
+  const { user: deletedTeamUser } = await createUser({ withSession: false });
   const { team } = await generateTeam(partner.id, { type: TeamType.PARTNER });
+  await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: deletedTeamUser.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
 
   const { collection } = await generateCollection({
     createdBy: user.id,
@@ -881,6 +896,15 @@ test("findAllDesignsThroughCollaborator find designs through a team", async (t: 
     designs.map((d: ProductDesignWithApprovalSteps) => d.id),
     [designTwo.id, designOne.id],
     "Returns designs for team collaborator"
+  );
+
+  const forDeletedTeamUser = await findAllDesignsThroughCollaborator({
+    userId: deletedTeamUser.id,
+  });
+  t.deepEqual(
+    forDeletedTeamUser,
+    [],
+    "Does not find the team designs for a the deleted team user"
   );
 });
 

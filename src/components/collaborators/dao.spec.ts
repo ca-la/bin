@@ -500,9 +500,10 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
   const { user } = await createUser({ withSession: false });
   const { user: teamOwner } = await createUser({ withSession: false });
   const { user: teamAdmin } = await createUser({ withSession: false });
+  const { user: deletedTeamUser } = await createUser({ withSession: false });
   const { team } = await generateTeam(teamOwner.id);
-  await db.transaction((trx: Knex.Transaction) =>
-    RawTeamUsersDAO.create(trx, {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       teamId: team.id,
       userId: teamAdmin.id,
@@ -511,8 +512,18 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
       createdAt: new Date(),
       deletedAt: null,
       updatedAt: new Date(),
-    })
-  );
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: deletedTeamUser.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+  });
 
   const { collection } = await generateCollection();
 

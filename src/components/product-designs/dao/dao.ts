@@ -66,6 +66,7 @@ product_designs.id in (
     LEFT JOIN team_users ON c.team_id = team_users.team_id
     WHERE (c.user_id = :userId OR team_users.user_id = :userId)
       AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
+      AND team_users.deleted_at IS NULL
       AND product_designs.deleted_at IS NULL
   UNION
   SELECT product_designs.id
@@ -77,6 +78,7 @@ product_designs.id in (
     WHERE (c.user_id = :userId OR team_users.user_id = :userId)
       AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
       AND co.deleted_at IS NULL
+      AND team_users.deleted_at IS NULL
       AND product_designs.deleted_at IS NULL
 )
     `,
