@@ -87,37 +87,22 @@ export async function createTeamUser(
 
   const { userEmail } = unsavedTeamUser;
 
-  const id = uuid.v4();
-
   const user = await findUserByEmail(userEmail, trx);
 
-  const partialUserData = {
-    id,
+  const created = await RawTeamUsersDAO.create(trx, {
+    // Might be overridden if user is revived by DAO from existing deleted row
+    id: uuid.v4(),
     teamId: unsavedTeamUser.teamId,
     role: unsavedTeamUser.role,
-  } as const;
+    createdAt: new Date(),
+    deletedAt: null,
+    updatedAt: new Date(),
+    ...(user
+      ? { userId: user.id, userEmail: null }
+      : { userEmail, userId: null }),
+  });
 
-  if (user) {
-    await RawTeamUsersDAO.create(trx, {
-      ...partialUserData,
-      userId: user.id,
-      userEmail: null,
-      createdAt: new Date(),
-      deletedAt: null,
-      updatedAt: new Date(),
-    });
-  } else {
-    await RawTeamUsersDAO.create(trx, {
-      ...partialUserData,
-      userEmail,
-      userId: null,
-      createdAt: new Date(),
-      deletedAt: null,
-      updatedAt: new Date(),
-    });
-  }
-
-  return TeamUsersDAO.findById(trx, id);
+  return TeamUsersDAO.findById(trx, created.id);
 }
 
 export async function updateTeamUser(
