@@ -40,7 +40,10 @@ export async function create(
 }
 
 export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
-  const result = await trx(TABLE_NAME).select("*");
+  const result = await trx(TABLE_NAME)
+    .select("*")
+    .orderBy("ordering", "asc")
+    .orderBy("created_at", "desc");
 
   return validateEvery<PlanRow, Plan>(
     TABLE_NAME,

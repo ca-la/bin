@@ -170,3 +170,77 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
     await trx.rollback();
   }
 });
+
+test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const private3 = await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      revenueShareBasisPoints: 5000,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_456",
+      title: "Should be fird in the order",
+      isDefault: false,
+      isPublic: false,
+      ordering: null,
+      description: null,
+    });
+
+    const publicOrder2 = await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 1234,
+      revenueShareBasisPoints: 1200,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_123",
+      title: "Should be second in the order",
+      isDefault: false,
+      isPublic: true,
+      ordering: 2,
+      description: null,
+    });
+
+    const publicOrder1 = await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 1234,
+      revenueShareBasisPoints: 1200,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_123",
+      title: "Should be first in the order",
+      isDefault: false,
+      isPublic: true,
+      ordering: 1,
+      description: null,
+    });
+
+    const private4 = await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      revenueShareBasisPoints: 5000,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_456",
+      title: "Should be last in the order",
+      isDefault: false,
+      isPublic: false,
+      ordering: null,
+      description: null,
+    });
+
+    const plans = await PlansDAO.findAll(trx);
+
+    t.equal(plans.length, 4, "finds all");
+    const plansIds = plans.map(({ id }: Plan) => id);
+    t.deepEqual(
+      plansIds,
+      [publicOrder1.id, publicOrder2.id, private3.id, private4.id],
+      "Public plans ordered by ordering in asc and private by created_at in desc"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
