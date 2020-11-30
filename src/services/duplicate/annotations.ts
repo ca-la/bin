@@ -47,7 +47,7 @@ export async function findAndDuplicateAnnotations(
   newCanvasId: string,
   trx: Knex.Transaction
 ): Promise<Annotation[]> {
-  const annotations = await AnnotationsDAO.findAllByCanvasId(canvasId);
+  const annotations = await AnnotationsDAO.findAllByCanvasId(trx, canvasId);
 
   // create annotation duplicates.
   return Promise.all(

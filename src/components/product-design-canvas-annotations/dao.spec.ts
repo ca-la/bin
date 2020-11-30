@@ -1,5 +1,8 @@
 import uuid from "node-uuid";
 import tape from "tape";
+import Knex from "knex";
+
+import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
 import * as AnnotationsDAO from "./dao";
 import createUser = require("../../test-helpers/create-user");
@@ -45,7 +48,9 @@ test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: 
     "Finds annotation by annotation ID"
   );
 
-  const asList = await AnnotationsDAO.findAllByCanvasId(designCanvas.id);
+  const asList = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllByCanvasId(trx, designCanvas.id)
+  );
   t.deepEqual(
     asList,
     [designCanvasAnnotation],
@@ -59,11 +64,46 @@ test("findAllByCanvasId returns in order of newest to oldest", async (t: tape.Te
     canvasId: canvas.id,
   });
 
-  const result = await AnnotationsDAO.findAllByCanvasId(canvas.id);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllByCanvasId(trx, canvas.id)
+  );
   t.deepEqual(
     result,
     [annotationTwo, annotation],
     "Returns in the correct order"
+  );
+});
+
+test("findAllWithCommentsByDesign with comments", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { annotation: a1, canvas, design } = await generateAnnotation({
+    createdBy: user.id,
+  });
+  const { comment } = await generateComment({ userId: user.id });
+  const { comment: commentTwo } = await generateComment({ userId: user.id });
+  await AnnotationCommentsDAO.create({
+    annotationId: a1.id,
+    commentId: comment.id,
+  });
+  await AnnotationCommentsDAO.create({
+    annotationId: a1.id,
+    commentId: commentTwo.id,
+  });
+
+  const { annotation: a2 } = await generateAnnotation({
+    canvasId: canvas.id,
+    createdBy: user.id,
+  });
+  const { comment: c3 } = await generateComment();
+  await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
+
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllWithCommentsByDesign(trx, design.id)
+  );
+  t.deepEqual(
+    result,
+    [a2, a1],
+    "Returns annotations with comments from newest to oldest"
   );
 });
 
@@ -90,8 +130,8 @@ test("findAllWithCommentsByCanvasId with no comments", async (t: tape.Test) => {
     createdBy: user.id,
   });
 
-  const withoutComment = await AnnotationsDAO.findAllWithCommentsByCanvasId(
-    designCanvas.id
+  const withoutComment = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllWithCommentsByCanvasId(trx, designCanvas.id)
   );
   t.deepEqual(
     withoutComment,
@@ -123,7 +163,9 @@ test("findAllWithCommentsByCanvasId with comments", async (t: tape.Test) => {
   const { comment: c3 } = await generateComment();
   await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
 
-  const result = await AnnotationsDAO.findAllWithCommentsByCanvasId(canvas.id);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllWithCommentsByCanvasId(trx, canvas.id)
+  );
   t.deepEqual(
     result,
     [a2, a1],
@@ -151,7 +193,9 @@ test("findAllWithCommentsByCanvasId with deletions", async (t: tape.Test) => {
   await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
   await AnnotationsDAO.deleteById(a2.id);
 
-  const result = await AnnotationsDAO.findAllWithCommentsByCanvasId(canvas.id);
+  const result = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.findAllWithCommentsByCanvasId(trx, canvas.id)
+  );
   t.deepEqual(
     result,
     [],

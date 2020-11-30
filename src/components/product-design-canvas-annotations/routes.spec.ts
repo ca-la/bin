@@ -1,7 +1,8 @@
 import uuid from "node-uuid";
 
 import ResourceNotFoundError from "../../errors/resource-not-found";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
+import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as AnnotationDAO from "./dao";
@@ -9,6 +10,42 @@ import { create as createDesign } from "../product-designs/dao";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 
 const API_PATH = "/product-design-canvas-annotations";
+
+function setup() {
+  const annotations = [
+    {
+      canvasId: "a-canvas-id",
+      createdBy: "a-user-id",
+      id: "an-annotation-id",
+      x: 5,
+      y: 2,
+    },
+    {
+      canvasId: "a-canvas-id",
+      createdBy: "a-user-id",
+      id: "another-annotation-id",
+      x: 1,
+      y: 1,
+    },
+  ];
+
+  return {
+    annotations,
+    sessionStub: sandbox().stub(SessionsDAO, "findById").resolves({
+      id: "a-session-id",
+      userId: "a-user-id",
+    }),
+    findByCanvasStub: sandbox()
+      .stub(AnnotationDAO, "findAllByCanvasId")
+      .resolves(annotations),
+    findByCanvasWithCommentsStub: sandbox()
+      .stub(AnnotationDAO, "findAllWithCommentsByCanvasId")
+      .resolves(annotations),
+    findByDesignStub: sandbox()
+      .stub(AnnotationDAO, "findAllWithCommentsByDesign")
+      .resolves(annotations),
+  };
+}
 
 test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
   const { session, user } = await createUser();
@@ -135,52 +172,47 @@ test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) =
 });
 
 test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: Test) => {
-  const { session, user } = await createUser();
-  const canvasId = uuid.v4();
+  const { annotations, findByCanvasStub } = setup();
 
-  const data = [
-    {
-      canvasId,
-      createdBy: user.id,
-      id: uuid.v4(),
-      x: 5,
-      y: 2,
-    },
-    {
-      canvasId,
-      createdBy: user.id,
-      id: uuid.v4(),
-      x: 1,
-      y: 1,
-    },
-  ];
-
-  sandbox().stub(AnnotationDAO, "findAllByCanvasId").resolves(data);
-  sandbox()
-    .stub(AnnotationDAO, "findAllWithCommentsByCanvasId")
-    .resolves([data[1]]);
-
-  const [response, body] = await get(`${API_PATH}/?canvasId=${canvasId}`, {
-    headers: authHeader(session.id),
+  const [response, body] = await get(`${API_PATH}/?canvasId="a-canvas-id"`, {
+    headers: authHeader("a-session-id"),
   });
-  t.equal(response.status, 200);
-  t.deepEqual(body, data);
-
-  const [withCommentsResponse, withComments] = await get(
-    `${API_PATH}?canvasId=${canvasId}&hasComments=true`,
-    {
-      headers: authHeader(session.id),
-    }
-  );
-  t.equal(withCommentsResponse.status, 200);
-  t.deepEqual(withComments, [data[1]]);
+  t.equal(response.status, 200, "returns success status");
+  t.deepEqual(body, annotations, "returns annotations in body");
+  t.true(findByCanvasStub.calledOnce, "calls correct DAO method");
 });
 
-test(`GET ${API_PATH}/ without a canvasId fails`, async (t: Test) => {
-  const { session } = await createUser();
+test(`GET ${API_PATH}/?canvasId=:canvasId?hasComments=true returns Annotations with comments`, async (t: Test) => {
+  const { annotations, findByCanvasWithCommentsStub } = setup();
+
+  const [withCommentsResponse, withComments] = await get(
+    `${API_PATH}?canvasId=a-canvas-id&hasComments=true`,
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(withCommentsResponse.status, 200, "returns success status");
+  t.deepEqual(withComments, annotations, "returns annotations in body");
+  t.true(findByCanvasWithCommentsStub.calledOnce, "calls correct DAO method");
+});
+
+test(`GET ${API_PATH}/?designId returns Annotations`, async (t: Test) => {
+  const { annotations, findByDesignStub } = setup();
+
+  const [response, body] = await get(`${API_PATH}/?designId=a-design-id`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "returns success status");
+  t.deepEqual(body, annotations, "returns annotations in body");
+  t.true(findByDesignStub.calledOnce, "calls correct DAO method");
+});
+
+test(`GET ${API_PATH}/ without a canvasId or designId fails`, async (t: Test) => {
+  setup();
+
   const [response] = await get(`${API_PATH}/`, {
-    headers: authHeader(session.id),
+    headers: authHeader("a-session-id"),
   });
 
-  t.equal(response.status, 400);
+  t.equal(response.status, 400, "returns invalid data status");
 });

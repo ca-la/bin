@@ -1,31 +1,37 @@
 import uuid from "node-uuid";
-import Canvas from "../../components/canvases/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
-import createUser = require("../create-user");
+import createUser from "../create-user";
 import * as CanvasesDAO from "../../components/canvases/dao";
 import Annotation from "../../components/product-design-canvas-annotations/domain-object";
 import { create } from "../../components/product-design-canvas-annotations/dao";
 import generateCanvas from "./product-design-canvas";
-import User from "../../components/users/domain-object";
-
-interface AnnotationWithResources {
-  annotation: Annotation;
-  canvas: Canvas;
-  createdBy: User;
-}
+import ProductDesignsDAO = require("../../components/product-designs/dao");
 
 export default async function generateAnnotation(
   options: Partial<Annotation> = {}
-): Promise<AnnotationWithResources> {
+) {
   const { user } = options.createdBy
     ? { user: await findUserById(options.createdBy) }
     : await createUser({ withSession: false });
-  const { canvas } = options.canvasId
-    ? { canvas: await CanvasesDAO.findById(options.canvasId) }
-    : await generateCanvas({ createdBy: user.id });
+  let canvas;
+  let design;
+  if (options.canvasId) {
+    canvas = await CanvasesDAO.findById(options.canvasId);
+    if (canvas === null) {
+      throw new Error(`Could not find canvas with id: ${options.canvasId}`);
+    }
 
-  if (!canvas) {
-    throw new Error("Canvas was unable to be found or created!");
+    design = await ProductDesignsDAO.findById(canvas.designId);
+
+    if (design === null) {
+      throw new Error(
+        `Could not find design for canvas with id: ${options.canvasId}`
+      );
+    }
+  } else {
+    const generated = await generateCanvas({ createdBy: user.id });
+    canvas = generated.canvas;
+    design = generated.design;
   }
 
   const annotation = await create({
@@ -41,5 +47,6 @@ export default async function generateAnnotation(
     annotation,
     canvas,
     createdBy: user,
+    design,
   };
 }

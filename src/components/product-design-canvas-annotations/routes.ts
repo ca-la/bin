@@ -7,6 +7,7 @@ import {
   findAllByCanvasId,
   findAllWithCommentsByCanvasId,
   update,
+  findAllWithCommentsByDesign,
 } from "./dao";
 import { hasOnlyProperties } from "../../services/require-properties";
 import * as AnnotationCommentDAO from "../../components/annotation-comments/dao";
@@ -20,6 +21,7 @@ import useTransaction from "../../middleware/use-transaction";
 const router = new Router();
 
 interface GetListQuery {
+  designId?: string;
   canvasId?: string;
   hasComments?: string;
 }
@@ -76,16 +78,24 @@ function* deleteAnnotation(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getList(this: AuthedContext): Iterator<any, any, any> {
+function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
-  if (!query.canvasId) {
-    this.throw(400, "Missing canvasId");
-  }
+  const { trx } = this.state;
 
-  const annotations =
-    query.hasComments !== "true"
-      ? yield findAllByCanvasId(query.canvasId)
-      : yield findAllWithCommentsByCanvasId(query.canvasId);
+  let annotations = [];
+
+  if (query.canvasId && query.hasComments) {
+    annotations = yield findAllWithCommentsByCanvasId(trx, query.canvasId);
+  } else if (query.canvasId) {
+    annotations = yield findAllByCanvasId(trx, query.canvasId);
+  } else if (query.designId) {
+    annotations = yield findAllWithCommentsByDesign(trx, query.designId);
+  } else {
+    this.throw(
+      400,
+      "Must provide either a canvasId or designId query parameter"
+    );
+  }
 
   this.status = 200;
   this.body = annotations;
@@ -111,7 +121,7 @@ function* getAnnotationComments(
   }
 }
 
-router.get("/", requireAuth, getList);
+router.get("/", requireAuth, useTransaction, getList);
 router.put("/:annotationId", requireAuth, createAnnotation);
 router.patch("/:annotationId", requireAuth, updateAnnotation);
 router.del("/:annotationId", requireAuth, deleteAnnotation);

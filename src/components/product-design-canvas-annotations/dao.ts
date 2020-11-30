@@ -114,9 +114,10 @@ export async function deleteById(id: string): Promise<Annotation> {
 }
 
 export async function findAllByCanvasId(
+  trx: Knex.Transaction,
   canvasId: string
 ): Promise<Annotation[]> {
-  const annotations: AnnotationRow[] = await db(TABLE_NAME)
+  const annotations: AnnotationRow[] = await trx(TABLE_NAME)
     .select("*")
     .where({ canvas_id: canvasId, deleted_at: null })
     .orderBy("created_at", "desc");
@@ -131,10 +132,53 @@ export async function findAllByCanvasId(
   );
 }
 
+export async function findAllWithCommentsByDesign(
+  trx: Knex.Transaction,
+  designId: string
+): Promise<Annotation[]> {
+  const annotations: AnnotationRow[] = await trx(TABLE_NAME)
+    .distinct("product_design_canvas_annotations.id")
+    .select("product_design_canvas_annotations.*")
+    .join(
+      "product_design_canvas_annotation_comments",
+      "product_design_canvas_annotation_comments.annotation_id",
+      "product_design_canvas_annotations.id"
+    )
+    .join(
+      "canvases",
+      "canvases.id",
+      "product_design_canvas_annotations.canvas_id"
+    )
+    .join(
+      "comments",
+      "comments.id",
+      "product_design_canvas_annotation_comments.comment_id"
+    )
+    .whereRaw(
+      `
+canvases.design_id = ?
+AND product_design_canvas_annotations.deleted_at IS null
+AND comments.deleted_at IS null
+`,
+      [designId]
+    )
+    .orderBy("product_design_canvas_annotations.created_at", "desc");
+
+  return parseNumericsList(
+    validateEvery<AnnotationRow, Annotation>(
+      TABLE_NAME,
+      isAnnotationRow,
+      dataAdapter,
+      annotations
+    )
+  );
+}
+
 export async function findAllWithCommentsByCanvasId(
+  trx: Knex.Transaction,
   canvasId: string
 ): Promise<Annotation[]> {
-  const annotations: AnnotationRow[] = await db(TABLE_NAME)
+  const annotations: AnnotationRow[] = await trx(TABLE_NAME)
     .distinct("product_design_canvas_annotations.id")
     .select("product_design_canvas_annotations.*")
     .join(
