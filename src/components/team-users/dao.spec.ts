@@ -170,6 +170,52 @@ test("TeamUsersDAO.deleteById", async (t: Test) => {
   }
 });
 
+test("TeamUsersDAO.find", async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  const trx = await db.transaction();
+  const { user } = await createUser({ withSession: false });
+
+  try {
+    const team = await TeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "Test Team",
+      createdAt: testDate,
+      deletedAt: null,
+      type: TeamType.DESIGNER,
+    });
+
+    const teamUser = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: user.id,
+      userEmail: null,
+      teamId: team.id,
+      role: Role.ADMIN,
+      createdAt: testDate,
+      deletedAt: null,
+      updatedAt: testDate,
+    });
+
+    const found = await TeamUsersDAO.find(trx, {
+      teamId: team.id,
+    });
+
+    t.deepEqual(
+      found,
+      [{ ...teamUser, user }],
+      "finds team users that are not deleted"
+    );
+
+    await TeamUsersDAO.deleteById(trx, teamUser.id);
+    const foundDeleted = await TeamUsersDAO.find(trx, {
+      teamId: team.id,
+    });
+
+    t.deepEqual(foundDeleted, [], "does not find deleted users");
+  } finally {
+    await trx.rollback();
+  }
+});
+
 test("TeamUsersDAO.findByUserAndTeam", async (t: Test) => {
   sandbox().useFakeTimers(testDate);
   const trx = await db.transaction();

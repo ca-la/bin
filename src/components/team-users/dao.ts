@@ -13,7 +13,6 @@ const rawStandardDao = buildDao<TeamUserDb, TeamUserDbRow>(
   rawAdapter,
   {
     orderColumn: "user_id",
-    excludeDeletedAt: false,
   }
 );
 
@@ -57,7 +56,6 @@ const dao = buildDao<TeamUser, TeamUserRow>(
   adapter,
   {
     orderColumn: "user_id",
-    excludeDeletedAt: false,
     queryModifier: withUser,
   }
 );
