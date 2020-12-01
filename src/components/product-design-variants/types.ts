@@ -15,3 +15,5 @@ export interface Variant {
 export type VariantDb = Omit<Variant, "sku"> & {
   sku: string | null;
 };
+
+export type ProductDesignVariantIO = Uninserted<VariantDb>;

@@ -1,13 +1,18 @@
+import Knex from "knex";
 import tape from "tape";
 import uuid from "node-uuid";
+import { pick } from "lodash";
 import { Variant } from "./types";
+import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
 import { create as createDesign } from "../product-designs/dao";
 import API from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as ProductDesignVariantsDAO from "./dao";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
+import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import * as DesignEventsService from "../design-events/service";
+import { ApprovalStepState, ApprovalStepType } from "../approval-steps/types";
 
 const API_PATH = "/product-design-variants";
 
@@ -89,6 +94,9 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   const rando = await createUser();
   const admin = await createUser({ role: "ADMIN" });
 
+  const universalProductCode = "928076178457";
+  const sku = "sku-1";
+
   const isQuoteCommittedStub = sandbox()
     .stub(DesignEventsService, "isQuoteCommitted")
     .resolves(false);
@@ -139,6 +147,16 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     colorNamePosition: 2,
   });
 
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await generateApprovalStep(trx, {
+      designId: design.id,
+      type: ApprovalStepType.CHECKOUT,
+      state: ApprovalStepState.COMPLETED,
+      startedAt: new Date(),
+      completedAt: new Date(),
+    });
+  });
+
   const variants = [
     {
       colorName: "Green",
@@ -147,6 +165,8 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
       id: uuid.v4(),
       position: 0,
       sizeName: "L",
+      universalProductCode,
+      sku,
       unitsToProduce: 101,
     },
     {
@@ -202,6 +222,17 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     [variants[0].id, variants[1].id]
   );
 
+  t.deepEqual(
+    pick(editorBody[0], "universalProductCode", "sku"),
+    {
+      universalProductCode,
+      sku,
+    },
+    "keeps existing upc and sku"
+  );
+  t.true(editorBody[1].sku, "generates new sku");
+  t.true(editorBody[1].universalProductCode, "generates new upc");
+
   // A view collaborator should not have permissions to edit the variants.
   const [viewerResponse] = await API.put(`${API_PATH}/?designId=${design.id}`, {
     body: variants,
@@ -235,4 +266,47 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   });
   t.equal(adminResponse.status, 200, "admins can update locked variants");
   t.equal(isQuoteCommittedStub.callCount, 0, "admins skip the commit check");
+});
+
+test(`PUT ${API_PATH}?designId for a not checked out design doesn't set codes`, async (t: tape.Test) => {
+  const owner = await createUser();
+
+  const design = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: owner.user.id,
+  });
+  await ProductDesignVariantsDAO.create({
+    colorName: "Green",
+    designId: design.id,
+    id: uuid.v4(),
+    position: 0,
+    sizeName: "M",
+    unitsToProduce: 999,
+    universalProductCode: null,
+    sku: null,
+    isSample: false,
+    colorNamePosition: 1,
+  });
+
+  const variants = [
+    {
+      colorName: "Green",
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      position: 1,
+      sizeName: "M",
+      unitsToProduce: 899,
+    },
+  ];
+
+  const [response, body] = await API.put(`${API_PATH}/?designId=${design.id}`, {
+    body: variants,
+    headers: API.authHeader(owner.session.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body[0].sku, null);
+  t.equal(response.status, 200);
+  t.deepEqual(body[0].universalProductCode, null);
 });

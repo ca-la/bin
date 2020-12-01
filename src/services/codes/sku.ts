@@ -36,7 +36,7 @@ export function formatSequenceValue(sequenceValue: number): string {
  */
 export async function computeUniqueSku(
   trx: Transaction,
-  variant: VariantDb
+  variant: VariantDb | Uninserted<VariantDb>
 ): Promise<string> {
   const increment = await sequenceIncrement(SEQUENCE_NAME);
 

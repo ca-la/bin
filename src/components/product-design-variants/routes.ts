@@ -2,33 +2,21 @@ import Router from "koa-router";
 import Knex from "knex";
 
 import * as ProductDesignVariantsDAO from "./dao";
-import requireAuth = require("../../middleware/require-auth");
 import {
   canAccessDesignInQuery,
   canEditDesign,
 } from "../../middleware/can-access-design";
 import { hasProperties } from "../../services/require-properties";
 import db from "../../services/db";
-import requireAdmin = require("../../middleware/require-admin");
 import { requireQueryParam } from "../../middleware/require-query-param";
 import backfillUpcsForDesign from "../../services/backfill-upcs-for-design";
 import useTransaction from "../../middleware/use-transaction";
+import { ProductDesignVariantIO } from "./types";
+import { enrichVariantInputsWithCodesIfCheckedOut } from "./service";
+import requireAuth = require("../../middleware/require-auth");
+import requireAdmin = require("../../middleware/require-admin");
 
 const router = new Router();
-
-interface ProductDesignVariantIO {
-  colorName: string | null;
-  createdAt?: Date;
-  designId: string;
-  id: string;
-  position: number;
-  sizeName: string | null;
-  unitsToProduce: number;
-  universalProductCode: string | null;
-  sku?: string | null;
-  isSample: boolean;
-  colorNamePosition: number;
-}
 
 function isProductDesignVariantIO(
   candidate: object
@@ -42,9 +30,10 @@ function isProductDesignVariantIO(
       "position",
       "sizeName",
       "unitsToProduce",
-      "universalProductCode"
+      "universalProductCode",
+      "sku"
     ) ||
-    // Legacy variants will not have universalProductCode
+    // Legacy variants will not have universalProductCode and sku
     hasProperties(
       candidate,
       "colorName",
@@ -83,17 +72,13 @@ function* replaceVariants(
   }
 
   if (Array.isArray(body) && isProductDesignVariantsIO(body)) {
-    const variants = yield db.transaction(async (trx: Knex.Transaction) =>
+    this.body = yield db.transaction(async (trx: Knex.Transaction) =>
       ProductDesignVariantsDAO.replaceForDesign(
         trx,
         designId,
-        body.map((productVariantInput: ProductDesignVariantIO) => ({
-          ...productVariantInput,
-          sku: productVariantInput.sku || null,
-        }))
+        await enrichVariantInputsWithCodesIfCheckedOut(trx, designId, body)
       )
     );
-    this.body = variants;
     this.status = 200;
   } else {
     this.throw(400, "Request does not match product design variants");
