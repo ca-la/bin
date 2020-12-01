@@ -112,6 +112,18 @@ async function setup() {
       updatedAt: new Date(),
     })
   );
+  const deletedPartnerTeamUser = await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: partnerTeam.id,
+      userId: null,
+      userEmail: "and-another@example.com",
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    })
+  );
 
   const { collaborator: designCollaborator } = await generateCollaborator({
     collectionId: null,
@@ -208,6 +220,7 @@ async function setup() {
       viewer: teamUser2,
       nonUser: teamUser3,
       deletedUser: deletedTeamUser,
+      deletedPartnerUser: deletedPartnerTeamUser,
     },
     users: [user, user2, user3, user4, user5],
   };

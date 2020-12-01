@@ -80,7 +80,10 @@ COALESCE(
       `
 (collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())
 AND
-collaborators.deleted_at IS NULL`
+collaborators.deleted_at IS NULL
+AND
+team_users.deleted_at IS NULL
+`
     )
     .andWhere((query: Knex.QueryBuilder) =>
       query.where({ "collaborators.design_id": designId }).orWhere({
