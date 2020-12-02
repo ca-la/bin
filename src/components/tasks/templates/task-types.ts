@@ -1,46 +1,19 @@
-import { mapKeys } from "lodash";
-import { CollaboratorRole } from "../../collaborators/domain-objects/role";
-
-export interface TaskType {
-  id: string;
-  title: string;
-  assigneeRole: CollaboratorRole;
-}
+import {
+  BidTaskTypeId,
+  TaskType,
+  taskTypesById,
+} from "../../bid-task-types/types";
+export {
+  BidTaskTypeId,
+  TaskType,
+  taskTypesById,
+} from "../../bid-task-types/types";
 
 export const taskTypes: { [key: string]: TaskType } = {
-  CALA: {
-    id: "065f32d9-7d25-49f8-b25d-970e148b59d8",
-    title: "CALA",
-    assigneeRole: CollaboratorRole.CALA,
-  },
-  DESIGN: {
-    id: "8635e5f1-6cec-4984-991b-af664d1d51ca",
-    title: "Design",
-    assigneeRole: CollaboratorRole.DESIGNER,
-  },
-  TECHNICAL_DESIGN: {
-    id: "e0dcffd3-9352-47d8-85a2-851cfb6ac437",
-    title: "Technical Design",
-    assigneeRole: CollaboratorRole.PARTNER,
-  },
-  PRODUCTION: {
-    id: "31c52ddf-88be-4ed2-9f32-8279ae62fcab",
-    title: "Production",
-    assigneeRole: CollaboratorRole.PARTNER,
-  },
-  PRODUCT_PHOTOGRAPHY: {
-    id: "9a188eba-b472-4b50-85ac-eb86319e642b",
-    title: "Product Photography",
-    assigneeRole: CollaboratorRole.PARTNER,
-  },
-  QUALITY_CONTROL: {
-    id: "48520934-a0e9-436d-ab56-cb2829ccdfed",
-    title: "Quality Control",
-    assigneeRole: CollaboratorRole.PARTNER,
-  },
+  CALA: taskTypesById[BidTaskTypeId.CALA],
+  DESIGN: taskTypesById[BidTaskTypeId.DESIGN],
+  TECHNICAL_DESIGN: taskTypesById[BidTaskTypeId.TECHNICAL_DESIGN],
+  PRODUCTION: taskTypesById[BidTaskTypeId.PRODUCTION],
+  PRODUCT_PHOTOGRAPHY: taskTypesById[BidTaskTypeId.PRODUCT_PHOTOGRAPHY],
+  QUALITY_CONTROL: taskTypesById[BidTaskTypeId.QUALITY_CONTROL],
 };
-
-export const taskTypesById: { [key: string]: TaskType } = mapKeys(
-  taskTypes,
-  (item: TaskType) => item.id
-);

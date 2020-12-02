@@ -13,7 +13,12 @@ import User from "../../components/users/domain-object";
 import { daysToMs } from "../../services/time-conversion";
 import db from "../../services/db";
 import ProductDesignsDAO from "../../components/product-designs/dao";
+import DesignEventsDAO from "../../components/design-events/dao";
+import * as BidsDAO from "../../components/bids/dao";
+import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
+import { templateDesignEvent } from "../../components/design-events/types";
 import { generateDesign } from "./product-design";
+import { BidTaskTypeId } from "../../components/bid-task-types/types";
 
 interface BidInterface {
   user: User;
@@ -101,4 +106,81 @@ export default async function generateBid({
     })
   );
   return { bid, quote, user };
+}
+
+export async function bidToTeam({
+  actorId,
+  targetTeamId,
+  designId,
+  bidTaskTypeIds,
+  now = new Date(),
+}: {
+  actorId: string;
+  targetTeamId: string;
+  designId: string;
+  bidTaskTypeIds: BidTaskTypeId[];
+  now?: Date;
+}) {
+  await generatePricingValues();
+  const quote = await generatePricingQuote(
+    {
+      createdAt: now,
+      deletedAt: null,
+      expiresAt: null,
+      id: uuid.v4(),
+      minimumOrderQuantity: 1,
+      designId,
+      materialBudgetCents: 1200,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+        {
+          complexity: "1_COLOR",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+    },
+    200
+  );
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const bid = await BidsDAO.create(trx, {
+      revenueShareBasisPoints: 10,
+      bidPriceCents: 100000,
+      bidPriceProductionOnlyCents: 0,
+      createdBy: actorId,
+      description: "Full Service",
+      dueDate: new Date(now.getTime() + daysToMs(10)),
+      id: uuid.v4(),
+      quoteId: quote.id,
+      createdAt: now,
+    });
+    for (const taskTypeId of bidTaskTypeIds) {
+      await BidTaskTypesDAO.create({ pricingBidId: bid.id, taskTypeId }, trx);
+    }
+    await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      type: "BID_DESIGN",
+      actorId,
+      designId,
+      bidId: bid.id,
+      targetId: null,
+      targetTeamId,
+      id: uuid.v4(),
+      createdAt: now,
+    });
+
+    return bid;
+  });
 }

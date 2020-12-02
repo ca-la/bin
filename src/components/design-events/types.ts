@@ -1,4 +1,5 @@
 import { Role } from "../users/types";
+import { BidTaskTypeId } from "../bid-task-types/types";
 
 /**
  * A log entry for a quote and partner assignment event that occured on a design
@@ -144,7 +145,7 @@ export interface DesignEventWithMetaRow extends DesignEventRow {
   target_team_name: string | null;
   submission_title: string | null;
   step_title: string | null;
-  task_type_id: string | null;
+  task_type_id: BidTaskTypeId | null;
   task_type_title?: string | null;
   shipment_tracking_description: string | null;
   shipment_tracking_event_tag: string | null;

@@ -28,6 +28,7 @@ const collaboratorParticipant: Participant = {
   displayName: "A name",
   role: "USER",
   userId: null,
+  bidTaskTypes: [],
 };
 
 test("GET /participants?designId", async (t: Test) => {

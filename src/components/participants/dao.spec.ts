@@ -4,18 +4,22 @@ import { test, Test } from "../../test-helpers/fresh";
 import { addDesign } from "../../test-helpers/collections";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 
+import db from "../../services/db";
 import createDesign from "../../services/create-design";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import * as CollectionsDAO from "../collections/dao";
 import * as UsersDAO from "../users/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
-import db from "../../services/db";
-
-import * as ParticipantsDAO from "./dao";
+import DesignEventsDAO from "../design-events/dao";
+import { templateDesignEvent } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { MentionType } from "../comments/types";
 import { Role as UserRole } from "../users/types";
 import { TeamUserRole } from "../../published-types";
+import { BidTaskTypeId } from "../bid-task-types/types";
+
+import * as ParticipantsDAO from "./dao";
+import { bidToTeam } from "../../test-helpers/factories/bid";
 
 const createUser = (name: string, role: UserRole = "USER") =>
   UsersDAO.create({
@@ -27,6 +31,7 @@ const createUser = (name: string, role: UserRole = "USER") =>
   });
 
 async function setup() {
+  const ops = await createUser("Ops");
   const user = await createUser("Designer");
   const user2 = await createUser("Design Collaborator");
   const user3 = await createUser("Collection Collaborator");
@@ -187,6 +192,26 @@ async function setup() {
     userEmail: "non-user-collaborator@example.com",
     userId: null,
   });
+
+  const bid = await bidToTeam({
+    actorId: ops.id,
+    targetTeamId: partnerTeam.id,
+    designId: design.id,
+    bidTaskTypeIds: [BidTaskTypeId.PRODUCTION, BidTaskTypeId.TECHNICAL_DESIGN],
+  });
+  // Accept Bid
+  await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      type: "ACCEPT_SERVICE_BID",
+      actorId: ops.id,
+      designId: design.id,
+      bidId: bid.id,
+      id: uuid.v4(),
+      createdAt: new Date(),
+      targetTeamId: partnerTeam.id,
+    })
+  );
   const { collaborator: teamCollaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
@@ -245,6 +270,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Designer",
           role: "USER",
           userId: state.users[0].id,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.COLLABORATOR,
@@ -252,6 +278,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Design Collaborator",
           role: "USER",
           userId: state.users[1].id,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.COLLABORATOR,
@@ -259,6 +286,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Collection Collaborator",
           role: "USER",
           userId: state.users[2].id,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.COLLABORATOR,
@@ -266,6 +294,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: state.collaborators.nonUserCollaborator.userEmail,
           role: null,
           userId: null,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.TEAM_USER,
@@ -273,6 +302,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Partner Team Admin",
           role: "PARTNER",
           userId: state.teamUsers.partnerTeam.userId,
+          bidTaskTypes: ["Production", "Technical Design"],
         },
         {
           type: MentionType.TEAM_USER,
@@ -280,6 +310,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Team Admin",
           role: "USER",
           userId: state.teamUsers.admin.userId,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.TEAM_USER,
@@ -287,6 +318,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: "Team Viewer",
           role: "USER",
           userId: state.teamUsers.viewer.userId,
+          bidTaskTypes: [],
         },
         {
           type: MentionType.TEAM_USER,
@@ -294,6 +326,7 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           displayName: state.teamUsers.nonUser.userEmail,
           role: null,
           userId: null,
+          bidTaskTypes: [],
         },
       ],
       "returns all non-cancelled design and collection collaborators and team users"
