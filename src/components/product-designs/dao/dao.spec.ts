@@ -14,6 +14,7 @@ import {
   isOwner,
   getTitleAndOwnerByShipmentTracking,
   findIdByQuoteId,
+  findPaidDesigns,
 } from "./dao";
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -1490,4 +1491,52 @@ test("findIdByQuoteId", async (t: Test) => {
     null,
     "returns null for a miss"
   );
+});
+
+test("findPaidDesigns", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design0 = await generateDesign({ userId: user.id });
+  const design1 = await generateDesign({ userId: user.id });
+
+  const emptyPaid = await db.transaction((trx: Knex.Transaction) =>
+    findPaidDesigns(trx)
+  );
+
+  t.deepEqual(emptyPaid, [], "returns no paid designs");
+
+  const { quote: quote0 } = await generateBid({
+    designId: design0.id,
+    userId: user.id,
+  });
+  const { quote: quote1 } = await generateBid({
+    designId: design1.id,
+    userId: user.id,
+  });
+
+  await generateDesignEvent({
+    createdAt: new Date("2019-04-20"),
+    quoteId: quote0.id,
+    type: "COMMIT_QUOTE",
+  });
+
+  await generateDesignEvent({
+    createdAt: new Date("2019-04-19"),
+    quoteId: quote1.id,
+    type: "COMMIT_QUOTE",
+  });
+
+  const paid = await db.transaction((trx: Knex.Transaction) =>
+    findPaidDesigns(trx)
+  );
+
+  t.equal(paid.length, 2, "Returns paid designs");
+  t.equal(paid[0].id, design0.id, "Returns paid designs in descending order");
+  t.equal(paid[1].id, design1.id, "Returns paid designs in descending order");
+
+  const limitOffset = await db.transaction((trx: Knex.Transaction) =>
+    findPaidDesigns(trx, { limit: 1, offset: 1 })
+  );
+
+  t.equal(limitOffset.length, 1, "Limits results");
+  t.equal(limitOffset[0].id, design1.id, "Offsets results");
 });

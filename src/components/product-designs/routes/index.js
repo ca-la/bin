@@ -30,6 +30,7 @@ const {
   getDesignUploadPolicy,
   getThumbnailUploadPolicy,
 } = require("./upload-policy");
+const { getPaidDesigns } = require("./paid");
 const { updateAllNodes } = require("./phidias");
 const { findAllDesignsThroughCollaborator } = require("../dao/dao");
 const { createFromTemplate } = require("./templates");
@@ -214,6 +215,8 @@ function* getDesigns() {
     } else {
       yield getDesignsByUser;
     }
+  } else if (this.query.paid === "true") {
+    yield getPaidDesigns;
   } else {
     yield getAllDesigns;
   }

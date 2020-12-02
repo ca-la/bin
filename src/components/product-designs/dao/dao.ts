@@ -492,3 +492,32 @@ export async function findIdByQuoteId(
 
   return row.id;
 }
+
+export async function findPaidDesigns(
+  trx: Knex.Transaction,
+  options?: {
+    offset?: number;
+    limit?: number;
+  }
+): Promise<ProductDesign[]> {
+  const rows = await queryWithCollectionMeta(trx)
+    .innerJoin(
+      "pricing_quotes",
+      "pricing_quotes.design_id",
+      "product_designs.id"
+    )
+    .joinRaw(
+      `
+      inner join design_events as events
+        on events.quote_id = pricing_quotes.id
+        and events.type = 'COMMIT_QUOTE'
+    `
+    )
+    .groupBy(["product_designs.id", "events.created_at"])
+    .orderBy("events.created_at", "desc")
+    .modify(limitOrOffset(options?.limit, options?.offset));
+
+  const hydrated = rows.map((row: ProductDesignRow) => new ProductDesign(row));
+
+  return hydrated;
+}
