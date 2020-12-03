@@ -19,7 +19,13 @@ import { hasProperties } from "../../services/require-properties";
 import createUPCsForCollection from "../../services/create-upcs-for-collection";
 import createSKUsForCollection from "../../services/create-skus-for-collection";
 import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
-import { logServerError, logWarning } from "../../services/logger";
+import {
+  time,
+  timeLog,
+  timeEnd,
+  logServerError,
+  logWarning,
+} from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
 import { createFromAddress } from "../../dao/invoice-addresses";
 import * as IrisService from "../../components/iris/send-message";
@@ -144,59 +150,79 @@ function* payQuote(
     AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
   >
 ): Iterator<any, any, any> {
-  const { body } = this.request;
-  const { isWaived } = this.query;
-  const { userId, collection, trx } = this.state;
-  if (!collection) {
-    this.throw(403, "Unable to access collection");
-  }
-
-  const invoiceAddressId = body.addressId
-    ? (yield createFromAddress(trx, body.addressId)).id
-    : null;
-
-  let invoice: Invoice;
-  let paymentAmountCents = 0;
-  if (isWaived) {
-    invoice = yield payWaivedQuote(
-      trx,
-      body.createQuotes,
-      userId,
-      collection,
-      invoiceAddressId
-    ).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err.message)
-      )
+  time("payQuote");
+  try {
+    const { body } = this.request;
+    const { isWaived } = this.query;
+    const { userId, collection, trx } = this.state;
+    if (!collection) {
+      this.throw(403, "Unable to access collection");
+    }
+    timeLog(
+      "payQuote",
+      "params:",
+      { userId, isWaived, collectionId: collection.id },
+      "body:",
+      body
     );
-  } else if (isPayWithMethodRequest(body)) {
-    const {
-      invoice: paidInvoice,
-      nonCreditPaymentAmount,
-    } = yield payInvoiceWithNewPaymentMethod(
-      trx,
-      body.createQuotes,
-      body.paymentMethodTokenId,
-      userId,
-      collection,
-      invoiceAddressId
-    ).catch((err: Error) => {
-      if (err instanceof InvalidDataError || err instanceof StripeError) {
-        this.throw(400, err.message);
-      }
-      throw err;
-    });
-    invoice = paidInvoice;
-    paymentAmountCents = nonCreditPaymentAmount;
-  } else {
-    this.throw("Request must match type");
+
+    const invoiceAddressId = body.addressId
+      ? (yield createFromAddress(trx, body.addressId)).id
+      : null;
+
+    timeLog("payQuote", "invoiceAddressId");
+
+    let invoice: Invoice;
+    let paymentAmountCents = 0;
+    if (isWaived) {
+      invoice = yield payWaivedQuote(
+        trx,
+        body.createQuotes,
+        userId,
+        collection,
+        invoiceAddressId
+      ).catch(
+        filterError(InvalidDataError, (err: InvalidDataError) =>
+          this.throw(400, err.message)
+        )
+      );
+      timeLog("payQuote", "payWaivedQuote");
+    } else if (isPayWithMethodRequest(body)) {
+      const {
+        invoice: paidInvoice,
+        nonCreditPaymentAmount,
+      } = yield payInvoiceWithNewPaymentMethod(
+        trx,
+        body.createQuotes,
+        body.paymentMethodTokenId,
+        userId,
+        collection,
+        invoiceAddressId
+      ).catch((err: Error) => {
+        if (err instanceof InvalidDataError || err instanceof StripeError) {
+          this.throw(400, err.message);
+        }
+        throw err;
+      });
+      invoice = paidInvoice;
+      paymentAmountCents = nonCreditPaymentAmount;
+      timeLog("payQuote", "payInvoiceWithNewPaymentMethod");
+    } else {
+      this.throw("Request must match type");
+    }
+
+    yield handleQuotePayment(trx, userId, collection.id);
+    timeLog("payQuote", "handleQuotePayment");
+    yield sendSlackUpdate({ invoice, collection, paymentAmountCents });
+    timeLog("payQuote", "sendSlackUpdate");
+
+    this.body = invoice;
+    this.status = 201;
+    timeEnd("payQuote");
+  } catch (err) {
+    timeEnd("payQuote");
+    throw err;
   }
-
-  yield handleQuotePayment(trx, userId, collection.id);
-  yield sendSlackUpdate({ invoice, collection, paymentAmountCents });
-
-  this.body = invoice;
-  this.status = 201;
 }
 
 router.post(

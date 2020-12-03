@@ -21,6 +21,7 @@ import CollectionDb from "../../components/collections/domain-object";
 import Invoice = require("../../domain-objects/invoice");
 import LineItem from "../../domain-objects/line-item";
 import createDesignPaymentLocks from "./create-design-payment-locks";
+import { time, timeLog, timeEnd } from "../../services/logger";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -131,32 +132,52 @@ export default async function payInvoiceWithNewPaymentMethod(
   collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<{ invoice: Invoice; nonCreditPaymentAmount: number }> {
-  await createDesignPaymentLocks(trx, quoteRequests);
+  try {
+    time("payInvoiceWithNewPaymentMethod");
+    await createDesignPaymentLocks(trx, quoteRequests);
+    timeLog("payInvoiceWithNewPaymentMethod", "createDesignPaymentLocks");
 
-  const paymentMethod = await createPaymentMethod({
-    token: paymentMethodTokenId,
-    userId,
-    trx,
-  });
-  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+    const paymentMethod = await createPaymentMethod({
+      token: paymentMethodTokenId,
+      userId,
+      trx,
+    });
+    timeLog("payInvoiceWithNewPaymentMethod", "createPaymentMethod");
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
+    timeLog("payInvoiceWithNewPaymentMethod", "createQuotes");
 
-  const designNames = await getDesignNames(quotes);
-  const collectionName = collection.title || "Untitled";
-  const totalCents = getQuoteTotal(quotes);
+    const designNames = await getDesignNames(quotes);
+    timeLog("payInvoiceWithNewPaymentMethod", "designNames");
+    const collectionName = collection.title || "Untitled";
+    const totalCents = getQuoteTotal(quotes);
 
-  const invoice = await createInvoice(
-    designNames,
-    collectionName,
-    collection.id,
-    totalCents,
-    userId,
-    invoiceAddressId,
-    trx
-  );
+    const invoice = await createInvoice(
+      designNames,
+      collectionName,
+      collection.id,
+      totalCents,
+      userId,
+      invoiceAddressId,
+      trx
+    );
+    timeLog("payInvoiceWithNewPaymentMethod", "createInvoice");
 
-  await processQuotesAfterInvoice(trx, invoice.id, quotes);
+    await processQuotesAfterInvoice(trx, invoice.id, quotes);
+    timeLog("payInvoiceWithNewPaymentMethod", "processQuotesAfterInvoice");
 
-  return payInvoice(invoice.id, paymentMethod.id, userId, trx);
+    const paidInvoice = payInvoice(invoice.id, paymentMethod.id, userId, trx);
+    timeLog("payInvoiceWithNewPaymentMethod", "payInvoice");
+
+    timeEnd("payInvoiceWithNewPaymentMethod");
+    return paidInvoice;
+  } catch (err) {
+    timeEnd("payInvoiceWithNewPaymentMethod");
+    throw err;
+  }
 }
 
 export async function payWaivedQuote(
@@ -166,33 +187,53 @@ export async function payWaivedQuote(
   collection: CollectionDb,
   invoiceAddressId: string | null
 ): Promise<Invoice> {
-  await createDesignPaymentLocks(trx, quoteRequests);
+  try {
+    time("payWaivedQuote");
+    await createDesignPaymentLocks(trx, quoteRequests);
+    timeLog("payWaivedQuote", "createDesignPaymentLocks");
 
-  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
-  const designNames = await getDesignNames(quotes);
-  const collectionName = collection.title || "Untitled";
-
-  const totalCents = getQuoteTotal(quotes);
-
-  const invoice = await createInvoice(
-    designNames,
-    collectionName,
-    collection.id,
-    totalCents,
-    userId,
-    invoiceAddressId,
-    trx
-  );
-
-  const { nonCreditPaymentAmount } = await spendCredit(userId, invoice, trx);
-
-  if (nonCreditPaymentAmount) {
-    throw new InvalidDataError(
-      "Cannot waive payment for amounts greater than $0"
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
     );
+    timeLog("payWaivedQuote", "createQuotes");
+    const designNames = await getDesignNames(quotes);
+    timeLog("payWaivedQuote", "getDesignNames");
+    const collectionName = collection.title || "Untitled";
+
+    const totalCents = getQuoteTotal(quotes);
+    timeLog("payWaivedQuote", "getQuoteTotal");
+
+    const invoice = await createInvoice(
+      designNames,
+      collectionName,
+      collection.id,
+      totalCents,
+      userId,
+      invoiceAddressId,
+      trx
+    );
+    timeLog("payWaivedQuote", "createInvoice");
+
+    const spentResult = await spendCredit(userId, invoice, trx);
+    timeLog("payWaivedQuote", "spendCredit");
+
+    if (spentResult.nonCreditPaymentAmount) {
+      throw new InvalidDataError(
+        "Cannot waive payment for amounts greater than $0"
+      );
+    }
+
+    await processQuotesAfterInvoice(trx, invoice.id, quotes);
+    timeLog("payWaivedQuote", "processQuotesAfterInvoice");
+
+    const invoiceFound = InvoicesDAO.findByIdTrx(trx, invoice.id);
+    timeLog("payWaivedQuote", "InvoicesDAO.findByIdTrx");
+    timeEnd("payWaivedQuote");
+    return invoiceFound;
+  } catch (err) {
+    timeEnd("payWaivedQuote");
+    throw err;
   }
-
-  await processQuotesAfterInvoice(trx, invoice.id, quotes);
-
-  return InvoicesDAO.findByIdTrx(trx, invoice.id);
 }
