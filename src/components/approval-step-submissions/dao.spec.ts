@@ -8,11 +8,14 @@ import * as ProductDesignsDAO from "../product-designs/dao";
 import db from "../../services/db";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import createUser from "../../test-helpers/create-user";
+import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
+import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
 } from "../approval-steps/domain-object";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
@@ -62,6 +65,8 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
+    createdBy: null,
+    deletedAt: null,
     stepId: as1.id,
     collaboratorId: null,
     teamUserId: null,
@@ -72,6 +77,8 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
+    createdBy: null,
+    deletedAt: null,
     stepId: as1.id,
     collaboratorId: null,
     teamUserId: null,
@@ -82,6 +89,8 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
     createdAt: new Date(),
+    createdBy: null,
+    deletedAt: null,
     stepId: as2.id,
     collaboratorId: null,
     teamUserId: null,
@@ -92,6 +101,8 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
     createdAt: new Date(),
+    createdBy: null,
+    deletedAt: null,
     stepId: as2.id,
     collaboratorId: null,
     teamUserId: null,
@@ -137,4 +148,66 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
       "returns submissions by design"
     );
   });
+});
+
+test("ApprovalStepSubmissionsDAO can delete the submission by id", async (t: Test) => {
+  const trx = await db.transaction();
+  try {
+    const { approvalStep } = await generateApprovalStep(trx);
+    const { submission } = await generateApprovalSubmission(trx, {
+      stepId: approvalStep.id,
+      title: "Review X",
+    });
+
+    t.isEqual(
+      submission.deletedAt,
+      null,
+      "Created submission doesn't have deletedAt timestamp"
+    );
+
+    let deletedSubmission;
+    try {
+      deletedSubmission = await ApprovalStepSubmissionsDAO.deleteById(
+        trx,
+        submission.id
+      );
+      t.pass("allows deleting submission that were created");
+    } catch {
+      t.fail("should not reject deleting submission that were created");
+    }
+
+    t.isNotEqual(
+      deletedSubmission?.deletedAt,
+      null,
+      "Succesfully deleted submission"
+    );
+
+    try {
+      await ApprovalStepSubmissionsDAO.deleteById(trx, submission.id);
+    } catch (err) {
+      t.ok(
+        err instanceof ResourceNotFoundError,
+        "deleting a second time rejects with ResourceNotFoundError"
+      );
+      t.pass(
+        "rejects when trying to delete something that has already been deleted"
+      );
+    }
+
+    try {
+      await ApprovalStepSubmissionsDAO.deleteById(trx, uuid.v4());
+      t.fail("deleting something that does not exists should not succeed");
+    } catch (err) {
+      t.ok(
+        err instanceof ResourceNotFoundError,
+        "deleting something that does not exists rejects with ResourceNotFoundError"
+      );
+      t.pass("rejects when trying to delete something that does not exist");
+    }
+
+    const found = await ApprovalStepSubmissionsDAO.findById(trx, submission.id);
+    t.equal(found, null, ".find does not return deleted submission");
+  } finally {
+    await trx.rollback();
+  }
 });

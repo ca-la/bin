@@ -22,6 +22,8 @@ export default interface ApprovalStepSubmission {
   id: string;
   stepId: string;
   createdAt: Date;
+  createdBy: string | null;
+  deletedAt: Date | null;
   artifactType: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
   collaboratorId: string | null;
@@ -33,6 +35,8 @@ export interface ApprovalStepSubmissionRow {
   id: string;
   step_id: string;
   created_at: Date;
+  created_by: string | null;
+  deleted_at: Date | null;
   artifact_type: ApprovalStepSubmissionArtifactType;
   state: ApprovalStepSubmissionState;
   collaborator_id: string | null;

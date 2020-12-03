@@ -2,7 +2,7 @@ import Knex from "knex";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
-import { authHeader, get, patch, post } from "../../test-helpers/http";
+import { authHeader, get, patch, post, del } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
@@ -22,6 +22,7 @@ import User from "../users/types";
 import { CollaboratorWithUser } from "../../components/collaborators/types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
+import SessionsDAO from "../../dao/sessions";
 import { DesignEventWithMeta } from "../../published-types";
 import * as IrisService from "../iris/send-message";
 import { templateDesignEventWithMeta } from "../design-events/types";
@@ -300,6 +301,8 @@ test("POST /design-approval-step-submissions?stepId=:stepId", async (t: Test) =>
   t.is(body.title, "Submarine");
   t.is(body.state, "UNSUBMITTED");
   t.is(body.stepId, steps[1].id);
+  t.is(body.createdBy, designer.user.id, "Creator is defined");
+  t.is(body.deletedAt, null);
 });
 
 test("POST /design-approval-step-submissions/:submissionId/approvals", async (t: Test) => {
@@ -589,4 +592,548 @@ test("POST /design-approval-step-submissions/:submissionId/re-review-requests", 
       NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST
     );
   });
+});
+
+test("DELETE /design-approval-step-submissions as unauthenticated user", async (t: Test) => {
+  sandbox().stub(SessionsDAO, "findById").resolves(null);
+
+  const [unauthenticated] = await del(
+    "/design-approval-step-submissions/a-submission-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+
+  t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+});
+
+test("DELETE /design-approval-step-submissions as authenticated user who is not a collaborator", async (t: Test) => {
+  const { submission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+  const user = await createUser({ role: "USER" });
+
+  const [unauthenticated] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(user.session.id),
+    }
+  );
+
+  t.equal(
+    unauthenticated.status,
+    403,
+    "Does not allow for user who is not a collaborator"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success for clean submission without collaborator, team user and with default state as admin", async (t: Test) => {
+  const { submission, approvalStep } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+  const admin = await createUser({ role: "ADMIN" });
+
+  const [getSubmissionsResponse, getSubmissionsBody] = await get(
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.is(getSubmissionsResponse.status, 200);
+  t.is(getSubmissionsBody.length, 1);
+  t.equal(
+    getSubmissionsBody[0].id,
+    submission.id,
+    "returns saved submission before deletion"
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete a clean submission as admin, "
+  );
+
+  const [
+    submissionsAfterDeleteResponse,
+    submissionsAfterDeleteBody,
+  ] = await get(`/design-approval-step-submissions?stepId=${approvalStep.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.is(submissionsAfterDeleteResponse.status, 200);
+  t.is(
+    submissionsAfterDeleteBody.length,
+    0,
+    "Doesn't return deleted submissions"
+  );
+
+  const [deleteAlreadyDeletedResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    deleteAlreadyDeletedResponse.status,
+    404,
+    "Cannot delete submission which is not exist"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success as collaborator with EDIT role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const collabEditor = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabEditor.user.id,
+        role: "EDIT",
+      },
+      trx
+    )
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete submission for collaborator with edit permissions"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success for clean submission as creator with VIEW role", async (t: Test) => {
+  const { approvalStep, design } = await setupSubmission();
+
+  const collabCreator = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabCreator.user.id,
+        role: "VIEW",
+      },
+      trx
+    )
+  );
+
+  const [createSubmissionResponse, createSubmissionBody] = await post(
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+      body: {
+        id: uuid.v4(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        title: "Submarine",
+      },
+    }
+  );
+
+  t.equal(
+    createSubmissionResponse.status,
+    200,
+    "Submission created by collaborator with VIEW role"
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${createSubmissionBody.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete a clean submission as creator with VIEW role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success for clean submission as creator with PREVIEW role", async (t: Test) => {
+  const { approvalStep, design } = await setupSubmission();
+
+  const collabCreator = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabCreator.user.id,
+        role: "PREVIEW",
+      },
+      trx
+    )
+  );
+
+  const [createSubmissionResponse, createSubmissionBody] = await post(
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+      body: {
+        id: uuid.v4(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        title: "Submarine",
+      },
+    }
+  );
+
+  t.equal(
+    createSubmissionResponse.status,
+    200,
+    "Submission created by collaborator with PREVIEW role"
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${createSubmissionBody.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete a clean submission as creator with PREVIEW role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success for clean submission as creator with PARTNER role", async (t: Test) => {
+  const { approvalStep, design } = await setupSubmission();
+
+  const collabCreator = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabCreator.user.id,
+        role: "PARTNER",
+      },
+      trx
+    )
+  );
+
+  const [createSubmissionResponse, createSubmissionBody] = await post(
+    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+      body: {
+        id: uuid.v4(),
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+        title: "Submarine",
+      },
+    }
+  );
+
+  t.equal(
+    createSubmissionResponse.status,
+    200,
+    "Submission created by collaborator with PARTNER role"
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${createSubmissionBody.id}`,
+    {
+      headers: authHeader(collabCreator.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete a clean submission as creator with PARTNER role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fail to delete someone else's submission for collaborator with VIEW role", async (t: Test) => {
+  const { design, submission } = await setupSubmission();
+
+  const collabCreator = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabCreator.user.id,
+        role: "VIEW",
+      },
+      trx
+    )
+  );
+
+  const collabViewer = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabViewer.user.id,
+        role: "VIEW",
+      },
+      trx
+    )
+  );
+
+  const [deleteResponse, deleteBody] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabViewer.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    403,
+    "Don't allow to delete someone else's submission for collaborator with VIEW role"
+  );
+
+  t.equal(
+    deleteBody.message,
+    "To delete the submission the user should be a creator of submission, collaborator of the design with edit permissions or an admin"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fails to delete someone else's submission as collaborator with PREVIEW role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const collabEditor = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabEditor.user.id,
+        role: "PREVIEW",
+      },
+      trx
+    )
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    403,
+    "Don't allow to delete someone else's submission for collaborator with PREVIEW role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fails to delete someone else's submission as collaborator with PARTNER role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const collabEditor = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabEditor.user.id,
+        role: "PARTNER",
+      },
+      trx
+    )
+  );
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    403,
+    "Don't allow to delete someone else's submission for collaborator with PARTNER role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fail for submission with collaborator assignee", async (t: Test) => {
+  const { submission, collaborator } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+  const admin = await createUser({ role: "ADMIN" });
+
+  await patch(`/design-approval-step-submissions/${submission.id}`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      collaboratorId: collaborator.id,
+    },
+  });
+
+  const [deleteResponse, deleteBody] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    400,
+    "Deletion is not possible for submission with assignee"
+  );
+
+  t.equal(
+    deleteBody.message,
+    "Submission deleting is allowed only for submission without assignee"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fail for submission with team user assignee", async (t: Test) => {
+  const { user } = await createUser();
+  const { teamUser } = await generateTeam(user.id);
+  const { submission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: teamUser.id,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+  const admin = await createUser({ role: "ADMIN" });
+
+  const [deleteResponse, deleteBody] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    400,
+    "Deletion is not possible for submission with team user assignee"
+  );
+
+  t.equal(
+    deleteBody.message,
+    "Submission deleting is allowed only for submission without assignee"
+  );
+});
+
+test("DELETE /design-approval-step-submissions fail for submission with changed state", async (t: Test) => {
+  const admin = await createUser({ role: "ADMIN" });
+
+  const { submission: submittedSubmission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.SUBMITTED,
+  });
+
+  const [
+    deleteSubmittedSubmissionResponse,
+    deleteSubmittedSubmissionBody,
+  ] = await del(`/design-approval-step-submissions/${submittedSubmission.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.equal(
+    deleteSubmittedSubmissionResponse.status,
+    400,
+    "Deletion is not possible for submission with SUMBITTED state"
+  );
+
+  const expectedErrorMessage =
+    "Submission deleting is allowed only for submission with UNSUBMITTED state";
+  t.equal(deleteSubmittedSubmissionBody.message, expectedErrorMessage);
+
+  const { submission: approvedSubmission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.APPROVED,
+  });
+
+  const [
+    deleteApprovedSubmissionResponse,
+    deleteApprovedSubmissionBody,
+  ] = await del(`/design-approval-step-submissions/${approvedSubmission.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.equal(
+    deleteApprovedSubmissionResponse.status,
+    400,
+    "Deletion is not possible for submission with APPROVED state"
+  );
+
+  t.equal(deleteApprovedSubmissionBody.message, expectedErrorMessage);
+
+  const { submission: revisionRequestedSubmission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.REVISION_REQUESTED,
+  });
+
+  const [
+    deleteRevisionRequestedSubmissionResponse,
+    deleteRevisionRequestedSubmissionBody,
+  ] = await del(
+    `/design-approval-step-submissions/${revisionRequestedSubmission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    deleteRevisionRequestedSubmissionResponse.status,
+    400,
+    "Deletion is not possible for submission with APPROVED state"
+  );
+
+  t.equal(deleteRevisionRequestedSubmissionBody.message, expectedErrorMessage);
+
+  const { submission: skippedSubmission } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.SKIPPED,
+  });
+
+  const [
+    deleteSkippedSubmissionResponse,
+    deleteSkippedSubmissionBody,
+  ] = await del(`/design-approval-step-submissions/${skippedSubmission.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.equal(
+    deleteSkippedSubmissionResponse.status,
+    400,
+    "Deletion is not possible for submission with SKIPPED state"
+  );
+
+  t.equal(deleteSkippedSubmissionBody.message, expectedErrorMessage);
 });

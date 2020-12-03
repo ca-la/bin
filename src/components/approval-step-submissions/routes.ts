@@ -36,6 +36,8 @@ import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
 import Comment from "../comments/types";
 import { RouteUpdated } from "../../services/pubsub/cala-events";
+import filterError from "../../services/filter-error";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const router = new Router();
 
@@ -228,6 +230,7 @@ export function* createApprovalSubmission(
   this: AuthedContext
 ): Iterator<any, any, any> {
   const { stepId }: GetApprovalSubmissionsQuery = this.query;
+  const { userId } = this.state;
 
   const [approvalSubmission] = yield db.transaction(
     async (trx: Knex.Transaction) => {
@@ -235,12 +238,55 @@ export function* createApprovalSubmission(
         {
           ...((this.request.body as unknown) as ApprovalStepSubmission),
           stepId,
+          createdBy: userId,
+          deletedAt: null,
         },
       ]);
     }
   );
   this.body = approvalSubmission;
   this.status = 200;
+}
+
+export function* deleteApprovalSubmission(
+  this: TrxContext<
+    AuthedContext<
+      { collaboratorId?: string | null; teamUserId?: string | null },
+      PermittedState & SubmissionState & DesignIdState
+    >
+  >
+): Iterator<any, any, any> {
+  const { submission, permissions, role, trx } = this.state;
+
+  const isAdmin = role === "ADMIN";
+  const isCreator = submission.createdBy === this.state.userId;
+  this.assert(
+    isAdmin || isCreator || permissions.canDelete,
+    403,
+    "To delete the submission the user should be a creator of submission, collaborator of the design with edit permissions or an admin"
+  );
+
+  if (submission.state !== ApprovalStepSubmissionState.UNSUBMITTED) {
+    this.throw(
+      400,
+      `Submission deleting is allowed only for submission with ${ApprovalStepSubmissionState.UNSUBMITTED} state`
+    );
+  }
+
+  if (submission.collaboratorId !== null || submission.teamUserId !== null) {
+    this.throw(
+      400,
+      "Submission deleting is allowed only for submission without assignee"
+    );
+  }
+
+  yield ApprovalSubmissionsDAO.deleteById(trx, submission.id).catch(
+    filterError(ResourceNotFoundError, () => {
+      this.throw(404, `Submission not found with id ${submission.id}`);
+    })
+  );
+
+  this.status = 204;
 }
 
 const ALLOWED_UPDATE_KEYS = ["collaboratorId", "teamUserId"];
@@ -539,6 +585,22 @@ router.post(
   ),
   canAccessDesignInState,
   createApprovalSubmission
+);
+
+router.del(
+  "/:submissionId",
+  requireAuth,
+  injectSubmission,
+  requireDesignIdBy<{}, SubmissionState>(
+    getDesignIdFromStep<SubmissionState>(function (
+      this: SubmissionStateContext
+    ): string {
+      return this.state.submission.stepId;
+    })
+  ),
+  canAccessDesignInState,
+  useTransaction,
+  deleteApprovalSubmission
 );
 
 export default router.routes();

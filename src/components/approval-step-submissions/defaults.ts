@@ -199,6 +199,8 @@ export async function getDefaultsByDesign(
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     ...sub,
     createdAt: new Date(now.getTime() + index),
+    createdBy: null,
+    deletedAt: null,
   }));
 }
 

@@ -14,7 +14,7 @@ interface ApprovalStepSubmissionWithResources {
 
 export default async function generateApprovalSubmission(
   trx: Knex.Transaction,
-  options: Partial<ApprovalStepSubmission & { createdBy?: string }> = {}
+  options: Partial<ApprovalStepSubmission> = {}
 ): Promise<ApprovalStepSubmissionWithResources> {
   const stepId =
     options.stepId || (await generateApprovalStep(trx)).approvalStep.id;
@@ -31,6 +31,8 @@ export default async function generateApprovalSubmission(
       title: "A submission",
       id: options.id || uuid.v4(),
       state: options.state || ApprovalStepSubmissionState.UNSUBMITTED,
+      createdBy: null,
+      deletedAt: null,
       stepId,
       ...options,
     },

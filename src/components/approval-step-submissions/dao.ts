@@ -6,6 +6,8 @@ import ApprovalStepSubmission, {
 } from "./types";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import first from "../../services/first";
 
 const TABLE_NAME = "design_approval_submissions";
 
@@ -15,7 +17,6 @@ const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
   adapter,
   {
     orderColumn: "created_at",
-    excludeDeletedAt: false,
   }
 );
 
@@ -35,6 +36,7 @@ export const dao = {
         )
         .where({
           "design_approval_steps.design_id": designId,
+          "design_approval_submissions.deleted_at": null,
         })
     );
   },
@@ -43,6 +45,22 @@ export const dao = {
     stepId: string
   ): Promise<ApprovalStepSubmission[]> {
     return standardDao.find(trx, { stepId });
+  },
+  async deleteById(
+    trx: Knex.Transaction,
+    id: string
+  ): Promise<ApprovalStepSubmission> {
+    const deleted: ApprovalStepSubmissionRow = await trx
+      .from(TABLE_NAME)
+      .where({ id, deleted_at: null })
+      .update({ deleted_at: new Date().toISOString() }, "*")
+      .then(first);
+
+    if (!deleted) {
+      throw new ResourceNotFoundError(`Submission "${id}" could not be found.`);
+    }
+
+    return adapter.fromDb(deleted);
   },
 };
 
@@ -55,4 +73,5 @@ export const {
   update,
   findByDesign,
   findByStep,
+  deleteById,
 } = dao;
