@@ -19,7 +19,7 @@ import { TeamUserRole } from "../../published-types";
 import { BidTaskTypeId } from "../bid-task-types/types";
 
 import * as ParticipantsDAO from "./dao";
-import { bidToTeam } from "../../test-helpers/factories/bid";
+import { bidDesign } from "../../test-helpers/factories/bid";
 
 const createUser = (name: string, role: UserRole = "USER") =>
   UsersDAO.create({
@@ -37,6 +37,7 @@ async function setup() {
   const user3 = await createUser("Collection Collaborator");
   const user4 = await createUser("Cancelled Collection Collaborator");
   const user5 = await createUser("Cancelled Design Collaborator");
+  const user6 = await createUser("Quality Control Partner", "PARTNER");
   const teamAdmin = await createUser("Team Admin");
   const teamViewer = await createUser("Team Viewer");
   const partnerTeamAdmin = await createUser("Partner Team Admin", "PARTNER");
@@ -193,20 +194,30 @@ async function setup() {
     userId: null,
   });
 
-  const bid = await bidToTeam({
+  const { bid: teamBid, quote } = await bidDesign({
     actorId: ops.id,
+    targetId: null,
     targetTeamId: partnerTeam.id,
     designId: design.id,
     bidTaskTypeIds: [BidTaskTypeId.PRODUCTION, BidTaskTypeId.TECHNICAL_DESIGN],
   });
-  // Accept Bid
+  const { bid: partnerBid } = await bidDesign({
+    actorId: ops.id,
+    quoteId: quote.id,
+    targetId: user6.id,
+    targetTeamId: null,
+    designId: design.id,
+    bidTaskTypeIds: [BidTaskTypeId.QUALITY_CONTROL],
+  });
+
+  // Accept Team Bid
   await db.transaction((trx: Knex.Transaction) =>
     DesignEventsDAO.create(trx, {
       ...templateDesignEvent,
       type: "ACCEPT_SERVICE_BID",
-      actorId: ops.id,
+      actorId: partnerTeamAdmin.id,
       designId: design.id,
-      bidId: bid.id,
+      bidId: teamBid.id,
       id: uuid.v4(),
       createdAt: new Date(),
       targetTeamId: partnerTeam.id,
@@ -221,6 +232,30 @@ async function setup() {
     userEmail: null,
     userId: null,
     teamId: partnerTeam.id,
+  });
+
+  // Accept Partner Bid
+  await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      type: "ACCEPT_SERVICE_BID",
+      actorId: user6.id,
+      designId: design.id,
+      bidId: partnerBid.id,
+      id: uuid.v4(),
+      createdAt: new Date(),
+      targetTeamId: null,
+    })
+  );
+  const { collaborator: partnerCollaborator } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    cancelledAt: null,
+    invitationMessage: "",
+    role: "PARTNER",
+    userEmail: null,
+    userId: user6.id,
+    teamId: null,
   });
 
   return {
@@ -238,6 +273,7 @@ async function setup() {
       cancelledDesignCollaborator,
       teamCollaborator,
       nonUserCollaborator,
+      partnerCollaborator,
     },
     teamUsers: {
       partnerTeam: partnerAdminTeamUser,
@@ -247,7 +283,7 @@ async function setup() {
       deletedUser: deletedTeamUser,
       deletedPartnerUser: deletedPartnerTeamUser,
     },
-    users: [user, user2, user3, user4, user5],
+    users: [user, user2, user3, user4, user5, user6],
   };
 }
 
@@ -303,6 +339,14 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
           role: "PARTNER",
           userId: state.teamUsers.partnerTeam.userId,
           bidTaskTypes: ["Production", "Technical Design"],
+        },
+        {
+          type: MentionType.COLLABORATOR,
+          id: state.collaborators.partnerCollaborator.id,
+          displayName: "Quality Control Partner",
+          role: "PARTNER",
+          userId: state.users[5].id,
+          bidTaskTypes: ["Quality Control"],
         },
         {
           type: MentionType.TEAM_USER,

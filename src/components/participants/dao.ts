@@ -14,7 +14,7 @@ const bidTaskTypeSubquery = (trx: Knex.Transaction, designId: string) =>
       "bid_task_types.pricing_bid_id"
     )
     .where({
-      "design_events.type": "ACCEPT_SERVICE_BID",
+      "design_events.type": "BID_DESIGN",
       "design_events.design_id": designId,
     })
     .andWhere((subquery: Knex.QueryBuilder) =>

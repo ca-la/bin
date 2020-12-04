@@ -108,52 +108,62 @@ export default async function generateBid({
   return { bid, quote, user };
 }
 
-export async function bidToTeam({
+export async function bidDesign({
   actorId,
+  targetId,
   targetTeamId,
   designId,
   bidTaskTypeIds,
+  quoteId = null,
   now = new Date(),
 }: {
   actorId: string;
-  targetTeamId: string;
+  targetId: string | null;
+  targetTeamId: string | null;
   designId: string;
   bidTaskTypeIds: BidTaskTypeId[];
+  quoteId?: string | null;
   now?: Date;
 }) {
   await generatePricingValues();
-  const quote = await generatePricingQuote(
-    {
-      createdAt: now,
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
+  const quote = quoteId
+    ? await PricingQuotesDAO.findById(quoteId)
+    : await generatePricingQuote(
         {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
+          createdAt: now,
+          deletedAt: null,
+          expiresAt: null,
+          id: uuid.v4(),
+          minimumOrderQuantity: 1,
+          designId,
+          materialBudgetCents: 1200,
+          materialCategory: "BASIC",
+          processes: [
+            {
+              complexity: "1_COLOR",
+              name: "SCREEN_PRINTING",
+            },
+            {
+              complexity: "1_COLOR",
+              name: "SCREEN_PRINTING",
+            },
+          ],
+          productComplexity: "SIMPLE",
+          productType: "TEESHIRT",
+          processTimelinesVersion: 0,
+          processesVersion: 0,
+          productMaterialsVersion: 0,
+          productTypeVersion: 0,
+          marginVersion: 0,
+          constantsVersion: 0,
+          careLabelsVersion: 0,
         },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    200
-  );
+        200
+      );
+  if (!quote) {
+    throw new Error("Could not find or create quote when bidding");
+  }
+
   return db.transaction(async (trx: Knex.Transaction) => {
     const bid = await BidsDAO.create(trx, {
       revenueShareBasisPoints: 10,
@@ -175,12 +185,12 @@ export async function bidToTeam({
       actorId,
       designId,
       bidId: bid.id,
-      targetId: null,
+      targetId,
       targetTeamId,
       id: uuid.v4(),
       createdAt: now,
     });
 
-    return bid;
+    return { bid, quote };
   });
 }
