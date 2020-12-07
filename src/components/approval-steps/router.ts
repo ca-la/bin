@@ -13,7 +13,7 @@ import {
   requireDesignIdBy,
 } from "../../middleware/can-access-design";
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
-import { CommentWithResources } from "@cala/ts-lib";
+import { CommentWithResources } from "../comments/types";
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { DesignEventWithMeta } from "../design-events/types";

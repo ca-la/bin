@@ -176,7 +176,17 @@ export async function getAllByDesignInclude(
         ...acc,
         [node.id]: {
           layout: layoutsForNode ? layoutsForNode[0] : null,
-          image: imagesForNode ? imagesForNode[0] : null,
+          image: imagesForNode
+            ? {
+                ...imagesForNode[0],
+                asset: {
+                  ...imagesForNode[0].asset,
+                  originalWidthPx: imagesForNode[0].asset.originalWidthPx || 0,
+                  originalHeightPx:
+                    imagesForNode[0].asset.originalHeightPx || 0,
+                },
+              }
+            : null,
         },
       };
     },

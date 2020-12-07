@@ -1,10 +1,9 @@
-import { Asset } from "@cala/ts-lib/dist/assets";
 import DataAdapter from "../../services/data-adapter";
 import {
   hasProperties,
   hasSomeProperties,
 } from "../../services/require-properties";
-import { AssetRow } from "./types";
+import Asset, { AssetRow } from "./types";
 
 export const dataAdapter = new DataAdapter<AssetRow, Asset>(
   toData,
@@ -17,8 +16,8 @@ export function toInsertion(data: Asset): AssetRow {
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
-    original_height_px: String(data.originalHeightPx),
-    original_width_px: String(data.originalWidthPx),
+    original_height_px: data.originalHeightPx,
+    original_width_px: data.originalWidthPx,
     title: data.title,
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
@@ -33,12 +32,8 @@ export function toPartialInsertion(data: Partial<Asset>): Partial<AssetRow> {
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
-    original_height_px: data.originalHeightPx
-      ? String(data.originalHeightPx)
-      : undefined,
-    original_width_px: data.originalWidthPx
-      ? String(data.originalWidthPx)
-      : undefined,
+    original_height_px: data.originalHeightPx,
+    original_width_px: data.originalWidthPx,
     title: data.title,
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
@@ -53,8 +48,8 @@ export function toData(row: AssetRow): Asset {
     description: row.description,
     id: row.id,
     mimeType: row.mime_type,
-    originalHeightPx: Number(row.original_height_px),
-    originalWidthPx: Number(row.original_width_px),
+    originalHeightPx: row.original_height_px,
+    originalWidthPx: row.original_width_px,
     title: row.title,
     uploadCompletedAt: row.upload_completed_at
       ? new Date(row.upload_completed_at)

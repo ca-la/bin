@@ -1,7 +1,6 @@
 import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
-import { Asset } from "@cala/ts-lib/dist/assets";
 import { omit, pick } from "lodash";
 
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
@@ -38,6 +37,7 @@ import Comment from "../comments/types";
 import { RouteUpdated } from "../../services/pubsub/cala-events";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
+import Asset from "../assets/types";
 
 const router = new Router();
 

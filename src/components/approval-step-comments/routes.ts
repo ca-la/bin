@@ -1,5 +1,3 @@
-import { BaseComment } from "@cala/ts-lib";
-import { Asset } from "@cala/ts-lib/dist/assets";
 import { pick } from "lodash";
 import Router from "koa-router";
 
@@ -17,6 +15,8 @@ import {
 } from "../../services/add-at-mention-details";
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import useTransaction from "../../middleware/use-transaction";
+import { Asset } from "../assets/types";
+import { BaseComment } from "../comments/types";
 
 const router = new Router();
 

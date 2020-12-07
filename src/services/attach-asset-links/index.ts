@@ -91,8 +91,8 @@ async function getLink(component: Component): Promise<AssetLinks> {
     fileType: "",
     thumbnail2xLink: null,
     thumbnailLink: null,
-    originalWidthPx: 0,
-    originalHeightPx: 0,
+    originalWidthPx: null,
+    originalHeightPx: null,
   };
 }
 

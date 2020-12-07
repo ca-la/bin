@@ -3,6 +3,7 @@ import uuid from "node-uuid";
 import { test, Test } from "../../test-helpers/fresh";
 import * as AssetsDAO from "./dao";
 import createUser = require("../../test-helpers/create-user");
+import Asset from "./types";
 
 test("AssetsDAO returns null if there is no file in the db", async (t: Test) => {
   const randomId = uuid.v4();
@@ -41,6 +42,27 @@ test("AssetsDAO supports creation", async (t: Test) => {
     },
     "Returns the newly created row"
   );
+  t.deepEqual(created, found, "Returns the same row");
+});
+
+test("AssetsDAO supports creation with null dimensions", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const id = uuid.v4();
+  const asset: Asset = {
+    createdAt: new Date("2020-02-24"),
+    description: null,
+    id,
+    mimeType: "text/csv",
+    originalHeightPx: null,
+    originalWidthPx: null,
+    title: "report",
+    uploadCompletedAt: null,
+    userId: user.id,
+  };
+  const created = await AssetsDAO.create(asset);
+
+  const found = await AssetsDAO.findById(id);
+  t.deepEqual(created, asset, "Returns the newly created row");
   t.deepEqual(created, found, "Returns the same row");
 });
 

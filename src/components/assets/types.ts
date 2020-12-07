@@ -4,8 +4,8 @@ export interface AssetLinks {
   fileType: string;
   thumbnail2xLink: string | null;
   thumbnailLink: string | null;
-  originalWidthPx: number;
-  originalHeightPx: number;
+  originalWidthPx: number | null;
+  originalHeightPx: number | null;
 }
 
 export interface Asset {
@@ -13,8 +13,8 @@ export interface Asset {
   description: string | null;
   id: string;
   mimeType: string;
-  originalHeightPx: number;
-  originalWidthPx: number;
+  originalHeightPx: number | null;
+  originalWidthPx: number | null;
   title: string | null;
   uploadCompletedAt: Date | null;
   userId: string | null;
@@ -69,8 +69,8 @@ export interface AssetRow {
   description: string | null;
   id: string;
   mime_type: string;
-  original_height_px: string;
-  original_width_px: string;
+  original_height_px: number | null;
+  original_width_px: number | null;
   title: string | null;
   upload_completed_at: string | null;
   user_id: string | null;

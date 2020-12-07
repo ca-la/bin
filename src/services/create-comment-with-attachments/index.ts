@@ -1,5 +1,6 @@
 import Knex = require("knex");
-import { BaseComment } from "@cala/ts-lib";
+
+import { BaseComment } from "../../components/comments/types";
 import * as CommentsDAO from "../../components/comments/dao";
 import * as AssetsDAO from "../../components/assets/dao";
 import * as CommentAttachmentsDAO from "../../components/comment-attachments/dao";
