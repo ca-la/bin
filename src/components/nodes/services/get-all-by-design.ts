@@ -14,7 +14,7 @@ import {
 import Node from "../domain-objects";
 import MaterialAttribute from "../../attributes/material-attributes/domain-objects";
 import ImageAttribute from "../../attributes/image-attributes/domain-objects";
-import Asset from "../../assets/types";
+import Asset, { AssetLinks } from "../../assets/types";
 import MaterialAttributeWithAsset from "../../attributes/material-attributes/domain-objects/with-asset";
 import ImageAttributeWithAsset from "../../attributes/image-attributes/domain-objects/with-asset";
 import { findNodeTrees, findRootNodesByDesign } from "../dao";
@@ -22,10 +22,7 @@ import { findAllByNodes as findAllMaterials } from "../../attributes/material-at
 import { findAllByNodes as findAllLayouts } from "../../attributes/layout-attributes/dao";
 import { findAllByNodes as findAllImages } from "../../attributes/image-attributes/dao";
 
-import {
-  AssetLinks,
-  getLinksForAsset,
-} from "../../../services/attach-asset-links";
+import { getLinksForAsset } from "../../../services/attach-asset-links";
 import LayoutAttribute from "../../attributes/layout-attributes/domain-object";
 
 interface AssetWithLinks extends Asset {

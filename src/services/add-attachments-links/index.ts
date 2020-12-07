@@ -1,9 +1,6 @@
 import Comment from "../../components/comments/types";
-import {
-  AssetLinks,
-  constructAttachmentAssetLinks,
-} from "../attach-asset-links";
-import Asset from "../../components/assets/types";
+import { constructAttachmentAssetLinks } from "../attach-asset-links";
+import Asset, { AssetLinks } from "../../components/assets/types";
 
 export interface CommentWithAttachmentLinks extends Comment {
   attachments: (Asset & AssetLinks)[];

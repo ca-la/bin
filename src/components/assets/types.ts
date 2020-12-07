@@ -4,7 +4,10 @@ export interface AssetLinks {
   fileType: string;
   thumbnail2xLink: string | null;
   thumbnailLink: string | null;
+  originalWidthPx: number;
+  originalHeightPx: number;
 }
+
 export interface Asset {
   createdAt: Date;
   description: string | null;

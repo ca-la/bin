@@ -128,6 +128,8 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
           fileType: "png",
           thumbnail2xLink: "https://foo.bar/test-small/2x.png",
           thumbnailLink: "https://foo.bar/test-small.png",
+          originalWidthPx: 640,
+          originalHeightPx: 480,
         };
       }
     );
@@ -207,7 +209,9 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
       "downloadLink",
       "thumbnail2xLink",
       "thumbnailLink",
-      "fileType"
+      "fileType",
+      "originalHeightPx",
+      "originalWidthPx"
     ),
     omit(component, "image")
   );
@@ -434,6 +438,8 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
     fileType: "png",
     thumbnail2xLink: "https://foo.bar/test-small/2x.png",
     thumbnailLink: "https://foo.bar/test-small.png",
+    originalWidthPx: 640,
+    originalHeightPx: 480,
   };
   sandbox()
     .stub(EnrichmentService, "addAssetLink")
