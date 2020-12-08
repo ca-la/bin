@@ -7,6 +7,7 @@ import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import TeamsDAO from "../teams/dao";
 import { TeamType } from "../teams/types";
 import { Role } from "./types";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const testDate = new Date(2012, 11, 25);
 
@@ -281,6 +282,102 @@ test("TeamUsersDAO.findByUserAndTeam", async (t: Test) => {
       { ...teamUser, user, deletedAt: testDate },
       "finds deleted TeamUser"
     );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("TeamUsersDAO.transferOwnership", async (t: Test) => {
+  const { user: u0 } = await createUser({ withSession: false });
+  const { user: u1 } = await createUser({ withSession: false });
+  const { user: u2 } = await createUser({ withSession: false });
+  const trx = await db.transaction();
+
+  try {
+    const team = await TeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "Test Team",
+      createdAt: testDate,
+      deletedAt: null,
+      type: TeamType.DESIGNER,
+    });
+
+    const oldOwner = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: u0.id,
+      userEmail: null,
+      teamId: team.id,
+      role: Role.OWNER,
+      createdAt: new Date(2012, 11, 21),
+      deletedAt: null,
+      updatedAt: new Date(2012, 11, 21),
+    });
+
+    const rando = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: u1.id,
+      userEmail: null,
+      teamId: team.id,
+      role: Role.EDITOR,
+      createdAt: new Date(2012, 11, 22),
+      deletedAt: null,
+      updatedAt: new Date(2012, 11, 22),
+    });
+
+    const newOwner = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: u2.id,
+      userEmail: null,
+      teamId: team.id,
+      role: Role.VIEWER,
+      createdAt: new Date(2012, 11, 23),
+      deletedAt: null,
+      updatedAt: new Date(2012, 11, 23),
+    });
+
+    const invited = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "invited@example.com",
+      teamId: team.id,
+      role: Role.EDITOR,
+      createdAt: new Date(2012, 11, 24),
+      deletedAt: null,
+      updatedAt: new Date(2012, 11, 24),
+    });
+
+    await TeamUsersDAO.transferOwnership(trx, newOwner.id);
+
+    t.deepEqual(
+      await RawTeamUsersDAO.find(trx, { teamId: team.id }),
+      [
+        { ...oldOwner, role: Role.ADMIN },
+        rando,
+        { ...newOwner, role: Role.OWNER },
+        invited,
+      ],
+      "sets new owner and makes old owner an admin"
+    );
+
+    try {
+      await TeamUsersDAO.transferOwnership(trx, uuid.v4());
+      t.fail("missing users should reject");
+    } catch (err) {
+      t.true(
+        err instanceof ResourceNotFoundError,
+        "rejects when attempting to set on unknown user"
+      );
+    }
+
+    try {
+      await TeamUsersDAO.transferOwnership(trx, invited.id);
+      t.fail("Invited members should not be set to owner");
+    } catch (err) {
+      t.true(
+        err instanceof ResourceNotFoundError,
+        "rejects when attempting to set on invited user"
+      );
+    }
   } finally {
     await trx.rollback();
   }

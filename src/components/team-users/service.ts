@@ -13,6 +13,7 @@ import UnauthorizedError from "../../errors/unauthorized";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
+    TeamUserRole.OWNER,
     TeamUserRole.ADMIN,
     TeamUserRole.EDITOR,
     TeamUserRole.VIEWER,
@@ -111,13 +112,24 @@ export async function updateTeamUser(
   actorTeamRole: TeamUserRole,
   patch: TeamUserUpdate
 ): Promise<TeamUser> {
-  if (!allowedRolesMap[actorTeamRole].includes(patch.role)) {
-    throw new UnauthorizedError(
-      "You cannot update a user with the specified role"
-    );
-  }
+  for (const keyToUpdate of Object.keys(patch) as (keyof TeamUserUpdate)[]) {
+    switch (keyToUpdate) {
+      case "role": {
+        const { role } = patch;
+        if (!allowedRolesMap[actorTeamRole].includes(role)) {
+          throw new UnauthorizedError(
+            "You cannot update a user with the specified role"
+          );
+        }
 
-  await RawTeamUsersDAO.update(trx, teamUserId, patch);
+        if (role === TeamUserRole.OWNER) {
+          await TeamUsersDAO.transferOwnership(trx, teamUserId);
+        } else {
+          await RawTeamUsersDAO.update(trx, teamUserId, { role });
+        }
+      }
+    }
+  }
 
   const updated = await TeamUsersDAO.findById(trx, teamUserId);
   if (!updated) {

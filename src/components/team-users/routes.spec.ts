@@ -50,6 +50,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     updateStub: sandbox()
       .stub(RawTeamUsersDAO, "update")
       .resolves({ before: tuDb1, updated: tuDb1 }),
+    transferOwnershipStub: sandbox()
+      .stub(TeamUsersDAO, "transferOwnership")
+      .resolves(),
     deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
   };
 }
@@ -268,7 +271,7 @@ test("PATCH /team-users/:id: invalid role", async (t: Test) => {
     },
   });
 
-  t.equal(response.status, 403, "Responds with success");
+  t.equal(response.status, 403, "Responds with forbidden status");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
 });
 
@@ -282,12 +285,16 @@ test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
     },
   });
 
-  t.equal(response.status, 403, "Responds with success");
+  t.equal(response.status, 403, "Responds with forbidden status");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
 });
 
-test("PATCH /team-users/:id: cannot upgrade to owner", async (t: Test) => {
-  const { updateStub } = setup();
+test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test) => {
+  const { findActorTeamUserStub, updateStub, transferOwnershipStub } = setup();
+  findActorTeamUserStub.resolves({
+    id: "a-team-owner",
+    role: TeamUserRole.ADMIN,
+  });
   const [response] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -295,8 +302,35 @@ test("PATCH /team-users/:id: cannot upgrade to owner", async (t: Test) => {
     },
   });
 
-  t.equal(response.status, 403, "Responds with success");
-  t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+  t.equal(response.status, 403, "Responds with forbidden status");
+  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(
+    transferOwnershipStub.callCount,
+    0,
+    "Does not call special transfer ownership method"
+  );
+});
+
+test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test) => {
+  const { findActorTeamUserStub, updateStub, transferOwnershipStub } = setup();
+  findActorTeamUserStub.resolves({
+    id: "a-team-owner",
+    role: TeamUserRole.OWNER,
+  });
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "OWNER",
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(
+    transferOwnershipStub.callCount,
+    1,
+    "Calls the special transfer ownership method"
+  );
 });
 
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {

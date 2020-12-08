@@ -2,8 +2,15 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import { buildDao } from "../../services/cala-component/cala-dao";
-import { TeamUserDb, TeamUserDbRow, TeamUser, TeamUserRow } from "./types";
+import {
+  TeamUserDb,
+  TeamUserDbRow,
+  TeamUser,
+  TeamUserRow,
+  Role as TeamUserRole,
+} from "./types";
 import adapter, { rawAdapter } from "./adapter";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const TABLE_NAME = "team_users";
 
@@ -12,7 +19,7 @@ const rawStandardDao = buildDao<TeamUserDb, TeamUserDbRow>(
   TABLE_NAME,
   rawAdapter,
   {
-    orderColumn: "user_id",
+    orderColumn: "created_at",
   }
 );
 
@@ -66,7 +73,7 @@ function deleteById(trx: Knex.Transaction, teamUserId: string) {
     .where({ id: teamUserId });
 }
 
-export async function claimAllByEmail(
+async function claimAllByEmail(
   trx: Knex.Transaction,
   email: string,
   userId: string
@@ -78,7 +85,7 @@ export async function claimAllByEmail(
   return rows.map(rawAdapter.fromDb);
 }
 
-export async function findByUserAndTeam(
+async function findByUserAndTeam(
   trx: Knex.Transaction,
   {
     userId,
@@ -99,9 +106,33 @@ export async function findByUserAndTeam(
   return found ? adapter.fromDb(found) : null;
 }
 
+async function transferOwnership(trx: Knex.Transaction, newOwnerId: string) {
+  const maybeTeam = await trx(TABLE_NAME)
+    .select<{ team_id: string }>("team_id")
+    .where({ id: newOwnerId })
+    .andWhereNot({ user_id: null })
+    .first();
+
+  if (!maybeTeam) {
+    throw new ResourceNotFoundError(
+      `Could not find team user with ID ${newOwnerId}`
+    );
+  }
+
+  const { team_id: teamId } = maybeTeam;
+
+  await trx(TABLE_NAME)
+    .update({ role: TeamUserRole.ADMIN })
+    .where({ team_id: teamId, role: TeamUserRole.OWNER });
+  await trx(TABLE_NAME)
+    .update({ role: TeamUserRole.OWNER })
+    .where({ team_id: teamId, id: newOwnerId });
+}
+
 export default {
   ...dao,
   deleteById,
   claimAllByEmail,
   findByUserAndTeam,
+  transferOwnership,
 };
