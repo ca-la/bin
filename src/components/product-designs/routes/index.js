@@ -23,7 +23,10 @@ const {
   canDeleteDesigns,
 } = require("../../../middleware/can-access-design");
 const { requireValues } = require("../../../services/require-properties");
-const { getDesignPermissions } = require("../../../services/get-permissions");
+const {
+  getDesignPermissions,
+  getPermissionsFromDesign,
+} = require("../../../services/get-permissions");
 const { deleteDesign, deleteDesigns } = require("./deletion");
 
 const {
@@ -105,16 +108,18 @@ function* getDesignsByUser() {
     role,
     filters,
   });
-  const designsWithPermissions = yield Promise.all(
-    designs.map(async (design) => {
-      const designPermissions = await getDesignPermissions({
-        designId: design.id,
-        sessionRole: role,
-        sessionUserId: userId,
-      });
-      return { ...design, permissions: designPermissions };
-    })
-  );
+  const designsWithPermissions = designs.map((design) => {
+    const designPermissions = getPermissionsFromDesign({
+      collaboratorRoles: [
+        ...design.collaboratorRoles,
+        ...(userId === design.userId ? ["EDIT"] : []),
+      ],
+      isCheckedOut: design.isCheckedOut,
+      sessionRole: role,
+      sessionUserId: userId,
+    });
+    return { ...design, permissions: designPermissions };
+  });
 
   this.body = designsWithPermissions;
   this.status = 200;

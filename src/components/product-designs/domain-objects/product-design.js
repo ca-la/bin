@@ -35,6 +35,8 @@ const keyNamesByColumnName = {
   first_step_created_at: "firstStepCreatedAt",
   last_step_due_at: "lastStepDueAt",
   bid_id: "bidId",
+  collaborator_roles: "collaboratorRoles",
+  is_checked_out: "isCheckedOut",
 };
 
 const dataMapper = new DataMapper(keyNamesByColumnName);

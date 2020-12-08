@@ -68,7 +68,7 @@ import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
 
-test("ProductDesignCanvases DAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
+test("ProductDesignsDAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
 
   const { asset: sketch } = await generateAsset({
@@ -247,9 +247,22 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
     collectionId: collection.id,
     designId: null,
     invitationMessage: "",
+    role: "VIEW",
+    userEmail: null,
+    userId: user.id,
+  });
+  await generateCollaborator({
+    collectionId: null,
+    designId: collectionSharedDesign.id,
+    invitationMessage: "",
     role: "EDIT",
     userEmail: null,
     userId: user.id,
+  });
+  await generateDesignEvent({
+    designId: collectionSharedDesign.id,
+    actorId: user.id,
+    type: "COMMIT_QUOTE",
   });
 
   const collectionSharedDesignDeleted = await createDesign({
@@ -268,10 +281,47 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
   t.deepEqual(
     designs[0].id,
     collectionSharedDesignDeleted.id,
-    "should match ids"
+    "collection shared design / should match ids"
   );
-  t.deepEqual(designs[1].id, collectionSharedDesign.id, "should match ids");
-  t.deepEqual(designs[2].id, designSharedDesign.id, "should match ids");
+  t.deepEqual(
+    designs[0].collaboratorRoles,
+    ["VIEW"],
+    "collection shared design / has collaborator roles attached"
+  );
+  t.deepEqual(
+    designs[0].isCheckedOut,
+    false,
+    "collection shared design / shows checked-out status"
+  );
+  t.deepEqual(
+    designs[1].id,
+    collectionSharedDesign.id,
+    "collection+design shared design / should match ids"
+  );
+  t.true(
+    isEqual(new Set(designs[1].collaboratorRoles), new Set(["VIEW", "EDIT"])),
+    "collection+design shared design / has both collaborator roles attached"
+  );
+  t.deepEqual(
+    designs[1].isCheckedOut,
+    true,
+    "collection+design shared design / shows checked-out status"
+  );
+  t.deepEqual(
+    designs[2].id,
+    designSharedDesign.id,
+    "design shared design / should match ids"
+  );
+  t.deepEqual(
+    designs[2].collaboratorRoles,
+    ["EDIT"],
+    "design shared design / has collaborator roles attached"
+  );
+  t.deepEqual(
+    designs[2].isCheckedOut,
+    false,
+    "design shared design / shows checked-out status"
+  );
 
   await deleteById(collectionSharedDesignDeleted.id);
 
@@ -299,11 +349,20 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
     userId: user.id,
   });
 
-  t.equal(designsYetAgain.length, 1);
+  t.equal(designsYetAgain.length, 2, "still returns collection design");
   t.equals(
     designsYetAgain[0].id,
+    collectionSharedDesign.id,
+    "returns design shared by design in the deleted collection"
+  );
+  t.true(
+    isEqual(new Set(designsYetAgain[0].collaboratorRoles), new Set(["EDIT"])),
+    "does not include collection role"
+  );
+  t.equals(
+    designsYetAgain[1].id,
     designSharedDesign.id,
-    "It only returns design shared by design"
+    "returns design shared by design"
   );
 });
 
