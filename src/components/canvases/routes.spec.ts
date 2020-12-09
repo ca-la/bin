@@ -130,6 +130,7 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
           thumbnailLink: "https://foo.bar/test-small.png",
           originalWidthPx: 640,
           originalHeightPx: 480,
+          assetId: "test",
         };
       }
     );
@@ -211,7 +212,8 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
       "thumbnailLink",
       "fileType",
       "originalHeightPx",
-      "originalWidthPx"
+      "originalWidthPx",
+      "assetId"
     ),
     omit(component, "image")
   );
@@ -433,6 +435,7 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
   const { user, session } = await createUser();
 
   const assetLink = {
+    assetId: "test",
     assetLink: "https://foo.bar/test.png",
     downloadLink: "",
     fileType: "png",

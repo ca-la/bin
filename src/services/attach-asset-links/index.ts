@@ -19,6 +19,7 @@ const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + "&dpr=2";
 function constructAssetLinks(asset: Asset): AssetLinks {
   const hasPreview = isPreviewable(asset.mimeType);
   return {
+    assetId: asset.id,
     assetLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,
@@ -86,6 +87,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
   }
 
   return {
+    assetId: null,
     assetLink: null,
     downloadLink: "",
     fileType: "",
@@ -148,6 +150,7 @@ export function generateThumbnailLinks(imageIds: string[]): string[] {
 export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
   const hasPreview = isPreviewable(asset.mimeType);
   return {
+    assetId: asset.id,
     assetLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
       : null,

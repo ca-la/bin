@@ -270,6 +270,7 @@ test("getAllByDesign will fetch all resources necessary for phidias", async (t: 
     {
       ...data.asset2,
       assetLinks: {
+        assetId: asset2.id,
         assetLink: `imgix-foo.com/${asset2.id}?fm=jpg&fit=max`,
         downloadLink: `base-foo.com/${asset2.id}`,
         fileType: "jpeg",

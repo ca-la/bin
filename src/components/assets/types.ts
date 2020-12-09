@@ -1,4 +1,5 @@
 export interface AssetLinks {
+  assetId: string | null;
   assetLink: string | null;
   downloadLink: string;
   fileType: string;

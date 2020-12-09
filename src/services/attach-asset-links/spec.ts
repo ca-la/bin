@@ -55,6 +55,7 @@ test("addAssetLink returns only the download link for non-previewable assets", a
   t.equal(enrichedComponent.assetLink, null);
   t.equal(enrichedComponent.thumbnailLink, null);
   t.equal(enrichedComponent.fileType, "csv");
+  t.equal(enrichedComponent.assetId, sketchId);
 });
 
 test("addAssetLink returns aws link when component is of type sketch", async (t: tape.Test) => {
@@ -97,6 +98,7 @@ test("addAssetLink returns aws link when component is of type sketch", async (t:
     `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "png");
+  t.equal(enrichedComponent.assetId, sketchId);
 });
 
 test("addAssetLink returns link when component is of type artwork", async (t: tape.Test) => {
@@ -139,6 +141,7 @@ test("addAssetLink returns link when component is of type artwork", async (t: ta
     `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "heic");
+  t.equal(enrichedComponent.assetId, artworkId);
 });
 
 test("addAssetLink returns link when component is of type material", async (t: tape.Test) => {
@@ -186,6 +189,7 @@ test("addAssetLink returns link when component is of type material", async (t: t
     `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "psd");
+  t.equal(enrichedComponent.assetId, materialImageId);
 });
 
 test("addAssetLink returns link when component is of type material", async (t: tape.Test) => {

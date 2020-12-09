@@ -60,7 +60,8 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
       "thumbnailLink",
       "fileType",
       "originalHeightPx",
-      "originalWidthPx"
+      "originalWidthPx",
+      "assetId"
     ),
     data
   );
