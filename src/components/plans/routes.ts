@@ -49,6 +49,11 @@ function* createPlan(
     title,
     isDefault,
     description,
+    baseCostPerBillingIntervalCents,
+    perSeatCostPerBillingIntervalCents,
+    canCheckOut,
+    canSubmit,
+    maximumSeatsPerTeam,
   } = this.request.body;
 
   const { trx } = this.state;
@@ -67,6 +72,11 @@ function* createPlan(
     title,
     isDefault,
     description,
+    baseCostPerBillingIntervalCents,
+    perSeatCostPerBillingIntervalCents,
+    canCheckOut,
+    canSubmit,
+    maximumSeatsPerTeam,
   });
   this.status = 201;
   this.body = createdPlan;

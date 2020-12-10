@@ -16,4 +16,9 @@ export interface Plan {
   isPublic: boolean;
   description: string | null;
   ordering: number | null;
+  baseCostPerBillingIntervalCents: number | null;
+  perSeatCostPerBillingIntervalCents: number;
+  canCheckOut: boolean;
+  canSubmit: boolean;
+  maximumSeatsPerTeam: number | null;
 }

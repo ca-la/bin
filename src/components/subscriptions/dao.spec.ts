@@ -32,6 +32,11 @@ test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) =>
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
@@ -69,6 +74,11 @@ test("SubscriptionsDAO supports waiving payment on a new subscription", async (t
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
@@ -113,6 +123,11 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     await SubscriptionsDAO.create(
@@ -190,6 +205,11 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const subscription = await SubscriptionsDAO.create(

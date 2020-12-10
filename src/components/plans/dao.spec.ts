@@ -23,6 +23,11 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     await PlansDAO.create(trx, {
@@ -37,6 +42,11 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const p1Found = await PlansDAO.findById(trx, p1id);
@@ -75,6 +85,11 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       isPublic: true,
       ordering: 2,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     await PlansDAO.create(trx, {
@@ -89,6 +104,11 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     await PlansDAO.create(trx, {
@@ -103,6 +123,11 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       isPublic: true,
       ordering: 1,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const plans = await PlansDAO.findPublic(trx);
@@ -146,6 +171,11 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     try {
@@ -161,6 +191,11 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
         isPublic: false,
         ordering: null,
         description: null,
+        baseCostPerBillingIntervalCents: 4567,
+        perSeatCostPerBillingIntervalCents: 0,
+        canSubmit: true,
+        canCheckOut: true,
+        maximumSeatsPerTeam: null,
       });
       throw new Error("Shouldn't get here");
     } catch (err) {
@@ -187,6 +222,11 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const publicOrder2 = await PlansDAO.create(trx, {
@@ -201,6 +241,11 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       isPublic: true,
       ordering: 2,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const publicOrder1 = await PlansDAO.create(trx, {
@@ -215,6 +260,11 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       isPublic: true,
       ordering: 1,
       description: null,
+      baseCostPerBillingIntervalCents: 1234,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const private4 = await PlansDAO.create(trx, {
@@ -229,6 +279,11 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     });
 
     const plans = await PlansDAO.findAll(trx);

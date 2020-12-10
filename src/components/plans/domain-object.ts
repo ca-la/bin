@@ -1,6 +1,7 @@
 import DataAdapter, { defaultEncoder } from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 import { BillingInterval, Plan } from "./plan";
+import parseNumericString from "../../services/parse-numeric-string";
 
 export { BillingInterval, Plan } from "./plan";
 
@@ -8,7 +9,10 @@ export interface PlanRow {
   id: string;
   billing_interval: BillingInterval;
   created_at: string;
-  monthly_cost_cents: string;
+
+  // TODO: This column is deprecated in favor of `base_cost...` and will be
+  // removed once all references are updated.
+  monthly_cost_cents: string; // bigint
   revenue_share_basis_points: number;
   cost_of_goods_share_basis_points: number;
   stripe_plan_id: string;
@@ -17,12 +21,28 @@ export interface PlanRow {
   is_public: boolean;
   description: string | null;
   ordering: number | null;
+  base_cost_per_billing_interval_cents: string | null; // bigint
+  per_seat_cost_per_billing_interval_cents: string; // bigint
+  can_check_out: boolean;
+  can_submit: boolean;
+  maximum_seats_per_team: string | null; // bigint
 }
 
 function encode(row: PlanRow): Plan {
   return {
     ...defaultEncoder<PlanRow, Plan>(row),
-    monthlyCostCents: Number(row.monthly_cost_cents),
+    monthlyCostCents: parseNumericString(row.monthly_cost_cents),
+    baseCostPerBillingIntervalCents:
+      row.base_cost_per_billing_interval_cents === null
+        ? null
+        : parseNumericString(row.base_cost_per_billing_interval_cents),
+    perSeatCostPerBillingIntervalCents: parseNumericString(
+      row.per_seat_cost_per_billing_interval_cents
+    ),
+    maximumSeatsPerTeam:
+      row.maximum_seats_per_team === null
+        ? null
+        : parseNumericString(row.maximum_seats_per_team),
   };
 }
 
@@ -42,7 +62,12 @@ export function isPlanRow(row: object): row is PlanRow {
     "is_default",
     "is_public",
     "description",
-    "ordering"
+    "ordering",
+    "base_cost_per_billing_interval_cents",
+    "per_seat_cost_per_billing_interval_cents",
+    "can_check_out",
+    "can_submit",
+    "maximum_seats_per_team"
   );
 }
 
@@ -60,7 +85,12 @@ export function isPlan(data: object): data is Plan {
     "isDefault",
     "isPublic",
     "description",
-    "ordering"
+    "ordering",
+    "baseCostPerBillingIntervalCents",
+    "perSeatCostPerBillingIntervalCents",
+    "canCheckOut",
+    "canSubmit",
+    "maximumSeatsPerTeam"
   );
 }
 

@@ -53,6 +53,11 @@ async function setup(
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
       ...planOptions,
     })
   );

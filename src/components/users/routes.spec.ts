@@ -631,6 +631,11 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
       isPublic: false,
       ordering: null,
       description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
     })
   );
 
