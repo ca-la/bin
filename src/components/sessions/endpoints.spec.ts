@@ -1,6 +1,6 @@
-import { test, Test } from "../../../test-helpers/fresh";
-import createUser from "../../../test-helpers/create-user";
-import { post } from "../../../test-helpers/http";
+import { test, Test } from "../../test-helpers/fresh";
+import createUser from "../../test-helpers/create-user";
+import { post } from "../../test-helpers/http";
 
 test("login(id) will not work for credentials that do not exist", async (t: Test) => {
   const { user } = await createUser({ role: "USER", withSession: false });

@@ -67,6 +67,26 @@ export interface NotificationMessage {
   matchedFilters: NotificationFilter[];
 }
 
+// GraphQL doesn't allow arbitrary schemaless object like Mention
+export interface MentionForGraphQL {
+  id: string;
+  name: string | undefined;
+}
+
+export type NotificationMessageAttachmentForGraphQL = Omit<
+  NotificationMessageAttachment,
+  "mentions"
+> & {
+  mentions?: MentionForGraphQL[];
+};
+
+export type NotificationMessageForGraphQL = Omit<
+  NotificationMessage,
+  "attachments"
+> & {
+  attachments: NotificationMessageAttachment[];
+};
+
 export enum NotificationFilter {
   UNARCHIVED = "UNARCHIVED",
   ARCHIVED = "ARCHIVED",

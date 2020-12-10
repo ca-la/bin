@@ -19,7 +19,7 @@
     "@types/node-fetch": "^2.3.3",
     "@types/node-uuid": "0.0.28",
     "@types/pg": "^7.4.14",
-    "apollo-server-koa": "^2.9.9",
+    "apollo-server-koa": "^2.19.0",
     "aws-sdk": "^2.302.0",
     "bcrypt": "5.0.0",
     "co-body": "4.2.0",

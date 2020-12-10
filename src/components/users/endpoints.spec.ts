@@ -1,7 +1,7 @@
-import { sandbox, test, Test } from "../../../test-helpers/fresh";
-import * as UsersDAO from "../../../components/users/dao";
-import createUser from "../../../test-helpers/create-user";
-import { authHeader, post } from "../../../test-helpers/http";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
+import * as UsersDAO from "./dao";
+import createUser from "../../test-helpers/create-user";
+import { authHeader, post } from "../../test-helpers/http";
 
 test("user(id) will not work if not admin authenticated", async (t: Test) => {
   const { session } = await createUser({ role: "USER" });
@@ -24,7 +24,7 @@ test("user(id) will not work if not admin authenticated", async (t: Test) => {
   });
 
   t.equal(response.status, 200);
-  t.equal(body.errors[0].message, "Unauthorized.");
+  t.equal(body.errors[0].message, "Unauthorized");
 
   const [response2, body2] = await post("/v2", {
     body: graphRequest,
@@ -32,7 +32,7 @@ test("user(id) will not work if not admin authenticated", async (t: Test) => {
   });
 
   t.equal(response2.status, 200);
-  t.equal(body2.errors[0].message, "Unauthorized.");
+  t.equal(body2.errors[0].message, "Unauthorized");
 });
 
 test("user(id) can return a user", async (t: Test) => {

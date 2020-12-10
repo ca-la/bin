@@ -7,7 +7,7 @@ import compress = require("koa-compress");
 import koa = require("koa");
 import convert = require("koa-convert");
 
-import apolloServer from "./apollo/server";
+import { apolloServer } from "./apollo";
 import attachSession = require("./middleware/attach-session");
 import errors = require("./middleware/errors");
 import headers = require("./middleware/headers");

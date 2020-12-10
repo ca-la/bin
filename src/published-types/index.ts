@@ -39,3 +39,13 @@ export * from "../components/participants/types";
 
 import * as CommentService from "../components/comments/service";
 export { CommentService };
+
+import * as SessionsGraphQLTypes from "../components/sessions/graphql-types";
+import * as UsersGraphQLTypes from "../components/users/graphql-types";
+import * as NotificationsGraphQLTypes from "../components/notifications/graphql-types";
+
+export const GraphQLTypes = {
+  ...SessionsGraphQLTypes,
+  ...UsersGraphQLTypes,
+  ...NotificationsGraphQLTypes,
+};

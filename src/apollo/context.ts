@@ -1,4 +1,11 @@
-import SessionsDAO from "../../dao/sessions";
+import SessionsDAO from "../dao/sessions";
+import db from "../services/db";
+
+import { GraphQLContextBase } from "./types";
+
+export interface ContextParams {
+  ctx: any;
+}
 
 export async function attachSession(
   authToken: string,
@@ -22,4 +29,15 @@ export async function attachSession(
     role: session.role,
     userId: session.userId,
   };
+}
+
+export async function context({
+  ctx,
+}: ContextParams): Promise<GraphQLContextBase> {
+  const session = await attachSession(
+    ctx.req.headers.authorization,
+    ctx.query.token
+  );
+  const trx = await db.transaction();
+  return { session, trx };
 }
