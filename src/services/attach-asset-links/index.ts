@@ -9,6 +9,7 @@ import { getExtension } from "../../services/get-extension";
 import Asset, { AssetLinks } from "../../components/assets/types";
 
 const DESIGN_PREVIEW_TOOL_FORMAT = "?fm=jpg&fit=max";
+const DESIGN_PREVIEW_TOOL_FORMAT_3X = "?fm=jpg&fit=max&dpr=3";
 const PREVIEW_CARD_FORMAT = "?fm=jpg&w=560";
 const THUMBNAIL_FORMAT = "?fm=jpg&w=160";
 const DESIGN_PREVIEW_THUMBNAIL = "?fm=jpg&fit=fill&h=104&w=104";
@@ -22,6 +23,9 @@ function constructAssetLinks(asset: Asset): AssetLinks {
     assetId: asset.id,
     assetLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      : null,
+    asset3xLink: hasPreview
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
     fileType: getExtension(asset.mimeType) || "Unknown",
@@ -89,6 +93,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
   return {
     assetId: null,
     assetLink: null,
+    asset3xLink: null,
     downloadLink: "",
     fileType: "",
     thumbnail2xLink: null,
@@ -153,6 +158,9 @@ export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
     assetId: asset.id,
     assetLink: hasPreview
       ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      : null,
+    asset3xLink: hasPreview
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
     fileType: getExtension(asset.mimeType) || "Unknown",

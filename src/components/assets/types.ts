@@ -1,6 +1,7 @@
 export interface AssetLinks {
   assetId: string | null;
   assetLink: string | null;
+  asset3xLink: string | null;
   downloadLink: string;
   fileType: string;
   thumbnail2xLink: string | null;

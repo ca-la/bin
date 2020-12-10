@@ -55,6 +55,7 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
     omit(
       body,
       "assetLink",
+      "asset3xLink",
       "downloadLink",
       "thumbnail2xLink",
       "thumbnailLink",

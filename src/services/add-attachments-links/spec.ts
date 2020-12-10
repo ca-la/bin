@@ -31,6 +31,7 @@ test("addAssetLink adds asset links to attached asset", async (t: tape.Test) => 
         ...commentWithAttachment.attachments[0],
         fileType: "jpeg",
         assetLink: `https://imgix.example.com/${commentWithAttachment.attachments[0].id}?fm=jpg&fit=max`,
+        asset3xLink: `https://imgix.example.com/${commentWithAttachment.attachments[0].id}?fm=jpg&fit=max&dpr=3`,
         thumbnail2xLink: `https://imgix.example.com/${commentWithAttachment.attachments[0].id}?fm=jpg&fit=fill&h=106&w=128&dpr=2`,
         thumbnailLink: `https://imgix.example.com/${commentWithAttachment.attachments[0].id}?fm=jpg&fit=fill&h=106&w=128`,
         downloadLink: `https://user-uploads.example.com/${commentWithAttachment.attachments[0].id}`,

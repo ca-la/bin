@@ -124,6 +124,7 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
         return {
           ...c,
           assetLink: "https://foo.bar/test.png",
+          asset3xLink: "https://foo.bar/test3x.png",
           downloadLink: "",
           fileType: "png",
           thumbnail2xLink: "https://foo.bar/test-small/2x.png",
@@ -207,6 +208,7 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
       body[0].components[0],
       "image",
       "assetLink",
+      "asset3xLink",
       "downloadLink",
       "thumbnail2xLink",
       "thumbnailLink",
@@ -437,6 +439,7 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
   const assetLink = {
     assetId: "test",
     assetLink: "https://foo.bar/test.png",
+    asset3xLink: "https://foo.bar/test3x.png",
     downloadLink: "",
     fileType: "png",
     thumbnail2xLink: "https://foo.bar/test-small/2x.png",
