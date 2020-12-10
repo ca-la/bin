@@ -311,7 +311,7 @@ test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test
   );
 });
 
-test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test) => {
+test("PATCH /team-users/:id: owners can transfer ownership", async (t: Test) => {
   const { findActorTeamUserStub, updateStub, transferOwnershipStub } = setup();
   findActorTeamUserStub.resolves({
     id: "a-team-owner",
@@ -326,6 +326,23 @@ test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test
 
   t.equal(response.status, 200, "Responds with success");
   t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(
+    transferOwnershipStub.callCount,
+    1,
+    "Calls the special transfer ownership method"
+  );
+});
+
+test("PATCH /team-users/:id: CALA admin can transfer ownership", async (t: Test) => {
+  const { transferOwnershipStub } = setup({ role: "ADMIN" });
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "OWNER",
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
   t.equal(
     transferOwnershipStub.callCount,
     1,

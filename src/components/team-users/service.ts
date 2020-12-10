@@ -41,7 +41,7 @@ export function requireTeamRoles(
     const { trx, userId } = this.state;
 
     if (this.state.role === "ADMIN") {
-      this.state.actorTeamRole = TeamUserRole.ADMIN;
+      this.state.actorTeamRole = TeamUserRole.OWNER;
     } else {
       const teamId = yield getTeamId(this);
 
