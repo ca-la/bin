@@ -4,6 +4,7 @@ import {
   DaoUpdated,
   DaoCreated,
   RouteUpdated,
+  RouteDeleted,
 } from "../../services/pubsub/cala-events";
 import DesignEventsDAO from "../design-events/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
@@ -19,6 +20,7 @@ import * as IrisService from "../../components/iris/send-message";
 import {
   realtimeApprovalSubmissionUpdated,
   realtimeApprovalSubmissionCreated,
+  realtimeApprovalSubmissionDeleted,
 } from "./realtime";
 import ApprovalStepSubmission, { approvalStepSubmissionDomain } from "./types";
 import { templateDesignEvent } from "../design-events/types";
@@ -218,6 +220,13 @@ export const listeners: Listeners<
       );
     },
   },
+  "route.deleted": async (
+    event: RouteDeleted<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    >
+  ): Promise<void> =>
+    IrisService.sendMessage(realtimeApprovalSubmissionDeleted(event.deleted)),
 };
 
 export default buildListeners<

@@ -34,7 +34,7 @@ import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
 import Comment from "../comments/types";
-import { RouteUpdated } from "../../services/pubsub/cala-events";
+import { RouteUpdated, RouteDeleted } from "../../services/pubsub/cala-events";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import Asset from "../assets/types";
@@ -280,11 +280,25 @@ export function* deleteApprovalSubmission(
     );
   }
 
-  yield ApprovalSubmissionsDAO.deleteById(trx, submission.id).catch(
+  const deleted = yield ApprovalSubmissionsDAO.deleteById(
+    trx,
+    submission.id
+  ).catch(
     filterError(ResourceNotFoundError, () => {
       this.throw(404, `Submission not found with id ${submission.id}`);
     })
   );
+
+  yield emit<
+    ApprovalStepSubmission,
+    RouteDeleted<ApprovalStepSubmission, typeof approvalStepSubmissionDomain>
+  >({
+    type: "route.deleted",
+    domain: approvalStepSubmissionDomain,
+    actorId: this.state.userId,
+    trx,
+    deleted,
+  });
 
   this.status = 204;
 }

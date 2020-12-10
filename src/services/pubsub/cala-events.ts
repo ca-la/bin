@@ -41,12 +41,20 @@ export interface RouteCreated<Model, domain extends string> extends EventBase {
   created: Model;
 }
 
+export interface RouteDeleted<Model, domain extends string> extends EventBase {
+  type: "route.deleted";
+  domain: domain;
+  actorId: string;
+  deleted: Model;
+}
+
 export type Event<Model, domain extends string> =
   | DaoCreated<Model, domain>
   | DaoUpdated<Model, domain>
   | DaoUpdating<Model, domain>
   | RouteUpdated<Model, domain>
-  | RouteCreated<Model, domain>;
+  | RouteCreated<Model, domain>
+  | RouteDeleted<Model, domain>;
 
 export type Handler<
   Model,

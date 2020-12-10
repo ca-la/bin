@@ -5,6 +5,7 @@ import {
   RouteUpdated,
   Handler,
   RouteCreated,
+  RouteDeleted,
 } from "../pubsub/cala-events";
 import { listen } from "../pubsub";
 import { getObjectDiff } from "../utils";
@@ -22,6 +23,7 @@ export type Listeners<Model, Domain extends string> = Partial<{
   >;
   "route.created": Handler<Model, Domain, RouteCreated<Model, Domain>>;
   "route.updated": Handler<Model, Domain, RouteUpdated<Model, Domain>>;
+  "route.deleted": Handler<Model, Domain, RouteDeleted<Model, Domain>>;
 }>;
 
 export function buildListeners<Model, Domain extends string>(
@@ -71,4 +73,7 @@ export function buildListeners<Model, Domain extends string>(
       }
     }
   );
+  if (listeners["route.deleted"]) {
+    listen("route.deleted", domain, listeners["route.deleted"]);
+  }
 }

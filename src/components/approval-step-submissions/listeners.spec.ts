@@ -6,6 +6,7 @@ import {
   DaoUpdated,
   DaoCreated,
   RouteUpdated,
+  RouteDeleted,
 } from "../../services/pubsub/cala-events";
 import DesignEventsDAO from "../design-events/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
@@ -577,6 +578,54 @@ test("route.updated: unassigned", async (t: Test) => {
       designEventCreateStub.args[2],
       undefined,
       "unassignment to unassigned submission does not make a new design event"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("route.deleted", async (t: Test) => {
+  const { irisStub } = setup();
+
+  const trx = await db.transaction();
+
+  try {
+    const event: RouteDeleted<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "route.deleted",
+      domain: approvalStepSubmissionDomain,
+      deleted: submission,
+      actorId: "u1",
+    };
+
+    if (!listeners["route.deleted"]) {
+      throw new Error("route.deleted is empty");
+    }
+
+    await listeners["route.deleted"](event);
+
+    t.deepEquals(
+      irisStub.args[0][0],
+      {
+        type: "approval-step-submission/deleted",
+        resource: {
+          id: "sub-1",
+          stepId: "step-1",
+          createdAt: now,
+          createdBy: null,
+          deletedAt: null,
+          artifactType: "CUSTOM",
+          state: ApprovalStepSubmissionState.UNSUBMITTED,
+          collaboratorId: null,
+          teamUserId: null,
+          title: "Garment Sample",
+        },
+        approvalStepId: "step-1",
+      },
+      "Sends message via realtime on delete"
     );
   } finally {
     await trx.rollback();

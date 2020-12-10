@@ -55,6 +55,32 @@ export function realtimeApprovalSubmissionCreated(
   };
 }
 
+export interface RealtimeApprovalSubmissionDeleted {
+  resource: ApprovalStepSubmission;
+  approvalStepId: string;
+  type: "approval-step-submission/deleted";
+}
+
+export function isRealtimeApprovalSubmissionDeleted(
+  data: any
+): data is Serialized<RealtimeApprovalSubmissionDeleted> {
+  return (
+    "approvalStepId" in data &&
+    "type" in data &&
+    data.type === "approval-step-submission/deleted"
+  );
+}
+
+export function realtimeApprovalSubmissionDeleted(
+  submission: ApprovalStepSubmission
+): RealtimeApprovalSubmissionDeleted {
+  return {
+    type: "approval-step-submission/deleted",
+    resource: submission,
+    approvalStepId: submission.stepId,
+  };
+}
+
 export interface RealtimeApprovalSubmissionRevisionRequest {
   resource: {
     event: DesignEventWithMeta;

@@ -11,6 +11,7 @@ import { RealtimeCollectionStatusUpdated } from "../collections/realtime";
 import {
   RealtimeApprovalSubmissionUpdated,
   RealtimeApprovalSubmissionCreated,
+  RealtimeApprovalSubmissionDeleted,
   RealtimeApprovalSubmissionRevisionRequest,
 } from "../approval-step-submissions/realtime";
 import { RealtimeApprovalStepUpdated } from "../approval-steps/realtime";
@@ -22,6 +23,7 @@ type AllRealtimeMessage =
   | RealtimeCollectionStatusUpdated
   | RealtimeApprovalSubmissionUpdated
   | RealtimeApprovalSubmissionCreated
+  | RealtimeApprovalSubmissionDeleted
   | RealtimeApprovalSubmissionRevisionRequest
   | RealtimeApprovalStepUpdated
   | GenericRealtimeMessage;
