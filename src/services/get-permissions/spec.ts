@@ -12,129 +12,6 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { moveDesign } from "../../test-helpers/collections";
 
-test("getPermissionFromDesign", async (t: tape.Test) => {
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT"],
-      isCheckedOut: false,
-      sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: true,
-      canSubmit: true,
-      canView: true,
-    },
-    "valid: editor"
-  );
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT"],
-      isCheckedOut: true,
-      sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: true,
-      canView: true,
-    },
-    "valid: editor on checked out design"
-  );
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: [],
-      isCheckedOut: true,
-      sessionRole: "ADMIN",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: true,
-      canSubmit: true,
-      canView: true,
-    },
-    "valid: admin on checked out design no collaborator"
-  );
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["PARTNER"],
-      isCheckedOut: false,
-      sessionRole: "PARTNER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: false,
-      canEdit: true,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "valid: partner"
-  );
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["PREVIEW"],
-      isCheckedOut: false,
-      sessionRole: "PARTNER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: false,
-      canDelete: false,
-      canEdit: false,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "valid: preview"
-  );
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["VIEW"],
-      isCheckedOut: false,
-      sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: false,
-      canEdit: false,
-      canEditVariants: false,
-      canSubmit: false,
-      canView: true,
-    },
-    "valid: view"
-  );
-
-  t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT", "PREVIEW", "PARTNER", "VIEW"],
-      isCheckedOut: false,
-      sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
-    }),
-    {
-      canComment: true,
-      canDelete: true,
-      canEdit: true,
-      canEditVariants: true,
-      canSubmit: true,
-      canView: true,
-    },
-    "valid: multiple roles returns permission for most permissive role"
-  );
-});
-
 test("#getDesignPermissions", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2, session: session2 } = await createUser();
@@ -536,12 +413,12 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   );
   t.equal(
     PermissionsService.findMostPermissiveRole(["ADFFD", "DDD", "FOO", "BAR"]),
-    null,
-    "Returns null if the list is malformed"
+    undefined,
+    "Returns undefined if the list is malformed"
   );
   t.equal(
     PermissionsService.findMostPermissiveRole([]),
-    null,
-    "Returns null if the list is empty"
+    undefined,
+    "Returns undefined if the list is empty"
   );
 });
