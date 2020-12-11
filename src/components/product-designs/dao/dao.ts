@@ -57,33 +57,57 @@ export async function findAllDesignsThroughCollaborator(options: {
   filters?: DesignFilter[];
 }): Promise<ProductDesignWithApprovalSteps[]> {
   const result = await queryWithCollectionMeta(db)
-    .whereRaw(
-      `
-product_designs.id in (
-  SELECT product_designs.id
-    FROM product_designs
-    JOIN collaborators AS c ON c.design_id = product_designs.id
+    .leftJoin(
+      db.raw(
+        `
+(
+  SELECT array_agg(subquery.role) as collaborator_roles, subquery.product_design_id FROM (
+  SELECT c.*, pd2.id as product_design_id
+    FROM product_designs AS pd2
+    JOIN collaborators AS c ON c.design_id = pd2.id
     LEFT JOIN team_users ON c.team_id = team_users.team_id
-    WHERE (c.user_id = :userId OR team_users.user_id = :userId)
-      AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
-      AND team_users.deleted_at IS NULL
-      AND product_designs.deleted_at IS NULL
+  WHERE (c.user_id = :userId OR team_users.user_id = :userId)
+    AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
+    AND team_users.deleted_at IS NULL
+    AND pd2.deleted_at IS NULL
   UNION
-  SELECT product_designs.id
+  SELECT c.*, pd3.id as product_design_id
     FROM collaborators AS c
     JOIN collections AS co ON co.id = c.collection_id
     JOIN collection_designs AS cd ON cd.collection_id = co.id
-    JOIN product_designs ON product_designs.id = cd.design_id
+    JOIN product_designs AS pd3 ON pd3.id = cd.design_id
     LEFT JOIN team_users ON c.team_id = team_users.team_id
-    WHERE (c.user_id = :userId OR team_users.user_id = :userId)
-      AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
-      AND co.deleted_at IS NULL
-      AND team_users.deleted_at IS NULL
-      AND product_designs.deleted_at IS NULL
-)
-    `,
-      { userId: options.userId }
+  WHERE (c.user_id = :userId OR team_users.user_id = :userId)
+    AND (c.cancelled_at IS NULL OR c.cancelled_at > now())
+    AND co.deleted_at IS NULL
+    AND team_users.deleted_at IS NULL
+    AND pd3.deleted_at IS NULL
+  ) AS subquery
+  GROUP BY subquery.product_design_id
+) AS design_collaborators
+  ON design_collaborators.product_design_id = product_designs.id
+`,
+        { userId: options.userId }
+      )
     )
+    .select(
+      db.raw(
+        "to_json(design_collaborators.collaborator_roles) as collaborator_roles"
+      )
+    )
+    .select(
+      db.raw(
+        `
+(
+  SELECT count(*)
+    FROM design_events
+   WHERE design_events.design_id = product_designs.id
+     AND type = 'COMMIT_QUOTE'
+) > 0 AS is_checked_out`
+      )
+    )
+    .whereRaw(`product_designs.id in (design_collaborators.product_design_id)`)
+    .groupBy("collaborator_roles")
     .modify(attachApprovalSteps)
     .modify((query: Knex.QueryBuilder) => {
       if (options.filters && options.filters.length > 0) {

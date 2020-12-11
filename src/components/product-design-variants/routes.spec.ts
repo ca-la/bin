@@ -239,11 +239,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     headers: API.authHeader(viewer.session.id),
   });
   t.equal(viewerResponse.status, 403);
-  t.equal(
-    isQuoteCommittedStub.callCount,
-    3,
-    "variant editability is checked for owner and editor only"
-  );
+  t.equal(isQuoteCommittedStub.callCount, 5, "checkout status is checked");
 
   isQuoteCommittedStub.resolves(true);
   const [ownerLockedResponse] = await API.put(
