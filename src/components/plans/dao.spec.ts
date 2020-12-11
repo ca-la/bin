@@ -56,13 +56,14 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
 
     t.equal(plans.length, 2, "finds all");
     const sorted = plans.sort(
-      (a: Plan, b: Plan) => a.monthlyCostCents - b.monthlyCostCents
+      (a: Plan, b: Plan) =>
+        a.baseCostPerBillingIntervalCents - b.baseCostPerBillingIntervalCents
     );
     t.equal(sorted[0].title, "A little Bit");
-    t.equal(sorted[0].monthlyCostCents, 1234);
+    t.equal(sorted[0].baseCostPerBillingIntervalCents, 1234);
     t.equal(sorted[0].revenueShareBasisPoints, 1200);
     t.equal(sorted[1].title, "Some More");
-    t.equal(sorted[1].monthlyCostCents, 4567);
+    t.equal(sorted[1].baseCostPerBillingIntervalCents, 4567);
     t.equal(sorted[1].revenueShareBasisPoints, 5000);
   } finally {
     await trx.rollback();

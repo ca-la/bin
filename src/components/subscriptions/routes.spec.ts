@@ -168,7 +168,8 @@ test("POST /subscriptions does not allow waiving payment on subscriptions for no
 test("POST /subscriptions allows omitting stripe info if the plan is free", async (t: Test) => {
   const { plan, session } = await setup({
     planOptions: {
-      monthlyCostCents: 0,
+      baseCostPerBillingIntervalCents: 0,
+      perSeatCostPerBillingIntervalCents: 0,
     },
   });
   const [res, body] = await post("/subscriptions", {

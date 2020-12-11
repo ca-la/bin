@@ -35,8 +35,9 @@ const createdPlan: Plan = {
   ordering: null,
 };
 
-const firstPlan = {
+const firstPlan: Plan = {
   id: uuid.v4(),
+  createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
   monthlyCostCents: 7890,
   revenueShareBasisPoints: 1234,
@@ -47,10 +48,16 @@ const firstPlan = {
   isPublic: true,
   description: "The First One",
   ordering: 1,
+  baseCostPerBillingIntervalCents: 7890,
+  perSeatCostPerBillingIntervalCents: 0,
+  canSubmit: true,
+  canCheckOut: true,
+  maximumSeatsPerTeam: null,
 };
 
-const secretPlan = {
+const secretPlan: Plan = {
   id: uuid.v4(),
+  createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
   monthlyCostCents: 4567,
   revenueShareBasisPoints: 1234,
@@ -61,10 +68,16 @@ const secretPlan = {
   isPublic: false,
   description: "The Secret One",
   ordering: null,
+  baseCostPerBillingIntervalCents: 4567,
+  perSeatCostPerBillingIntervalCents: 0,
+  canSubmit: true,
+  canCheckOut: true,
+  maximumSeatsPerTeam: null,
 };
 
-const littleBitPlan = {
+const littleBitPlan: Plan = {
   id: uuid.v4(),
+  createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
   monthlyCostCents: 1234,
   revenueShareBasisPoints: 1234,
@@ -75,6 +88,11 @@ const littleBitPlan = {
   isPublic: false,
   description: null,
   ordering: null,
+  baseCostPerBillingIntervalCents: 1234,
+  perSeatCostPerBillingIntervalCents: 0,
+  canSubmit: true,
+  canCheckOut: true,
+  maximumSeatsPerTeam: null,
 };
 
 function setup({ role = "USER" }: { role?: UserRole } = {}) {
@@ -105,11 +123,11 @@ test("GET /plans lists public plans in order", async (t: Test) => {
 
   t.equal(body.length, 2);
   t.equal(body[0].title, "The First One");
-  t.equal(body[0].monthlyCostCents, 7890);
+  t.equal(body[0].baseCostPerBillingIntervalCents, 7890);
   t.equal(body[0].revenueShareBasisPoints, 1234);
 
   t.equal(body[1].title, "A little Bit");
-  t.equal(body[1].monthlyCostCents, 1234);
+  t.equal(body[1].baseCostPerBillingIntervalCents, 1234);
 });
 
 test("GET /plans/:id returns a plan", async (t: Test) => {
@@ -161,7 +179,6 @@ test("POST /plans valid for the admin", async (t: Test) => {
   const [response, body] = await post("/plans", {
     headers: authHeader("a-session-id"),
     body: {
-      monthlyCostCents: 5_000_00,
       stripePlanId: "plan_FeBI1CSrMOAqHs",
       title: "Uncapped",
       isDefault: false,
@@ -199,7 +216,6 @@ test("POST /plans invalid for regular user", async (t: Test) => {
   const [invalid] = await post("/plans", {
     headers: authHeader("a-session-id"),
     body: {
-      monthlyCostCents: 5_000_00,
       stripePlanId: "plan_FeBI1CSrMOAqHs",
       title: "Uncapped",
       isDefault: false,
@@ -210,6 +226,7 @@ test("POST /plans invalid for regular user", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      baseCostPerBillingIntervalCents: 1234,
     },
   });
 
@@ -224,7 +241,6 @@ test("POST /plans invalid for unauthenticated user", async (t: Test) => {
   const [unauthenticated] = await post("/plans", {
     headers: authHeader("a-session-id"),
     body: {
-      monthlyCostCents: 5_000_00,
       stripePlanId: "plan_FeBI1CSrMOAqHs",
       title: "Uncapped",
       isDefault: false,
@@ -235,6 +251,7 @@ test("POST /plans invalid for unauthenticated user", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      baseCostPerBillingIntervalCents: 1234,
     },
   });
 
@@ -263,7 +280,7 @@ test("POST /plans invalid without required fields", async (t: Test) => {
   t.equal(
     invalid.status,
     400,
-    "Responds with invalid if body doesn't have monthlyCostCents"
+    "Responds with invalid if body doesn't have baseCostPerBillingIntervalCents"
   );
 });
 
@@ -283,7 +300,6 @@ test("POST /plans creates only private plan even if we ask for public", async (t
   const [response, body] = await post("/plans", {
     headers: authHeader("a-session-id"),
     body: {
-      monthlyCostCents: 5_000_00,
       stripePlanId: "plan_FeBI1CSrMOAqHs",
       title: "Uncapped",
       isDefault: false,
@@ -294,6 +310,7 @@ test("POST /plans creates only private plan even if we ask for public", async (t
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      baseCostPerBillingIntervalCents: 1234,
     },
   });
 
@@ -304,7 +321,6 @@ test("POST /plans creates only private plan even if we ask for public", async (t
 
 test("POST /plans valid for MONTHLY and ANNUALLY billing interval and invalid for other values", async (t: Test) => {
   const planBody = {
-    monthlyCostCents: 5_000_00,
     stripePlanId: "plan_FeBI1CSrMOAqHs",
     title: "Uncapped",
     isDefault: false,
@@ -314,6 +330,7 @@ test("POST /plans valid for MONTHLY and ANNUALLY billing interval and invalid fo
     ordering: null,
     revenueShareBasisPoints: 4000,
     costOfGoodsShareBasisPoints: 0,
+    baseCostPerBillingIntervalCents: 1234,
   };
 
   setup({ role: "ADMIN" });

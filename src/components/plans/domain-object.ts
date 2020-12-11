@@ -21,7 +21,7 @@ export interface PlanRow {
   is_public: boolean;
   description: string | null;
   ordering: number | null;
-  base_cost_per_billing_interval_cents: string | null; // bigint
+  base_cost_per_billing_interval_cents: string; // bigint
   per_seat_cost_per_billing_interval_cents: string; // bigint
   can_check_out: boolean;
   can_submit: boolean;
@@ -31,11 +31,9 @@ export interface PlanRow {
 function encode(row: PlanRow): Plan {
   return {
     ...defaultEncoder<PlanRow, Plan>(row),
-    monthlyCostCents: parseNumericString(row.monthly_cost_cents),
-    baseCostPerBillingIntervalCents:
-      row.base_cost_per_billing_interval_cents === null
-        ? null
-        : parseNumericString(row.base_cost_per_billing_interval_cents),
+    baseCostPerBillingIntervalCents: parseNumericString(
+      row.base_cost_per_billing_interval_cents
+    ),
     perSeatCostPerBillingIntervalCents: parseNumericString(
       row.per_seat_cost_per_billing_interval_cents
     ),
@@ -107,13 +105,13 @@ export function isCreatePlanInputRequest(
 
   const isRequiredFieldsProvided = [
     "billingInterval",
-    "monthlyCostCents",
     "revenueShareBasisPoints",
     "costOfGoodsShareBasisPoints",
     "stripePlanId",
     "title",
     "isDefault",
     "description",
+    "baseCostPerBillingIntervalCents",
   ].every(keyset.has.bind(keyset));
 
   return isRequiredFieldsProvided && isBillingInterval(plan.billingInterval);

@@ -42,7 +42,6 @@ function* createPlan(
 ): Iterator<any, any, any> {
   const {
     billingInterval,
-    monthlyCostCents,
     revenueShareBasisPoints,
     costOfGoodsShareBasisPoints,
     stripePlanId,
@@ -57,6 +56,13 @@ function* createPlan(
   } = this.request.body;
 
   const { trx } = this.state;
+
+  // TODO: Safe to remove after this column is dropped, just kept temporarily
+  // for backwards compatibility.
+  const monthlyCostCents =
+    billingInterval === "MONTHLY"
+      ? baseCostPerBillingIntervalCents
+      : Math.ceil(baseCostPerBillingIntervalCents / 12);
 
   const createdPlan = yield PlansDAO.create(trx, {
     // we don't allow people to create public plans via this API in general
