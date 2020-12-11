@@ -16,8 +16,8 @@ export function toInsertion(data: Asset): AssetRow {
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
-    original_height_px: data.originalHeightPx,
-    original_width_px: data.originalWidthPx,
+    original_height_px: data.originalHeightPx || null,
+    original_width_px: data.originalWidthPx || null,
     title: data.title,
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
@@ -32,8 +32,8 @@ export function toPartialInsertion(data: Partial<Asset>): Partial<AssetRow> {
     description: data.description,
     id: data.id,
     mime_type: data.mimeType,
-    original_height_px: data.originalHeightPx,
-    original_width_px: data.originalWidthPx,
+    original_height_px: data.originalHeightPx || null,
+    original_width_px: data.originalWidthPx || null,
     title: data.title,
     upload_completed_at: data.uploadCompletedAt
       ? data.uploadCompletedAt.toISOString()
