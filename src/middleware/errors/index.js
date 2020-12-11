@@ -21,15 +21,19 @@ function* errors(next) {
 
     if (this.status >= 500) {
       logServerError(err.stack);
-
-      this.body = {
-        message:
-          "Something went wrong! Please try again, or email hi@ca.la if this message persists.",
-      };
     } else {
       logClientError(err.stack);
       this.body = { message: err.message, errors: err.errors };
     }
+  }
+
+  // 5xx status may be set by the block above or another part of the code —
+  // either way we redact the original error.
+  if (this.status >= 500) {
+    this.body = {
+      message:
+        "Something went wrong! Please try again, or email hi@ca.la if this message persists.",
+    };
   }
 }
 

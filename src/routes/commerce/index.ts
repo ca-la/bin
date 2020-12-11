@@ -33,27 +33,18 @@ const legacyProxy = function* (
 
 function* fillStorefrontVariantSkus(this: AuthedContext) {
   const { storefrontId } = this.params;
-  try {
-    const filledCount = yield fillSkus(storefrontId);
-    this.body = { filledCount };
-    this.status = 200;
-  } catch (err) {
-    this.status = 500;
-    this.body = { error: err.message };
-  }
+
+  const filledCount = yield fillSkus(storefrontId);
+  this.body = { filledCount };
+  this.status = 200;
 }
 
 function* getProductInfo(
   this: AuthedContext<{}, AuthedState, { designId: string }>
 ) {
   const { designId } = this.params;
-  try {
-    this.body = yield fetchProductInfo(designId);
-    this.status = 200;
-  } catch (err) {
-    this.status = 500;
-    this.body = { error: err.message };
-  }
+  this.body = yield fetchProductInfo(designId);
+  this.status = 200;
 }
 
 function* getProductVariants(
@@ -68,17 +59,13 @@ function* getProductVariants(
 ) {
   const { designId, storefrontId } = this.params;
   const { externalProductId } = this.query;
-  try {
-    this.body = yield fetchProductVariants(
-      designId,
-      storefrontId,
-      typeof externalProductId === "string" ? externalProductId : null
-    );
-    this.status = 200;
-  } catch (err) {
-    this.status = 500;
-    this.body = { error: err.message };
-  }
+
+  this.body = yield fetchProductVariants(
+    designId,
+    storefrontId,
+    typeof externalProductId === "string" ? externalProductId : null
+  );
+  this.status = 200;
 }
 
 const router = new Router();
