@@ -1,8 +1,10 @@
 import uuid from "node-uuid";
+import { pick } from "lodash";
 
 import { test, Test, sandbox } from "../../test-helpers/fresh";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import generateBid from "../../test-helpers/factories/bid";
+import { generateTeam } from "../../test-helpers/factories/team";
 import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
 
@@ -17,7 +19,7 @@ import DesignEvent, {
 } from "../../components/design-events/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import NotificationsLayer from "../../components/approval-steps/notifications";
-import { NotificationType } from "../../components/notifications/domain-object";
+import { NotificationType } from "../../components/notifications/types";
 
 import {
   actualizeDesignStepsAfterBidAcceptance,
@@ -30,9 +32,11 @@ interface TestCase {
   isBlank: boolean;
   stepStates: { [key in ApprovalStepType]: ApprovalStepState };
   createdDesignEvents: Partial<DesignEvent>[];
+  teamId?: string;
   sendNotificationCallCount: number;
 }
 
+const teamId = uuid.v4();
 const testCases: TestCase[] = [
   {
     title: "Technical Design bid",
@@ -51,6 +55,26 @@ const testCases: TestCase[] = [
       },
     ],
     sendNotificationCallCount: 1,
+  },
+  {
+    title: "Technical Design bid with team",
+    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
+    isBlank: false,
+    stepStates: {
+      [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
+      [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.CURRENT,
+      [ApprovalStepType.SAMPLE]: ApprovalStepState.BLOCKED,
+      [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED,
+    },
+    createdDesignEvents: [
+      {
+        taskTypeId: taskTypes.TECHNICAL_DESIGN.id,
+        type: "STEP_PARTNER_PAIRING",
+        targetTeamId: teamId,
+      },
+    ],
+    sendNotificationCallCount: 1,
+    teamId,
   },
   {
     title: "Production bid",
@@ -97,6 +121,10 @@ const testCases: TestCase[] = [
 for (const testCase of testCases) {
   test(testCase.title, async (t: Test) => {
     const { user } = await createUser({ withSession: false });
+    if (testCase.teamId) {
+      await generateTeam(user.id, { id: testCase.teamId });
+    }
+
     const design = await generateDesign({
       userId: user.id,
     });
@@ -111,8 +139,6 @@ for (const testCase of testCases) {
     );
     const trx = await db.transaction();
     try {
-      // Completing checkout step
-      // since bid acceptance can take place only after checkout
       const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
         designId: design.id,
         type: ApprovalStepType.CHECKOUT,
@@ -126,6 +152,7 @@ for (const testCase of testCases) {
       const event: DesignEvent = {
         ...templateDesignEvent,
         actorId: user.id,
+        targetTeamId: testCase.teamId || null,
         bidId: bid.id,
         createdAt: new Date(),
         designId: design.id,
@@ -147,21 +174,20 @@ for (const testCase of testCases) {
           }`
         );
       }
-      const createdEvents = createDesignEventStub.args.reduce(
-        (acc: Partial<DesignEvent>[], arg: any) => {
-          acc.push({
-            taskTypeId: arg[1].taskTypeId,
-            type: arg[1].type,
-          });
-          return acc;
-        },
-        []
+      t.is(
+        createDesignEventStub.args.length,
+        testCase.createdDesignEvents.length
       );
-      t.deepEqual(
-        createdEvents,
-        testCase.createdDesignEvents,
-        `${testCase.title}: creates design events`
-      );
+      for (let i = 0; i < createDesignEventStub.args.length; i = i + 1) {
+        const created = createDesignEventStub.args[i][1];
+        const expected = testCase.createdDesignEvents[i];
+
+        t.deepEqual(
+          pick(created, Object.keys(expected)),
+          expected,
+          `${testCase.title}: event #${i} creates design events`
+        );
+      }
       t.deepEqual(
         sendNotificationStub.callCount,
         testCase.sendNotificationCallCount,

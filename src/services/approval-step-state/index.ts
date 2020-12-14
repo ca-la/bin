@@ -206,7 +206,7 @@ export async function actualizeDesignStepsAfterBidAcceptance(
   trx: Knex.Transaction,
   event: DesignEvent
 ): Promise<void> {
-  const { bidId, actorId, designId, quoteId } = event;
+  const { bidId, actorId, targetTeamId, designId, quoteId } = event;
   if (!bidId) {
     throw new Error("bidId is missing");
   }
@@ -231,11 +231,13 @@ export async function actualizeDesignStepsAfterBidAcceptance(
   const baseDesignEvent: Unsaved<DesignEvent> = {
     ...templateDesignEvent,
     actorId,
+    targetTeamId,
     bidId,
     designId,
     quoteId,
     type: "STEP_PARTNER_PAIRING",
   };
+
   for (const bidTaskType of bidTaskTypes) {
     switch (bidTaskType.taskTypeId) {
       case taskTypes.TECHNICAL_DESIGN.id: {

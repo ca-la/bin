@@ -509,13 +509,13 @@ test("Partner pairing: accept as a team member", async (t: Test) => {
         actorId: partner.user.id,
         designId: design.id,
         type: "STEP_PARTNER_PAIRING",
-        targetTeamId: null,
+        targetTeamId: team.id,
       },
       {
         actorId: partner.user.id,
         designId: design.id,
         type: "STEP_PARTNER_PAIRING",
-        targetTeamId: null,
+        targetTeamId: team.id,
       },
     ],
     "Adds an acceptance event"
