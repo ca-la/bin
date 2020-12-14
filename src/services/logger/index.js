@@ -42,6 +42,11 @@ function logWarning(...args) {
   console.log(COLORS.yellow, "WARNING:", ...args, COLORS.reset);
 }
 
+function table(...args) {
+  // eslint-disable-next-line no-console
+  console.table(...args);
+}
+
 module.exports = {
   log,
   logServerError,
@@ -50,4 +55,5 @@ module.exports = {
   time,
   timeEnd,
   timeLog,
+  table,
 };

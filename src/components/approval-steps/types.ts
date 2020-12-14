@@ -33,6 +33,14 @@ export enum ApprovalStepType {
   PRODUCTION = "PRODUCTION",
 }
 
+export function isApprovalStepType(
+  candidate: string | undefined
+): candidate is ApprovalStepType {
+  return Object.values(ApprovalStepType).includes(
+    candidate as ApprovalStepType
+  );
+}
+
 export interface ApprovalBlocked extends BaseApprovalStep {
   state: ApprovalStepState.BLOCKED;
   reason: string;
