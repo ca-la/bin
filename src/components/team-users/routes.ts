@@ -13,22 +13,20 @@ import {
   isTeamUserRole,
   TeamUserUpdate,
   isTeamUserUpdate,
+  TeamUser,
 } from "./types";
-import { createTeamUser, requireTeamRoles, updateTeamUser } from "./service";
+import {
+  createTeamUser,
+  requireTeamRoles,
+  updateTeamUser,
+  requireTeamUserByTeamUserId,
+} from "./service";
 import TeamUsersDAO from "./dao";
 
-async function findTeamByTeamUserId(context: TrxContext<AuthedContext>) {
-  const teamUser = await TeamUsersDAO.findById(
-    context.state.trx,
-    context.params.teamUserId
-  );
-  if (!teamUser) {
-    return context.throw(
-      `Could not find team user ${context.params.teamUserId}`,
-      404
-    );
-  }
-  return teamUser.teamId;
+async function findTeamByTeamUser(
+  context: TrxContext<AuthedContext<any, { teamUser: TeamUser }>>
+) {
+  return context.state.teamUser.teamId;
 }
 
 function* create(
@@ -57,10 +55,13 @@ function* getList(this: TrxContext<AuthedContext>) {
 
 function* update(
   this: TrxContext<
-    AuthedContext<TeamUserUpdate, { actorTeamRole: TeamUserRole }>
+    AuthedContext<
+      TeamUserUpdate,
+      { actorTeamRole: TeamUserRole; teamUser: TeamUser }
+    >
   >
 ) {
-  const { trx, actorTeamRole } = this.state;
+  const { trx, actorTeamRole, teamUser } = this.state;
   const { teamUserId } = this.params;
   const { body } = this.request;
 
@@ -71,13 +72,26 @@ function* update(
     this.throw(`Invalid team user role: ${body.role}`, 403);
   }
 
+  const isTryingToUpdateTeamOwner = teamUser.role === TeamUserRole.OWNER;
+  if (isTryingToUpdateTeamOwner) {
+    this.throw(`You cannot update team owner role`, 403);
+  }
+
   this.body = yield updateTeamUser(trx, teamUserId, actorTeamRole, body);
   this.status = 200;
 }
 
-function* deleteTeamUser(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
+function* deleteTeamUser(
+  this: TrxContext<AuthedContext<TeamUserUpdate, { teamUser: TeamUser }>>
+) {
+  const { trx, teamUser } = this.state;
   const { teamUserId } = this.params;
+
+  const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
+  if (isTryingToDeleteTeamOwner) {
+    this.throw(`You cannot delete the owner of the team`, 403);
+  }
+
   yield TeamUsersDAO.deleteById(trx, teamUserId);
   this.status = 204;
 }
@@ -112,15 +126,20 @@ export default {
       patch: [
         requireAuth,
         useTransaction,
-        requireTeamRoles(Object.values(TeamUserRole), findTeamByTeamUserId),
+        requireTeamUserByTeamUserId,
+        requireTeamRoles<{ teamUser: TeamUser }>(
+          Object.values(TeamUserRole),
+          findTeamByTeamUser
+        ),
         update,
       ],
       del: [
         requireAuth,
         useTransaction,
-        requireTeamRoles(
+        requireTeamUserByTeamUserId,
+        requireTeamRoles<{ teamUser: TeamUser }>(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
-          findTeamByTeamUserId,
+          findTeamByTeamUser,
           { allowSelf: true }
         ),
         deleteTeamUser,

@@ -333,6 +333,69 @@ test("PATCH /team-users/:id: owners can transfer ownership", async (t: Test) => 
   );
 });
 
+test("PATCH /team-users/:id: doesn't allow team owner to self-downgrade", async (t: Test) => {
+  const {
+    findTeamUserByIdStub,
+    findActorTeamUserStub,
+    updateStub,
+    transferOwnershipStub,
+  } = setup();
+  const teamOwner: TeamUser = {
+    ...tu1,
+    role: Role.OWNER,
+  };
+  findTeamUserByIdStub.resolves(teamOwner);
+  findActorTeamUserStub.resolves(teamOwner);
+
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "ADMIN",
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with forbidden status");
+  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(
+    transferOwnershipStub.callCount,
+    0,
+    "Does not call the special transfer ownership method"
+  );
+});
+
+test("PATCH /team-users/:id: admin can't downgrade owner", async (t: Test) => {
+  const {
+    findTeamUserByIdStub,
+    findActorTeamUserStub,
+    updateStub,
+    transferOwnershipStub,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.OWNER,
+  });
+
+  findActorTeamUserStub.resolves({
+    id: "a-team-admin",
+    role: TeamUserRole.ADMIN,
+  });
+
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "VIEWER",
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with forbidden status");
+  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(
+    transferOwnershipStub.callCount,
+    0,
+    "Does not call the special transfer ownership method"
+  );
+});
+
 test("PATCH /team-users/:id: CALA admin can transfer ownership", async (t: Test) => {
   const { transferOwnershipStub } = setup({ role: "ADMIN" });
   const [response] = await patch(`/team-users/${tu1.id}`, {
@@ -348,6 +411,16 @@ test("PATCH /team-users/:id: CALA admin can transfer ownership", async (t: Test)
     1,
     "Calls the special transfer ownership method"
   );
+});
+
+test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) => {
+  const { findTeamUserByIdStub } = setup();
+  findTeamUserByIdStub.resolves(null);
+
+  const [response] = await del(`/team-users/0000-0000-0000`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 404);
 });
 
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
@@ -385,6 +458,57 @@ test("DEL /team-users/:id allows self-update when non-admin", async (t: Test) =>
 
   t.equal(response.status, 204, "Allows deletion of self");
   t.equal(deleteStub.callCount, 1, "Deletes own team user");
+});
+
+test("DEL /team-users/:id doesn't allow team owner to self-delete", async (t: Test) => {
+  const { deleteStub, findActorTeamUserStub, findTeamUserByIdStub } = setup();
+  const teamOwner: TeamUser = {
+    ...tu1,
+    role: Role.OWNER,
+  };
+  findTeamUserByIdStub.resolves(teamOwner);
+  findActorTeamUserStub.resolves(teamOwner);
+
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 403, "Does not allow deletion");
+  t.equal(deleteStub.callCount, 0, "Does not delete the team owner");
+});
+
+test("DEL /team-users/:id doesn't allow team admin to delete team owner", async (t: Test) => {
+  const { deleteStub, findActorTeamUserStub, findTeamUserByIdStub } = setup();
+  findActorTeamUserStub.resolves({
+    userId: tu1.userId,
+    role: TeamUserRole.ADMIN,
+  });
+  findTeamUserByIdStub.resolves({
+    userId: tu1.userId,
+    role: TeamUserRole.OWNER,
+  });
+
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 403, "Does not allow deletion");
+  t.equal(deleteStub.callCount, 0, "Does not delete the team owner");
+});
+
+test("DEL /team-users/:id doesn't allow CALA admin to delete team owner", async (t: Test) => {
+  const { deleteStub, findTeamUserByIdStub } = setup({ role: "ADMIN" });
+  findTeamUserByIdStub.resolves({
+    userId: tu1.userId,
+    role: TeamUserRole.OWNER,
+  });
+
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 403, "Does not allow deletion");
+  t.equal(deleteStub.callCount, 0, "Does not delete the team owner");
 });
 
 test("/team-users end-to-end", async (t: Test) => {

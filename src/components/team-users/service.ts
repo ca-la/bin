@@ -27,15 +27,38 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.VIEWER]: [],
 };
 
-export function requireTeamRoles(
+export function* requireTeamUserByTeamUserId(
+  this: TrxContext<AuthedContext<any, { teamUser: TeamUser }>>,
+  next: () => Promise<any>
+): Generator<any, any, any> {
+  const teamUser = yield TeamUsersDAO.findById(
+    this.state.trx,
+    this.params.teamUserId
+  );
+
+  if (!teamUser) {
+    return this.throw(
+      `Could not find team user ${this.params.teamUserId}`,
+      404
+    );
+  }
+
+  this.state.teamUser = teamUser;
+
+  yield next;
+}
+
+export function requireTeamRoles<StateT>(
   roles: TeamUserRole[],
   getTeamId: (
-    context: TrxContext<AuthedContext<any>>
+    context: TrxContext<AuthedContext<any, StateT>>
   ) => Promise<string | null>,
   options: { allowSelf?: boolean; allowNoTeam?: boolean } = {}
 ) {
   return function* (
-    this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
+    this: TrxContext<
+      AuthedContext<any, { actorTeamRole?: TeamUserRole } & StateT>
+    >,
     next: () => Promise<any>
   ) {
     const { trx, userId } = this.state;
