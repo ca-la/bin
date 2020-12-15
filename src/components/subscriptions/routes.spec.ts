@@ -12,7 +12,7 @@ import PaymentMethodsDAO = require("../payment-methods/dao");
 import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User from "../users/domain-object";
-import { authHeader, get, patch, post, put } from "../../test-helpers/http";
+import { authHeader, get, patch, post } from "../../test-helpers/http";
 import { Plan, BillingInterval } from "../plans/domain-object";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
@@ -37,8 +37,8 @@ async function setup(
 
   sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
 
-  const { session, user } = await createUser();
   const { planOptions } = options;
+  const { session, user } = await createUser();
 
   const plan = await db.transaction((trx: Knex.Transaction) =>
     PlansDAO.create(trx, {
@@ -204,39 +204,6 @@ test("POST /subscriptions allows waiving payment on subscrixptions by admins", a
   t.equal(body.userId, user.id);
   t.equal(body.paymentMethodId, null);
   t.equal(body.isPaymentWaived, true);
-});
-
-test("PUT /subscriptions updates a subscription", async (t: Test) => {
-  const { plan, user, session } = await setup();
-
-  let id;
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const subscription = await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: null,
-        planId: plan.id,
-        paymentMethodId: null,
-        stripeSubscriptionId: "123",
-        userId: user.id,
-        isPaymentWaived: false,
-      },
-      trx
-    );
-
-    id = subscription.id;
-  });
-
-  const [res, body] = await put(`/subscriptions/${id}`, {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-      stripeCardToken: "tok_123",
-    },
-  });
-
-  t.equal(res.status, 200);
-  t.notEqual(body.paymentMethodId, null);
 });
 
 test("PATCH /subscriptions/:id cancels a subscription", async (t: Test) => {

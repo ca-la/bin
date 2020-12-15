@@ -104,35 +104,6 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
   this.status = 201;
 }
 
-function* createOrUpdate(this: AuthedContext): Iterator<any, any, any> {
-  const { body } = this.request;
-  if (!isCreateOrUpdateRequest(body)) {
-    this.throw(400, "Missing required properties");
-  }
-
-  const { subscriptionId } = this.params;
-  const { stripeCardToken, planId } = body;
-  if (!stripeCardToken) {
-    this.throw(400, "Missing stripe card token");
-  }
-  const updated = yield db.transaction((trx: Knex.Transaction) => {
-    return createOrUpdateSubscription({
-      stripeCardToken,
-      planId,
-      userId: this.state.userId,
-      subscriptionId,
-      trx,
-    }).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
-      )
-    );
-  });
-
-  this.body = updated;
-  this.status = 200;
-}
-
 function* update(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
   if (!isUpdateRequest(body)) {
@@ -157,7 +128,6 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
 
 router.get("/", requireAuth, getList);
 router.post("/", requireAuth, create);
-router.put("/:subscriptionId", requireAuth, createOrUpdate);
 router.patch("/:subscriptionId", requireAdmin, update);
 
 export default router.routes();
