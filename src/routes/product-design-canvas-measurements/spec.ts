@@ -3,6 +3,7 @@ import uuid from "node-uuid";
 import sinon from "sinon";
 
 import createUser = require("../../test-helpers/create-user");
+import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as MeasurementDAO from "../../dao/product-design-canvas-measurements";
@@ -328,6 +329,61 @@ test("GET /?canvasId=:canvasId returns Measurements", async (t: tape.Test) => {
   );
   t.equal(response.status, 200);
   t.deepEqual(body, data);
+});
+
+test("GET /?designId returns Measurements", async (t: tape.Test) => {
+  sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ userId: "a-user-id", role: "USER" });
+
+  const data = [
+    {
+      canvasId: "a-canvas-id",
+      createdBy: "a-user-id",
+      endingX: 20,
+      endingY: 10,
+      id: uuid.v4(),
+      label: "A",
+      measurement: "16 inches",
+      name: "sleeve length",
+      startingX: 5,
+      startingY: 2,
+    },
+    {
+      canvasId: "a-canvas-id",
+      createdBy: "a-user-id",
+      endingX: 2,
+      endingY: 10,
+      id: uuid.v4(),
+      label: "B",
+      measurement: "6 inches",
+      name: "sleeve width",
+      startingX: 1,
+      startingY: 1,
+    },
+  ];
+
+  sandbox().stub(MeasurementDAO, "findAllByDesignId").resolves(data);
+
+  const [response, body] = await get(
+    "/product-design-canvas-measurements/?designId=a-design-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(body, data);
+});
+
+test("GET / returns a Bad Request without canvasId or designId", async (t: tape.Test) => {
+  sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ userId: "a-user-id", role: "USER" });
+
+  const [response] = await get("/product-design-canvas-measurements", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 400);
 });
 
 test("GET /label?canvasId= gets the next label to use", async (t: tape.Test) => {

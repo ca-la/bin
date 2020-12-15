@@ -154,12 +154,49 @@ export async function deleteById(id: string): Promise<Measurement> {
 }
 
 export async function findAllByCanvasId(
-  canvasId: string
+  canvasId: string,
+  trx?: Knex.Transaction
 ): Promise<Measurement[]> {
   const measurements: MeasurementRow[] = await db(TABLE_NAME)
     .select("*")
     .where({ canvas_id: canvasId, deleted_at: null })
+    .modify((query: Knex.QueryBuilder) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .orderBy("created_at", "desc");
+  return parseNumericsList(
+    validateEvery<MeasurementRow, Measurement>(
+      TABLE_NAME,
+      isMeasurementRow,
+      dataAdapter,
+      measurements
+    )
+  );
+}
+
+export async function findAllByDesignId(
+  trx: Knex.Transaction,
+  designId: string
+): Promise<Measurement[]> {
+  const measurements = await trx(TABLE_NAME)
+    .distinct("product_design_canvas_measurements.id")
+    .select("product_design_canvas_measurements.*")
+    .join(
+      "canvases",
+      "canvases.id",
+      "product_design_canvas_measurements.canvas_id"
+    )
+    .whereRaw(
+      `
+canvases.design_id = ?
+AND product_design_canvas_measurements.deleted_at IS null
+`,
+      [designId]
+    )
+    .orderBy("product_design_canvas_measurements.created_at", "desc");
+
   return parseNumericsList(
     validateEvery<MeasurementRow, Measurement>(
       TABLE_NAME,

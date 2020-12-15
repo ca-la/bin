@@ -12,6 +12,7 @@ import {
   create,
   deleteById,
   findAllByCanvasId,
+  findAllByDesignId,
   findById,
   getLabel,
   MeasurementNotFoundError,
@@ -20,15 +21,15 @@ import {
 
 test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();
-  const design = await createDesign({
+  const d0 = await createDesign({
     productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
-  const { canvas: designCanvas } = await generateCanvas({
+  const { canvas: canvas0 } = await generateCanvas({
     componentId: null,
     createdBy: user.id,
-    designId: design.id,
+    designId: d0.id,
     height: 200,
     ordering: 0,
     title: "My Green Tee",
@@ -36,8 +37,8 @@ test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t:
     x: 0,
     y: 0,
   });
-  const designCanvasMeasurement = await create({
-    canvasId: designCanvas.id,
+  const c0m0 = await create({
+    canvasId: canvas0.id,
     createdBy: user.id,
     deletedAt: null,
     endingX: 20,
@@ -49,8 +50,8 @@ test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t:
     startingX: 5,
     startingY: 2,
   });
-  const designCanvasMeasurementTwo = await create({
-    canvasId: designCanvas.id,
+  const c0m1 = await create({
+    canvasId: canvas0.id,
     createdBy: user.id,
     deletedAt: null,
     endingX: 2,
@@ -62,19 +63,83 @@ test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t:
     startingX: 1,
     startingY: 1,
   });
-  const result = await findById(designCanvasMeasurement.id);
 
-  t.deepEqual(
-    designCanvasMeasurement,
-    result,
-    "Returned the inserted measurement"
-  );
+  const { canvas: canvas1 } = await generateCanvas({
+    componentId: null,
+    createdBy: user.id,
+    designId: d0.id,
+    height: 240,
+    ordering: 0,
+    title: "My Green Tea",
+    width: 240,
+    x: 0,
+    y: 0,
+  });
+  const c1m0 = await create({
+    canvasId: canvas1.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 2,
+    endingY: 10,
+    id: uuid.v4(),
+    label: "B",
+    measurement: "6 years",
+    name: "sleeve age",
+    startingX: 1,
+    startingY: 1,
+  });
 
-  const results = await findAllByCanvasId(designCanvas.id);
+  const { canvas: canvas2, design: d1 } = await generateCanvas({
+    componentId: null,
+    createdBy: user.id,
+    height: 240,
+    ordering: 0,
+    title: "In another design",
+    width: 240,
+    x: 0,
+    y: 0,
+  });
+  const c2m0 = await create({
+    canvasId: canvas2.id,
+    createdBy: user.id,
+    deletedAt: null,
+    endingX: 2,
+    endingY: 10,
+    id: uuid.v4(),
+    label: "B",
+    measurement: "6 years",
+    name: "sleeve age",
+    startingX: 1,
+    startingY: 1,
+  });
+
+  const result = await findById(c0m0.id);
+
+  t.deepEqual(c0m0, result, "Returned the inserted measurement");
+
+  const results = await findAllByCanvasId(canvas0.id);
   t.deepEqual(
-    [designCanvasMeasurementTwo, designCanvasMeasurement],
+    [c0m1, c0m0],
     results,
     "Returned all inserted measurements for the canvas"
+  );
+
+  const byDesign = await db.transaction((trx: Knex.Transaction) =>
+    findAllByDesignId(trx, d0.id)
+  );
+  t.deepEqual(
+    byDesign,
+    [c1m0, c0m1, c0m0],
+    "Returns all inserted measurements for the design"
+  );
+
+  const byAnotherDesign = await db.transaction((trx: Knex.Transaction) =>
+    findAllByDesignId(trx, d1.id)
+  );
+  t.deepEqual(
+    byAnotherDesign,
+    [c2m0],
+    "Returns only inserted measurements for the design"
   );
 });
 
