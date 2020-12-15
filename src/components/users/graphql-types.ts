@@ -11,7 +11,7 @@ export const User: GraphQLType = {
   type: "type",
   body: {
     birthday: "String",
-    createdAt: "Date",
+    createdAt: "GraphQLDateTime",
     email: "String",
     id: "String!",
     isSmsPreregistration: "Boolean!",
