@@ -1,9 +1,9 @@
 import tape from "tape";
 import Knex from "knex";
 
-import { test } from "../../test-helpers/fresh";
+import { test, sandbox } from "../../test-helpers/fresh";
 import API from "../../test-helpers/http";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import createDesign from "../../services/create-design";
 import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";
@@ -14,6 +14,8 @@ import generateAnnotation from "../../test-helpers/factories/product-design-canv
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import db from "../../services/db";
+import SessionsDAO from "../../dao/sessions";
+import TeamUsersDAO from "../../components/team-users/dao";
 
 const API_PATH = "/access-control";
 
@@ -289,4 +291,107 @@ test(`GET ${API_PATH}/collections checks access`, async (t: tape.Test) => {
     }
   );
   t.equal(responseThree.status, 200);
+});
+
+test(`GET ${API_PATH}/teams checks access`, async (t: tape.Test) => {
+  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves(null);
+  const [unauthenticated] = await API.get(`${API_PATH}/teams/team-id`, {
+    headers: API.authHeader("a-session-id"),
+  });
+  t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+
+  sessionStub.resolves({
+    role: "ADMIN",
+    userId: "an-admin-id",
+  });
+  const [successForCalaAdmin] = await API.get(`${API_PATH}/teams/team-id`, {
+    headers: API.authHeader("a-session-id"),
+  });
+  t.equal(successForCalaAdmin.status, 200, "Cala admins have full access");
+
+  sessionStub.resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  const findActorTeamUserStub = sandbox()
+    .stub(TeamUsersDAO, "findOne")
+    .resolves(null);
+  const [notATeamMember] = await API.get(`${API_PATH}/teams/team-id`, {
+    headers: API.authHeader("a-session-id"),
+  });
+  t.equal(
+    notATeamMember.status,
+    403,
+    "Forbidden if user is not a member of the team"
+  );
+
+  sessionStub.resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  findActorTeamUserStub.resolves({
+    userId: "a-user-id",
+    role: "VIEWER",
+  });
+  const [teamMemberWithViewerRole] = await API.get(
+    `${API_PATH}/teams/team-id`,
+    {
+      headers: API.authHeader("a-session-id"),
+    }
+  );
+  t.equal(teamMemberWithViewerRole.status, 200);
+
+  findActorTeamUserStub.resolves({
+    userId: "a-user-id",
+    role: "EDITOR",
+  });
+  const [teamMemberWithEditorRole] = await API.get(
+    `${API_PATH}/teams/team-id`,
+    {
+      headers: API.authHeader("a-session-id"),
+    }
+  );
+  t.equal(teamMemberWithEditorRole.status, 200);
+
+  findActorTeamUserStub.resolves({
+    userId: "a-user-id",
+    role: "ADMIN",
+  });
+  const [teamMemberWithAdminRole] = await API.get(`${API_PATH}/teams/team-id`, {
+    headers: API.authHeader("a-session-id"),
+  });
+  t.deepEqual(
+    findActorTeamUserStub.args[0][1],
+    {
+      teamId: "team-id",
+      userId: "a-user-id",
+    },
+    "Find actor by right teamId and userId"
+  );
+  t.equal(teamMemberWithAdminRole.status, 200);
+
+  findActorTeamUserStub.resolves({
+    userId: "a-user-id",
+    role: "OWNER",
+  });
+  const [teamMemberWithOwnerRole] = await API.get(`${API_PATH}/teams/team-id`, {
+    headers: API.authHeader("a-session-id"),
+  });
+  t.equal(teamMemberWithOwnerRole.status, 200);
+
+  findActorTeamUserStub.resolves({
+    userId: "a-user-id",
+    role: "not-a-role",
+  });
+  const [teamMemberWithUnexpectedRole] = await API.get(
+    `${API_PATH}/teams/team-id`,
+    {
+      headers: API.authHeader("a-session-id"),
+    }
+  );
+  t.equal(
+    teamMemberWithUnexpectedRole.status,
+    403,
+    "User with unexpected role doesn't have a access"
+  );
 });

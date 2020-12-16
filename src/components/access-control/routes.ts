@@ -1,10 +1,14 @@
 import Router from "koa-router";
-import requireAuth = require("../../middleware/require-auth");
+import requireAuth from "../../middleware/require-auth";
+import useTransaction from "../../middleware/use-transaction";
 import { canAccessAnnotationInParams } from "../../middleware/can-access-annotation";
 import { canAccessTaskInParams } from "../../middleware/can-access-task";
 import { canAccessDesignInParam } from "../../middleware/can-access-design";
 import { canAccessApprovalStepInParam } from "../../middleware/can-access-approval-step";
 import { canAccessCollectionInParam } from "../../middleware/can-access-collection";
+import { requireTeamRoles } from "../../components/team-users/service";
+
+import { Role as TeamUserRole } from "../../components/team-users/types";
 
 const router = new Router();
 
@@ -73,6 +77,14 @@ function* getCollectionAccess(
   this.body = this.state.permissions;
 }
 
+/**
+ * Checks if the authenticated user has access to the given team.
+ * Responds with a 200 if there's a match.
+ */
+function* getTeamAccess(this: AuthedContext): Iterator<any, any, any> {
+  this.status = 200;
+}
+
 router.get("/notifications", requireAuth, getNotificationAccess);
 router.get(
   "/annotations/:annotationId",
@@ -104,6 +116,17 @@ router.get(
   requireAuth,
   canAccessApprovalStepInParam,
   getApprovalStepAccess
+);
+
+router.get(
+  "/teams/:teamId",
+  requireAuth,
+  useTransaction,
+  requireTeamRoles(
+    Object.values(TeamUserRole),
+    async (context: AuthedContext) => context.params.teamId
+  ),
+  getTeamAccess
 );
 
 export default router.routes();
