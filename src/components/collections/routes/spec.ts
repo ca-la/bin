@@ -497,6 +497,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: owner.user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx
@@ -509,6 +510,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: collaborator.user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx

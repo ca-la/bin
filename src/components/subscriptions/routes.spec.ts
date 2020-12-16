@@ -84,6 +84,7 @@ test("GET /subscriptions lists current subscriptions", async (t: Test) => {
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx
@@ -219,6 +220,7 @@ test("PATCH /subscriptions/:id cancels a subscription", async (t: Test) => {
         paymentMethodId: null,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx

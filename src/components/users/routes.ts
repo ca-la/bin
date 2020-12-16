@@ -83,6 +83,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
     if (planId) {
       await createOrUpdateSubscription({
         userId: userInTrx.id,
+        teamId: null,
         stripeCardToken,
         planId,
         trx,

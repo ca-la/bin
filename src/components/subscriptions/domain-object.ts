@@ -2,20 +2,31 @@ import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 import { Plan } from "../plans/domain-object";
 
-export interface Subscription {
+interface SubscriptionBase {
   id: string;
   createdAt: Date;
   cancelledAt: Date | null;
   planId: string;
   paymentMethodId: string | null;
   stripeSubscriptionId: string | null;
-  userId: string;
   isPaymentWaived: boolean;
 }
 
-export interface SubscriptionWithPlan extends Subscription {
-  plan: Plan;
+interface UserSubscription extends SubscriptionBase {
+  userId: string;
+  teamId: null;
 }
+
+interface TeamSubscription extends SubscriptionBase {
+  userId: null;
+  teamId: string;
+}
+
+export type Subscription = UserSubscription | TeamSubscription;
+
+export type SubscriptionWithPlan = Subscription & {
+  plan: Plan;
+};
 
 export interface SubscriptionRow {
   id: string;
@@ -24,7 +35,8 @@ export interface SubscriptionRow {
   plan_id: string;
   payment_method_id: string | null;
   stripe_subscription_id: string | null;
-  user_id: string;
+  user_id: string | null;
+  team_id: string | null;
   is_payment_waived: boolean;
 }
 
@@ -44,20 +56,37 @@ export function isSubscriptionRow(row: object): row is SubscriptionRow {
     "payment_method_id",
     "stripe_subscription_id",
     "user_id",
+    "team_id",
     "is_payment_waived"
   );
 }
 
-export function isSubscription(data: object): data is Subscription {
-  return hasProperties(
-    data,
-    "id",
-    "createdAt",
-    "cancelledAt",
-    "planId",
-    "paymentMethodId",
-    "stripeSubscriptionId",
-    "userId",
-    "isPaymentWaived"
-  );
+export function isSubscription(data: any): data is Subscription {
+  if (typeof data !== "object") {
+    return false;
+  }
+  if (
+    !hasProperties(
+      data,
+      "id",
+      "createdAt",
+      "cancelledAt",
+      "planId",
+      "paymentMethodId",
+      "stripeSubscriptionId",
+      "userId",
+      "teamId",
+      "isPaymentWaived"
+    )
+  ) {
+    return false;
+  }
+  if (data.teamId && !data.userId) {
+    return true;
+  }
+  if (!data.teamId && data.userId) {
+    return true;
+  }
+
+  return false;
 }

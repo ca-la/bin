@@ -4,6 +4,8 @@ import Knex from "knex";
 
 import { test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
+import { generateTeam } from "../../test-helpers/factories/team";
+import TeamUsersDAO from "../team-users/dao";
 import db from "../../services/db";
 import * as SubscriptionsDAO from "./dao";
 import * as PlansDAO from "../plans/dao";
@@ -47,6 +49,7 @@ test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) =>
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx
@@ -89,6 +92,7 @@ test("SubscriptionsDAO supports waiving payment on a new subscription", async (t
         paymentMethodId: null,
         stripeSubscriptionId: null,
         userId: user.id,
+        teamId: null,
         isPaymentWaived: true,
       },
       trx
@@ -138,6 +142,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx
@@ -151,6 +156,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx
@@ -164,15 +170,70 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+    const { team } = await generateTeam(user.id);
+    const { team: team2, teamUser: teamUser2 } = await generateTeam(user.id);
+    await TeamUsersDAO.deleteById(trx, teamUser2.id);
+    const { user: user2 } = await createUser({ withSession: false });
+    const { user: user3 } = await createUser({ withSession: false });
+    const { team: team3 } = await generateTeam(user2.id);
+
+    const active3 = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("3000-01-01"),
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: "123",
+        userId: user3.id,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    // subscription for team2
+    // not active since the team2 membership is dropped
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("3000-01-01"),
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: "123",
+        userId: user3.id,
+        teamId: team2.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    // subscription for team3
+    // not active since the team3 is created by user3
+    // and user1 doesn't have membership in it
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("3000-01-01"),
+        planId: plan.id,
+        paymentMethodId: paymentMethod.id,
+        stripeSubscriptionId: "123",
+        userId: user3.id,
+        teamId: team3.id,
         isPaymentWaived: false,
       },
       trx
     );
 
     const found = await SubscriptionsDAO.findActive(user.id, trx);
-    t.equal(found.length, 2);
+    t.equal(found.length, 3);
     t.equal(found[0].id, active1.id);
     t.equal(found[1].id, active2.id);
+    t.equal(found[2].id, active3.id);
   });
 });
 
@@ -220,6 +281,7 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
         paymentMethodId: pm1.id,
         stripeSubscriptionId: "123",
         userId: user.id,
+        teamId: null,
         isPaymentWaived: false,
       },
       trx

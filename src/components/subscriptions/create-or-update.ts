@@ -10,6 +10,7 @@ import { Subscription } from "./domain-object";
 
 interface Options {
   userId: string;
+  teamId: string | null;
   planId: string;
   stripeCardToken?: string;
   subscriptionId?: string;
@@ -25,6 +26,7 @@ export default async function createOrUpdateSubscription(
     stripeCardToken,
     subscriptionId,
     userId,
+    teamId,
     isPaymentWaived,
     trx,
   } = options;
@@ -82,7 +84,8 @@ export default async function createOrUpdateSubscription(
         paymentMethodId,
         planId,
         stripeSubscriptionId,
-        userId,
+        userId: teamId ? null : userId,
+        teamId,
       },
       trx
     );

@@ -57,6 +57,7 @@ async function run(args: string[]): Promise<void> {
           paymentMethodId: null,
           stripeSubscriptionId: null,
           userId: user.id,
+          teamId: null,
           isPaymentWaived: true,
         },
         trx

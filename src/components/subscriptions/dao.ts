@@ -55,13 +55,16 @@ export async function findActive(
   userId: string,
   trx: Knex.Transaction
 ): Promise<Subscription[]> {
-  const res = await db(TABLE_NAME)
-    .transacting(trx)
-    .whereRaw(
-      "user_id = ? and (cancelled_at is null or cancelled_at > now())",
-      [userId]
+  const res = await trx
+    .from("subscriptions as s")
+    .joinRaw(
+      "left join team_users as tu on s.team_id = tu.team_id and tu.deleted_at is null"
     )
-    .returning("*");
+    .where((builder: Knex.QueryBuilder) => {
+      builder.where({ "s.user_id": userId }).orWhere({ "tu.user_id": userId });
+    })
+    .andWhereRaw("(cancelled_at is null or cancelled_at > now())")
+    .select("s.*");
 
   return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,

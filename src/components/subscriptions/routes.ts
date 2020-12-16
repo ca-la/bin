@@ -17,6 +17,7 @@ interface CreateOrUpdateRequest {
   planId: string;
   stripeCardToken?: string;
   userId?: string;
+  teamId?: string;
   isPaymentWaived?: boolean;
 }
 
@@ -91,6 +92,7 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
       stripeCardToken,
       planId,
       userId,
+      teamId: body.teamId || null,
       isPaymentWaived: isAdmin && body.isPaymentWaived,
       trx,
     }).catch(
