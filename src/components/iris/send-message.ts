@@ -16,6 +16,7 @@ import {
 } from "../approval-step-submissions/realtime";
 import { RealtimeApprovalStepUpdated } from "../approval-steps/realtime";
 import { RealtimeMessage as GenericRealtimeMessage } from "./types";
+import { logServerError } from "../../services/logger";
 
 type AllRealtimeMessage =
   | RealtimeMessage
@@ -33,19 +34,23 @@ type AllRealtimeMessage =
  * @param resource A realtime resource
  */
 export async function sendMessage(resource: AllRealtimeMessage): Promise<void> {
-  const uploadResponse = await uploadToS3({
-    acl: "authenticated-read",
-    bucketName: AWS_IRIS_S3_BUCKET,
-    contentType: "application/json",
-    resource: JSON.stringify(resource),
-  });
+  try {
+    const uploadResponse = await uploadToS3({
+      acl: "authenticated-read",
+      bucketName: AWS_IRIS_S3_BUCKET,
+      contentType: "application/json",
+      resource: JSON.stringify(resource),
+    });
 
-  await enqueueMessage({
-    deduplicationId: `${uploadResponse.bucketName}-${uploadResponse.remoteFilename}`,
-    messageGroupId: resource.type,
-    messageType: "realtime-message",
-    payload: uploadResponse,
-    queueRegion: AWS_IRIS_SQS_REGION,
-    queueUrl: AWS_IRIS_SQS_URL,
-  });
+    await enqueueMessage({
+      deduplicationId: `${uploadResponse.bucketName}-${uploadResponse.remoteFilename}`,
+      messageGroupId: resource.type,
+      messageType: "realtime-message",
+      payload: uploadResponse,
+      queueRegion: AWS_IRIS_SQS_REGION,
+      queueUrl: AWS_IRIS_SQS_URL,
+    });
+  } catch (err) {
+    logServerError("Failed to send realtime message", err);
+  }
 }

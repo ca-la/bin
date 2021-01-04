@@ -12,6 +12,8 @@ import { NotificationType } from "../notifications/domain-object";
 import { createNotificationMessage } from "../notifications/notification-messages";
 import * as NotificationAnnouncer from "../iris/messages/notification";
 import { findById } from "../notifications/dao";
+import LogService from "../../services/logger";
+import { NotificationMessage } from "../../published-types";
 
 import { sendMessage } from "./send-message";
 import { RealtimeMessageType, RealtimeMessage } from "./types";
@@ -80,4 +82,37 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
 
   t.true(Boolean(s3Upload), "Called with the expected arguments");
   t.true(Boolean(sqsMessage), "Sends to SQS");
+});
+
+test("Does not throw when upload fails", async (t: tape.Test) => {
+  sandbox().stub(S3Service, "uploadToS3").rejects();
+
+  const logStub = sandbox().stub(LogService, "logServerError");
+
+  const message: NotificationMessage = {
+    id: "",
+    title: "",
+    html: "",
+    readAt: null,
+    link: "",
+    createdAt: new Date(),
+    actor: null,
+    imageUrl: null,
+    location: [],
+    attachments: [],
+    actions: [],
+    archivedAt: null,
+    matchedFilters: [],
+  };
+  const realtimeNotification: RealtimeMessage = {
+    type: RealtimeMessageType.notificationCreated,
+    channels: [`notifications/user-id`],
+    resource: message,
+  };
+  try {
+    await sendMessage(realtimeNotification);
+    t.equal(logStub.callCount, 1, "Server error is logged");
+  } catch {
+    t.fail("Throws an error when trying to send message");
+  }
 });
