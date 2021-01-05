@@ -91,6 +91,7 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
     }
 
     let targetId = null;
+    let didUnassign = true;
 
     if (updated.collaboratorId) {
       const collaborator = await CollaboratorsDAO.findById(
@@ -99,9 +100,11 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
         trx
       );
       targetId = collaborator && collaborator.userId;
+      didUnassign = collaborator === null;
     } else if (updated.teamUserId) {
       const teamUser = await RawTeamUsersDAO.findById(trx, updated.teamUserId);
       targetId = teamUser && teamUser.userId;
+      didUnassign = teamUser === null;
     }
 
     await DesignEventsDAO.create(trx, {
@@ -112,7 +115,7 @@ export const listeners: Listeners<ApprovalStep, typeof approvalStepDomain> = {
       designId: updated.designId,
       id: uuid.v4(),
       targetId,
-      type: "STEP_ASSIGNMENT",
+      type: didUnassign ? "STEP_UNASSIGNMENT" : "STEP_ASSIGNMENT",
     });
   },
 
