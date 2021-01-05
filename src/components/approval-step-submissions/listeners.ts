@@ -73,6 +73,7 @@ export const listeners: Listeners<
     }
 
     let targetId = null;
+    let didUnassign = true;
 
     if (updated.collaboratorId) {
       const collaborator = await CollaboratorsDAO.findById(
@@ -81,9 +82,11 @@ export const listeners: Listeners<
         trx
       );
       targetId = collaborator && collaborator.userId;
+      didUnassign = collaborator === null;
     } else if (updated.teamUserId) {
       const teamUser = await RawTeamUsersDAO.findById(trx, updated.teamUserId);
       targetId = teamUser && teamUser.userId;
+      didUnassign = teamUser === null;
     }
 
     await DesignEventsDAO.create(trx, {
@@ -95,7 +98,9 @@ export const listeners: Listeners<
       designId: approvalStep.designId,
       id: uuid.v4(),
       targetId,
-      type: "STEP_SUBMISSION_ASSIGNMENT",
+      type: didUnassign
+        ? "STEP_SUBMISSION_UNASSIGNMENT"
+        : "STEP_SUBMISSION_ASSIGNMENT",
     });
   },
 
