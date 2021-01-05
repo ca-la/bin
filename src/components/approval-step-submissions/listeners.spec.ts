@@ -515,7 +515,7 @@ test("route.updated: unassigned", async (t: Test) => {
           designId: "d1",
           id: "uuid",
           targetId: null,
-          type: "STEP_SUBMISSION_UNASSIGNMENT",
+          type: "STEP_SUBMISSION_ASSIGNMENT",
         },
       ],
       "unassignment from team user creates design event"
@@ -554,7 +554,7 @@ test("route.updated: unassigned", async (t: Test) => {
           designId: "d1",
           id: "uuid",
           targetId: null,
-          type: "STEP_SUBMISSION_UNASSIGNMENT",
+          type: "STEP_SUBMISSION_ASSIGNMENT",
         },
       ],
       "unassignment from collaborator creates design event"

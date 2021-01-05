@@ -764,7 +764,7 @@ test("route.updated", async (t: Test) => {
             createdAt: now,
             designId: "d1",
             targetId: null,
-            type: "STEP_UNASSIGNMENT",
+            type: "STEP_ASSIGNMENT",
           },
         ],
       ],
@@ -791,7 +791,7 @@ test("route.updated", async (t: Test) => {
             createdAt: now,
             designId: "d1",
             targetId: null,
-            type: "STEP_UNASSIGNMENT",
+            type: "STEP_ASSIGNMENT",
           },
         ],
       ],
@@ -808,10 +808,10 @@ test("route.updated", async (t: Test) => {
     for (const testCase of testCases) {
       const findCollaboratorStub = sandbox()
         .stub(CollaboratorsDAO, "findById")
-        .resolves(testCase.findCollaboratorResult || null);
+        .returns(testCase.findCollaboratorResult);
       const findTeamUserStub = sandbox()
         .stub(RawTeamUsersDAO, "findById")
-        .resolves(testCase.findTeamUserResult || null);
+        .returns(testCase.findTeamUserResult);
       const createDesignEventStub = sandbox().stub(DesignEventsDAO, "create");
       const sendNotificationStub = sandbox().stub(
         NotificationsLayer[NotificationType.APPROVAL_STEP_ASSIGNMENT],
