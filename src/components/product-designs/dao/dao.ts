@@ -32,6 +32,10 @@ export const TABLE_NAME = "product_designs";
 
 export type DesignFilter =
   | {
+      type: "TEAM";
+      value: string;
+    }
+  | {
       type: "COLLECTION";
       value: "*" | string;
     }
@@ -157,6 +161,10 @@ function applyFilter(
       } else {
         query.where({ "collection_designs.collection_id": designFilter.value });
       }
+      break;
+    }
+    case "TEAM": {
+      query.where({ "collections.team_id": designFilter.value });
       break;
     }
     case "STEP":

@@ -16,6 +16,7 @@ const requireAuth = require("../../../middleware/require-auth");
 const createDesign = require("../../../services/create-design").default;
 const User = require("../../users/domain-object");
 const UsersDAO = require("../../users/dao");
+const TeamUsersDAO = require("../../team-users/dao").default;
 const {
   canAccessDesignInParam,
   canAccessDesignsInQuery,
@@ -27,6 +28,7 @@ const {
   getDesignPermissions,
   getPermissionsFromDesign,
 } = require("../../../services/get-permissions");
+const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
 
 const {
@@ -90,14 +92,25 @@ function* getDesignsByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
   const filters = [];
-  if (this.query.collectionFilterId) {
-    filters.push({ type: "COLLECTION", value: this.query.collectionFilterId });
+  const { collectionFilterId, teamId, currentStepType, stageType } = this.query;
+  if (collectionFilterId) {
+    filters.push({ type: "COLLECTION", value: collectionFilterId });
   }
-  if (this.query.currentStepType) {
-    filters.push({ type: "STEP", value: this.query.currentStepType });
+  if (teamId) {
+    const teamUser = yield db.transaction((trx) =>
+      TeamUsersDAO.findOne(trx, { teamId, userId })
+    );
+    if (!teamUser && role !== "ADMIN") {
+      this.throw(403, "Must be a member of team to search by team");
+    }
+
+    filters.push({ type: "TEAM", value: teamId });
   }
-  if (this.query.stageType) {
-    filters.push({ type: "STAGE", value: this.query.stageType });
+  if (currentStepType) {
+    filters.push({ type: "STEP", value: currentStepType });
+  }
+  if (stageType) {
+    filters.push({ type: "STAGE", value: stageType });
   }
   const designs = yield ProductDesignsDaoTs.findAllDesignsThroughCollaborator({
     userId: this.query.userId,

@@ -696,6 +696,67 @@ test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.T
   t.deepEqual(collectionSearch[0].id, firstDesign.id, "should match ids");
 });
 
+test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: otherTeamOwner } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+  const { team: otherTeam } = await generateTeam(otherTeamOwner.id);
+
+  const firstDesign = await createDesign({
+    productType: "test",
+    title: "first design",
+    userId: user.id,
+  });
+  const secondDesign = await createDesign({
+    productType: "test",
+    title: "second design",
+    userId: otherTeamOwner.id,
+  });
+  await createDesign({
+    productType: "test",
+    title: "third design",
+    userId: user.id,
+  });
+
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: user.id,
+    title: "Collection 1",
+    teamId: team.id,
+  });
+  await addDesign(collectionOne.id, firstDesign.id);
+  const { collection: collectionTwo } = await generateCollection({
+    createdBy: user.id,
+    title: "Collection 2",
+    teamId: otherTeam.id,
+  });
+  await addDesign(collectionTwo.id, secondDesign.id);
+
+  const teamDesigns = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    filters: [{ type: "TEAM", value: team.id }],
+  });
+  t.equal(
+    teamDesigns.length,
+    1,
+    "returns all designs in that team's collection"
+  );
+  t.true(
+    isEqual(
+      new Set(
+        teamDesigns.map((design: ProductDesignWithApprovalSteps) => design.id)
+      ),
+      new Set([firstDesign.id])
+    ),
+    "finds the correct designs"
+  );
+
+  const otherTeamsDesigns = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    filters: [{ type: "TEAM", value: otherTeam.id }],
+  });
+  t.deepEqual(otherTeamsDesigns, [], "returns empty results");
+});
+
 test("findAllDesignsThroughCollaborator filters by current step", async (t: tape.Test) => {
   const { user } = await createUser();
   const d1 = await createDesign({

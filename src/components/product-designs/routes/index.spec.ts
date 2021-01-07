@@ -1,6 +1,8 @@
 import tape from "tape";
 
 import EmailService = require("../../../services/email");
+import SessionsDAO from "../../../dao/sessions";
+import TeamUsersDAO from "../../team-users/dao";
 import * as TaskEventsDAO from "../../../dao/task-events";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as ProductDesignStagesDAO from "../../../dao/product-design-stages";
@@ -94,4 +96,70 @@ test("GET /product-designs allows filtering by collection", async (t: tape.Test)
       value: "*",
     },
   ]);
+});
+
+test("GET /product-designs allows filtering by team", async (t: tape.Test) => {
+  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  const teamUserStub = sandbox().stub(TeamUsersDAO, "findOne").resolves({
+    teamId: "a-team-id",
+    userId: "a-user-id",
+  });
+
+  const getDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaborator")
+    .resolves([]);
+
+  const [response] = await get(
+    "/product-designs?userId=a-user-id&teamId=a-team-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(response.status, 200, "succeeds for own user");
+  t.deepEqual(
+    getDesignsStub.args[0][0].filters,
+    [
+      {
+        type: "TEAM",
+        value: "a-team-id",
+      },
+    ],
+    "calls DAO with correct arguments"
+  );
+
+  const [differentUser] = await get(
+    "/product-designs?userId=a-different-user-id&teamId=a-team-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(differentUser.status, 403, "fails for using a different user");
+
+  teamUserStub.resolves(null);
+  const [notTeamMember] = await get(
+    "/product-designs?userId=a-user-id&teamId=a-team-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(notTeamMember.status, 403, "fails when not a member of the team");
+
+  sessionStub.resolves({
+    role: "ADMIN",
+    userId: "an-admin-user-id",
+  });
+  const [admin] = await get(
+    "/product-designs?userId=a-different-user-id&teamId=a-team-id",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(
+    admin.status,
+    200,
+    "succeeds for different user if they are an admin"
+  );
 });
