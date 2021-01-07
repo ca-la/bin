@@ -83,10 +83,6 @@ import {
   isAnnotationCommentMentionNotification,
 } from "../../components/notifications/models/annotation-mention";
 import {
-  isPartnerPairingCommittedNotification,
-  PartnerPairingCommittedNotification,
-} from "../../components/notifications/models/partner-pairing-committed";
-import {
   AnnotationCommentReplyNotification,
   isAnnotationCommentReplyNotification,
 } from "../../components/notifications/models/annotation-reply";
@@ -1060,61 +1056,6 @@ export async function sendPartnerDesignBid(
     isPartnerDesignBidNotification,
     `Could not validate ${NotificationType.PARTNER_DESIGN_BID} notification type from database with id: ${id}`
   );
-}
-
-interface PartnerPairingCommittedArguments {
-  actorId: string;
-  collectionId: string;
-  targetUserId: string;
-}
-
-/**
- * Creates notifications to a designer for CALA Ops committing partner pairings on a collection.
- */
-export async function immediatelySendPartnerPairingCommitted(
-  options: PartnerPairingCommittedArguments
-): Promise<PartnerPairingCommittedNotification> {
-  const id = uuid.v4();
-  const notification = await NotificationsDAO.create({
-    ...templateNotification,
-    actorUserId: options.actorId,
-    collectionId: options.collectionId,
-    id,
-    recipientUserId: options.targetUserId,
-    sentEmailAt: new Date(),
-    type: NotificationType.PARTNER_PAIRING_COMMITTED,
-  });
-
-  const collection = await CollectionsDAO.findById(options.collectionId);
-
-  const target = await UsersDAO.findById(options.targetUserId);
-  if (!target) {
-    throw new Error("Could not find target user");
-  }
-
-  const emailAddress = target.email;
-
-  const notificationMessage = await createNotificationMessage(notification);
-  if (!notificationMessage) {
-    throw new Error("Could not create notification message");
-  }
-
-  await EmailService.enqueueSend({
-    params: {
-      collection,
-      notification: notificationMessage,
-    },
-    templateName: "single_notification",
-    to: emailAddress,
-  });
-
-  const validated = validateTypeWithGuardOrThrow(
-    notification,
-    isPartnerPairingCommittedNotification,
-    `Could not validate ${NotificationType.INVITE_COLLABORATOR} notification type from database with id: ${id}`
-  );
-
-  return validated;
 }
 
 interface CollaboratorInviteArguments {

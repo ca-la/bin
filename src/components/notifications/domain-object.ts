@@ -80,12 +80,6 @@ import toDateOrNull, { toDateStringOrNull } from "../../services/to-date";
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 import {
-  FullPartnerPairingCommittedNotification,
-  FullPartnerPairingCommittedNotificationRow,
-  PartnerPairingCommittedNotification,
-  PartnerPairingCommittedNotificationRow,
-} from "./models/partner-pairing-committed";
-import {
   ExpiredNotification,
   ExpiredNotificationRow,
   FullExpirationNotification,
@@ -149,7 +143,6 @@ export type Notification =
   | MeasurementCreateNotification
   | PartnerAcceptServiceBidNotification
   | PartnerDesignBidNotification
-  | PartnerPairingCommittedNotification
   | PartnerRejectServiceBidNotification
   | TaskAssignmentNotification
   | TaskCommentCreateNotification
@@ -173,7 +166,6 @@ export type FullNotification =
   | FullTaskCommentCreateNotification
   | FullTaskAssignmentNotification
   | FullPartnerRejectServiceBidNotification
-  | FullPartnerPairingCommittedNotification
   | FullPartnerDesignBidNotification
   | FullPartnerAcceptServiceBidNotification
   | FullMeasurementCreateNotification
@@ -202,7 +194,6 @@ export type NotificationRow =
   | MeasurementCreateNotificationRow
   | PartnerAcceptServiceBidNotificationRow
   | PartnerDesignBidNotificationRow
-  | PartnerPairingCommittedNotificationRow
   | PartnerRejectServiceBidNotificationRow
   | TaskAssignmentNotificationRow
   | TaskCommentCreateNotificationRow
@@ -223,7 +214,6 @@ export type FullNotificationRow =
   | FullTaskCommentCreateNotificationRow
   | FullTaskAssignmentNotificationRow
   | FullPartnerRejectServiceBidNotificationRow
-  | FullPartnerPairingCommittedNotificationRow
   | FullPartnerDesignBidNotificationRow
   | FullPartnerAcceptServiceBidNotificationRow
   | FullMeasurementCreateNotificationRow
@@ -352,6 +342,7 @@ export const DEPRECATED_NOTIFICATION_TYPES = [
   "update-feature-placement",
   "update-section",
   "update-selected-option",
+  "PARTNER_PAIRING_COMMITTED",
 ];
 
 export const INBOX_NOTIFICATION_TYPES = [

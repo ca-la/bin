@@ -28,7 +28,7 @@ import {
   putDesigns,
 } from "./designs";
 import { getCollectionPermissions } from "../../../services/get-permissions";
-import { commitCostInputs, createPartnerPairing, recostInputs } from "./admin";
+import { commitCostInputs, recostInputs } from "./admin";
 import {
   fetchExpiredWithLabels,
   fetchUncostedWithLabels,
@@ -321,11 +321,4 @@ router.post(
   canAccessCollectionInParam,
   recostInputs
 );
-router.post(
-  "/:collectionId/partner-pairings",
-  requireAdmin,
-  canAccessCollectionInParam,
-  createPartnerPairing
-);
-
 export default router.routes();

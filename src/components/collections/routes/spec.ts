@@ -17,7 +17,6 @@ import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
-import * as DesignTasksService from "../../../services/create-design-tasks";
 import { stubFetchUncostedWithLabels } from "../../../test-helpers/stubs/collections";
 import CollectionDb from "../domain-object";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
@@ -26,15 +25,8 @@ import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import createDesign from "../../../services/create-design";
-import DesignEvent, {
-  DesignEventTypes,
-  templateDesignEvent,
-} from "../../design-events/types";
-import { taskTypes } from "../../tasks/templates/task-types";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
-import { checkout } from "../../../test-helpers/checkout-collection";
 import * as IrisService from "../../iris/send-message";
-import generateBid from "../../../test-helpers/factories/bid";
 import { generateTeam } from "../../../test-helpers/factories/team";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
@@ -831,150 +823,6 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
     "COMMIT_COST_INPUTS",
     "Creates a second cost input event"
   );
-});
-
-test("POST /collections/:collectionId/partner-pairings", async (t: tape.Test) => {
-  const createDesignTasksStub = sandbox().stub(DesignTasksService, "default");
-  const createNotificationsStub = sandbox()
-    .stub(CreateNotifications, "immediatelySendPartnerPairingCommitted")
-    .resolves();
-
-  const partner1 = await createUser({ role: "PARTNER" });
-  const partner2 = await createUser({ role: "PARTNER" });
-  const {
-    user: { admin, designer },
-    collection,
-    quotes,
-    collectionDesigns,
-  } = await checkout();
-  const { bid: bidOne } = await generateBid({
-    quoteId: quotes[0].id,
-    designId: collectionDesigns[0].id,
-    userId: admin.user.id,
-    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-    bidOptions: {
-      assignee: {
-        type: "USER",
-        id: partner1.user.id,
-      },
-    },
-  });
-  const { bid: bidTwo } = await generateBid({
-    quoteId: quotes[0].id,
-    designId: collectionDesigns[0].id,
-    userId: admin.user.id,
-    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
-    bidOptions: {
-      assignee: {
-        type: "USER",
-        id: partner2.user.id,
-      },
-    },
-  });
-
-  await db.transaction((trx: Knex.Transaction) =>
-    DesignEventsDAO.createAll(trx, [
-      {
-        ...templateDesignEvent,
-        actorId: partner1.user.id,
-        bidId: bidOne.id,
-        createdAt: new Date(),
-        designId: collectionDesigns[0].id,
-        id: uuid.v4(),
-        type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
-      },
-      {
-        ...templateDesignEvent,
-        actorId: partner2.user.id,
-        bidId: bidTwo.id,
-        createdAt: new Date(),
-        designId: collectionDesigns[1].id,
-        id: uuid.v4(),
-        type: "ACCEPT_SERVICE_BID" as DesignEventTypes,
-      },
-    ])
-  );
-
-  const failedPartnerPairing = await API.post(
-    `/collections/${collection.id}/partner-pairings`,
-    { headers: API.authHeader(designer.session.id) }
-  );
-  t.equal(failedPartnerPairing[0].status, 403);
-
-  t.is(
-    createDesignTasksStub.callCount,
-    4,
-    "Initial design task creation count"
-  );
-  createDesignTasksStub.resetHistory();
-
-  const partnerPairing = await API.post(
-    `/collections/${collection.id}/partner-pairings`,
-    { headers: API.authHeader(admin.session.id) }
-  );
-  t.equal(partnerPairing[0].status, 204, "Partner pairing should give 204");
-  t.equal(
-    createNotificationsStub.callCount,
-    1,
-    "Partner pairing notification is created"
-  );
-
-  const [
-    designOneEvents,
-    designTwoEvents,
-  ] = await db.transaction(async (trx: Knex.Transaction) => [
-    await DesignEventsDAO.find(trx, { designId: collectionDesigns[0].id }),
-    await DesignEventsDAO.find(trx, { designId: collectionDesigns[0].id }),
-  ]);
-
-  t.ok(
-    designOneEvents.some(
-      (de: DesignEvent) => de.type === "COMMIT_PARTNER_PAIRING"
-    ),
-    "Creates a design event for committing partner pairing"
-  );
-  t.ok(
-    designTwoEvents.some(
-      (de: DesignEvent) => de.type === "COMMIT_PARTNER_PAIRING"
-    ),
-    "Creates a design event for committing partner pairing"
-  );
-
-  t.is(
-    createDesignTasksStub.callCount,
-    2,
-    "Post pairing tasks are generated for each design"
-  );
-
-  const collectionTwo = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: designer.user.id,
-    deletedAt: null,
-    description: null,
-    id: uuid.v4(),
-    teamId: null,
-    title: "Yohji Yamamoto FW19",
-  });
-  const designThree = await createDesign({
-    description: "Oversize Placket Shirt",
-    productType: "SHIRT",
-    title: "Cozy Shirt",
-    userId: designer.user.id,
-  });
-  const designFour = await createDesign({
-    description: "Gabardine Wool Pant",
-    productType: "PANT",
-    title: "Balloon Pants",
-    userId: designer.user.id,
-  });
-  await moveDesign(collectionTwo.id, designThree.id);
-  await moveDesign(collectionTwo.id, designFour.id);
-
-  const notPairedFailure = await API.post(
-    `/collections/${collectionTwo.id}/partner-pairings`,
-    { headers: API.authHeader(admin.session.id) }
-  );
-  t.equal(notPairedFailure[0].status, 409);
 });
 
 test("GET /collections?isSubmitted=true&isCosted=false returns collections with uncosted designs", async (t: tape.Test) => {

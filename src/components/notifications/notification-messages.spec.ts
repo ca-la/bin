@@ -701,39 +701,6 @@ test("task completion notification message", async (t: tape.Test) => {
   );
 });
 
-test("partner pairing committed notification message", async (t: tape.Test) => {
-  sandbox()
-    .stub(NotificationAnnouncer, "announceNotificationCreation")
-    .resolves({});
-  const { collection, actor, recipient } = await generateNotification({
-    type: NotificationType.PARTNER_PAIRING_COMMITTED,
-  });
-  const { collection: parPairCollection } = await generateNotification({
-    recipientUserId: recipient.id,
-    type: NotificationType.PARTNER_PAIRING_COMMITTED,
-  });
-
-  const notifications = await db.transaction(async (trx: Knex.Transaction) => {
-    await CollectionsDAO.deleteById(trx, parPairCollection.id);
-    return findByUserId(trx, recipient.id, { limit: 20, offset: 0 });
-  });
-
-  t.is(notifications.length, 1);
-  const parPairNotification = notifications[0];
-  const message = await createNotificationMessage(parPairNotification);
-  if (!message) {
-    throw new Error("Did not create message");
-  }
-  t.assert(
-    message.html.includes(collection.title || "Untitled"),
-    "message html contains the collection title"
-  );
-  t.assert(
-    message.actor && message.actor.id === actor.id,
-    "message.actor && message.actor.id is the user"
-  );
-});
-
 test("costing expiration notification messages", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")

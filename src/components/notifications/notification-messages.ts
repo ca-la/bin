@@ -697,28 +697,6 @@ export async function createNotificationMessage(
       };
     }
 
-    case NotificationType.PARTNER_PAIRING_COMMITTED: {
-      const { collectionId } = notification;
-      const collection = {
-        id: collectionId,
-        title: notification.collectionTitle,
-      };
-      const { htmlLink, deepLink } = getLinks({
-        collection,
-        type: LinkType.Collection,
-      });
-      return {
-        ...baseNotificationMessage,
-        html: `${htmlLink} has been paired with all partners! 🎉 You can now track development progress on Timeline.`,
-        imageUrl: null,
-        link: deepLink,
-        location: [],
-        title: `Your collection, ${normalizeTitle(
-          collection
-        )} has been paired with all partners! 🙌`,
-      };
-    }
-
     case NotificationType.COLLECTION_SUBMIT: {
       const { collectionId } = notification;
       const collection = {
