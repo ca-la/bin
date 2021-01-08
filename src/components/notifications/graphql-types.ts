@@ -69,6 +69,7 @@ export const NotificationMessage: GraphQLType = {
   name: "NotificationMessage",
   type: "type",
   body: {
+    type: "String!",
     id: "String!",
     title: "String!",
     html: "String!",
