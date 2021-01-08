@@ -73,6 +73,7 @@ export const NotificationMessage: GraphQLType = {
     id: "String!",
     title: "String!",
     html: "String!",
+    text: "String!",
     readAt: "GraphQLDateTime",
     link: "String!",
     createdAt: "GraphQLDateTime!",
