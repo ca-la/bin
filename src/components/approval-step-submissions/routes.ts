@@ -33,6 +33,7 @@ import useTransaction from "../../middleware/use-transaction";
 import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
+import * as NotificationsService from "../../services/create-notifications";
 import Comment from "../comments/types";
 import { RouteUpdated, RouteDeleted } from "../../services/pubsub/cala-events";
 import filterError from "../../services/filter-error";
@@ -471,10 +472,19 @@ export function* createRevisionRequest(
     commentId: comment.id,
   });
 
-  const { idNameMap } = yield getCollaboratorsFromCommentMentions(
-    trx,
-    comment.text
-  );
+  const {
+    mentionedUserIds,
+    idNameMap,
+  } = yield getCollaboratorsFromCommentMentions(trx, comment.text);
+
+  for (const mentionedUserId of mentionedUserIds) {
+    yield NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
+      approvalStepId: this.state.stepId,
+      commentId: comment.id,
+      actorId: userId,
+      recipientId: mentionedUserId,
+    });
+  }
 
   const commentWithMentions = { ...comment, mentions: idNameMap };
 

@@ -24,6 +24,7 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 import Session from "../../domain-objects/session";
 import SessionsDAO from "../../dao/sessions";
 import { DesignEventWithMeta } from "../../published-types";
+import * as NotificationService from "../../services/create-notifications";
 import * as IrisService from "../iris/send-message";
 import { templateDesignEventWithMeta } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
@@ -388,6 +389,9 @@ test("POST /design-approval-step-submissions/:submissionId/approvals", async (t:
 
 test("POST /design-approval-step-submissions/:submissionId/revision-requests", async (t: Test) => {
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+  const notificationStub = sandbox()
+    .stub(NotificationService, "sendApprovalStepCommentMentionNotification")
+    .resolves();
 
   const now = new Date();
   sandbox().useFakeTimers(now);
@@ -404,7 +408,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
-    text: "test comment",
+    text: `test comment @<${collaborator.id}|collaborator>`,
     userId: designer.user.id,
   };
 
@@ -419,6 +423,12 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
   );
 
   t.equal(response.status, 204);
+  t.deepEqual(notificationStub.args[0][1], {
+    actorId: designer.user.id,
+    approvalStepId: submission.stepId,
+    commentId: comment.id,
+    recipientId: collaborator.userId,
+  });
 
   const trx = await db.transaction();
   try {
@@ -444,7 +454,9 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     const fullComment = {
       ...comment,
       attachments: [],
-      mentions: {},
+      mentions: {
+        [collaborator.id]: collaborator.user!.name,
+      },
       userEmail: designer.user.email,
       userName: designer.user.name,
       userRole: "USER",
