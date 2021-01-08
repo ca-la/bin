@@ -10,6 +10,7 @@ import {
   span,
   getApprovalBaseWithAssets,
 } from "../notifications/notification-messages";
+import normalizeTitle from "../../services/normalize-title";
 
 export interface NotificationLayerSchema {
   [NotificationType.APPROVAL_STEP_ASSIGNMENT]: {
@@ -44,7 +45,12 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} assigned you to ${
           notification.approvalStepTitle
         } on ${assets.designHtmlLink}`,
-        title: `${assets.actorName} assigned you to ${notification.approvalStepTitle} on ${assets.designHtmlLink}`,
+        title: `${assets.actorName} assigned you to ${
+          notification.approvalStepTitle
+        } on ${normalizeTitle({ title: notification.designTitle })}`,
+        text: `Assigned you to ${
+          notification.approvalStepTitle
+        } on ${normalizeTitle({ title: notification.designTitle })}`,
       };
     }
   ),
@@ -65,7 +71,12 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} completed ${
           notification.approvalStepTitle
         } on ${assets.designHtmlLink}`,
-        title: `${assets.actorName} completed ${notification.approvalStepTitle} on ${assets.designHtmlLink}`,
+        title: `${assets.actorName} completed ${
+          notification.approvalStepTitle
+        } on ${normalizeTitle({ title: notification.designTitle })}`,
+        text: `Completed ${notification.approvalStepTitle} on ${normalizeTitle({
+          title: notification.designTitle,
+        })}`,
       };
     }
   ),
@@ -86,7 +97,8 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} has been assigned to ${
           assets.stepHtmlLink
         }`,
-        title: `${assets.actorName} has been assigned to ${assets.stepHtmlLink}`,
+        title: `${assets.actorName} has been assigned to ${notification.approvalStepTitle}`,
+        text: `Has been assigned to ${notification.approvalStepTitle}`,
       };
     }
   ),

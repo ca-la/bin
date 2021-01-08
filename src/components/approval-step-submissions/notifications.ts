@@ -48,7 +48,8 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} assigned you to review ${
           notification.approvalSubmissionTitle
         } for ${assets.designHtmlLink}`,
-        title: `${assets.actorName} assigned you to review ${assets.submissionHtmlLink}`,
+        title: `${assets.actorName} assigned you to review ${notification.approvalSubmissionTitle}`,
+        text: `Assigned you to review ${notification.approvalSubmissionTitle}`,
       };
     }
   ),
@@ -69,7 +70,8 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} approved ${
           assets.submissionHtmlLink
         }`,
-        title: `${assets.actorName} approved ${assets.submissionHtmlLink}`,
+        title: `${assets.actorName} approved ${notification.approvalSubmissionTitle}`,
+        text: `Approved ${notification.approvalSubmissionTitle}`,
       };
     }
   ),
@@ -90,7 +92,8 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} requested revisions to ${
           assets.submissionHtmlLink
         }`,
-        title: `${assets.actorName} requested revisions to ${assets.submissionHtmlLink}`,
+        title: `${assets.actorName} requested revisions to ${notification.approvalSubmissionTitle}`,
+        text: `Requested revisions to ${notification.approvalSubmissionTitle}`,
       };
     }
   ),
@@ -111,7 +114,8 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         html: `${span(assets.actorName, "user-name")} requested re-review of ${
           assets.submissionHtmlLink
         }`,
-        title: `${assets.actorName} requested re-review of ${assets.submissionHtmlLink}`,
+        title: `${assets.actorName} requested re-review of ${notification.approvalSubmissionTitle}`,
+        text: `Requested re-review of ${notification.approvalSubmissionTitle}`,
       };
     }
   ),

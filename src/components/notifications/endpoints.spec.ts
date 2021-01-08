@@ -69,6 +69,7 @@ test("notificationMessages endpoint", async () => {
     const notificationMessage: NotificationMessage = {
       id: "",
       title: "",
+      text: "",
       html: "",
       readAt: null,
       link: "",
@@ -80,6 +81,7 @@ test("notificationMessages endpoint", async () => {
       actions: [],
       archivedAt: null,
       matchedFilters: [],
+      type: NotificationType.ANNOTATION_COMMENT_CREATE,
     };
     const findByUserIdStub = sandbox()
       .stub(NotificationsDAO, "findByUserId")

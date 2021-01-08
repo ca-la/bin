@@ -1,12 +1,13 @@
 import { test, Test } from "../../test-helpers/fresh";
 import { transformNotificationMessageToGraphQL } from "./service";
-import { NotificationMessage } from "./types";
+import { NotificationMessage, NotificationType } from "./types";
 
 test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
   const notificationMessage: NotificationMessage = {
     id: "",
     title: "",
     html: "",
+    text: "",
     readAt: null,
     link: "",
     createdAt: new Date(),
@@ -23,6 +24,7 @@ test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
     actions: [],
     archivedAt: null,
     matchedFilters: [],
+    type: NotificationType.ANNOTATION_COMMENT_CREATE,
   };
 
   const transformed = transformNotificationMessageToGraphQL(

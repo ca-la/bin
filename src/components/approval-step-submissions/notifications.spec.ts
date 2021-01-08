@@ -96,6 +96,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         design.title,
         design.id,
       ],
+      textParts: ["Assigned you to review ", submission.title],
     },
     {
       title: "APPROVAL_STEP_SUBMISSION_APPROVAL",
@@ -107,6 +108,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalSubmissionId: submission.id,
       },
       parts: [actor.name, " approved ", submission.title],
+      textParts: ["Approved ", submission.title],
     },
     {
       title: "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
@@ -118,6 +120,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalSubmissionId: submission.id,
       },
       parts: [actor.name, " requested revisions to ", submission.title],
+      textParts: ["Requested revisions to ", submission.title],
     },
     {
       title: "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
@@ -129,6 +132,7 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalSubmissionId: submission.id,
       },
       parts: [actor.name, " requested re-review of ", submission.title],
+      textParts: ["Requested re-review of ", submission.title],
     },
   ];
   for (const testCase of testCases) {
@@ -156,7 +160,14 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
           (part: string) => message && message.html.includes(part)
         ),
         true,
-        `${testCase.title} / notification message contains expected parts`
+        `${testCase.title} / notification message contains expected html parts`
+      );
+      t.is(
+        testCase.textParts.every(
+          (part: string) => message && message.text.includes(part)
+        ),
+        true,
+        `${testCase.title} / notification message contains expected text parts`
       );
     } finally {
       await trx.rollback();

@@ -23,6 +23,7 @@ import {
   BaseFullNotification,
   BaseNotification,
 } from "../notifications/models/base";
+import normalizeTitle from "../../services/normalize-title";
 
 type BaseFull = Omit<
   BaseNotification,
@@ -79,7 +80,7 @@ export interface FullShipmentTrackingUpdateNotification extends BaseFull {
 }
 
 interface TrackingBaseWithAssets {
-  base: Omit<NotificationMessage, "html" | "title">;
+  base: Omit<NotificationMessage, "html" | "title" | "text">;
   actorName: string;
   designHtmlLink: string;
   trackingHtmlLink: string | null;
@@ -98,6 +99,7 @@ function getTrackingBaseWithAssets(
     shipmentTrackingDescription,
     approvalStepId,
     approvalStepTitle,
+    type,
   } = notification;
 
   if (!shipmentTrackingId || !designId || !approvalStepId) {
@@ -136,6 +138,7 @@ function getTrackingBaseWithAssets(
       link: trackingLink,
       location: getLocation({ collection, design }),
       imageUrl: buildImageUrl(notification.designImageIds),
+      type,
     },
     actorName,
     designHtmlLink,
@@ -201,6 +204,7 @@ function getNotificationFromTag(
 ): {
   html: string;
   title: string;
+  text: string;
 } {
   const trackingHtmlLink = constructHtmlLink(deepLink, trackingTitle);
 
@@ -208,6 +212,7 @@ function getNotificationFromTag(
     case "Pending":
       return {
         title: `Tracking for ${trackingTitle} is Pending`,
+        text: `Tracking for ${trackingTitle} is Pending`,
         html: `Tracking for ${trackingHtmlLink} is ${constructHtmlLink(
           deepLink,
           "Pending"
@@ -217,12 +222,14 @@ function getNotificationFromTag(
     case "InfoReceived":
       return {
         title: `Tracking info for ${trackingTitle} has been received.`,
+        text: `Tracking info for ${trackingTitle} has been received.`,
         html: `Tracking info for ${trackingHtmlLink} has been received.`,
       };
 
     case "InTransit":
       return {
         title: `${trackingTitle} is in Transit`,
+        text: `${trackingTitle} is in Transit`,
         html: `${trackingHtmlLink} is in ${constructHtmlLink(
           deepLink,
           "Transit"
@@ -232,6 +239,7 @@ function getNotificationFromTag(
     case "OutForDelivery":
       return {
         title: `${trackingTitle} is Out for Delivery`,
+        text: `${trackingTitle} is Out for Delivery`,
         html: `${trackingHtmlLink} is ${constructHtmlLink(
           deepLink,
           "Out for Delivery"
@@ -241,6 +249,7 @@ function getNotificationFromTag(
     case "AvailableForPickup":
       return {
         title: `${trackingTitle} is Available for Pickup`,
+        text: `${trackingTitle} is Available for Pickup`,
         html: `${trackingHtmlLink} is ${constructHtmlLink(
           deepLink,
           "Available for Pickup"
@@ -250,6 +259,7 @@ function getNotificationFromTag(
     case "Delivered":
       return {
         title: `${trackingTitle} was Delivered`,
+        text: `${trackingTitle} was Delivered`,
         html: `${trackingHtmlLink} was ${constructHtmlLink(
           deepLink,
           "Delivered"
@@ -259,12 +269,14 @@ function getNotificationFromTag(
     case "AttemptFail":
       return {
         title: `Delivery attempt for ${trackingTitle} failed.`,
+        text: `Delivery attempt for ${trackingTitle} failed.`,
         html: `Delivery attempt for ${trackingHtmlLink} failed.`,
       };
 
     case "Exception":
       return {
         title: `Delivery for ${trackingTitle} has an Exception`,
+        text: `Delivery for ${trackingTitle} has an Exception`,
         html: `Delivery for ${trackingHtmlLink} has an ${constructHtmlLink(
           deepLink,
           "Exception"
@@ -274,6 +286,7 @@ function getNotificationFromTag(
     case "Expired":
       return {
         title: `Tracking for ${trackingTitle} has Expired`,
+        text: `Tracking for ${trackingTitle} has Expired`,
         html: `Tracking for ${trackingHtmlLink} has ${constructHtmlLink(
           deepLink,
           "Expired"
@@ -321,7 +334,12 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
           actorName,
           "user-name"
         )} added tracking to ${designHtmlLink}`,
-        title: `${actorName} added tracking to ${notification.designTitle}`,
+        title: `${actorName} added tracking to ${normalizeTitle({
+          title: notification.designTitle,
+        })}`,
+        text: `Added tracking to ${normalizeTitle({
+          title: notification.designTitle,
+        })}`,
         attachments: [
           {
             text: `${notification.shipmentTrackingDescription} · ${notification.trackingId}`,

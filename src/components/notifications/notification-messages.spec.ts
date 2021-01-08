@@ -90,6 +90,10 @@ test("annotation comment notification message", async (t: tape.Test) => {
     "message html contains the design title"
   );
   t.assert(
+    annCommCreateMessage.text.includes(design.title || "test"),
+    "message text contains the design title"
+  );
+  t.assert(
     annCommCreateMessage.actor && annCommCreateMessage.actor.id === actor.id,
     "message actor is the user"
   );
@@ -163,6 +167,10 @@ test("annotation mention notification message", async (t: tape.Test) => {
     message.html.includes(design.title || "test"),
     "message html contains the design title"
   );
+  t.assert(
+    message.text.includes(design.title || "test"),
+    "message text contains the design title"
+  );
   t.assert(message.actor && message.actor.id === actor.id, "actor is correct");
   const { mentions, hasAttachments } = message.attachments[0];
   t.assert(
@@ -227,6 +235,10 @@ test("collection submit notification message", async (t: tape.Test) => {
     "message html contains the collection title"
   );
   t.assert(
+    message.text.includes(collection.title || "test"),
+    "message text contains the collection title"
+  );
+  t.assert(
     message.actor && message.actor.id === userOne.user.id,
     "message.actor && message.actor.id is the user"
   );
@@ -273,6 +285,10 @@ test("commit cost inputs notification message", async (t: tape.Test) => {
   t.assert(
     message.html.includes("test collection"),
     "message html contains the collection title"
+  );
+  t.assert(
+    message.text.includes("test collection"),
+    "message text contains the collection title"
   );
   t.assert(
     message.actor && message.actor.id === userOne.user.id,
@@ -740,7 +756,7 @@ test("costing expiration notification messages", async (t: tape.Test) => {
       "pricing has expired. Please resubmit for updated costing."
     )
   );
-  t.equal(message1!.title, "Pricing for Testing123 has expired.");
+  t.equal(message1!.title, "Pricing for Testing123 has expired");
 
   // Costing Expiration Two Days
 
@@ -749,8 +765,8 @@ test("costing expiration notification messages", async (t: tape.Test) => {
     message2!.html.includes(collection.title || "Untitled"),
     "message html contains the collection title"
   );
-  t.true(message2!.html.includes("pricing expires in 48 hours."));
-  t.equal(message2!.title, "Pricing for Testing123 will expire in 48 hours.");
+  t.true(message2!.html.includes("pricing expires in 48 hours"));
+  t.equal(message2!.title, "Pricing for Testing123 will expire in 48 hours");
 
   // Costing Expiration One Week
 
@@ -759,8 +775,8 @@ test("costing expiration notification messages", async (t: tape.Test) => {
     message3!.html.includes(collection.title || "Untitled"),
     "message html contains the collection title"
   );
-  t.true(message3!.html.includes("pricing expires in 7 days."));
-  t.equal(message3!.title, "Pricing for Testing123 will expire in 7 days.");
+  t.true(message3!.html.includes("pricing expires in 7 days"));
+  t.equal(message3!.title, "Pricing for Testing123 will expire in 7 days");
 });
 
 test("unsupported notifications", async (t: tape.Test) => {

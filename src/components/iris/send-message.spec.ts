@@ -93,6 +93,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
     id: "",
     title: "",
     html: "",
+    text: "",
     readAt: null,
     link: "",
     createdAt: new Date(),
@@ -103,6 +104,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
     actions: [],
     archivedAt: null,
     matchedFilters: [],
+    type: NotificationType.ANNOTATION_COMMENT_CREATE,
   };
   const realtimeNotification: RealtimeMessage = {
     type: RealtimeMessageType.notificationCreated,

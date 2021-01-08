@@ -84,6 +84,7 @@ test("ApprovalSteps notifications", async (t: Test) => {
         design.title,
         design.id,
       ],
+      textParts: ["Assigned you to ", approvalStep.title],
     },
     {
       title: "APPROVAL_STEP_COMPLETION",
@@ -101,6 +102,7 @@ test("ApprovalSteps notifications", async (t: Test) => {
         design.title,
         design.id,
       ],
+      textParts: ["Completed ", approvalStep.title, " on ", design.title],
     },
     {
       title: "APPROVAL_STEP_PAIRING",
@@ -116,6 +118,7 @@ test("ApprovalSteps notifications", async (t: Test) => {
         approvalStep.title,
         design.id,
       ],
+      textParts: ["Has been assigned to ", approvalStep.title],
     },
   ];
   for (const testCase of testCases) {
@@ -143,7 +146,14 @@ test("ApprovalSteps notifications", async (t: Test) => {
           (part: string) => message && message.html.includes(part)
         ),
         true,
-        `${testCase.title} / notification message contains expected parts`
+        `${testCase.title} / notification message contains expected html parts`
+      );
+      t.is(
+        testCase.textParts.every(
+          (part: string) => message && message.text.includes(part)
+        ),
+        true,
+        `${testCase.title} / notification message contains expected text parts`
       );
     } finally {
       await trx.rollback();

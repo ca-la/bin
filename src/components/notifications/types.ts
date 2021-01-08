@@ -65,6 +65,8 @@ export interface NotificationMessage {
   actions: NotificationMessageAction[];
   archivedAt: Date | null;
   matchedFilters: NotificationFilter[];
+  text: string;
+  type: NotificationType;
 }
 
 // GraphQL doesn't allow arbitrary schemaless object like Mention

@@ -5,7 +5,10 @@ import MonthlySalesReport from "../../components/sales-reports/domain-object";
 import { findById as findUser } from "../../components/users/dao";
 import EmailService from "../../services/email";
 import { STUDIO_HOST } from "../../config";
-import { NotificationMessage } from "../../components/notifications/types";
+import {
+  NotificationMessage,
+  NotificationType,
+} from "../../components/notifications/types";
 
 const LEFT_STYLE = "text-align:left;width:50%;padding-right:4px;";
 const RIGHT_STYLE =
@@ -48,6 +51,7 @@ export async function immediatelySendMonthlySalesReport(
   const message: NotificationMessage = {
     id: uuid.v4(),
     title: "Monthly Sales Report",
+    text: "Monthly Sales Report",
     html: `
       <table style='margin:auto;'>
         <tbody>
@@ -108,6 +112,7 @@ export async function immediatelySendMonthlySalesReport(
     actions: [],
     archivedAt: null,
     matchedFilters: [],
+    type: NotificationType.ANNOTATION_COMMENT_CREATE,
   };
 
   await EmailService.enqueueSend({

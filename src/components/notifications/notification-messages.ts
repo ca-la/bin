@@ -87,6 +87,7 @@ type BaseMessage = Pick<
   | "readAt"
   | "archivedAt"
   | "matchedFilters"
+  | "type"
 > & {
   actor: User;
 };
@@ -101,11 +102,12 @@ export function createBaseMessage(notification: FullNotification): BaseMessage {
     readAt: notification.readAt,
     archivedAt: notification.archivedAt,
     matchedFilters: getMatchingFilters(notification),
+    type: notification.type,
   };
 }
 
 interface ApprovalBaseWithAssets {
-  base: Omit<NotificationMessage, "html" | "title">;
+  base: Omit<NotificationMessage, "html" | "title" | "text">;
   actorName: string;
   designHtmlLink: string;
   stepHtmlLink: string;
@@ -125,6 +127,7 @@ export function getApprovalBaseWithAssets(
     approvalStepTitle,
     approvalSubmissionId,
     approvalSubmissionTitle,
+    type,
   } = notification;
 
   if (!approvalStepId || !designId) {
@@ -172,6 +175,7 @@ export function getApprovalBaseWithAssets(
       imageUrl: buildImageUrl(designImageIds),
       link: deepLink,
       location: getLocation({ collection, design }),
+      type,
     },
     actorName,
     designHtmlLink,
@@ -220,6 +224,7 @@ export async function createNotificationMessage(
           design: designMeta,
         }),
         title: `${cleanName} invited you to collaborate on ${resourceName}`,
+        text: `Invited you to collaborate on ${resourceName}`,
       };
 
       if (collectionMeta) {
@@ -302,6 +307,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`,
+        text: `Commented on ${normalizeTitle(design)}`,
       };
     }
 
@@ -350,6 +356,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(design)}`,
+        text: `Mentioned you on ${normalizeTitle(design)}`,
       };
     }
 
@@ -403,6 +410,7 @@ export async function createNotificationMessage(
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
           design
         )}`,
+        text: `Replied to a comment on ${normalizeTitle(design)}`,
       };
     }
 
@@ -427,6 +435,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} added a measurement to ${normalizeTitle(design)}`,
+        text: `Added a measurement to ${normalizeTitle(design)}`,
       };
     }
 
@@ -480,6 +489,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on your task ${normalizeTitle(task)}`,
+        text: `Commented on your task ${normalizeTitle(task)}`,
       };
     }
 
@@ -529,6 +539,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`,
+        text: `Mentioned you on the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -580,6 +591,7 @@ export async function createNotificationMessage(
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
           task
         )}`,
+        text: `Replied to a comment on ${normalizeTitle(task)}`,
       };
     }
 
@@ -607,6 +619,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} assigned you the task ${normalizeTitle(task)}`,
+        text: `Assigned you the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -631,6 +644,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} completed the task ${normalizeTitle(task)}`,
+        text: `Completed the task ${normalizeTitle(task)}`,
       };
     }
 
@@ -654,6 +668,7 @@ export async function createNotificationMessage(
         title: `${cleanName} accepted the service bid for ${normalizeTitle(
           design
         )}`,
+        text: `Accepted the service bid for ${normalizeTitle(design)}`,
       };
     }
 
@@ -671,6 +686,7 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection: null, design }),
         title: "You have a new project to review",
+        text: "You have a new project to review",
       };
     }
 
@@ -694,6 +710,7 @@ export async function createNotificationMessage(
         title: `${cleanName} rejected the service bid for ${normalizeTitle(
           design
         )}`,
+        text: `Rejected the service bid for ${normalizeTitle(design)}`,
       };
     }
 
@@ -719,6 +736,9 @@ export async function createNotificationMessage(
         title: `${normalizeTitle(
           collection
         )} has been submitted, and will be review by our team`,
+        text: `${normalizeTitle(
+          collection
+        )} has been submitted, and will be review by our team`,
       };
     }
 
@@ -742,6 +762,9 @@ export async function createNotificationMessage(
         title: `${normalizeTitle(
           collection
         )} has been reviewed and is now ready for checkout`,
+        text: `${normalizeTitle(
+          collection
+        )} has been reviewed and is now ready for checkout`,
       };
     }
 
@@ -762,7 +785,8 @@ export async function createNotificationMessage(
         imageUrl: null,
         link: deepLink,
         location: [],
-        title: `Pricing for ${normalizeTitle(collection)} has expired.`,
+        title: `Pricing for ${normalizeTitle(collection)} has expired`,
+        text: `Pricing for ${normalizeTitle(collection)} has expired`,
       };
     }
 
@@ -779,13 +803,16 @@ export async function createNotificationMessage(
       });
       return {
         ...baseNotificationMessage,
-        html: `${htmlLink} pricing expires in 48 hours.`,
+        html: `${htmlLink} pricing expires in 48 hours`,
         imageUrl: null,
         link: deepLink,
         location: [],
         title: `Pricing for ${normalizeTitle(
           collection
-        )} will expire in 48 hours.`,
+        )} will expire in 48 hours`,
+        text: `Pricing for ${normalizeTitle(
+          collection
+        )} will expire in 48 hours`,
       };
     }
 
@@ -802,13 +829,14 @@ export async function createNotificationMessage(
       });
       return {
         ...baseNotificationMessage,
-        html: `${htmlLink} pricing expires in 7 days.`,
+        html: `${htmlLink} pricing expires in 7 days`,
         imageUrl: null,
         link: deepLink,
         location: [],
         title: `Pricing for ${normalizeTitle(
           collection
-        )} will expire in 7 days.`,
+        )} will expire in 7 days`,
+        text: `Pricing for ${normalizeTitle(collection)} will expire in 7 days`,
       };
     }
 
@@ -870,6 +898,9 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(
+          approvalStep
+        )} for ${normalizeTitle(design)}`,
+        text: `Mentioned you on ${normalizeTitle(
           approvalStep
         )} for ${normalizeTitle(design)}`,
       };
@@ -935,6 +966,9 @@ export async function createNotificationMessage(
         title: `${cleanName} replied to a comment on ${normalizeTitle(
           approvalStep
         )} for ${normalizeTitle(design)}`,
+        text: `${cleanName} replied to a comment on ${normalizeTitle(
+          approvalStep
+        )} for ${normalizeTitle(design)}`,
       };
     }
 
@@ -996,6 +1030,9 @@ export async function createNotificationMessage(
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(
+          approvalStep
+        )} for ${normalizeTitle(design)}`,
+        text: `Commented on ${normalizeTitle(
           approvalStep
         )} for ${normalizeTitle(design)}`,
       };
