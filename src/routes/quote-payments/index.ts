@@ -7,7 +7,7 @@ import StripeError from "../../errors/stripe";
 import requireAuth = require("../../middleware/require-auth");
 import {
   canAccessCollectionInRequestBody,
-  canSubmitCollection,
+  canCheckOutCollection,
 } from "../../middleware/can-access-collection";
 import { typeGuard } from "../../middleware/type-guard";
 import payInvoiceWithNewPaymentMethod, {
@@ -229,9 +229,9 @@ router.post(
   "/",
   requireAuth,
   canAccessCollectionInRequestBody,
-  canSubmitCollection,
-  typeGuard<PayRequest | PayWithMethodRequest>(isPayRequest),
   useTransaction,
+  canCheckOutCollection,
+  typeGuard<PayRequest | PayWithMethodRequest>(isPayRequest),
   payQuote
 );
 

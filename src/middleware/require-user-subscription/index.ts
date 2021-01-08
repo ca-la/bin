@@ -4,7 +4,10 @@ import { findActive as findActiveSubscription } from "../../components/subscript
 import Knex from "knex";
 import db from "../../services/db";
 
-export default function* requireSubscription(
+// Require that the user has an active user-level subscription
+// Note: This will become obsolete as subscriptions move to the team level; see
+// `src/components/plans/find-collection-team-plans`
+export default function* requireUserSubscription(
   this: Koa.Context,
   next: () => any
 ): Iterator<any, any, any> {

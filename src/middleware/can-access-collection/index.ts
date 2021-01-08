@@ -2,7 +2,12 @@ import Koa from "koa";
 import Knex from "knex";
 
 import CollectionsDAO = require("../../components/collections/dao");
+import {
+  canSubmitTeamCollection,
+  canCheckOutTeamCollection,
+} from "../../components/plans/find-collection-team-plans";
 import { getCollectionPermissions } from "../../services/get-permissions";
+import requireUserSubscription from "../../middleware/require-user-subscription";
 import db from "../../services/db";
 
 export function* attachCollectionAndPermissions(
@@ -98,13 +103,22 @@ export function* canEditCollection(
 }
 
 export function* canSubmitCollection(
-  this: AuthedContext<{}, PermissionsKoaState>,
+  this: TrxContext<
+    AuthedContext<{}, PermissionsKoaState & CollectionsKoaState>
+  >,
   next: () => Promise<any>
 ): any {
-  const { permissions } = this.state;
-  if (!permissions) {
+  const { permissions, collection, trx } = this.state;
+
+  if (!permissions || !collection) {
     throw new Error(
-      "canSubmitCollection must be chained with canAccessCollectionInParam"
+      "canSubmitCollection must be chained with a canAccessCollection* call"
+    );
+  }
+
+  if (!trx) {
+    throw new Error(
+      "canSubmitCollection must be chained with a useTransaction call"
     );
   }
 
@@ -113,6 +127,56 @@ export function* canSubmitCollection(
     403,
     "You don't have permission to submit this collection"
   );
+
+  if (collection.teamId) {
+    const canSubmit = yield canSubmitTeamCollection(trx, collection.id);
+    this.assert(
+      canSubmit,
+      402,
+      "Your plan does not include the ability to submit, please upgrade"
+    );
+  } else {
+    yield requireUserSubscription.call(this, next);
+  }
+
+  yield next;
+}
+
+export function* canCheckOutCollection(
+  this: TrxContext<
+    AuthedContext<{}, PermissionsKoaState & CollectionsKoaState>
+  >,
+  next: () => Promise<any>
+): any {
+  const { permissions, collection, trx } = this.state;
+  if (!permissions || !collection) {
+    throw new Error(
+      "canCheckOutCollection must be chained with a canAccessCollection* call"
+    );
+  }
+
+  if (!trx) {
+    throw new Error(
+      "canCheckOutCollection must be chained with a useTransaction call"
+    );
+  }
+
+  this.assert(
+    permissions.canSubmit,
+    403,
+    "You don't have permission to check out this collection"
+  );
+
+  if (collection.teamId) {
+    const canCheckOut = yield canCheckOutTeamCollection(trx, collection.id);
+    this.assert(
+      canCheckOut,
+      402,
+      "Your plan does not include the ability to check out, please upgrade"
+    );
+  } else {
+    yield requireUserSubscription.call(this, next);
+  }
 
   yield next;
 }

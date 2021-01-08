@@ -14,6 +14,7 @@ import * as LineItemsDAO from "../../dao/line-items";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
+import * as RequireUserSubscription from "../../middleware/require-user-subscription";
 import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
@@ -40,16 +41,24 @@ const ADDRESS_BLANK = {
   postCode: "RG41 2PE",
 };
 
-test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
-  const { user, session } = await createUser();
-  const stripe = sandbox().stub(Stripe, "charge").resolves({ id: "chargeId" });
+function setupStubs() {
   sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
   sandbox()
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
-  sandbox().stub(EmailService, "enqueueSend").resolves();
+  sandbox().stub(RequireUserSubscription, "default").resolves();
+  const chargeStub = sandbox()
+    .stub(Stripe, "charge")
+    .resolves({ id: "chargeId" });
+  const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
   const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
+  return { chargeStub, emailStub, slackStub, irisStub };
+}
+
+test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { slackStub, irisStub, chargeStub } = setupStubs();
   const paymentMethodTokenId = uuid.v4();
 
   const collection = await CollectionsDAO.create({
@@ -191,7 +200,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems.length, 2, "Line Item exists for designs");
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
-  t.assert(stripe.calledOnce, "Stripe was charged");
+  t.assert(chargeStub.calledOnce, "Stripe was charged");
 
   const realtimeDesignEvents = irisStub.args.filter(
     (arg: any) => arg[0].type === "design-event/created"
@@ -271,15 +280,10 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
 
 test("/quote-payments POST does not generate quotes, payment method, invoice, lineItems on payment failure", async (t: Test) => {
   const { user, session } = await createUser();
-  const stripe = sandbox()
-    .stub(Stripe, "charge")
-    .rejects(new StripeError({ message: "Could not process payment" }));
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
+
+  const { chargeStub } = setupStubs();
+  chargeStub.rejects(new StripeError({ message: "Could not process payment" }));
+
   const paymentMethodTokenId = uuid.v4();
 
   const collection = await CollectionsDAO.create({
@@ -347,13 +351,12 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 
   const invoice = await InvoicesDAO.findByUser(user.id);
   t.deepEquals(invoice, [], "No invoice exists for design");
-  t.assert(stripe.calledOnce, "Stripe was called");
+  t.assert(chargeStub.calledOnce, "Stripe was called");
 });
 
 test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
   const { user, session } = await createUser();
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
+  const { slackStub } = setupStubs();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -456,11 +459,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
 
 test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) => {
   const { user, session } = await createUser();
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
-  sandbox().stub(SlackService, "enqueueSend").resolves();
+  setupStubs();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -535,15 +534,12 @@ test(
     " invoice, lineItems on failure",
   async (t: Test) => {
     const { user, session } = await createUser();
-    sandbox().stub(EmailService, "enqueueSend").resolves();
-    sandbox().stub(SlackService, "enqueueSend").resolves();
-    sandbox()
-      .stub(attachSource, "default")
-      .resolves({ id: "sourceId", last4: "1234" });
-    sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
+    setupStubs();
+
     sandbox()
       .stub(LineItemsDAO, "create")
       .rejects(new InvalidDataError("Duplicate"));
+
     const paymentMethodTokenId = uuid.v4();
 
     const collection = await CollectionsDAO.create({
@@ -615,13 +611,8 @@ test(
 );
 
 test("POST /quote-payments creates shopify products if connected to a storefront", async (t: Test) => {
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
-  sandbox().stub(Stripe, "charge").resolves({ id: "chargeId" });
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
+  setupStubs();
+
   const createShopifyProductsStub = sandbox()
     .stub(CreateShopifyProducts, "createShopifyProductsForCollection")
     .resolves();
@@ -705,13 +696,7 @@ test("POST /quote-payments creates shopify products if connected to a storefront
 });
 
 test("POST /quote-payments still succeeds if creates shopify products fails", async (t: Test) => {
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
-  sandbox().stub(Stripe, "charge").resolves({ id: "chargeId" });
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
+  setupStubs();
 
   const createShopifyProductsStub = sandbox()
     .stub(CreateShopifyProducts, "createShopifyProductsForCollection")
@@ -785,21 +770,8 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
 
 test("POST /quote-payments does not allow parallel requests to succeed", async (t: Test) => {
   const { user, session } = await createUser();
-  sandbox()
-    .stub(Stripe, "charge")
-    .callsFake(async () => {
-      return {
-        chargeId: uuid.v4(),
-      };
-    });
 
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
-  sandbox().stub(IrisService, "sendMessage").resolves();
+  setupStubs();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -918,21 +890,7 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
 
 test("POST /quote-payments does not allow consecutive requests to succeed", async (t: Test) => {
   const { user, session } = await createUser();
-  sandbox()
-    .stub(Stripe, "charge")
-    .callsFake(async () => {
-      return {
-        chargeId: uuid.v4(),
-      };
-    });
-
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
-  sandbox()
-    .stub(attachSource, "default")
-    .resolves({ id: "sourceId", last4: "1234" });
-  sandbox().stub(EmailService, "enqueueSend").resolves();
-  sandbox().stub(SlackService, "enqueueSend").resolves();
-  sandbox().stub(IrisService, "sendMessage").resolves();
+  setupStubs();
 
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),

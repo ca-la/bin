@@ -34,7 +34,6 @@ import {
   fetchUncostedWithLabels,
 } from "../services/fetch-with-labels";
 import deleteCollectionAndRemoveDesigns from "../services/delete";
-import requireSubscription from "../../../middleware/require-subscription";
 import { Role as TeamUserRole } from "../../team-users/types";
 import { requireTeamRoles } from "../../team-users/service";
 
@@ -258,7 +257,7 @@ router.patch(
 router.post(
   "/:collectionId/submissions",
   requireAuth,
-  requireSubscription,
+  useTransaction,
   canAccessCollectionInParam,
   canSubmitCollection,
   createSubmission
