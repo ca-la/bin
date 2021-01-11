@@ -96,15 +96,19 @@ function* getDesignsByUser() {
   if (collectionFilterId) {
     filters.push({ type: "COLLECTION", value: collectionFilterId });
   }
-  if (teamId) {
-    const teamUser = yield db.transaction((trx) =>
-      TeamUsersDAO.findOne(trx, { teamId, userId })
-    );
-    if (!teamUser && role !== "ADMIN") {
-      this.throw(403, "Must be a member of team to search by team");
-    }
+  if (teamId !== undefined) {
+    if (teamId === "null") {
+      filters.push({ type: "TEAM", value: null });
+    } else {
+      const teamUser = yield db.transaction((trx) =>
+        TeamUsersDAO.findOne(trx, { teamId, userId })
+      );
+      if (!teamUser && role !== "ADMIN") {
+        this.throw(403, "Must be a member of team to search by team");
+      }
 
-    filters.push({ type: "TEAM", value: teamId });
+      filters.push({ type: "TEAM", value: teamId });
+    }
   }
   if (currentStepType) {
     filters.push({ type: "STEP", value: currentStepType });

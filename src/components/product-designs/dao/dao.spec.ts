@@ -712,7 +712,7 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
     title: "second design",
     userId: otherTeamOwner.id,
   });
-  await createDesign({
+  const thirdDesign = await createDesign({
     productType: "test",
     title: "third design",
     userId: user.id,
@@ -731,6 +731,13 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
   });
   await addDesign(collectionTwo.id, secondDesign.id);
 
+  const { collection: collectionThree } = await generateCollection({
+    createdBy: user.id,
+    title: "Collection 3",
+    teamId: null,
+  });
+  await addDesign(collectionThree.id, thirdDesign.id);
+
   const teamDesigns = await findAllDesignsThroughCollaborator({
     userId: user.id,
     filters: [{ type: "TEAM", value: team.id }],
@@ -747,7 +754,7 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
       ),
       new Set([firstDesign.id])
     ),
-    "finds the correct designs"
+    "finds the correct team designs"
   );
 
   const otherTeamsDesigns = await findAllDesignsThroughCollaborator({
@@ -755,6 +762,22 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
     filters: [{ type: "TEAM", value: otherTeam.id }],
   });
   t.deepEqual(otherTeamsDesigns, [], "returns empty results");
+
+  const nonTeamDesigns = await findAllDesignsThroughCollaborator({
+    userId: user.id,
+    filters: [{ type: "TEAM", value: null }],
+  });
+  t.true(
+    isEqual(
+      new Set(
+        nonTeamDesigns.map(
+          (design: ProductDesignWithApprovalSteps) => design.id
+        )
+      ),
+      new Set([thirdDesign.id])
+    ),
+    "finds the correct non-team designs"
+  );
 });
 
 test("findAllDesignsThroughCollaborator filters by current step", async (t: tape.Test) => {

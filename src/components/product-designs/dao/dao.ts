@@ -33,7 +33,7 @@ export const TABLE_NAME = "product_designs";
 export type DesignFilter =
   | {
       type: "TEAM";
-      value: string;
+      value: string | null;
     }
   | {
       type: "COLLECTION";

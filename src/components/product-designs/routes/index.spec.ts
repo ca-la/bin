@@ -130,6 +130,24 @@ test("GET /product-designs allows filtering by team", async (t: tape.Test) => {
     "calls DAO with correct arguments"
   );
 
+  const [nullTeam] = await get(
+    "/product-designs?userId=a-user-id&teamId=null",
+    {
+      headers: authHeader("a-session-id"),
+    }
+  );
+  t.equal(nullTeam.status, 200, "succeeds for own user");
+  t.deepEqual(
+    getDesignsStub.args[1][0].filters,
+    [
+      {
+        type: "TEAM",
+        value: null,
+      },
+    ],
+    "calls DAO with correct arguments"
+  );
+
   const [differentUser] = await get(
     "/product-designs?userId=a-different-user-id&teamId=a-team-id",
     {
