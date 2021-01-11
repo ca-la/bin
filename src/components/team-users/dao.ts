@@ -2,6 +2,7 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import { buildDao } from "../../services/cala-component/cala-dao";
+import first from "../../services/first";
 import {
   TeamUserDb,
   TeamUserDbRow,
@@ -62,15 +63,25 @@ const dao = buildDao<TeamUser, TeamUserRow>(
   TABLE_NAME,
   adapter,
   {
-    orderColumn: "user_id",
+    orderColumn: "created_at",
     queryModifier: withUser,
   }
 );
 
-function deleteById(trx: Knex.Transaction, teamUserId: string) {
-  return trx(TABLE_NAME)
-    .update({ deleted_at: new Date() })
-    .where({ id: teamUserId });
+async function deleteById(
+  trx: Knex.Transaction,
+  teamUserId: string
+): Promise<TeamUserDb> {
+  const deleted: TeamUserRow | undefined = await trx(TABLE_NAME)
+    .update({ deleted_at: new Date() }, "*")
+    .where({ id: teamUserId })
+    .then((rows: TeamUserRow[]) => first<TeamUserRow>(rows));
+
+  if (!deleted) {
+    throw new Error(`Failed to delete team user with ${teamUserId} id`);
+  }
+
+  return rawAdapter.fromDb(deleted);
 }
 
 async function claimAllByEmail(

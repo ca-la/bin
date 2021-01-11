@@ -1,6 +1,8 @@
 import { buildAdapter } from "../../services/cala-component/cala-adapter";
 import { dataAdapter as userAdapter } from "../users/domain-object";
 import {
+  teamUserDomain,
+  rawTeamUserDomain,
   TeamUserDb,
   TeamUserDbRow,
   TeamUserRow,
@@ -96,14 +98,14 @@ function decode(data: TeamUser): TeamUserRow {
 }
 
 export const rawAdapter = buildAdapter({
-  domain: "TeamUserDb" as const,
+  domain: rawTeamUserDomain,
   encodeTransformer: rawEncode,
   decodeTransformer: rawDecode,
   requiredProperties: ["id", "teamId", "userId", "userEmail", "role"],
 });
 
 export default buildAdapter({
-  domain: "TeamUser" as const,
+  domain: teamUserDomain,
   encodeTransformer: encode,
   decodeTransformer: decode,
   requiredProperties: ["id", "teamId", "userId", "userEmail", "role", "user"],

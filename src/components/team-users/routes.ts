@@ -14,6 +14,7 @@ import {
   TeamUserUpdate,
   isTeamUserUpdate,
   TeamUser,
+  teamUserDomain,
 } from "./types";
 import {
   createTeamUser,
@@ -22,6 +23,12 @@ import {
   requireTeamUserByTeamUserId,
 } from "./service";
 import TeamUsersDAO from "./dao";
+import { emit } from "../../services/pubsub";
+import {
+  RouteCreated,
+  RouteUpdated,
+  RouteDeleted,
+} from "../../services/pubsub/cala-events";
 
 async function findTeamByTeamUser(
   context: TrxContext<AuthedContext<any, { teamUser: TeamUser }>>
@@ -35,13 +42,23 @@ function* create(
   >
 ) {
   const { body } = this.request;
-  const { trx, actorTeamRole } = this.state;
+  const { trx, actorTeamRole, userId: actorUserId } = this.state;
 
-  this.body = yield createTeamUser(trx, actorTeamRole, body).catch(
+  const created = yield createTeamUser(trx, actorTeamRole, body).catch(
     filterError(UnauthorizedError, (error: UnauthorizedError) => {
       this.throw(403, error.message);
     })
   );
+
+  yield emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
+    type: "route.created",
+    domain: teamUserDomain,
+    actorId: actorUserId,
+    trx,
+    created,
+  });
+
+  this.body = created;
   this.status = 201;
 }
 
@@ -61,7 +78,7 @@ function* update(
     >
   >
 ) {
-  const { trx, actorTeamRole, teamUser } = this.state;
+  const { trx, actorTeamRole, teamUser, userId: actorUserId } = this.state;
   const { teamUserId } = this.params;
   const { body } = this.request;
 
@@ -77,14 +94,26 @@ function* update(
     this.throw(`You cannot update team owner role`, 403);
   }
 
-  this.body = yield updateTeamUser(trx, teamUserId, actorTeamRole, body);
+  const before = yield TeamUsersDAO.findById(trx, teamUserId);
+  const updated = yield updateTeamUser(trx, teamUserId, actorTeamRole, body);
+
+  yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
+    type: "route.updated",
+    domain: teamUserDomain,
+    actorId: actorUserId,
+    trx,
+    before,
+    updated,
+  });
+
+  this.body = updated;
   this.status = 200;
 }
 
 function* deleteTeamUser(
   this: TrxContext<AuthedContext<TeamUserUpdate, { teamUser: TeamUser }>>
 ) {
-  const { trx, teamUser } = this.state;
+  const { trx, teamUser, userId: actorUserId } = this.state;
   const { teamUserId } = this.params;
 
   const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
@@ -92,7 +121,15 @@ function* deleteTeamUser(
     this.throw(`You cannot delete the owner of the team`, 403);
   }
 
-  yield TeamUsersDAO.deleteById(trx, teamUserId);
+  const deleted = yield TeamUsersDAO.deleteById(trx, teamUserId);
+
+  yield emit<TeamUser, RouteDeleted<TeamUser, typeof teamUserDomain>>({
+    type: "route.deleted",
+    domain: teamUserDomain,
+    actorId: actorUserId,
+    trx,
+    deleted,
+  });
   this.status = 204;
 }
 

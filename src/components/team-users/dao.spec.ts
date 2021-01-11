@@ -148,9 +148,16 @@ test("TeamUsersDAO.deleteById", async (t: Test) => {
       updatedAt: testDate,
     });
 
-    const deletedCount = await TeamUsersDAO.deleteById(trx, created.id);
+    const deletedTeamUser = await TeamUsersDAO.deleteById(trx, created.id);
 
-    t.equal(deletedCount, 1, "returns count of deleted users");
+    t.deepEqual(
+      deletedTeamUser,
+      {
+        ...created,
+        deletedAt: testDate,
+      },
+      "returns deleted team user"
+    );
 
     const invited = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
@@ -163,9 +170,16 @@ test("TeamUsersDAO.deleteById", async (t: Test) => {
       updatedAt: testDate,
     });
 
-    const invitedDeleteCount = await TeamUsersDAO.deleteById(trx, invited.id);
+    const deletedInviteeUser = await TeamUsersDAO.deleteById(trx, invited.id);
 
-    t.equal(invitedDeleteCount, 1, "returns count of deleted users");
+    t.deepEqual(
+      deletedInviteeUser,
+      {
+        ...invited,
+        deletedAt: testDate,
+      },
+      "returns deleted invitee user"
+    );
   } finally {
     await trx.rollback();
   }

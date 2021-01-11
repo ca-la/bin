@@ -1,5 +1,8 @@
 import User, { UserRow } from "../users/types";
 
+export const teamUserDomain = "TeamUser" as "TeamUser";
+export const rawTeamUserDomain = "TeamUserDb" as "TeamUserDb";
+
 export enum Role {
   OWNER = "OWNER",
   ADMIN = "ADMIN",

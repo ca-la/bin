@@ -4,6 +4,7 @@ export enum RealtimeMessageType {
   shipmentTrackingUpdated = "shipment-tracking/updated",
   shipmentTrackingCreated = "shipment-tracking/created",
   notificationCreated = "notification/created",
+  teamUsersListUpdated = "team-users-list/updated",
 }
 
 export interface RealtimeMessage {

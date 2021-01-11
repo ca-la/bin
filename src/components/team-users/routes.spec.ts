@@ -4,6 +4,7 @@ import { authHeader, del, get, patch, post } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 
 import db from "../../services/db";
+import * as PubSub from "../../services/pubsub";
 import * as UsersDAO from "../users/dao";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
@@ -54,6 +55,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .stub(TeamUsersDAO, "transferOwnership")
       .resolves(),
     deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
+    emitStub: sandbox().stub(PubSub, "emit").resolves(),
   };
 }
 
