@@ -53,7 +53,13 @@ export function requireTeamRoles<StateT>(
   getTeamId: (
     context: TrxContext<AuthedContext<any, StateT>>
   ) => Promise<string | null>,
-  options: { allowSelf?: boolean; allowNoTeam?: boolean } = {}
+  options: {
+    allowSelf?: (
+      context: TrxContext<AuthedContext<any, StateT>>,
+      actorTeamUserId: string | null
+    ) => Promise<boolean>;
+    allowNoTeam?: boolean;
+  } = {}
 ) {
   return function* (
     this: TrxContext<
@@ -80,13 +86,9 @@ export function requireTeamRoles<StateT>(
           this.throw(403, "You cannot modify a team you are not a member of");
         }
 
-        const actorIsTeamUser = userId === actorTeamUser.userId;
-        if (
-          !(
-            roles.includes(actorTeamUser.role) ||
-            (actorIsTeamUser && options.allowSelf)
-          )
-        ) {
+        const isAllowSelf = yield options.allowSelf?.(this, actorTeamUser.id) ??
+          Promise.resolve(false);
+        if (!(roles.includes(actorTeamUser.role) || isAllowSelf)) {
           this.throw(403, "You are not authorized to perform this team action");
         }
 

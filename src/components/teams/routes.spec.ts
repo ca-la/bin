@@ -4,6 +4,7 @@ import { authHeader, get, patch, post, del } from "../../test-helpers/http";
 
 import SessionsDAO from "../../dao/sessions";
 import TeamUsersDAO from "../team-users/dao";
+import { TeamUser, Role as TeamUserRole } from "../team-users/types";
 import TeamsDAO from "./dao";
 import { TeamDb, TeamType } from "./types";
 import createUser from "../../test-helpers/create-user";
@@ -177,14 +178,69 @@ test("GET /teams/:id as ADMIN", async (t: Test) => {
   t.deepEqual(body, JSON.parse(JSON.stringify(t1)));
 });
 
-test("GET /teams/:id as USER", async (t: Test) => {
-  setup({ role: "USER" });
+interface TeamAccessTestCase {
+  title: string;
+  findTeamUserStub: Partial<TeamUser> | null;
+  responseStatus: number;
+  responseBody?: any;
+}
 
-  const [response] = await get("/teams/a-team-id", {
-    headers: authHeader("a-session-id"),
+const teamAccessTestCases: TeamAccessTestCase[] = [
+  {
+    title: "GET /teams/:id forbidden for regular not a team USER",
+    findTeamUserStub: null,
+    responseStatus: 403,
+  },
+  {
+    title: "GET /teams/:id for team user with VIEWER role",
+    findTeamUserStub: { role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+    responseBody: t1,
+  },
+  {
+    title: "GET /teams/:id for team user with EDITOR role",
+    findTeamUserStub: { role: TeamUserRole.EDITOR },
+    responseStatus: 200,
+    responseBody: t1,
+  },
+  {
+    title: "GET /teams/:id for team user with ADMIN role",
+    findTeamUserStub: { role: TeamUserRole.ADMIN },
+    responseStatus: 200,
+    responseBody: t1,
+  },
+  {
+    title: "GET /teams/:id for team user with OWNER role",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    responseStatus: 200,
+    responseBody: t1,
+  },
+  {
+    title: "GET /teams/:id forbidden for team user with unexpected team role",
+    findTeamUserStub: { role: "NOT_A_ROLE" as TeamUserRole },
+    responseStatus: 403,
+  },
+];
+
+for (const testCase of teamAccessTestCases) {
+  test(testCase.title, async (t: Test) => {
+    setup({ role: "USER" });
+    sandbox().stub(TeamUsersDAO, "findOne").resolves(testCase.findTeamUserStub);
+
+    const [response, body] = await get("/teams/a-team-id", {
+      headers: authHeader("a-session-id"),
+    });
+    t.equal(
+      response.status,
+      testCase.responseStatus,
+      "responds successfully for team user with VIEWER role"
+    );
+
+    if (testCase.responseBody) {
+      t.deepEqual(body, JSON.parse(JSON.stringify(testCase.responseBody)));
+    }
   });
-  t.equal(response.status, 403, "only adminds can view");
-});
+}
 
 test("PATCH /teams/:id as random USER", async (t: Test) => {
   const { updateStub } = setup();

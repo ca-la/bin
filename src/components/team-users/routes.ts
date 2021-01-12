@@ -177,7 +177,12 @@ export default {
         requireTeamRoles<{ teamUser: TeamUser }>(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
           findTeamByTeamUser,
-          { allowSelf: true }
+          {
+            allowSelf: async (
+              context: AuthedContext,
+              actorTeamUserId: string | null
+            ) => context.params.teamUserId === actorTeamUserId,
+          }
         ),
         deleteTeamUser,
       ],

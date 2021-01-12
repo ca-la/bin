@@ -173,7 +173,12 @@ export default {
     },
     "/:id": {
       ...standardRouter.routes["/:id"],
-      get: [useTransaction, requireAdmin, findTeam],
+      get: [
+        useTransaction,
+        requireAuth,
+        requireTeamRoles(Object.values(TeamUserRole), findTeamById),
+        findTeam,
+      ],
       del: [
         useTransaction,
         requireAuth,
