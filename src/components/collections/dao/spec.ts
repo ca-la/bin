@@ -88,6 +88,66 @@ test("CollectionsDAO#findById does not find deleted collections", async (t: Test
   });
 });
 
+test("CollectionsDAO#findByTeam", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+  const { team: team2 } = await generateTeam(user.id);
+  const trx = await db.transaction();
+
+  try {
+    const c1 = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: "Initial commit",
+      id: uuid.v4(),
+      teamId: team.id,
+      title: "Drop 001/The Early Years",
+    });
+    const c2 = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: "Another collection",
+      id: uuid.v4(),
+      teamId: team.id,
+      title: "Drop 002",
+    });
+    const c3 = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: "Some other team",
+      id: uuid.v4(),
+      teamId: team2.id,
+      title: "Another one",
+    });
+    await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: user.id,
+      deletedAt: null,
+      description: "Not in _this_ team!",
+      id: uuid.v4(),
+      teamId: null,
+      title: "Something else",
+    });
+
+    t.deepEqual(
+      await CollectionsDAO.findByTeam(trx, team.id),
+      [c2, c1],
+      "Finds only team collections"
+    );
+
+    t.deepEqual(
+      await CollectionsDAO.findByTeam(trx, team2.id),
+      [c3],
+      "Finds only team collections"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
 test("CollectionsDAO#findByUser finds all collections and searches", async (t: Test) => {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });

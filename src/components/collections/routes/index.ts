@@ -17,6 +17,7 @@ import useTransaction from "../../../middleware/use-transaction";
 
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
+import TeamUsersDAO from "../../team-users/dao";
 import { isPartialCollection } from "../domain-object";
 import { Collection, CollectionDb } from "../types";
 import { createSubmission, getSubmissionStatus } from "./submissions";
@@ -110,6 +111,7 @@ function* createCollection(
 function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const {
     userId,
+    teamId,
     isCosted,
     isSubmitted,
     isExpired,
@@ -139,6 +141,31 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
           collection,
           role,
           userIdToQuery
+        ),
+      });
+    }
+    this.body = withPermissions;
+    this.status = 200;
+  } else if (teamId !== undefined) {
+    if (role !== "ADMIN") {
+      const teamUser = yield TeamUsersDAO.findOne(trx, {
+        teamId,
+        userId: currentUserId,
+      });
+      this.assert(teamUser, 403, "Only team users can list team collections");
+    }
+    const collections = yield CollectionsDAO.findByTeam(trx, teamId);
+
+    const withPermissions: Collection[] = [];
+
+    for (const collection of collections) {
+      withPermissions.push({
+        ...collection,
+        permissions: yield getCollectionPermissions(
+          trx,
+          collection,
+          role,
+          currentUserId
         ),
       });
     }

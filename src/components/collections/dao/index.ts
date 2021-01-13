@@ -150,6 +150,26 @@ export async function findByUser(
   );
 }
 
+export async function findByTeam(trx: Knex.Transaction, teamId: string) {
+  const collections: CollectionDbRow[] = await trx
+    .from(TABLE_NAME)
+    .select("collections.*")
+    .join("teams", "teams.id", "collections.team_id")
+    .where({
+      "collections.deleted_at": null,
+      "teams.id": teamId,
+    })
+    .orderBy("collections.created_at", "desc")
+    .catch(rethrow);
+
+  return validateEvery<CollectionDbRow, CollectionDb>(
+    TABLE_NAME,
+    isCollectionRow,
+    dataAdapter,
+    collections
+  );
+}
+
 export async function findById(
   id: string,
   trx?: Knex.Transaction

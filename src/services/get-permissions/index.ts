@@ -162,7 +162,12 @@ export async function getCollectionPermissions(
   sessionUserId: string
 ): Promise<Permissions> {
   if (collection.teamId !== null) {
-    return getTeamCollectionPermissions(trx, collection.teamId, sessionUserId);
+    return getTeamCollectionPermissions(
+      trx,
+      collection.teamId,
+      sessionUserId,
+      sessionRole
+    );
   }
   const collaborators: Collaborator[] = await CollaboratorsDAO.findByCollectionAndUser(
     collection.id,
@@ -215,8 +220,13 @@ export function calculateTeamCollectionPermissions(
 export async function getTeamCollectionPermissions(
   trx: Knex.Transaction,
   teamId: string,
-  userId: string
+  userId: string,
+  sessionRole: string
 ): Promise<Permissions> {
+  if (sessionRole === "ADMIN") {
+    return ADMIN_PERMISSIONS;
+  }
+
   const teamUser = await TeamUsersDAO.findOne(trx, { teamId, userId });
   if (!teamUser) {
     return {

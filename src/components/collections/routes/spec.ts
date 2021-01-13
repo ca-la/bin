@@ -260,7 +260,8 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
 
 test("GET /collections", async (t: tape.Test) => {
   const { user, session } = await createUser();
-  const { user: user2 } = await createUser();
+  const another = await createUser();
+  const admin = await createUser({ role: "ADMIN" });
   const { team } = await generateTeam(user.id);
 
   const collection1 = await CollectionsDAO.create({
@@ -274,7 +275,7 @@ test("GET /collections", async (t: tape.Test) => {
   });
   const collection2 = await CollectionsDAO.create({
     createdAt: new Date(),
-    createdBy: user2.id,
+    createdBy: another.user.id,
     deletedAt: null,
     description: "Another collection",
     id: uuid.v4(),
@@ -283,7 +284,7 @@ test("GET /collections", async (t: tape.Test) => {
   });
   const collection3 = await CollectionsDAO.create({
     createdAt: new Date(),
-    createdBy: user2.id,
+    createdBy: another.user.id,
     deletedAt: null,
     description: "Another collection",
     id: uuid.v4(),
@@ -313,16 +314,7 @@ test("GET /collections", async (t: tape.Test) => {
       headers: API.authHeader(session.id),
     }
   );
-  const [forbiddenResponse] = await API.get("/collections", {
-    headers: API.authHeader(session.id),
-  });
-
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
-  t.equal(
-    forbiddenResponse.status,
-    403,
-    'GET without user ID returns "403 Forbidden" status'
-  );
   t.deepEqual(
     collections,
     [
@@ -365,6 +357,70 @@ test("GET /collections", async (t: tape.Test) => {
     ],
     "Returns all collections I have access to."
   );
+
+  const [, teamCollections] = await API.get(`/collections?teamId=${team.id}`, {
+    headers: API.authHeader(session.id),
+  });
+
+  t.deepEqual(
+    teamCollections,
+    [
+      {
+        ...collection3,
+        createdAt: collection3.createdAt.toISOString(),
+        permissions: {
+          canComment: true,
+          canDelete: true,
+          canEdit: true,
+          canEditVariants: true,
+          canSubmit: true,
+          canView: true,
+        },
+      },
+    ],
+    "Returns all team collections"
+  );
+
+  const [, adminTeamCollections] = await API.get(
+    `/collections?teamId=${team.id}`,
+    {
+      headers: API.authHeader(admin.session.id),
+    }
+  );
+
+  t.deepEqual(
+    adminTeamCollections,
+    [
+      {
+        ...collection3,
+        createdAt: collection3.createdAt.toISOString(),
+        permissions: {
+          canComment: true,
+          canDelete: true,
+          canEdit: true,
+          canEditVariants: true,
+          canSubmit: true,
+          canView: true,
+        },
+      },
+    ],
+    "Returns all team collections with all permissions"
+  );
+
+  const [forbiddenResponse] = await API.get("/collections", {
+    headers: API.authHeader(session.id),
+  });
+
+  t.equal(
+    forbiddenResponse.status,
+    403,
+    'GET without user ID returns "403 Forbidden" status'
+  );
+
+  const [forbiddenTeam] = await API.get(`/collections?teamId=${team.id}`, {
+    headers: API.authHeader(another.session.id),
+  });
+  t.equal(forbiddenTeam.status, 403, "Cannot get another team's collection");
 });
 
 test("DELETE /collections/:id", async (t: tape.Test) => {
