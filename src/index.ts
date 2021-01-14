@@ -16,7 +16,7 @@ import loggerMiddleware = require("./middleware/logger");
 import metrics from "./middleware/metrics";
 import options = require("./middleware/options");
 import router from "./routes";
-import "./components/cala-components";
+import { registerMessageBuilders } from "./components/cala-components";
 import shopifyAuth from "./middleware/shopify-auth";
 import validatePagination from "./middleware/validate-pagination";
 
@@ -40,6 +40,7 @@ const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${router.stack.length} routes in ${loadTime}ms`);
 
 if (!module.parent) {
+  registerMessageBuilders();
   const port = process.env.PORT || 8001;
   app.listen(port);
 

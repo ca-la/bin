@@ -2,6 +2,9 @@
 
 const fetch = require("node-fetch");
 const { baseUrl } = require("./boot-server");
+const { registerMessageBuilders } = require("../components/cala-components");
+
+registerMessageBuilders();
 
 function parseResponse(res) {
   const contentType = res.headers.get("Content-Type");

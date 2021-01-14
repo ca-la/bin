@@ -34,7 +34,7 @@ type AllNotificationsUnion = Extract<
 
 export type CalaNotificationsUnion = AllNotificationsUnion;
 
-function registerMessageBuilders(): void {
+export function registerMessageBuilders(): void {
   for (const component of calaComponents) {
     const layer = component.notifications;
     if (!layer) {
@@ -57,4 +57,3 @@ function registerMessageBuilders(): void {
     }
   }
 }
-registerMessageBuilders();

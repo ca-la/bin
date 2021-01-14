@@ -1,3 +1,4 @@
+import Knex from "knex";
 import { escape as escapeOptionalHtml } from "lodash";
 
 import InvalidDataError from "../../errors/invalid-data";
@@ -20,8 +21,8 @@ import {
   NotificationMessageActionType,
 } from "./types";
 import { getMatchingFilters } from "../../services/get-matching-filters";
-import Knex from "knex";
 import db from "../../services/db";
+import { logServerError } from "../../services/logger";
 
 const messageBuilders: Partial<Record<
   NotificationType,
@@ -189,6 +190,9 @@ export async function createNotificationMessage(
 ): Promise<NotificationMessage | null> {
   if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
     return null;
+  }
+  if (Object.keys(messageBuilders).length === 0) {
+    logServerError("The messageBuilders variable has not been initialized");
   }
 
   const builder = messageBuilders[notification.type as NotificationType];
