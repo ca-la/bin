@@ -83,10 +83,10 @@ export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
 }
 
 export function* getCollectionDesigns(
-  this: AuthedContext
+  this: TrxContext<AuthedContext>
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
-  const { role, userId } = this.state;
+  const { role, userId, trx } = this.state;
 
   const collectionDesigns = yield ProductDesignsDAO.findByCollectionId(
     collectionId
@@ -95,7 +95,7 @@ export function* getCollectionDesigns(
   const designsWithPermissions: DesignWithPermissions[] = [];
 
   for (const collectionDesign of collectionDesigns) {
-    const permissions = yield getDesignPermissionsAndRole({
+    const permissions = yield getDesignPermissionsAndRole(trx, {
       designId: collectionDesign.id,
       sessionRole: role,
       sessionUserId: userId,

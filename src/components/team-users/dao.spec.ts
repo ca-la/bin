@@ -3,11 +3,16 @@ import uuid from "node-uuid";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
+import * as CollectionsDAO from "../collections/dao";
+import DesignsDAO from "../product-designs/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import TeamsDAO from "../teams/dao";
 import { TeamType } from "../teams/types";
 import { Role } from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
+import { generateTeam } from "../../test-helpers/factories/team";
+import { TeamUserRole } from ".";
+import { moveDesign } from "../../test-helpers/collections";
 
 const testDate = new Date(2012, 11, 25);
 
@@ -392,6 +397,118 @@ test("TeamUsersDAO.transferOwnership", async (t: Test) => {
         "rejects when attempting to set on invited user"
       );
     }
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("TeamUsersDAO.findByUserAndDesign", async (t: Test) => {
+  const trx = await db.transaction();
+  const { user: owner } = await createUser({ withSession: false });
+  const { user: user1 } = await createUser({ withSession: false });
+  const { user: user2 } = await createUser({ withSession: false });
+  const { user: user3 } = await createUser({ withSession: false });
+  const { user: user4 } = await createUser({ withSession: false });
+  const { team, teamUser: tu1 } = await generateTeam(
+    user1.id,
+    {},
+    {
+      role: TeamUserRole.ADMIN,
+    }
+  );
+
+  try {
+    const tu2 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.EDITOR,
+      teamId: team.id,
+      userId: user2.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    const tu3 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user3.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user4.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const collection = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: owner.id,
+      deletedAt: null,
+      description: null,
+      id: uuid.v4(),
+      teamId: team.id,
+      title: "C1",
+    });
+    const design1 = await DesignsDAO.create({
+      productType: "TEE",
+      title: "My Tee",
+      userId: owner.id,
+    });
+    await moveDesign(collection.id, design1.id);
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndDesign(trx, user1.id, design1.id),
+      [
+        {
+          ...tu1,
+          user: user1,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndDesign(trx, user2.id, design1.id),
+      [
+        {
+          ...tu2,
+          user: user2,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndDesign(trx, user3.id, design1.id),
+      [
+        {
+          ...tu3,
+          user: user3,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndDesign(trx, user4.id, design1.id),
+      [],
+      "does not return the deleted team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndDesign(trx, owner.id, design1.id),
+      [],
+      "does not return the non team user"
+    );
   } finally {
     await trx.rollback();
   }

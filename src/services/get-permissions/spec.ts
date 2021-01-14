@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 import tape from "tape";
 
@@ -10,7 +11,9 @@ import DesignsDAO from "../../components/product-designs/dao";
 import * as PermissionsService from "./index";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
+import { generateTeam } from "../../test-helpers/factories/team";
 import { moveDesign } from "../../test-helpers/collections";
+import { TeamUserRole, RawTeamUsersDAO } from "../../components/team-users";
 
 test("getPermissionFromDesign", async (t: tape.Test) => {
   t.deepEqual(
@@ -314,6 +317,155 @@ test("#getDesignPermissions", async (t: tape.Test) => {
       canView: false,
     },
     "Returns no access permissions for the collection the user does not have access to."
+  );
+});
+
+test("#getDesignPermissions by team", async (t: tape.Test) => {
+  const { user: owner } = await createUser();
+  const { user: user1, session: session1 } = await createUser();
+  const { user: user2, session: session2 } = await createUser();
+  const { user: user3, session: session3 } = await createUser();
+  const { user: user4, session: session4 } = await createUser();
+  const { team } = await generateTeam(
+    user1.id,
+    {},
+    {
+      role: TeamUserRole.ADMIN,
+    }
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.EDITOR,
+      teamId: team.id,
+      userId: user2.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user3.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user4.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+  });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: owner.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    teamId: team.id,
+    title: "C1",
+  });
+  const design1 = await DesignsDAO.create({
+    productType: "TEE",
+    title: "My Tee",
+    userId: owner.id,
+  });
+  await moveDesign(collection.id, design1.id);
+
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: "",
+    role: "VIEW",
+    userEmail: null,
+    userId: user1.id,
+  });
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: user2.id,
+  });
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session1.role,
+      sessionUserId: user1.id,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "Prefers team permissions when they are more permissive"
+  );
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session2.role,
+      sessionUserId: user2.id,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "Prefers collaborator permissions when they are more permissive"
+  );
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session3.role,
+      sessionUserId: user3.id,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    },
+    "Permissions by team only"
+  );
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
+      sessionRole: session4.role,
+      sessionUserId: user4.id,
+    }),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    },
+    "Empty permissions for the deleted team user"
   );
 });
 

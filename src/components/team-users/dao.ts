@@ -140,10 +140,32 @@ async function transferOwnership(trx: Knex.Transaction, newOwnerId: string) {
     .where({ team_id: teamId, id: newOwnerId });
 }
 
+async function findByUserAndDesign(
+  trx: Knex.Transaction,
+  userId: string,
+  designId: string
+) {
+  const teamUsers = await trx
+    .select("team_users.*")
+    .from("collection_designs")
+    .join("collections", "collections.id", "collection_designs.collection_id")
+    .join("team_users", "team_users.team_id", "collections.team_id")
+    .where({
+      "collections.deleted_at": null,
+      "collection_designs.design_id": designId,
+      "team_users.deleted_at": null,
+      "team_users.user_id": userId,
+    })
+    .modify(withUser);
+
+  return adapter.fromDbArray(teamUsers);
+}
+
 export default {
   ...dao,
   deleteById,
   claimAllByEmail,
   findByUserAndTeam,
   transferOwnership,
+  findByUserAndDesign,
 };

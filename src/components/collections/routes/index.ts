@@ -84,19 +84,21 @@ function* createCollection(
     )
   );
 
-  yield CollaboratorsDAO.create(
-    {
-      cancelledAt: null,
-      collectionId: collection.id,
-      designId: null,
-      invitationMessage: "",
-      role: "EDIT",
-      userEmail: null,
-      userId,
-      teamId: null,
-    },
-    trx
-  );
+  if (!body.teamId) {
+    yield CollaboratorsDAO.create(
+      {
+        cancelledAt: null,
+        collectionId: collection.id,
+        designId: null,
+        invitationMessage: "",
+        role: "EDIT",
+        userEmail: null,
+        userId,
+        teamId: null,
+      },
+      trx
+    );
+  }
   const permissions = yield getCollectionPermissions(
     trx,
     collection,
@@ -301,6 +303,7 @@ router.get(
 router.get(
   "/:collectionId/designs",
   requireAuth,
+  useTransaction,
   canAccessCollectionInParam,
   getCollectionDesigns
 );

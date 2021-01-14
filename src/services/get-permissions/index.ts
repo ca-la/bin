@@ -1,14 +1,14 @@
 import Knex from "knex";
+import db from "../db";
 
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import Collaborator from "../../components/collaborators/types";
+import Collaborator, { Roles } from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 import { Permissions } from "../../components/permissions/types";
-import TeamUsersDAO from "../../components/team-users/dao";
-import { Role as TeamUserRole } from "../../components/team-users/types";
+import { TeamUserRole, TeamUsersDAO } from "../../components/team-users";
 export { Permissions } from "../../components/permissions/types";
 
 export interface PermissionsAndRole {
@@ -17,6 +17,13 @@ export interface PermissionsAndRole {
 }
 
 const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
+
+const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<TeamUserRole, Roles> = {
+  [TeamUserRole.OWNER]: "EDIT",
+  [TeamUserRole.ADMIN]: "EDIT",
+  [TeamUserRole.EDITOR]: "EDIT",
+  [TeamUserRole.VIEWER]: "VIEW",
+};
 
 const ADMIN_PERMISSIONS: Permissions = {
   canComment: true,
@@ -93,25 +100,44 @@ export function getPermissionsFromDesign(options: {
   };
 }
 
-export async function getDesignPermissionsAndRole(options: {
-  designId: string;
-  sessionRole: string;
-  sessionUserId: string;
-}): Promise<PermissionsAndRole> {
+export async function getDesignPermissionsAndRole(
+  trx: Knex.Transaction,
+  options: {
+    designId: string;
+    sessionRole: string;
+    sessionUserId: string;
+  }
+): Promise<PermissionsAndRole> {
   const { designId, sessionRole, sessionUserId } = options;
 
   const combinedCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
     designId,
-    sessionUserId
+    sessionUserId,
+    trx
   );
   const collaboratorRoles = combinedCollaborators.map(
     (collaborator: Collaborator): string => {
       return collaborator.role;
     }
   );
+  const teamUsers = await TeamUsersDAO.findByUserAndDesign(
+    trx,
+    sessionUserId,
+    designId
+  );
 
-  const role = findMostPermissiveRole(collaboratorRoles);
+  const teamUserRoles = teamUsers.map((teamUser: { role: string }): string => {
+    return teamUser.role;
+  });
+  for (const teamUser of teamUsers) {
+    const collaboratorRole = TEAM_USER_ROLE_TO_COLLABORATOR_ROLE[teamUser.role];
+    if (!collaboratorRole) {
+      throw new Error(`Missing team role mapping for "${teamUser.role}"`);
+    }
+    collaboratorRoles.push(collaboratorRole);
+  }
 
+  const role = findMostPermissiveRole([...collaboratorRoles, ...teamUserRoles]);
   if (sessionRole === "ADMIN") {
     return {
       role,
@@ -122,10 +148,12 @@ export async function getDesignPermissionsAndRole(options: {
   const isOwnerOfDesign = await isDesignOwner({
     designId,
     userId: sessionUserId,
+    trx,
   });
   const isOwnerOfCollection = await CollectionsDAO.hasOwnership({
     designId,
     userId: sessionUserId,
+    trx,
   });
   const isOwner = isOwnerOfDesign || isOwnerOfCollection;
 
@@ -133,7 +161,7 @@ export async function getDesignPermissionsAndRole(options: {
   if (isOwner) {
     collaboratorRoles.push("EDIT");
   }
-  const isCheckedOut = await isQuoteCommitted(null, designId);
+  const isCheckedOut = await isQuoteCommitted(trx, designId);
 
   return {
     role,
@@ -151,8 +179,13 @@ export async function getDesignPermissions(options: {
   sessionRole: string;
   sessionUserId: string;
 }): Promise<Permissions> {
-  const designPermissionsAndRole = await getDesignPermissionsAndRole(options);
-  return { ...designPermissionsAndRole.permissions };
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const designPermissionsAndRole = await getDesignPermissionsAndRole(
+      trx,
+      options
+    );
+    return { ...designPermissionsAndRole.permissions };
+  });
 }
 
 export async function getCollectionPermissions(
