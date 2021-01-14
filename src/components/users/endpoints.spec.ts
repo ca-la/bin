@@ -24,7 +24,7 @@ test("user(id) will not work if not admin authenticated", async (t: Test) => {
   });
 
   t.equal(response.status, 200);
-  t.equal(body.errors[0].message, "Unauthorized");
+  t.true(body.errors[0].message.includes("Something went wrong!"));
 
   const [response2, body2] = await post("/v2", {
     body: graphRequest,
@@ -32,7 +32,7 @@ test("user(id) will not work if not admin authenticated", async (t: Test) => {
   });
 
   t.equal(response2.status, 200);
-  t.equal(body2.errors[0].message, "Unauthorized");
+  t.true(body2.errors[0].message.includes("Something went wrong!"));
 });
 
 test("user(id) can return a user", async (t: Test) => {

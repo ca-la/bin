@@ -39,7 +39,7 @@ const notificationMessages: GraphQLEndpoint<
     "(limit: Int = 20, offset: Int = 20, filter: NotificationFilter): [NotificationMessage]",
   middleware: requireAuth,
   resolver: async (
-    _: any,
+    _: unknown,
     args: GetNotificationsArgs,
     context: GraphQLContextAuthenticated
   ) => {
@@ -71,13 +71,13 @@ interface ArchiveNotificationsArgs {
   inboxOnly: boolean;
 }
 
-const archiveNotification: GraphQLEndpoint<
+const archiveNotifications: GraphQLEndpoint<
   ArchiveNotificationsArgs,
   number,
   GraphQLContextAuthenticated
 > = {
   endpointType: "MUTATION",
-  name: "archiveNotification",
+  name: "archiveNotifications",
   signature: "(id: String!, inboxOnly: Boolean = false): Int!",
   middleware: requireAuth,
   resolver: async (
@@ -102,7 +102,55 @@ const archiveNotification: GraphQLEndpoint<
   },
 };
 
+interface UpdateNotificationArgs {
+  id: string;
+  archivedAt: Date | null;
+}
+
+const updateNotificaion: GraphQLEndpoint<
+  UpdateNotificationArgs,
+  NotificationMessageForGraphQL,
+  GraphQLContextAuthenticated
+> = {
+  endpointType: "MUTATION",
+  name: "updateNotification",
+  signature: "(id: String!, archivedAt: GraphQLDateTime): NotificationMessage!",
+  middleware: requireAuth,
+  resolver: async (
+    _: unknown,
+    args: UpdateNotificationArgs,
+    context: GraphQLContextAuthenticated
+  ) => {
+    const { id, archivedAt } = args;
+    const {
+      trx,
+      session: { userId },
+    } = context;
+
+    const notification = await NotificationsDAO.findById(trx, id);
+    if (!notification) {
+      throw new Error("Notification not found");
+    }
+    if (notification.recipientUserId !== userId) {
+      throw new Error("Access denied for this resource");
+    }
+
+    await NotificationsDAO.update(trx, id, { archivedAt });
+
+    const updated = await NotificationsDAO.findById(trx, id);
+    if (!updated) {
+      throw new Error("Updated notification not found");
+    }
+    const message = await createNotificationMessage(updated);
+    if (!message) {
+      throw new Error("Updated a notification that cannot be displayed");
+    }
+    return transformNotificationMessageToGraphQL(message);
+  },
+};
+
 export const NotificationEndpoints = [
   notificationMessages,
-  archiveNotification,
+  archiveNotifications,
+  updateNotificaion,
 ];

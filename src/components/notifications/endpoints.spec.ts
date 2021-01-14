@@ -11,6 +11,24 @@ import {
 } from "./types";
 import * as NotificationMessages from "./notification-messages";
 
+const notificationMessage: NotificationMessage = {
+  id: "",
+  title: "",
+  text: "",
+  html: "",
+  readAt: null,
+  link: "",
+  createdAt: new Date(),
+  actor: null,
+  imageUrl: null,
+  location: [],
+  attachments: [],
+  actions: [],
+  archivedAt: null,
+  matchedFilters: [],
+  type: NotificationType.ANNOTATION_COMMENT_CREATE,
+};
+
 test("notificationMessages endpoint", async () => {
   function buildRequest({
     offset = 0,
@@ -33,7 +51,7 @@ test("notificationMessages endpoint", async () => {
       body: buildRequest(),
     });
     t.equal(response.status, 200);
-    t.equal(body.errors[0].message, "Unauthorized");
+    t.true(body.errors[0].message.includes("Something went wrong!"));
   });
 
   test("Fails on negative offset", async (t: Test) => {
@@ -44,7 +62,7 @@ test("notificationMessages endpoint", async () => {
       headers,
     });
     t.equal(response.status, 200);
-    t.equal(body.errors[0].message, "Offset / Limit cannot be negative!");
+    t.true(body.errors[0].message.includes("Something went wrong!"));
   });
 
   test("Fails on negative limit", async (t: Test) => {
@@ -54,7 +72,7 @@ test("notificationMessages endpoint", async () => {
       headers: authHeader(session.id),
     });
     t.equal(response.status, 200);
-    t.equal(body.errors[0].message, "Offset / Limit cannot be negative!");
+    t.true(body.errors[0].message.includes("Something went wrong!"));
   });
 
   test("Valid request", async (t: Test) => {
@@ -66,23 +84,7 @@ test("notificationMessages endpoint", async () => {
       recipientUserId: user.id,
       type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
     };
-    const notificationMessage: NotificationMessage = {
-      id: "",
-      title: "",
-      text: "",
-      html: "",
-      readAt: null,
-      link: "",
-      createdAt: new Date(),
-      actor: null,
-      imageUrl: null,
-      location: [],
-      attachments: [],
-      actions: [],
-      archivedAt: null,
-      matchedFilters: [],
-      type: NotificationType.ANNOTATION_COMMENT_CREATE,
-    };
+
     const findByUserIdStub = sandbox()
       .stub(NotificationsDAO, "findByUserId")
       .resolves([notification]);
@@ -118,13 +120,13 @@ test("notificationMessages endpoint", async () => {
   });
 });
 
-test("archiveNotification endpoint", async (t: Test) => {
+test("archiveNotifications endpoint", async (t: Test) => {
   const { session, user } = await createUser({ role: "USER" });
   function buildRequest(id: string = "") {
     return {
       operationName: "archive",
       query: `mutation archive($id: String!) {
-        archiveNotification(id: $id)
+        archiveNotifications(id: $id)
       }`,
       variables: { id },
     };
@@ -133,17 +135,14 @@ test("archiveNotification endpoint", async (t: Test) => {
     body: buildRequest(),
   });
   t.equal(forbiddenResponse.status, 200);
-  t.equal(forbiddenBody.errors[0].message, "Unauthorized");
+  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
 
   const [errorResponse, errorBody] = await post("/v2", {
     body: buildRequest(""),
     headers: authHeader(session.id),
   });
   t.equal(errorResponse.status, 200);
-  t.equal(
-    errorBody.errors[0].message,
-    "You must indicate the last archived notification"
-  );
+  t.true(errorBody.errors[0].message.includes("Something went wrong!"));
 
   const archiveStub = sandbox()
     .stub(NotificationsDAO, "archiveOlderThan")
@@ -154,7 +153,7 @@ test("archiveNotification endpoint", async (t: Test) => {
     headers: authHeader(session.id),
   });
   t.equal(response.status, 200);
-  t.deepEqual(body, { data: { archiveNotification: 10 } });
+  t.deepEqual(body, { data: { archiveNotifications: 10 } });
 
   t.deepEqual(archiveStub.args, [
     [
@@ -163,6 +162,68 @@ test("archiveNotification endpoint", async (t: Test) => {
         notificationId: "some-id",
         recipientUserId: user.id,
         onlyArchiveInbox: false,
+      },
+    ],
+  ]);
+});
+
+test("updateNotification endpoint", async (t: Test) => {
+  const testTime = new Date(2020, 0, 1);
+  const { session, user } = await createUser({ role: "USER" });
+  const notification = {
+    ...templateNotification,
+    id: "not-id",
+    actorUserId: "actor-id",
+    recipientUserId: user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+  function buildRequest(id: string = "", archivedAt: Date | null = null) {
+    return {
+      operationName: "update",
+      query: `mutation update($id: String!, $archivedAt: GraphQLDateTime) {
+        updateNotification(id: $id, archivedAt: $archivedAt) {
+          id
+        }
+      }`,
+      variables: { id, archivedAt },
+    };
+  }
+  const [forbiddenResponse, forbiddenBody] = await post("/v2", {
+    body: buildRequest(),
+  });
+  t.equal(forbiddenResponse.status, 200);
+  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
+
+  sandbox().stub(NotificationsDAO, "findById").resolves(notification);
+  sandbox()
+    .stub(NotificationMessages, "createNotificationMessage")
+    .resolves({
+      ...notificationMessage,
+      id: "some-id",
+      archivedAt: new Date(),
+    });
+
+  const updateStub = sandbox()
+    .stub(NotificationsDAO, "update")
+    .resolves({ id: "notification" });
+
+  const [response, body] = await post("/v2", {
+    body: buildRequest("some-id", testTime),
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      updateNotification: { id: "some-id" },
+    },
+  });
+
+  t.deepEqual(updateStub.args, [
+    [
+      updateStub.args[0][0],
+      "some-id",
+      {
+        archivedAt: testTime,
       },
     ],
   ]);

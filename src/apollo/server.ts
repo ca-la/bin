@@ -3,12 +3,14 @@ import {
   GraphQLRequestContextWillSendResponse,
   GraphQLRequestContextDidEncounterErrors,
 } from "apollo-server-types";
+import { GraphQLError } from "graphql";
 import { context } from "./context";
 import { GraphQLContextBase } from "./types";
 import { endpoints, Endpoint } from "./endpoints";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { ENABLE_APOLLO_PLAYGROUND } from "../config";
 import { extractSortedTypes, buildTypes } from "./service";
+import { logServerError } from "../services/logger";
 
 function extractResolvers() {
   const resolvers: Record<"Query" | "Mutation", IResolvers> = {
@@ -78,6 +80,11 @@ export const apolloServer = new ApolloServer({
     GraphQLDateTime,
     ...extractResolvers(),
   },
+  formatError: (_: GraphQLError): Error => {
+    return new Error(
+      "Something went wrong! Please try again, or email hi@ca.la if this message persists."
+    );
+  },
   typeDefs,
   playground: ENABLE_APOLLO_PLAYGROUND,
   plugins: [
@@ -89,6 +96,9 @@ export const apolloServer = new ApolloServer({
               GraphQLContextBase
             >
           ) => {
+            requestContext.errors.forEach((error: GraphQLError) => {
+              logServerError(error.originalError);
+            });
             await requestContext.context.trx.rollback();
           },
           willSendResponse: async (
