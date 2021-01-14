@@ -4,6 +4,9 @@ import {
 } from "../../services/notify-pricing-expirations";
 import Logger from "../../services/logger";
 import "../../services/aws";
+import { registerMessageBuilders } from "../../components/cala-components";
+
+registerMessageBuilders();
 
 notifyPricingExpirations()
   .then((expirationCounts: ExpirationResponse): void => {
