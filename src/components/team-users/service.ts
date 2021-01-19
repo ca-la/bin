@@ -10,6 +10,8 @@ import {
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import UnauthorizedError from "../../errors/unauthorized";
+import InsufficientPlanError from "../../errors/insufficient-plan";
+import { areThereAvailableSeatsInTeamPlan } from "../plans/find-team-plans";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -103,11 +105,27 @@ export function requireTeamRoles<StateT>(
 export async function createTeamUser(
   trx: Knex.Transaction,
   actorTeamRole: TeamUserRole,
-  unsavedTeamUser: UnsavedTeamUser
+  unsavedTeamUser: UnsavedTeamUser,
+  isAdmin?: boolean
 ) {
   if (!allowedRolesMap[actorTeamRole].includes(unsavedTeamUser.role)) {
     throw new UnauthorizedError(
       "You cannot add a user with the specified role"
+    );
+  }
+
+  const teamUsers = await TeamUsersDAO.find(trx, {
+    teamId: unsavedTeamUser.teamId,
+  });
+  const areThereSeatsInTeamPlan = await areThereAvailableSeatsInTeamPlan(
+    trx,
+    unsavedTeamUser.teamId,
+    teamUsers.length,
+    isAdmin
+  );
+  if (!areThereSeatsInTeamPlan) {
+    throw new InsufficientPlanError(
+      "Your plan does not allow to add more team users, please upgrade"
     );
   }
 

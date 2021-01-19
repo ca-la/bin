@@ -6,6 +6,7 @@ import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import * as PubSub from "../../services/pubsub";
 import * as UsersDAO from "../users/dao";
+import * as FindTeamPlans from "../plans/find-team-plans";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 import TeamsDAO from "../teams/dao";
@@ -56,6 +57,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .resolves(),
     deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
+    areThereAvailableSeatsInTeamPlanStub: sandbox()
+      .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
+      .resolves(true),
   };
 }
 
@@ -179,6 +183,74 @@ test("POST /team-users: forbidden", async (t: Test) => {
     editorMakesAdmin.status,
     403,
     "Returns Forbidden status when you're an editor trying to make an admin"
+  );
+});
+
+test("POST /team-users: payment required when not enought seats in plan", async (t: Test) => {
+  const { areThereAvailableSeatsInTeamPlanStub } = setup();
+  areThereAvailableSeatsInTeamPlanStub.resolves(false);
+
+  const [paymentRequired, body] = await post("/team-users", {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "ADMIN",
+    },
+  });
+
+  t.equal(
+    paymentRequired.status,
+    402,
+    "Returns Payment Required status when current plans does not allow to add more users"
+  );
+
+  t.deepEqual(
+    body.message,
+    "Your plan does not allow to add more team users, please upgrade"
+  );
+});
+
+test("POST /team-users: calls areThereAvailableSeatsInTeamPlan with isAdmin for CALA admin", async (t: Test) => {
+  const { areThereAvailableSeatsInTeamPlanStub, sessionsStub } = setup();
+
+  sessionsStub.resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  await post("/team-users", {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "ADMIN",
+    },
+  });
+
+  t.deepEqual(
+    areThereAvailableSeatsInTeamPlanStub.args[0][3],
+    false,
+    "called with isAdmin false for request from regular user"
+  );
+
+  sessionsStub.resolves({
+    role: "ADMIN",
+    userId: "a-user-id",
+  });
+
+  await post("/team-users", {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "ADMIN",
+    },
+  });
+
+  t.deepEqual(
+    areThereAvailableSeatsInTeamPlanStub.args[1][3],
+    true,
+    "called with isAdmin true for request from admin user"
   );
 });
 
@@ -514,6 +586,10 @@ test("DEL /team-users/:id doesn't allow CALA admin to delete team owner", async 
 });
 
 test("/team-users end-to-end", async (t: Test) => {
+  sandbox()
+    .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
+    .resolves(true);
+
   const teamAdmin = await createUser();
   const teamMember = await createUser();
   const notAMember = await createUser();

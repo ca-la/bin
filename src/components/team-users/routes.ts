@@ -5,6 +5,7 @@ import { typeGuard } from "../../middleware/type-guard";
 
 import filterError from "../../services/filter-error";
 import UnauthorizedError from "../../errors/unauthorized";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 
 import {
   isUnsavedTeamUser,
@@ -42,13 +43,20 @@ function* create(
   >
 ) {
   const { body } = this.request;
-  const { trx, actorTeamRole, userId: actorUserId } = this.state;
+  const { trx, actorTeamRole, userId: actorUserId, role } = this.state;
 
-  const created = yield createTeamUser(trx, actorTeamRole, body).catch(
-    filterError(UnauthorizedError, (error: UnauthorizedError) => {
-      this.throw(403, error.message);
-    })
-  );
+  const isAdmin = role === "ADMIN";
+  const created = yield createTeamUser(trx, actorTeamRole, body, isAdmin)
+    .catch(
+      filterError(UnauthorizedError, (error: UnauthorizedError) => {
+        this.throw(403, error.message);
+      })
+    )
+    .catch(
+      filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
+        this.throw(402, error.message)
+      )
+    );
 
   yield emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
     type: "route.created",
