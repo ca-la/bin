@@ -26,6 +26,8 @@ export interface PlanRow {
   can_check_out: boolean;
   can_submit: boolean;
   maximum_seats_per_team: string | null; // bigint
+  includes_fulfillment: boolean;
+  upgrade_to_plan_id: string | null;
 }
 
 function encode(row: PlanRow): Plan {
@@ -65,7 +67,9 @@ export function isPlanRow(row: object): row is PlanRow {
     "per_seat_cost_per_billing_interval_cents",
     "can_check_out",
     "can_submit",
-    "maximum_seats_per_team"
+    "maximum_seats_per_team",
+    "includes_fulfillment",
+    "upgrade_to_plan_id"
   );
 }
 
@@ -88,7 +92,9 @@ export function isPlan(data: object): data is Plan {
     "perSeatCostPerBillingIntervalCents",
     "canCheckOut",
     "canSubmit",
-    "maximumSeatsPerTeam"
+    "maximumSeatsPerTeam",
+    "includesFulfillment",
+    "upgradeToPlanId"
   );
 }
 

@@ -636,6 +636,8 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     })
   );
 

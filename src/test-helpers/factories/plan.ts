@@ -25,6 +25,8 @@ export default async function generatePlan(
     canSubmit: true,
     canCheckOut: true,
     maximumSeatsPerTeam: null,
+    includesFulfillment: true,
+    upgradeToPlanId: null,
     ...options,
   });
 }

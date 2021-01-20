@@ -24,6 +24,8 @@ const planDataToCreate: Unsaved<Plan> = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  includesFulfillment: true,
+  upgradeToPlanId: null,
 };
 const createdPlan: Plan = {
   ...planDataToCreate,
@@ -53,6 +55,8 @@ const firstPlan: Plan = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  includesFulfillment: true,
+  upgradeToPlanId: null,
 };
 
 const secretPlan: Plan = {
@@ -73,6 +77,8 @@ const secretPlan: Plan = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  includesFulfillment: true,
+  upgradeToPlanId: null,
 };
 
 const littleBitPlan: Plan = {
@@ -93,6 +99,8 @@ const littleBitPlan: Plan = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  includesFulfillment: true,
+  upgradeToPlanId: null,
 };
 
 function setup({ role = "USER" }: { role?: UserRole } = {}) {
@@ -194,6 +202,8 @@ test("POST /plans valid for the admin", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     },
   });
 

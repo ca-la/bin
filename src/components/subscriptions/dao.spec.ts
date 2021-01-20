@@ -39,6 +39,8 @@ test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) =>
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
@@ -82,6 +84,8 @@ test("SubscriptionsDAO supports waiving payment on a new subscription", async (t
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
@@ -132,6 +136,8 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     await SubscriptionsDAO.create(
@@ -271,6 +277,8 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(

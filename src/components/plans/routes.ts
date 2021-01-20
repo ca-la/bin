@@ -53,6 +53,8 @@ function* createPlan(
     canCheckOut,
     canSubmit,
     maximumSeatsPerTeam,
+    includesFulfillment,
+    upgradeToPlanId,
   } = this.request.body;
 
   const { trx } = this.state;
@@ -83,6 +85,8 @@ function* createPlan(
     canCheckOut,
     canSubmit,
     maximumSeatsPerTeam,
+    includesFulfillment,
+    upgradeToPlanId,
   });
   this.status = 201;
   this.body = createdPlan;

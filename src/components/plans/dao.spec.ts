@@ -11,7 +11,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
   const p1id = uuid.v4();
 
   try {
-    await PlansDAO.create(trx, {
+    const plan1 = await PlansDAO.create(trx, {
       id: p1id,
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -28,6 +28,8 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     await PlansDAO.create(trx, {
@@ -47,6 +49,8 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: plan1.id,
     });
 
     const p1Found = await PlansDAO.findById(trx, p1id);
@@ -62,9 +66,11 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
     t.equal(sorted[0].title, "A little Bit");
     t.equal(sorted[0].baseCostPerBillingIntervalCents, 1234);
     t.equal(sorted[0].revenueShareBasisPoints, 1200);
+    t.equal(sorted[0].includesFulfillment, true);
     t.equal(sorted[1].title, "Some More");
     t.equal(sorted[1].baseCostPerBillingIntervalCents, 4567);
     t.equal(sorted[1].revenueShareBasisPoints, 5000);
+    t.equal(sorted[1].upgradeToPlanId, plan1.id);
   } finally {
     await trx.rollback();
   }
@@ -91,6 +97,8 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     await PlansDAO.create(trx, {
@@ -110,6 +118,8 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     await PlansDAO.create(trx, {
@@ -129,6 +139,8 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const plans = await PlansDAO.findPublic(trx);
@@ -177,6 +189,8 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     try {
@@ -197,6 +211,8 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
         canSubmit: true,
         canCheckOut: true,
         maximumSeatsPerTeam: null,
+        includesFulfillment: true,
+        upgradeToPlanId: null,
       });
       throw new Error("Shouldn't get here");
     } catch (err) {
@@ -228,6 +244,8 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const publicOrder2 = await PlansDAO.create(trx, {
@@ -247,6 +265,8 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const publicOrder1 = await PlansDAO.create(trx, {
@@ -266,6 +286,8 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const private4 = await PlansDAO.create(trx, {
@@ -285,6 +307,8 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
     });
 
     const plans = await PlansDAO.findAll(trx);

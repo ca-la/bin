@@ -21,4 +21,6 @@ export interface Plan {
   canCheckOut: boolean;
   canSubmit: boolean;
   maximumSeatsPerTeam: number | null;
+  includesFulfillment: boolean;
+  upgradeToPlanId: string | null;
 }
