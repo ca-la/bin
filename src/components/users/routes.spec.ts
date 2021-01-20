@@ -11,8 +11,7 @@ import * as DuplicationService from "../../services/duplicate";
 import * as PlansDAO from "../plans/dao";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
 import TeamUsersDAO from "../../components/team-users/dao";
-import * as SessionsDAO from "../../dao/sessions";
-import * as SubscriptionsDAO from "../../components/subscriptions/dao";
+import SessionsDAO from "../../dao/sessions";
 import * as UsersDAO from "./dao";
 import { BillingInterval } from "../plans/domain-object";
 import createUser from "../../test-helpers/create-user";
@@ -21,16 +20,17 @@ import InvalidDataError from "../../errors/invalid-data";
 import MailChimp = require("../../services/mailchimp");
 import Stripe = require("../../services/stripe");
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
-import { baseUser, UserIO } from "./domain-object";
+import { baseUser } from "./domain-object";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
 import * as TeamsService from "../teams/service";
+import * as SubscriptionService from "../subscriptions/create-or-update";
 
-const USER_DATA: UserIO = Object.freeze({
+const createBody = {
   email: "user@example.com",
-  name: "Q User",
-  password: "hunter2",
-  phone: "415 580 9925",
-});
+  lastAcceptedDesignerTermsAt: new Date().toISOString(),
+  planId: "a-plan-id",
+  stripeCardToken: "a-stripe-card-token",
+};
 
 function stubUserDependencies() {
   const duplicationStub = sandbox()
@@ -44,13 +44,25 @@ function stubUserDependencies() {
     .resolves();
   const createTeamStub = sandbox()
     .stub(TeamsService, "createTeamWithOwner")
+    .resolves({
+      id: "a-team-id",
+    });
+  const createSubscriptionStub = sandbox()
+    .stub(SubscriptionService, "default")
     .resolves();
+  const createSessionStub = sandbox()
+    .stub(SessionsDAO, "createForUser")
+    .resolves({
+      id: "a-session-id",
+    });
 
   return {
     duplicationStub,
     mailchimpStub,
     teamUsersStub,
     createTeamStub,
+    createSubscriptionStub,
+    createSessionStub,
   };
 }
 
@@ -59,36 +71,28 @@ test("POST /users returns a 400 if user creation fails", async (t: Test) => {
 
   sandbox().stub(UsersDAO, "create").rejects(new InvalidDataError("Bad email"));
 
-  const [response, body] = await post("/users", { body: USER_DATA });
+  const [response, body] = await post("/users", { body: createBody });
 
   t.equal(response.status, 400, "status=400");
   t.equal(body.message, "Bad email");
 });
 
-test("POST /users allows public values to be set", async (t: Test) => {
-  const { createTeamStub } = stubUserDependencies();
-
-  const acceptedAt = new Date("2019-01-01").toISOString();
+test("POST /users with non-team creation request", async (t: Test) => {
+  stubUserDependencies();
 
   const [response, body] = await post("/users", {
-    body: {
-      ...USER_DATA,
-      lastAcceptedDesignerTermsAt: acceptedAt,
-    },
+    body: createBody,
   });
 
   t.equal(response.status, 201, "status=201");
-  t.equal(body.name, "Q User");
+  t.equal(body.name, null);
   t.equal(body.email, "user@example.com");
-  t.equal(body.phone, "+14155809925");
+  t.equal(body.phone, null);
   t.equal(body.password, undefined);
   t.equal(body.passwordHash, undefined);
-  t.equal(body.lastAcceptedDesignerTermsAt, acceptedAt);
-
-  t.deepEqual(
-    createTeamStub.args[0].slice(1),
-    ["Q User's Team", body.id],
-    "creates user's initial team if name is set"
+  t.equal(
+    body.lastAcceptedDesignerTermsAt,
+    createBody.lastAcceptedDesignerTermsAt
   );
 });
 
@@ -96,7 +100,7 @@ test("POST /users does not allow private values to be set", async (t: Test) => {
   stubUserDependencies();
 
   const data = {
-    ...USER_DATA,
+    ...createBody,
     role: "ADMIN",
   };
 
@@ -104,61 +108,51 @@ test("POST /users does not allow private values to be set", async (t: Test) => {
 
   t.equal(body.role, "USER");
 });
+
 test("POST /users only allows CALA emails on restricted servers ", async (t: Test) => {
   stubUserDependencies();
 
   sandbox().stub(Config, "REQUIRE_CALA_EMAIL").value(true);
 
-  const [invalidEmailresponse, invalidEmailBody] = await post("/users", {
-    body: USER_DATA,
+  const [invalidEmailResponse, invalidEmailBody] = await post("/users", {
+    body: createBody,
   });
-  t.equal(invalidEmailresponse.status, 400, "status=400");
+  t.equal(invalidEmailResponse.status, 400, "status=400");
   t.true(
     invalidEmailBody.message.startsWith(
       "Only @ca.la or @calastg.com emails can"
     )
   );
 
-  const [caDotEmailResponce] = await post("/users", {
-    body: { ...USER_DATA, email: "test@ca.la", phone: "415 580 9926" },
+  const [caDotEmailResponse] = await post("/users", {
+    body: { ...createBody, email: "test@ca.la" },
   });
-  t.equal(caDotEmailResponce.status, 201, "status=201");
+  t.equal(caDotEmailResponse.status, 201, "status=201");
 
   const [calastgEmailResponce] = await post("/users", {
-    body: { ...USER_DATA, email: "test@calastg.com" },
+    body: { ...createBody, email: "test@calastg.com" },
   });
   t.equal(calastgEmailResponce.status, 201, "status=201");
 });
 
 test("POST /users returns a session instead if requested", async (t: Test) => {
-  stubUserDependencies();
+  const { createSessionStub } = stubUserDependencies();
 
   const [response, body] = await post("/users?returnValue=session", {
-    body: USER_DATA,
+    body: createBody,
   });
   t.equal(response.status, 201, "status=201");
-  t.equal(body.userId.length, 36);
-  t.equal(body.user.name, "Q User");
-});
-
-test("POST /users allow creating a user with no name or password", async (t: Test) => {
-  const { createTeamStub } = stubUserDependencies();
-
-  const [response] = await post("/users?returnValue=session", {
-    body: {
-      ...USER_DATA,
-      name: null,
-      password: null,
-    },
-  });
-
-  t.equal(response.status, 201);
-  t.false(createTeamStub.called, "Does not create team for user with no name");
+  t.deepEqual(body, { id: "a-session-id" }, "returns the sessions");
+  t.equal(
+    createSessionStub.args[0][0].email,
+    createBody.email,
+    "creates a session for the user"
+  );
 });
 
 test("PUT /users/:id/password returns a 401 if unauthenticated", async (t: Test) => {
   const [response, body] = await put("/users/123/password", {
-    body: USER_DATA,
+    body: createBody,
   });
   t.equal(response.status, 401);
   t.equal(body.message, "Authorization is required to access this resource");
@@ -606,7 +600,7 @@ test("GET /users?search with malformed RegExp throws 400", async (t: Test) => {
 });
 
 test("POST /users allows subscribing to a plan", async (t: Test) => {
-  const { teamUsersStub } = stubUserDependencies();
+  const { teamUsersStub, createSubscriptionStub } = stubUserDependencies();
 
   sandbox()
     .stub(attachSource, "default")
@@ -643,7 +637,7 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
 
   const [response, body] = await post("/users", {
     body: {
-      ...USER_DATA,
+      ...createBody,
       planId: plan.id,
       stripeCardToken: "tok_123",
     },
@@ -655,10 +649,8 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   t.equal(teamUsersStub.firstCall.args[1], body.email);
   t.equal(teamUsersStub.firstCall.args[2], body.id);
 
-  await db.transaction(async (trx: Knex.Transaction) => {
-    const subscriptions = await SubscriptionsDAO.findForUser(body.id, trx);
-    t.equal(subscriptions.length, 1);
-    t.equal(subscriptions[0].planId, plan.id);
-    t.notEqual(subscriptions[0].paymentMethodId, null);
-  });
+  t.equal(createSubscriptionStub.args[0][0].planId, plan.id);
+  t.equal(createSubscriptionStub.args[0][0].stripeCardToken, "tok_123");
+  t.equal(createSubscriptionStub.args[0][0].teamId, null);
+  t.equal(createSubscriptionStub.args[0][0].userId, body.id);
 });
