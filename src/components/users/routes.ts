@@ -1,3 +1,4 @@
+import * as z from "zod";
 import Knex from "knex";
 import Router from "koa-router";
 import rethrow = require("pg-rethrow");
@@ -19,88 +20,153 @@ import MultipleErrors from "../../errors/multiple-errors";
 import requireAuth = require("../../middleware/require-auth");
 import SessionsDAO = require("../../dao/sessions");
 import TeamUsersDAO from "../../components/team-users/dao";
-import User, { Role, ROLES, UserIO } from "./domain-object";
+import User, { Role, ROLES } from "./domain-object";
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from "../../config";
 import { hasProperties } from "../../services/require-properties";
 import { isValidEmail } from "../../services/validation";
 import { logServerError } from "../../services/logger";
 import { validatePassword } from "./services/validate-password";
 import { createTeamWithOwner } from "../teams/service";
+import { check } from "../../services/check";
 
 const router = new Router();
 
-interface CreateBody extends UserIO {
-  planId?: string;
-  stripeCardToken?: string;
+const createBodySchema = z.object({
+  email: z.string(),
+  lastAcceptedDesignerTermsAt: z.string(),
+  planId: z.string(),
+  stripeCardToken: z.string(),
+});
+type CreateBody = z.infer<typeof createBodySchema>;
+
+const createWithTeamBodySchema = z.object({
+  name: z.string(),
+  email: z.string(),
+  password: z.string(),
+  teamTitle: z.string(),
+  subscription: z.object({
+    planId: z.string(),
+    stripeCardToken: z.string(),
+  }),
+});
+type CreateWithTeamBody = z.infer<typeof createWithTeamBodySchema>;
+
+const createRequestSchema = z.union([
+  createBodySchema,
+  createWithTeamBodySchema,
+]);
+
+async function createWithTeam(
+  trx: Knex.Transaction,
+  body: CreateWithTeamBody
+): Promise<User> {
+  const {
+    name,
+    password,
+    email,
+    subscription: { planId, stripeCardToken },
+    teamTitle,
+  } = body;
+
+  if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
+    throw new InvalidDataError(
+      "Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio"
+    );
+  }
+
+  const user = await UsersDAO.create(
+    {
+      name,
+      password,
+      email,
+      lastAcceptedDesignerTermsAt: new Date(),
+      referralCode: "n/a",
+      role: ROLES.USER,
+    },
+    { requirePassword: true, trx }
+  );
+
+  const team = await createTeamWithOwner(trx, teamTitle, user.id);
+
+  await createOrUpdateSubscription({
+    userId: user.id,
+    teamId: team.id,
+    stripeCardToken,
+    planId,
+    trx,
+  });
+
+  await TeamUsersDAO.claimAllByEmail(trx, email, user.id);
+
+  return user;
+}
+
+async function createWithoutTeam(
+  trx: Knex.Transaction,
+  body: CreateBody
+): Promise<User> {
+  const { email, lastAcceptedDesignerTermsAt, planId, stripeCardToken } = body;
+
+  if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
+    throw new InvalidDataError(
+      "Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio"
+    );
+  }
+
+  const user = await UsersDAO.create(
+    {
+      name: null,
+      password: null,
+      email,
+      lastAcceptedDesignerTermsAt: lastAcceptedDesignerTermsAt
+        ? new Date(lastAcceptedDesignerTermsAt)
+        : null,
+      referralCode: "n/a",
+      role: ROLES.USER,
+    },
+    { requirePassword: false, trx }
+  );
+
+  await createOrUpdateSubscription({
+    userId: user.id,
+    teamId: null,
+    stripeCardToken,
+    planId,
+    trx,
+  });
+
+  await TeamUsersDAO.claimAllByEmail(trx, email, user.id);
+
+  return user;
 }
 
 /**
  * POST /users
  */
-function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
-  const {
-    name,
-    email,
-    password,
-    phone,
-    lastAcceptedDesignerTermsAt,
-    planId,
-    stripeCardToken,
-  } = this.request.body;
+function* createUser(this: PublicContext): Iterator<any, any, any> {
   const { cohort, initialDesigns, promoCode } = this.query;
+  const { body } = this.request;
 
-  if (!email) {
-    this.throw(400, "Email must be provided");
-  }
-
-  if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
-    // tslint:disable-next-line:max-line-length
+  if (!check(createRequestSchema, body)) {
     this.throw(
       400,
-      "Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio"
+      "Must provide email, lastAcceptedDesignerTermsAt, planId, and stripeCardToken"
     );
   }
 
-  const referralCode = "n/a";
-
-  // TODO: Move all other resource creations into transaction
-  const user = yield db.transaction(async (trx: Knex.Transaction) => {
-    const userInTrx = await UsersDAO.create(
-      {
-        email,
-        lastAcceptedDesignerTermsAt,
-        name,
-        password,
-        phone,
-        referralCode,
-        role: ROLES.USER,
-      },
-      { requirePassword: false, trx }
-    ).catch(
-      filterError(InvalidDataError, (err: Error) => this.throw(400, err))
-    );
-
-    if (planId) {
-      await createOrUpdateSubscription({
-        userId: userInTrx.id,
-        teamId: null,
-        stripeCardToken,
-        planId,
-        trx,
-      }).catch(
+  const user = yield db.transaction((trx: Knex.Transaction) => {
+    if (check(createWithTeamBodySchema, body)) {
+      return createWithTeam(trx, body).catch(
         filterError(InvalidDataError, (err: InvalidDataError) =>
           this.throw(400, err)
         )
       );
     }
-
-    if (typeof name === "string") {
-      await createTeamWithOwner(trx, `${name}'s Team`, userInTrx.id);
-    }
-
-    await TeamUsersDAO.claimAllByEmail(trx, email, userInTrx.id);
-
-    return userInTrx;
+    return createWithoutTeam(trx, body).catch(
+      filterError(InvalidDataError, (err: InvalidDataError) =>
+        this.throw(400, err)
+      )
+    );
   });
 
   let targetCohort = null;
@@ -126,14 +192,14 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
   try {
     yield MailChimp.subscribeToUsers({
       cohort: targetCohort && targetCohort.slug,
-      email,
-      name,
-      referralCode,
+      email: user.email,
+      name: user.name,
+      referralCode: "n/a",
     });
   } catch (err) {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this
     // log line we need to investigate ASAP (and manually subscribe the user)
-    logServerError(`Failed to sign up user to Mailchimp: ${email}`);
+    logServerError(`Failed to sign up user to Mailchimp: ${user.email}`);
   }
 
   yield claimDesignInvitations(user.email, user.id);
