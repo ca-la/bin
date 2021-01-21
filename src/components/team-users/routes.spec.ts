@@ -55,7 +55,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     transferOwnershipStub: sandbox()
       .stub(TeamUsersDAO, "transferOwnership")
       .resolves(),
-    deleteStub: sandbox().stub(TeamUsersDAO, "deleteById").resolves(),
+    deleteStub: sandbox()
+      .stub(TeamUsersDAO, "deleteById")
+      .resolves({ teamId: "a-team-id" }),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
     areThereAvailableSeatsInTeamPlanStub: sandbox()
       .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")

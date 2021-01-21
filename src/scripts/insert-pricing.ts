@@ -18,6 +18,7 @@ import { PricingProcessTimelineRow } from "../components/pricing-process-timelin
 import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
 import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
 import { ProductType, validProductTypes } from "../domain-objects/pricing";
+import ResourceNotFoundError from "../errors/resource-not-found";
 
 const CHUNK_SIZE = 2000;
 
@@ -201,6 +202,12 @@ function ask(
 
 async function getLatestVersion(tableName: string): Promise<number> {
   const row = await db(tableName).max("version").first();
+
+  if (!row) {
+    throw new ResourceNotFoundError(
+      `Could not find rows with a version number in table: "${tableName}"`
+    );
+  }
 
   return row.max !== null ? row.max : -1;
 }

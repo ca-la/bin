@@ -1,75 +1,19 @@
-import { Role } from "../users/types";
-import { BidTaskTypeId } from "../bid-task-types/types";
+import * as z from "zod";
+import { userRoleSchema } from "../users/types";
+import { bidTaskTypeIdSchema } from "../bid-task-types/types";
 
-/**
- * A log entry for a quote and partner assignment event that occured on a design
- */
-
-export type DesignEventTypes =
-  | DesignerEvents
-  | CALAEvents
-  | PartnerEvents
-  | ApprovalEvents
-  | ShipmentTrackingEvents;
-
-type DesignerEvents =
-  // Send the design to CALA initially for review
-  | "SUBMIT_DESIGN"
-  // Commit to a certain quantity and price quote
-  | "COMMIT_QUOTE";
-
-type CALAEvents =
-  // Send a design to a partner for them to accept/reject
-  | "BID_DESIGN"
-  // Indicate that we're unable to support producing this design
-  | "REJECT_DESIGN"
-  // Indicate that we've set up the cost inputs for this design, so a designer
-  // may now review them.
-  | "COMMIT_COST_INPUTS"
-  // The opposite of BID_DESIGN; remove a partner
-  | "REMOVE_PARTNER"
-  // Indicate if CALA has finalized pairing of a partner(s) to a design.
-  | "COMMIT_PARTNER_PAIRING"
-  // Cost inputs have expired
-  | "COSTING_EXPIRATION";
-
-type PartnerEvents = "ACCEPT_SERVICE_BID" | "REJECT_SERVICE_BID";
-
-type ShipmentTrackingEvents = "TRACKING_CREATION" | "TRACKING_UPDATE";
-
-type ApprovalEvents =
-  | "REVISION_REQUEST"
-  | "STEP_ASSIGNMENT"
-  | "STEP_UNASSIGNMENT"
-  | "STEP_SUBMISSION_APPROVAL"
-  | "STEP_SUBMISSION_ASSIGNMENT"
-  | "STEP_SUBMISSION_UNASSIGNMENT"
-  | "STEP_SUBMISSION_RE_REVIEW_REQUEST"
-  | "STEP_COMPLETE"
-  | "STEP_REOPEN"
-  | "STEP_PARTNER_PAIRING";
-
-export type ActivityStreamEventType = Extract<
-  | "REVISION_REQUEST"
-  | "STEP_ASSIGNMENT"
-  | "STEP_UNASSIGNMENT"
-  | "STEP_SUBMISSION_APPROVAL"
-  | "STEP_SUBMISSION_ASSIGNMENT"
-  | "STEP_SUBMISSION_UNASSIGNMENT"
-  | "STEP_SUBMISSION_RE_REVIEW_REQUEST"
-  | "STEP_COMPLETE"
-  | "STEP_PARTNER_PAIRING"
-  | "STEP_REOPEN"
-  | "SUBMIT_DESIGN"
-  | "COMMIT_QUOTE"
-  | "COMMIT_COST_INPUTS"
-  | "COSTING_EXPIRATION"
-  | "TRACKING_CREATION"
-  | "TRACKING_UPDATE",
-  DesignEventTypes
->;
-
-export const ACTIVITY_STREAM_EVENTS: ActivityStreamEventType[] = [
+const designerEvents = z.enum(["SUBMIT_DESIGN", "COMMIT_QUOTE"]);
+const calaEvents = z.enum([
+  "BID_DESIGN",
+  "REJECT_DESIGN",
+  "COMMIT_COST_INPUTS",
+  "REMOVE_PARTNER",
+  "COMMIT_PARTNER_PAIRING",
+  "COSTING_EXPIRATION",
+]);
+const partnerEvents = z.enum(["ACCEPT_SERVICE_BID", "REJECT_SERVICE_BID"]);
+const shipmentTrackingEvents = z.enum(["TRACKING_CREATION", "TRACKING_UPDATE"]);
+const approvalEvents = z.enum([
   "REVISION_REQUEST",
   "STEP_ASSIGNMENT",
   "STEP_UNASSIGNMENT",
@@ -78,85 +22,130 @@ export const ACTIVITY_STREAM_EVENTS: ActivityStreamEventType[] = [
   "STEP_SUBMISSION_UNASSIGNMENT",
   "STEP_SUBMISSION_RE_REVIEW_REQUEST",
   "STEP_COMPLETE",
-  "STEP_PARTNER_PAIRING",
   "STEP_REOPEN",
-  "SUBMIT_DESIGN",
-  "COMMIT_QUOTE",
-  "COMMIT_COST_INPUTS",
-  "COSTING_EXPIRATION",
-  "TRACKING_CREATION",
-  "TRACKING_UPDATE",
-];
+  "STEP_PARTNER_PAIRING",
+]);
+export const allEventsSchema = z.enum([
+  ...designerEvents.options,
+  ...calaEvents.options,
+  ...partnerEvents.options,
+  ...shipmentTrackingEvents.options,
+  ...approvalEvents.options,
+]);
+export type DesignEventTypes = z.infer<typeof allEventsSchema>;
 
-export default interface DesignEvent {
-  id: string;
-  createdAt: Date;
-  actorId: string;
-  targetId: string | null;
-  targetTeamId: string | null;
-  designId: string;
-  bidId: string | null;
-  quoteId: string | null;
-  approvalStepId: string | null;
-  type: DesignEventTypes;
-  approvalSubmissionId: string | null;
-  commentId: string | null;
-  taskTypeId: string | null;
-  shipmentTrackingId: string | null;
-  shipmentTrackingEventId: string | null;
-}
+export const activityStreamEventsSchema = z.enum([
+  allEventsSchema.enum.REVISION_REQUEST,
+  allEventsSchema.enum.STEP_ASSIGNMENT,
+  allEventsSchema.enum.STEP_UNASSIGNMENT,
+  allEventsSchema.enum.STEP_SUBMISSION_APPROVAL,
+  allEventsSchema.enum.STEP_SUBMISSION_ASSIGNMENT,
+  allEventsSchema.enum.STEP_SUBMISSION_UNASSIGNMENT,
+  allEventsSchema.enum.STEP_SUBMISSION_RE_REVIEW_REQUEST,
+  allEventsSchema.enum.STEP_COMPLETE,
+  allEventsSchema.enum.STEP_PARTNER_PAIRING,
+  allEventsSchema.enum.STEP_REOPEN,
+  allEventsSchema.enum.SUBMIT_DESIGN,
+  allEventsSchema.enum.COMMIT_QUOTE,
+  allEventsSchema.enum.COMMIT_COST_INPUTS,
+  allEventsSchema.enum.COSTING_EXPIRATION,
+  allEventsSchema.enum.TRACKING_CREATION,
+  allEventsSchema.enum.TRACKING_UPDATE,
+]);
+export type ActivityStreamEventType = z.infer<
+  typeof activityStreamEventsSchema
+>;
 
-export interface DesignEventRow {
-  id: string;
-  created_at: Date;
-  actor_id: string;
-  target_id: string | null;
-  target_team_id: string | null;
-  design_id: string;
-  bid_id: string | null;
-  quote_id: string | null;
-  approval_step_id: string | null;
-  type: DesignEventTypes;
-  approval_submission_id: string | null;
-  comment_id: string | null;
-  task_type_id: string | null;
-  shipment_tracking_id: string | null;
-  shipment_tracking_event_id: string | null;
-}
+export const designEventSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  actorId: z.string(),
+  targetId: z.string().nullable(),
+  targetTeamId: z.string().nullable(),
+  designId: z.string(),
+  bidId: z.string().nullable(),
+  quoteId: z.string().nullable(),
+  approvalStepId: z.string().nullable(),
+  type: allEventsSchema,
+  approvalSubmissionId: z.string().nullable(),
+  commentId: z.string().nullable(),
+  taskTypeId: z.string().nullable(),
+  shipmentTrackingId: z.string().nullable(),
+  shipmentTrackingEventId: z.string().nullable(),
+});
+export type DesignEvent = z.infer<typeof designEventSchema>;
+export default DesignEvent;
 
-export interface DesignEventWithMeta extends DesignEvent {
-  actorName: string | null;
-  actorRole: Role;
-  actorEmail: string | null;
-  targetName: string | null;
-  targetRole: Role | null;
-  targetEmail: string | null;
-  targetTeamName: string | null;
-  submissionTitle: string | null;
-  stepTitle: string | null;
-  taskTypeId: string | null;
-  taskTypeTitle: string | null;
-  shipmentTrackingDescription: string | null;
-  shipmentTrackingEventTag: string | null;
-  shipmentTrackingEventSubtag: string | null;
-}
+export const serializedDesignEventSchema = designEventSchema.extend({
+  createdAt: z.string(),
+});
+export type SerializedDesignEvent = z.infer<typeof serializedDesignEventSchema>;
 
-export interface DesignEventWithMetaRow extends DesignEventRow {
-  actor_name: string | null;
-  actor_role: Role;
-  actor_email: string | null;
-  target_name: string | null;
-  target_role: Role | null;
-  target_email: string | null;
-  target_team_name: string | null;
-  submission_title: string | null;
-  step_title: string | null;
-  task_type_id: BidTaskTypeId | null;
-  task_type_title?: string | null;
-  shipment_tracking_description: string | null;
-  shipment_tracking_event_tag: string | null;
-  shipment_tracking_event_subtag: string | null;
-}
+export const designEventRowSchema = z.object({
+  id: z.string(),
+  created_at: z.date(),
+  actor_id: z.string(),
+  target_id: z.string().nullable(),
+  target_team_id: z.string().nullable(),
+  design_id: z.string(),
+  bid_id: z.string().nullable(),
+  quote_id: z.string().nullable(),
+  approval_step_id: z.string().nullable(),
+  type: allEventsSchema,
+  approval_submission_id: z.string().nullable(),
+  comment_id: z.string().nullable(),
+  task_type_id: z.string().nullable(),
+  shipment_tracking_id: z.string().nullable(),
+  shipment_tracking_event_id: z.string().nullable(),
+});
+export type DesignEventRow = z.infer<typeof designEventRowSchema>;
+
+export const serializedDesignEventRowSchema = designEventRowSchema.extend({
+  created_at: z
+    .string()
+    .transform((dateString: string) => new Date(dateString)),
+});
+export type SerializedDesignEventRow = z.infer<
+  typeof serializedDesignEventRowSchema
+>;
+
+export const designEventWithMetaSchema = designEventSchema.extend({
+  actorName: z.string().nullable(),
+  actorRole: userRoleSchema,
+  actorEmail: z.string().nullable(),
+  targetName: z.string().nullable(),
+  targetRole: userRoleSchema.nullable(),
+  targetEmail: z.string().nullable(),
+  targetTeamName: z.string().nullable(),
+  submissionTitle: z.string().nullable(),
+  stepTitle: z.string().nullable(),
+  taskTypeId: z.string().nullable(),
+  taskTypeTitle: z.string().nullable(),
+  shipmentTrackingDescription: z.string().nullable(),
+  shipmentTrackingEventTag: z.string().nullable(),
+  shipmentTrackingEventSubtag: z.string().nullable(),
+});
+export type DesignEventWithMeta = z.infer<typeof designEventWithMetaSchema>;
+
+export const designEventWithMetaRowSchema = designEventRowSchema.extend({
+  actor_name: z.string().nullable(),
+  actor_role: userRoleSchema,
+  actor_email: z.string().nullable(),
+  target_name: z.string().nullable(),
+  target_role: userRoleSchema.nullable(),
+  target_email: z.string().nullable(),
+  target_team_name: z.string().nullable(),
+  submission_title: z.string().nullable(),
+  step_title: z.string().nullable(),
+  task_type_id: bidTaskTypeIdSchema.nullable(),
+  task_type_title: z.string().nullable().optional(),
+  shipment_tracking_description: z.string().nullable(),
+  shipment_tracking_event_tag: z.string().nullable(),
+  shipment_tracking_event_subtag: z.string().nullable(),
+});
+export type DesignEventWithMetaRow = z.infer<
+  typeof designEventWithMetaRowSchema
+>;
 
 export const templateDesignEvent = {
   targetId: null,

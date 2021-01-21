@@ -34,7 +34,7 @@ function* getInvoices() {
     canAccessUserResource.call(this, userId);
     invoices = yield InvoicesDAO.findByUser(userId);
   } else if (collectionId) {
-    const isAdmin = this.state.role === User.ROLES.admin;
+    const isAdmin = this.state.role === User.ROLES.ADMIN;
     this.assert(isAdmin, 403);
     invoices = yield InvoicesDAO.findByCollection(collectionId);
   } else {

@@ -55,7 +55,7 @@ export async function create(data: UserOnboarding): Promise<UserOnboarding> {
 export async function findByUserId(
   userId: string
 ): Promise<UserOnboarding | null> {
-  const userOnboardingRow: UserOnboardingRow = await db(TABLE_NAME)
+  const userOnboardingRow = await db(TABLE_NAME)
     .select("*")
     .where({ user_id: userId })
     .then((rows: UserOnboardingRow[]) => first<UserOnboardingRow>(rows));

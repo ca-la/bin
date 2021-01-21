@@ -27,7 +27,7 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: object[]) => first(rows));
+    .then((rows: CohortRow[]) => first(rows));
 
   if (!created) {
     throw new Error("Failed to create cohort!");
@@ -53,7 +53,7 @@ export async function findById(
         query.transacting(trx);
       }
     })
-    .then((rows: object[]) => first(rows));
+    .then((rows: CohortRow[]) => first(rows));
 
   return validate<CohortRow, Cohort>(
     TABLE_NAME,
@@ -75,7 +75,7 @@ export async function findBySlug(
         query.transacting(trx);
       }
     })
-    .then((rows: object[]) => first(rows));
+    .then((rows: CohortRow[]) => first(rows));
 
   return validate<CohortRow, Cohort>(
     TABLE_NAME,

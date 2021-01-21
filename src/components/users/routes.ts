@@ -73,7 +73,7 @@ function* createUser(this: PublicContext<CreateBody>): Iterator<any, any, any> {
         password,
         phone,
         referralCode,
-        role: ROLES.user,
+        role: ROLES.USER,
       },
       { requirePassword: false, trx }
     ).catch(
@@ -246,7 +246,7 @@ interface CaughtError extends Error {
 function* updateUser(
   this: AuthedContext<UserWithNewPassword>
 ): Iterator<any, any, any> {
-  const isAdmin = this.state.role === ROLES.admin;
+  const isAdmin = this.state.role === ROLES.ADMIN;
   const isCurrentUser = this.params.userId === this.state.userId;
 
   this.assert(
@@ -369,7 +369,7 @@ function* updateUser(
 
 function* getAllUsers(this: AuthedContext): Iterator<any, any, any> {
   this.assert(this.state.userId, 401);
-  this.assert(this.state.role === ROLES.admin, 403);
+  this.assert(this.state.role === ROLES.ADMIN, 403);
 
   const users = yield UsersDAO.findAll({
     limit: Number(this.query.limit) || 10,
@@ -390,7 +390,7 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
  * GET /users/:id
  */
 function* getUser(this: AuthedContext): Iterator<any, any, any> {
-  this.assert(this.state.role === ROLES.admin, 403);
+  this.assert(this.state.role === ROLES.ADMIN, 403);
 
   const user = yield UsersDAO.findById(this.params.userId);
   this.assert(user, 404, "User not found");

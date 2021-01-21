@@ -157,17 +157,18 @@ function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
     )
     .leftJoin("assets as canvas_assets", (join: Knex.JoinClause) =>
       join
-        .onIn(
-          "canvas_assets.id",
+        .onIn("canvas_assets.id", [
           db.raw(`
-  components.sketch_id,
-  (
-    SELECT preview_image_id FROM product_design_options
-     WHERE product_design_options.id = components.material_id LIMIT 1
-  ),
-  components.artwork_id
-`)
-        )
+components.sketch_id,
+(
+  SELECT preview_image_id
+    FROM product_design_options
+   WHERE product_design_options.id = components.material_id
+   LIMIT 1
+),
+components.artwork_id
+`),
+        ])
         .andOnNull("canvas_assets.deleted_at")
     )
     .whereNull("a.deleted_at");

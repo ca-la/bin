@@ -52,14 +52,12 @@ type Base = Omit<
   | "designId"
   | "recipientUserId"
   | "annotationId"
-  | "componentType"
 >;
 
 export interface AnnotationCommentMentionNotification extends Base {
   canvasId: string;
   collectionId: string | null;
   commentId: string;
-  componentType: string;
   designId: string;
   annotationId: string;
   recipientUserId: string;
@@ -73,6 +71,7 @@ type BaseFull = Omit<
   | "designTitle"
   | "taskTitle"
   | "annotationImageId"
+  | "componentType"
 >;
 
 export interface FullAnnotationCommentMentionNotification extends BaseFull {
@@ -81,6 +80,7 @@ export interface FullAnnotationCommentMentionNotification extends BaseFull {
   designTitle: string | null;
   taskTitle: string;
   annotationImageId: string;
+  componentType: string;
 }
 
 export function isAnnotationCommentMentionNotification(

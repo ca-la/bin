@@ -370,7 +370,6 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
         ...inputBid,
         acceptedAt: null,
         assignee: null,
-        partnerUserId: null,
       },
       "created bid should set acceptedAt"
     );
@@ -540,12 +539,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
 
     t.deepEqual(
       await findByQuoteId(trx, quote1.id),
-      [
-        open1,
-        teamBid,
-        { ...removed, assignee: null, partnerUserId: null },
-        expired,
-      ],
+      [open1, teamBid, { ...removed, assignee: null }, expired],
       "findByQuoteId / returns all bids by quote ID / quote1"
     );
     t.deepEqual(
@@ -570,7 +564,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         open2,
         open1,
         teamBid,
-        { ...removed, assignee: null, partnerUserId: null },
+        { ...removed, assignee: null },
         expired,
       ],
       "findAll / returns all bids / no limit or offset"
@@ -593,7 +587,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         open2,
         open1,
         teamBid,
-        { ...removed, assignee: null, partnerUserId: null },
+        { ...removed, assignee: null },
         expired,
       ],
       "findAll / returns all bids / with offset no limit"
@@ -640,7 +634,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         {
           ...removed,
           assignee: null,
-          partnerUserId: null,
           designEvents: [deRemovedBid, deRemovedRemove],
         },
         { ...expired, designEvents: [deExpiredBid] },
@@ -665,7 +658,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       [
         { ...open1, designEvents: [] },
         { ...teamBid, designEvents: [] },
-        { ...removed, assignee: null, partnerUserId: null, designEvents: [] },
+        { ...removed, assignee: null, designEvents: [] },
         { ...expired, designEvents: [] },
       ],
       "findAllByQuoteAndTargetId / returns quote's bids with filtered design events / quote1 partner2"
@@ -696,7 +689,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
       [
         { ...open1, designEvents: [] },
         { ...teamBid, designEvents: [deTeamBid] },
-        { ...removed, assignee: null, partnerUserId: null, designEvents: [] },
+        { ...removed, assignee: null, designEvents: [] },
         { ...expired, designEvents: [] },
       ],
       "findAllByQuoteAndTargetId / returns quote's bids with filtered design events / quote1 team"
@@ -735,7 +728,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: partner1.id,
           name: partner1.name,
         },
-        partnerUserId: partner1.id,
       },
       "findById / returns bid"
     );
@@ -750,7 +742,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: partner2.id,
           name: partner2.name,
         },
-        partnerUserId: partner2.id,
       },
       "findById / returns bid"
     );
@@ -765,7 +756,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: partner2.id,
           name: partner2.name,
         },
-        partnerUserId: partner2.id,
       },
       "findById / returns bid"
     );
@@ -779,7 +769,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: team.id,
           name: team.title,
         },
-        partnerUserId: null,
       },
       "findByBidIdAndUser / returns bid to a team for team users"
     );
@@ -805,7 +794,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: partner1.id,
           name: partner1.name,
         },
-        partnerUserId: partner1.id,
       },
       "findByBidIdAndUser / returns bid even if user has not accepted"
     );
@@ -820,7 +808,6 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
           id: partner2.id,
           name: partner2.name,
         },
-        partnerUserId: partner2.id,
       },
       "findByBidIdAndUser / returns bid if user has accepted the bid"
     );

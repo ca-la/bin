@@ -44,9 +44,9 @@ test("AddressesDAO.deleteById deletes an address", async (t: Test) => {
   const data = Object.assign({}, ADDRESS_DATA, { userId: user.id });
 
   const address = await AddressesDAO.create(data);
-  const deleted = await AddressesDAO.deleteById(address.id);
+  const deleted = await AddressesDAO.deleteById(address!.id);
 
-  t.notEqual(deleted.deletedAt, null);
+  t.notEqual(deleted!.deletedAt, null);
 });
 
 test("AddressesDAO.update updates an address", async (t: Test) => {
@@ -60,7 +60,7 @@ test("AddressesDAO.update updates an address", async (t: Test) => {
   const expectedAddress = Object.assign({}, ADDRESS_DATA, patch);
 
   const updated = pick(
-    await AddressesDAO.update(address.id, patch),
+    await AddressesDAO.update(address!.id, patch),
     Object.keys(expectedAddress)
   );
 

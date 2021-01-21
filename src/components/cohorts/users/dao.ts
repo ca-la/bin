@@ -23,7 +23,7 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: object[]) => first(rows));
+    .then((rows: CohortUserRow[]) => first(rows));
 
   if (!created) {
     throw new Error("Failed to create cohort user!");

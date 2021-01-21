@@ -67,7 +67,8 @@ export async function createAll(
 
 export async function findById(assetId: string): Promise<Asset | null> {
   const found = await db(TABLE_NAME)
-    .where({ id: assetId }, "*")
+    .select("*")
+    .where({ id: assetId })
     .catch(rethrow)
     .then((rows: AssetRow[]) => first(rows));
 

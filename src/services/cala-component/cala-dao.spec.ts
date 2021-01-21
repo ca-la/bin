@@ -5,7 +5,7 @@ import { omit } from "lodash";
 import { buildDao } from "./cala-dao";
 import { buildAdapter } from "./cala-adapter";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import * as PubSub from "../../services/pubsub";
+import * as PubSub from "../../services/pubsub/emitter";
 import db from "../../services/db";
 
 interface BaseWidget {
@@ -103,13 +103,13 @@ async function setup(): Promise<void> {
     "test_table_widget_parts",
     (table: Knex.CreateTableBuilder) => {
       table.uuid("id").primary();
-      table.timestamp("created_at").notNullable().defaultTo(db.now);
+      table.timestamp("created_at").notNullable().defaultTo(db.fn.now());
       table.text("title").notNullable();
     }
   );
   await db.schema.createTable(tableName, (table: Knex.CreateTableBuilder) => {
     table.uuid("id").primary();
-    table.timestamp("created_at").notNullable().defaultTo(db.now);
+    table.timestamp("created_at").notNullable().defaultTo(db.fn.now());
     table.text("title").notNullable();
     table
       .uuid("part_id")

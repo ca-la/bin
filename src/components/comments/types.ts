@@ -1,60 +1,69 @@
-import { Role } from "../users/types";
-import Asset, { AssetLinks } from "../assets/types";
+import * as z from "zod";
+import { userRoleSchema } from "../users/types";
+import { assetLinksSchema, assetSchema } from "../assets/types";
 
-export interface BaseComment {
-  id: string;
-  createdAt: Date;
-  deletedAt: Date | null;
-  text: string;
-  parentCommentId: string | null;
-  userId: string;
-  isPinned: boolean;
-}
+export const baseCommentSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  deletedAt: z.date().nullable(),
+  text: z.string(),
+  parentCommentId: z.string().nullable(),
+  userId: z.string(),
+  isPinned: z.boolean(),
+});
+export type BaseComment = z.infer<typeof baseCommentSchema>;
 
-export default interface Comment extends BaseComment {
-  userName: string | null;
-  userEmail: string | null;
-  userRole: Role;
-  attachments: Asset[];
-}
+export const commentSchema = baseCommentSchema.extend({
+  userName: z.string().nullable(),
+  userEmail: z.string().nullable(),
+  userRole: userRoleSchema,
+  attachments: z.array(assetSchema),
+});
+export type Comment = z.infer<typeof commentSchema>;
 
-export interface BaseCommentRow {
-  id: string;
-  created_at: Date;
-  deleted_at: Date | null;
-  text: string;
-  parent_comment_id: string | null;
-  user_id: string;
-  is_pinned: boolean;
-}
+export const baseCommentRowSchema = z.object({
+  id: z.string(),
+  created_at: z.date(),
+  deleted_at: z.date().nullable(),
+  text: z.string(),
+  parent_comment_id: z.string().nullable(),
+  user_id: z.string(),
+  is_pinned: z.boolean(),
+});
+export type BaseCommentRow = z.infer<typeof baseCommentRowSchema>;
 
-export interface CommentRow extends BaseCommentRow {
-  user_name: string | null;
-  user_email: string | null;
-  user_role: Role;
-  attachments: Asset[];
-}
+export const commentRowSchema = baseCommentRowSchema.extend({
+  user_name: z.string().nullable(),
+  user_email: z.string().nullable(),
+  user_role: userRoleSchema,
+  attachments: z.array(assetSchema),
+});
+export type CommentRow = z.infer<typeof commentRowSchema>;
 
-export interface CommentWithMentions extends Comment {
-  mentions: {
-    [id: string]: string;
-  };
-}
+export const commentWithMentionsSchema = commentSchema.extend({
+  mentions: z.record(z.string()),
+});
+export type CommentWithMentions = z.infer<typeof commentWithMentionsSchema>;
 
-export interface CommentWithResources extends CommentWithMentions {
-  attachments: (Asset & Partial<AssetLinks>)[];
-}
+export const commentWithResourcesSchema = commentWithMentionsSchema.extend({
+  attachments: z.array(z.intersection(assetSchema, assetLinksSchema.partial())),
+});
+export type CommentWithResources = z.infer<typeof commentWithResourcesSchema>;
 
 export enum MentionType {
   COLLABORATOR = "collaborator",
   TEAM_USER = "teamUser",
 }
+export const mentionTypeSchema = z.nativeEnum(MentionType);
 
-export interface MentionMeta {
-  id: string;
-  type: MentionType;
-}
+export const mentionMetaSchema = z.object({
+  id: z.string(),
+  type: mentionTypeSchema,
+});
+export type MentionMeta = z.infer<typeof mentionMetaSchema>;
 
 export function isMentionType(candidate: string): candidate is MentionType {
-  return Object.values(MentionType).includes(candidate as MentionType);
+  return mentionTypeSchema.safeParse(candidate).success;
 }
+
+export default Comment;

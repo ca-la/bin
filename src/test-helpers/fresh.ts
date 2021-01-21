@@ -74,7 +74,7 @@ function beforeEach(): void {
   });
 }
 
-function afterEach(): Knex.QueryBuilder {
+function afterEach(): Knex.Raw {
   currentSandbox.restore();
 
   // Very naive 'wipe the database' query.

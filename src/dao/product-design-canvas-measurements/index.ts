@@ -209,7 +209,7 @@ AND product_design_canvas_measurements.deleted_at IS null
 
 export async function getLabel(canvasId: string): Promise<string> {
   const measurementCount = await db(TABLE_NAME)
-    .count("*")
+    .count<CountRow[]>("*")
     .where({ canvas_id: canvasId })
     .then((rows: CountRow[]) => first<CountRow>(rows));
   if (!measurementCount) {

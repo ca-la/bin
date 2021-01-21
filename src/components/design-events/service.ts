@@ -1,13 +1,12 @@
 import Knex from "knex";
 
-import db from "../../services/db";
 import { find } from "./dao";
 
 export async function isQuoteCommitted(
-  trx: Knex.Transaction | null,
+  trx: Knex.Transaction,
   designId: string
 ): Promise<boolean> {
-  const designEvents = await find(trx || db, {
+  const designEvents = await find(trx, {
     designId,
     type: "COMMIT_QUOTE",
   });

@@ -194,7 +194,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     omit(address, "id", "createdAt", "updatedAt"),
     "Invoice address matches the original address"
   );
-  t.equals(invoiceAddress.addressId, address.id);
+  t.equals(invoiceAddress!.addressId, address.id);
 
   const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
   t.equals(lineItems.length, 2, "Line Item exists for designs");
@@ -434,7 +434,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
     omit(address, "id", "createdAt", "updatedAt"),
     "Invoice address matches the original address"
   );
-  t.equals(invoiceAddress.addressId, address.id);
+  t.equals(invoiceAddress!.addressId, address.id);
 
   t.equal(postResponse.status, 201, "successfully creates the invoice");
   t.equals(body.isPaid, true, "Invoice is paid");

@@ -105,14 +105,15 @@ export async function create(
   trx?: Knex.Transaction
 ): Promise<NormalizedPricingQuote> {
   const TABLE_NAME = "pricing_quotes";
-  const [created]: [object | null] = await db(TABLE_NAME)
+  const created = await db(TABLE_NAME)
     .insert(omit(quote, ["processes"]))
     .returning("*")
     .modify((query: Knex.QueryBuilder) => {
       if (trx) {
         query.transacting(trx);
       }
-    });
+    })
+    .then((rows: PricingQuoteRow[]) => first(rows));
 
   if (created && isPricingQuoteRow(created)) {
     return normalizedPricingQuoteAdapter.parse(created);
@@ -123,7 +124,7 @@ export async function create(
 
 export async function findMatchingOrCreateInput(
   input: Uninserted<PricingQuoteInputRow>
-): Promise<PricingQuoteInputRow> {
+): Promise<PricingQuoteInputRow | undefined> {
   const TABLE_NAME = "pricing_inputs";
   const maybeMatch: PricingQuoteInputRow | null = await db(TABLE_NAME)
     .first()
@@ -133,11 +134,10 @@ export async function findMatchingOrCreateInput(
     return maybeMatch;
   }
 
-  const [created]: [PricingQuoteInputRow] = await db(TABLE_NAME)
+  return db(TABLE_NAME)
     .insert(input)
-    .returning("*");
-
-  return created;
+    .returning("*")
+    .then((rows: PricingQuoteInputRow[]) => first(rows));
 }
 
 export async function findVersionValuesForRequest(
@@ -340,9 +340,11 @@ async function findCareLabel(
   version?: number
 ): Promise<PricingCareLabel> {
   const TABLE_NAME = "pricing_care_labels";
-  const careLabelRow: PricingCareLabelRow | null = await findAtVersionOrLatest<
-    Promise<PricingCareLabelRow | null>
-  >(TABLE_NAME, units, version);
+  const careLabelRow: PricingCareLabelRow | null = await findAtVersionOrLatest(
+    TABLE_NAME,
+    units,
+    version
+  );
 
   if (!careLabelRow) {
     throw new ResourceNotFoundError("Pricing care label does not exist!");
@@ -385,9 +387,11 @@ async function findProductMaterial(
   version?: number
 ): Promise<PricingProductMaterial> {
   const TABLE_NAME = "pricing_product_materials";
-  const materialRow: PricingProductMaterialRow | null = await findAtVersionOrLatest<
-    Knex.QueryBuilder
-  >(TABLE_NAME, units, version).where({ category });
+  const materialRow: PricingProductMaterialRow | null = await findAtVersionOrLatest(
+    TABLE_NAME,
+    units,
+    version
+  ).where({ category });
 
   if (!materialRow) {
     throw new ResourceNotFoundError(
@@ -410,9 +414,11 @@ async function findProductType(
   version?: number
 ): Promise<PricingProductType> {
   const TABLE_NAME = "pricing_product_types";
-  const typeRow: PricingProductTypeRow | null = await findAtVersionOrLatest<
-    Knex.QueryBuilder
-  >(TABLE_NAME, units, version).where({ name, complexity });
+  const typeRow: PricingProductTypeRow | null = await findAtVersionOrLatest(
+    TABLE_NAME,
+    units,
+    version
+  ).where({ name, complexity });
 
   if (!typeRow) {
     throw new ResourceNotFoundError("Pricing product type could not be found!");
@@ -568,9 +574,11 @@ async function findMargin(
   version?: number
 ): Promise<PricingMargin> {
   const TABLE_NAME = "pricing_margins";
-  const marginRow: PricingMarginRow | null = await findAtVersionOrLatest<
-    Promise<PricingMarginRow | null>
-  >(TABLE_NAME, units, version);
+  const marginRow: PricingMarginRow | null = await findAtVersionOrLatest(
+    TABLE_NAME,
+    units,
+    version
+  );
 
   if (!marginRow) {
     throw new ResourceNotFoundError("Pricing margin does not exist!");
@@ -579,11 +587,11 @@ async function findMargin(
   return validate(TABLE_NAME, isPricingMarginRow, marginDataAdapter, marginRow);
 }
 
-function findAtVersionOrLatest<T>(
+function findAtVersionOrLatest(
   from: TableName,
   units: number,
   version?: number
-): T {
+): Knex.QueryBuilder {
   return db(from)
     .first()
     .modify((modifyQuery: Knex.QueryBuilder) => {

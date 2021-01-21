@@ -173,7 +173,7 @@ function findByFitPartnerCustomer(fitPartnerCustomerId) {
       fit_partner_customer_id: fitPartnerCustomerId,
       deleted_at: null,
     })
-    .map(instantiate);
+    .then((scans) => scans.map(instantiate));
 }
 
 module.exports = {

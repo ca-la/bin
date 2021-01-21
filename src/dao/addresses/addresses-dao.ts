@@ -15,7 +15,7 @@ import { validatePropertiesFormatted } from "../../services/validate";
 
 export type AddressesDao<T> = DAO<T> & {
   createTrx: (trx: Knex.Transaction, data: any) => Promise<T>;
-  findByUserId: DaoFindById<T[]>;
+  findByUserId: DaoFindById<T>;
   instantiate: (row: any) => T;
   maybeInstantiate: (row: any) => T | null;
 };
@@ -73,7 +73,7 @@ export default function getAddressesDAO<T extends Address>(
       .then((addresses: any[]) => addresses.map(instantiate));
   }
 
-  function findById(id: string): Promise<T> {
+  function findById(id: string): Promise<T | null> {
     return db(tableName)
       .where({
         id,
@@ -84,8 +84,8 @@ export default function getAddressesDAO<T extends Address>(
       .catch(rethrow);
   }
 
-  function deleteById(id: string): Promise<T> {
-    return db(tableName)
+  async function deleteById(id: string): Promise<T> {
+    const deleted = await db(tableName)
       .where({
         id,
         deleted_at: null,
@@ -99,6 +99,12 @@ export default function getAddressesDAO<T extends Address>(
       .then(first)
       .then(maybeInstantiate)
       .catch(rethrow);
+
+    if (!deleted) {
+      throw new Error(`Failed to delete address with ID ${id}`);
+    }
+
+    return deleted;
   }
 
   function update(id: string, data: any): Promise<T> {

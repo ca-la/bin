@@ -82,7 +82,7 @@ export async function create(
   });
 
   const connection = options.trx || db;
-  const user: UserRow = await connection(TABLE_NAME)
+  const user = await connection(TABLE_NAME)
     .insert(rowData, "*")
     .catch(rethrow)
     .catch(
@@ -192,7 +192,7 @@ export async function findAll({
 function getByEmailBuilder(
   email: string,
   trx?: Knex.Transaction
-): Knex.QueryBuilder {
+): Promise<UserRow | undefined> {
   const normalized = normalizeEmail(email);
 
   return db("users")
@@ -312,7 +312,7 @@ export async function update(
     })
     .then((users: UserRow[]) => first<UserRow>(users));
 
-  if (previousEmail) {
+  if (previousEmail && user && user.email) {
     await updateEmail(previousEmail, user.email);
   }
 
@@ -421,9 +421,11 @@ export async function findAllUnpaidPartners({
     .leftJoin("partner_payout_logs as l", "b.id", "l.bid_id")
     .where({ "de.type": "ACCEPT_SERVICE_BID" })
     .andWhere("de.created_at", ">", new Date(BID_CUTOFF_DATE))
-    .whereNotIn(
-      "b.id",
-      db.raw("SELECT bid_id from design_events where type = 'REMOVE_PARTNER'")
+    .whereNotIn("b.id", (subquery: Knex.QueryBuilder) =>
+      subquery
+        .from("design_events")
+        .select("bid_id")
+        .where({ type: "REMOVE_PARTNER" })
     )
     .modify(limitOrOffset(limit, offset))
     .groupBy(["b.id", "users.id", "b.bid_price_cents"])

@@ -1,7 +1,6 @@
 import uuid from "node-uuid";
 import Knex from "knex";
 
-import db from "../../services/db";
 import first from "../../services/first";
 import {
   dataAdapter,
@@ -39,9 +38,7 @@ export async function findForUser(
   userId: string,
   trx: Knex.Transaction
 ): Promise<Subscription[]> {
-  const res = await db(TABLE_NAME)
-    .transacting(trx)
-    .where({ user_id: userId }, "*");
+  const res = await trx(TABLE_NAME).select("*").where({ user_id: userId });
 
   return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,

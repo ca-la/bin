@@ -202,7 +202,7 @@ test("UsersDAO.findAll finds based on matching search terms and role", async (t:
   const users = await UsersDAO.findAll({
     limit: 100,
     offset: 0,
-    role: ROLES.admin,
+    role: ROLES.ADMIN,
     search: "q user",
   });
   t.equal(users.length, 1, "finds one user");

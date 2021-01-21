@@ -1,7 +1,7 @@
 import {
   DesignEventWithMeta,
   ActivityStreamEventType,
-  ACTIVITY_STREAM_EVENTS,
+  activityStreamEventsSchema,
 } from "./types";
 
 export interface RealtimeDesignEventCreated {
@@ -55,6 +55,6 @@ export function isRealtimeActivityStreamDesignEventCreated(
     "resource" in data &&
     "type" in data &&
     data.type === "design-event/created" &&
-    ACTIVITY_STREAM_EVENTS.includes(data.resource.type)
+    activityStreamEventsSchema.options.includes(data.resource.type)
   );
 }

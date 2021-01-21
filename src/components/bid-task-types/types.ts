@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 import { CollaboratorRole } from "../collaborators/types";
 
 export interface TaskType {
@@ -14,6 +16,7 @@ export enum BidTaskTypeId {
   PRODUCT_PHOTOGRAPHY = "9a188eba-b472-4b50-85ac-eb86319e642b",
   QUALITY_CONTROL = "48520934-a0e9-436d-ab56-cb2829ccdfed",
 }
+export const bidTaskTypeIdSchema = z.nativeEnum(BidTaskTypeId);
 
 export const taskTypesById: Record<BidTaskTypeId, TaskType> = {
   [BidTaskTypeId.CALA]: {

@@ -1,26 +1,30 @@
-export interface AssetLinks {
-  assetId: string | null;
-  assetLink: string | null;
-  asset3xLink: string | null;
-  downloadLink: string;
-  fileType: string;
-  thumbnail2xLink: string | null;
-  thumbnailLink: string | null;
-  originalWidthPx: number | null;
-  originalHeightPx: number | null;
-}
+import * as z from "zod";
 
-export interface Asset {
-  createdAt: Date;
-  description: string | null;
-  id: string;
-  mimeType: string;
-  originalHeightPx: number | null;
-  originalWidthPx: number | null;
-  title: string | null;
-  uploadCompletedAt: Date | null;
-  userId: string | null;
-}
+export const assetLinksSchema = z.object({
+  assetId: z.string().nullable(),
+  assetLink: z.string().nullable(),
+  asset3xLink: z.string().nullable(),
+  downloadLink: z.string(),
+  fileType: z.string(),
+  thumbnail2xLink: z.string().nullable(),
+  thumbnailLink: z.string().nullable(),
+  originalWidthPx: z.number().nullable(),
+  originalHeightPx: z.number().nullable(),
+});
+export type AssetLinks = z.infer<typeof assetLinksSchema>;
+
+export const assetSchema = z.object({
+  createdAt: z.date(),
+  description: z.string().nullable(),
+  id: z.string(),
+  mimeType: z.string(),
+  originalHeightPx: z.number().nullable(),
+  originalWidthPx: z.number().nullable(),
+  title: z.string().nullable(),
+  uploadCompletedAt: z.date().nullable(),
+  userId: z.string().nullable(),
+});
+export type Asset = z.infer<typeof assetSchema>;
 
 export const ACCEPTED_IMAGE_TYPES = [
   "heic",
@@ -66,16 +70,17 @@ export const SUPPORTED_FILE_TYPES: FileType[] = [
  * - Change `user_id` to `created_by` and make it required.
  * - Pull out `original_height_px` and `original_width_px` into an Image Metadata table.
  */
-export interface AssetRow {
-  created_at: string;
-  description: string | null;
-  id: string;
-  mime_type: string;
-  original_height_px: number | null;
-  original_width_px: number | null;
-  title: string | null;
-  upload_completed_at: string | null;
-  user_id: string | null;
-}
+export const assetRowSchema = z.object({
+  created_at: z.string(),
+  description: z.string().nullable(),
+  id: z.string(),
+  mime_type: z.string(),
+  original_height_px: z.number().nullable(),
+  original_width_px: z.number().nullable(),
+  title: z.string().nullable(),
+  upload_completed_at: z.string().nullable(),
+  user_id: z.string().nullable(),
+});
+export type AssetRow = z.infer<typeof assetRowSchema>;
 
 export default Asset;

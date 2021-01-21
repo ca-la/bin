@@ -1446,7 +1446,7 @@ test("findTaskAssets returns proper assets of stage task", async (t: tape.Test) 
     NotificationsService.findTaskAssets(trx, task.id)
   );
   t.equal(assets.design.id, design.id);
-  t.equal(assets.stage.id, stage.id);
+  t.equal(assets.stage!.id, stage.id);
   t.equal(assets.approvalStep, null);
 });
 
@@ -1489,5 +1489,5 @@ test("findTaskAssets returns proper assets of approval step task", async (t: tap
   );
   t.equal(assets.design.id, design.id);
   t.equal(assets.stage, null);
-  t.equal(assets.approvalStep.id, approvalStep.id);
+  t.equal(assets.approvalStep!.id, approvalStep.id);
 });

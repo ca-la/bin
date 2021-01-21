@@ -4,6 +4,7 @@ import meow from "meow";
 
 import db from "../services/db";
 import { log } from "../services/logger";
+import ResourceNotFoundError from "../errors/resource-not-found";
 
 const HELP_TEXT = `
   Promote a specific version of a pricing table to be the latest version
@@ -25,9 +26,15 @@ const cli = meow(HELP_TEXT, {
 });
 
 async function findMaxVersion(tableName: string): Promise<number> {
-  const { max }: { max: number } = await db(tableName).max("version").first();
+  const row = await db(tableName).max("version").first();
 
-  return max;
+  if (!row) {
+    throw new ResourceNotFoundError(
+      `Could not find rows with a version number in table: "${tableName}"`
+    );
+  }
+
+  return row.max !== null ? row.max : -1;
 }
 
 function findAtVersion<T>(tableName: string, version: number): Promise<T[]> {

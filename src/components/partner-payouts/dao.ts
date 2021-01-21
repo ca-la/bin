@@ -25,9 +25,9 @@ export async function create(
 ): Promise<PartnerPayoutLogDb> {
   const shortId = await computeUniqueShortId();
   const rowData = dataAdapterDb.forInsertion({
-    id: uuid.v4(),
     shortId,
     ...data,
+    id: uuid.v4(),
   });
 
   const result = await trx(TABLE_NAME)

@@ -4,11 +4,12 @@ import { pick } from "lodash";
 
 import Logger from "../services/logger";
 import db from "../services/db";
+import { check } from "../services/check";
 import ApprovalStepsDAO from "../components/approval-steps/dao";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
-  isApprovalStepType,
+  approvalStepTypeSchema,
 } from "../components/approval-steps/types";
 import ResourceNotFoundError from "../errors/resource-not-found";
 
@@ -86,7 +87,7 @@ function main() {
     throw new Error(USAGE);
   }
 
-  if (!isApprovalStepType(stepType)) {
+  if (!check(approvalStepTypeSchema, stepType)) {
     throw new Error(USAGE);
   }
 

@@ -4,10 +4,15 @@ import {
   taskTypesById,
   idsByTaskTypeTitle,
 } from "../bid-task-types/types";
-import { Participant, ParticipantRow } from "./types";
+import {
+  Participant,
+  ParticipantRow,
+  participantRowSchema,
+  participantSchema,
+} from "./types";
 
 function encode(row: ParticipantRow): Participant {
-  return {
+  return participantSchema.parse({
     type: row.type,
     displayName: row.display_name,
     id: row.id,
@@ -16,11 +21,11 @@ function encode(row: ParticipantRow): Participant {
     bidTaskTypes: row.bid_task_type_ids.map(
       (id: BidTaskTypeId) => taskTypesById[id].title
     ),
-  };
+  });
 }
 
 function decode(data: Participant): ParticipantRow {
-  return {
+  return participantRowSchema.parse({
     type: data.type,
     display_name: data.displayName,
     id: data.id,
@@ -34,19 +39,12 @@ function decode(data: Participant): ParticipantRow {
       },
       []
     ),
-  };
+  });
 }
 
 export const dataAdapter = buildAdapter<Participant, ParticipantRow>({
   domain: "Participant",
-  requiredProperties: [
-    "type",
-    "displayName",
-    "id",
-    "role",
-    "userId",
-    "bidTaskTypes",
-  ],
+  requiredProperties: [],
   decodeTransformer: decode,
   encodeTransformer: encode,
 });

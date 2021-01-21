@@ -2,7 +2,6 @@ import Knex from "knex";
 import uuid from "node-uuid";
 import rethrow = require("pg-rethrow");
 
-import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import first from "../../services/first";
@@ -54,9 +53,9 @@ export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
 }
 
 export async function findPublic(trx: Knex.Transaction): Promise<Plan[]> {
-  const result = await db(TABLE_NAME)
-    .transacting(trx)
-    .where({ is_public: true }, "*")
+  const result = await trx(TABLE_NAME)
+    .select("*")
+    .where({ is_public: true })
     .orderBy("ordering", "asc");
 
   return validateEvery<PlanRow, Plan>(
@@ -72,6 +71,7 @@ export async function findById(
   id: string
 ): Promise<Plan | null> {
   const result = await trx(TABLE_NAME)
+    .select("*")
     .where({ id })
     .then((rows: PlanRow[]) => first(rows));
 

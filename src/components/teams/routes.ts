@@ -2,10 +2,11 @@ import Knex from "knex";
 
 import { emit } from "../../services/pubsub";
 import { RouteCreated } from "../../services/pubsub/cala-events";
+import { check } from "../../services/check";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO from "./dao";
-import { isTeamType, isUnsavedTeam, TeamDb, TeamType } from "./types";
+import { TeamDb, unsavedTeamSchema, teamTypeSchema, TeamType } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import { createTeamWithOwner } from "./service";
@@ -21,12 +22,15 @@ async function findTeamById(context: TrxContext<AuthedContext>) {
 function* createTeam(this: TrxContext<AuthedContext>) {
   const { trx, userId: actorId } = this.state;
   const { body } = this.request;
+  const parsed = unsavedTeamSchema.safeParse(body);
 
-  if (!isUnsavedTeam(body)) {
+  if (!parsed.success) {
     this.throw(400, "You must provide a title for the new team");
   }
 
-  const created = yield createTeamWithOwner(trx, body.title, actorId);
+  const unsavedTeam = parsed.data;
+
+  const created = yield createTeamWithOwner(trx, unsavedTeam.title, actorId);
   yield emit<TeamDb, RouteCreated<TeamDb, typeof domain>>({
     type: "route.created",
     domain,
@@ -77,7 +81,7 @@ function* findTeams(this: TrxContext<AuthedContext>) {
   const { userId, search, limit, offset, type, filter } = this.query;
 
   if (type) {
-    if (!isTeamType(type)) {
+    if (!check(teamTypeSchema, type)) {
       this.throw(400, "You must provide a valid team type");
     }
   }

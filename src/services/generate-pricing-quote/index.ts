@@ -33,6 +33,7 @@ import ApprovalStep, {
 } from "../../components/approval-steps/types";
 import { templateDesignEvent } from "../../components/design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -92,6 +93,10 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
   const pricingQuoteInputRow = await findMatchingOrCreateInput(
     pricingQuoteInput
   );
+
+  if (!pricingQuoteInputRow) {
+    throw new ResourceNotFoundError("Could not find or create PricingInput");
+  }
 
   return pricingQuoteInputRow.id;
 }

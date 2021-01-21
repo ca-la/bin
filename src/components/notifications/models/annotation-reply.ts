@@ -46,14 +46,12 @@ type Base = Omit<
   | "designId"
   | "recipientUserId"
   | "annotationId"
-  | "componentType"
 >;
 
 export interface AnnotationCommentReplyNotification extends Base {
   canvasId: string;
   collectionId: string | null;
   commentId: string;
-  componentType: string;
   designId: string;
   annotationId: string;
   recipientUserId: string;
@@ -62,7 +60,11 @@ export interface AnnotationCommentReplyNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & AnnotationCommentReplyNotification,
-  "collectionTitle" | "commentText" | "designTitle" | "taskTitle"
+  | "collectionTitle"
+  | "commentText"
+  | "designTitle"
+  | "taskTitle"
+  | "componentType"
 >;
 
 export interface FullAnnotationCommentReplyNotification extends BaseFull {
@@ -70,6 +72,7 @@ export interface FullAnnotationCommentReplyNotification extends BaseFull {
   commentText: string;
   designTitle: string | null;
   taskTitle: string;
+  componentType: string;
 }
 
 export function isAnnotationCommentReplyNotification(

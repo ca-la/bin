@@ -1,22 +1,38 @@
+import * as z from "zod";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
 import {
   BaseNotification,
   BaseFullNotification,
 } from "../notifications/models/base";
 import { NotificationType } from "../notifications/types";
 
-export interface BaseApprovalStep {
-  id: string;
-  title: string;
-  ordering: number;
-  designId: string;
-  collaboratorId: string | null;
-  teamUserId: string | null;
-  type: ApprovalStepType;
-  createdAt: Date;
-  completedAt: Date | null;
-  startedAt: Date | null;
-  dueAt: Date | null;
+export enum ApprovalStepType {
+  CHECKOUT = "CHECKOUT",
+  TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
+  SAMPLE = "SAMPLE",
+  PRODUCTION = "PRODUCTION",
 }
+export const approvalStepTypeSchema = z.nativeEnum(ApprovalStepType);
+
+export const baseApprovalStepSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  ordering: z.number(),
+  designId: z.string(),
+  collaboratorId: z.string().nullable(),
+  teamUserId: z.string().nullable(),
+  type: approvalStepTypeSchema,
+  state: z.string(),
+  reason: z.string().nullable(),
+  createdAt: z.date(),
+  completedAt: z.date().nullable(),
+  startedAt: z.date().nullable(),
+  dueAt: z.date().nullable(),
+});
+export type BaseApprovalStep = z.infer<typeof baseApprovalStepSchema>;
 
 export enum ApprovalStepState {
   BLOCKED = "BLOCKED",
@@ -25,81 +41,87 @@ export enum ApprovalStepState {
   COMPLETED = "COMPLETED",
   SKIP = "SKIP",
 }
+export const approvalStepStateSchema = z.nativeEnum(ApprovalStepState);
 
-export enum ApprovalStepType {
-  CHECKOUT = "CHECKOUT",
-  TECHNICAL_DESIGN = "TECHNICAL_DESIGN",
-  SAMPLE = "SAMPLE",
-  PRODUCTION = "PRODUCTION",
-}
+export const approvalBlockedSchema = baseApprovalStepSchema.extend({
+  state: z.literal(ApprovalStepState.BLOCKED),
+  reason: z.string(),
+  completedAt: z.null(),
+  startedAt: z.null(),
+});
+export type ApprovalBlocked = z.infer<typeof approvalBlockedSchema>;
 
-export function isApprovalStepType(
-  candidate: string | undefined
-): candidate is ApprovalStepType {
-  return Object.values(ApprovalStepType).includes(
-    candidate as ApprovalStepType
-  );
-}
+export const approvalUnstartedSchema = baseApprovalStepSchema.extend({
+  state: z.literal(ApprovalStepState.UNSTARTED),
+  reason: z.null(),
+  completedAt: z.null(),
+  startedAt: z.null(),
+});
+export type ApprovalUnstarted = z.infer<typeof approvalUnstartedSchema>;
 
-export interface ApprovalBlocked extends BaseApprovalStep {
-  state: ApprovalStepState.BLOCKED;
-  reason: string;
-  completedAt: null;
-  startedAt: null;
-}
+export const approvalCurrentSchema = baseApprovalStepSchema.extend({
+  state: z.literal(ApprovalStepState.CURRENT),
+  reason: z.null(),
+  completedAt: z.null(),
+  startedAt: z.date(),
+});
+export type ApprovalCurrent = z.infer<typeof approvalCurrentSchema>;
 
-export interface ApprovalUnstarted extends BaseApprovalStep {
-  state: ApprovalStepState.UNSTARTED;
-  reason: null;
-  completedAt: null;
-  startedAt: null;
-}
+export const approvalCompletedSchema = baseApprovalStepSchema.extend({
+  state: z.literal(ApprovalStepState.COMPLETED),
+  reason: z.null(),
+  completedAt: z.date(),
+  startedAt: z.date(),
+});
+export type ApprovalCompleted = z.infer<typeof approvalCompletedSchema>;
 
-export interface ApprovalCurrent extends BaseApprovalStep {
-  state: ApprovalStepState.CURRENT;
-  reason: null;
-  startedAt: Date;
-  completedAt: null;
-}
+export const approvalSkipSchema = baseApprovalStepSchema.extend({
+  state: z.literal(ApprovalStepState.SKIP),
+  reason: z.null(),
+  completedAt: z.null(),
+  startedAt: z.null(),
+});
+export type ApprovalSkip = z.infer<typeof approvalSkipSchema>;
 
-export interface ApprovalCompleted extends BaseApprovalStep {
-  state: ApprovalStepState.COMPLETED;
-  reason: null;
-  completedAt: Date;
-  startedAt: Date;
-}
+export const approvalStepSchema = z.union([
+  approvalBlockedSchema,
+  approvalUnstartedSchema,
+  approvalCurrentSchema,
+  approvalCompletedSchema,
+  approvalSkipSchema,
+]);
+type ApprovalStep = z.infer<typeof approvalStepSchema>;
 
-export interface ApprovalSkip extends BaseApprovalStep {
-  state: ApprovalStepState.SKIP;
-  reason: null;
-  completedAt: null;
-  startedAt: null;
-}
-
-type ApprovalStep =
-  | ApprovalBlocked
-  | ApprovalUnstarted
-  | ApprovalCurrent
-  | ApprovalCompleted
-  | ApprovalSkip;
+export const approvalStepSchemaFromBase = baseApprovalStepSchema.transform(
+  approvalStepSchema.parse
+);
 
 export default ApprovalStep;
 
-export interface ApprovalStepRow {
-  id: string;
-  title: string;
-  ordering: number;
-  design_id: string;
-  collaborator_id: string | null;
-  team_user_id: string | null;
-  state: string;
-  reason: string | null;
-  type: string;
-  created_at: Date;
-  completed_at: Date | null;
-  started_at: Date | null;
-  due_at: Date | null;
-}
+export const approvalStepRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  ordering: z.number(),
+  design_id: z.string(),
+  collaborator_id: z.string().nullable(),
+  team_user_id: z.string().nullable(),
+  state: z.string(),
+  reason: z.string().nullable(),
+  type: z.string(),
+  created_at: z.date(),
+  completed_at: z.date().nullable(),
+  started_at: z.date().nullable(),
+  due_at: z.date().nullable(),
+});
+export type ApprovalStepRow = z.infer<typeof approvalStepRowSchema>;
+
+export const approvalStepRowJsonSchema = approvalStepRowSchema.extend({
+  created_at: dateStringToDate,
+  completed_at: nullableDateStringToNullableDate,
+  started_at: nullableDateStringToNullableDate,
+  due_at: nullableDateStringToNullableDate,
+});
+export type ApprovalStepRowJson = z.infer<typeof approvalStepRowJsonSchema>;
 
 export const approvalStepDomain = "ApprovalStep" as "ApprovalStep";
 

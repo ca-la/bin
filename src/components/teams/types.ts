@@ -1,42 +1,43 @@
+import * as z from "zod";
 import { Role as TeamUserRole } from "../team-users/types";
 
 export enum TeamType {
   DESIGNER = "DESIGNER",
   PARTNER = "PARTNER",
 }
+export const teamTypeSchema = z.nativeEnum(TeamType);
 
-export function isTeamType(candidate: any): candidate is TeamType {
-  return Object.values(TeamType).includes(candidate);
-}
+export const teamDbSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  createdAt: z.date(),
+  deletedAt: z.date().nullable(),
+  type: teamTypeSchema,
+});
+export type TeamDb = z.infer<typeof teamDbSchema>;
 
-export interface TeamDb {
-  id: string;
-  title: string;
-  createdAt: Date;
-  deletedAt: Date | null;
-  type: TeamType;
-}
+export const teamDbRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  created_at: z.date(),
+  deleted_at: z.date().nullable(),
+  type: teamTypeSchema,
+});
+export type TeamDbRow = z.infer<typeof teamDbRowSchema>;
 
-export interface TeamDbRow {
-  id: string;
-  title: string;
-  created_at: Date;
-  deleted_at: Date | null;
-  type: TeamType;
-}
+export const teamSchema = teamDbSchema.extend({
+  role: z.nativeEnum(TeamUserRole),
+});
+export type Team = z.infer<typeof teamSchema>;
 
-export interface Team extends TeamDb {
-  role: TeamUserRole;
-}
+export const teamRowSchema = teamDbRowSchema.extend({
+  role: z.nativeEnum(TeamUserRole),
+});
+export type TeamRow = z.infer<typeof teamRowSchema>;
 
-export interface TeamRow extends TeamDbRow {
-  role: TeamUserRole;
-}
-
-export function isUnsavedTeam(
-  candidate: Record<string, any>
-): candidate is Omit<TeamDb, "id" | "createdAt" | "deletedAt"> {
-  const keyset = new Set(Object.keys(candidate));
-
-  return ["title"].every(keyset.has.bind(keyset));
-}
+export const unsavedTeamSchema = teamDbSchema.omit({
+  id: true,
+  createdAt: true,
+  deletedAt: true,
+  type: true,
+});

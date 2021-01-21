@@ -231,6 +231,14 @@ test("ProductDesignsDAO.findAll with needsQuote query", async (t) => {
     id: uuid.v4(),
     targetId: null,
     type: "SUBMIT_DESIGN",
+    targetTeamId: null,
+    quoteId: null,
+    approvalStepId: null,
+    approvalSubmissionId: null,
+    commentId: null,
+    taskTypeId: null,
+    shipmentTrackingId: null,
+    shipmentTrackingEventId: null,
   };
 
   await db.transaction(async (trx) => {
@@ -252,6 +260,14 @@ test("ProductDesignsDAO.findAll with needsQuote query", async (t) => {
     id: uuid.v4(),
     targetId: user.id,
     type: "BID_DESIGN",
+    targetTeamId: null,
+    quoteId: null,
+    approvalStepId: null,
+    approvalSubmissionId: null,
+    commentId: null,
+    taskTypeId: null,
+    shipmentTrackingId: null,
+    shipmentTrackingEventId: null,
   };
 
   await db.transaction(async (trx) => {

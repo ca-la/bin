@@ -143,7 +143,7 @@ export function buildDao<
     modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const rowData = blanks.map(adapter.forInsertion.bind(adapter));
-    const createdRows: ModelRow[] = await trx(tableName)
+    const createdRows = await trx(tableName)
       .insert(rowData)
       .returning("*")
       .modify(insertModifier)

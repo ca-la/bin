@@ -1,97 +1,17 @@
-import { buildAdapter } from "../../services/cala-component/cala-adapter";
-import DesignEvent, {
-  DesignEventRow,
-  domain,
-  DesignEventWithMeta,
-  DesignEventWithMetaRow,
+import { fromSchema } from "../../services/cala-component/cala-adapter";
+import {
+  designEventRowSchema,
+  designEventSchema,
+  designEventWithMetaRowSchema,
+  designEventWithMetaSchema,
 } from "./types";
 
-export default buildAdapter<DesignEvent, DesignEventRow>({
-  domain,
-  requiredProperties: [
-    "id",
-    "createdAt",
-    "actorId",
-    "targetId",
-    "targetTeamId",
-    "designId",
-    "bidId",
-    "type",
-    "quoteId",
-    "approvalStepId",
-    "approvalSubmissionId",
-    "commentId",
-    "shipmentTrackingId",
-    "shipmentTrackingEventId",
-  ],
+export default fromSchema({
+  modelSchema: designEventSchema,
+  rowSchema: designEventRowSchema,
 });
 
-function withMetaEncode(row: DesignEventWithMetaRow): DesignEventWithMeta {
-  return {
-    id: row.id,
-    createdAt: row.created_at,
-    actorId: row.actor_id,
-    targetId: row.target_id,
-    targetTeamId: row.target_team_id,
-    designId: row.design_id,
-    bidId: row.bid_id,
-    type: row.type,
-    quoteId: row.quote_id,
-    approvalStepId: row.approval_step_id,
-    approvalSubmissionId: row.approval_submission_id,
-    commentId: row.comment_id,
-    actorName: row.actor_name,
-    actorRole: row.actor_role,
-    actorEmail: row.actor_email,
-    targetName: row.target_name,
-    targetRole: row.target_role,
-    targetEmail: row.target_email,
-    targetTeamName: row.target_team_name,
-    submissionTitle: row.submission_title,
-    stepTitle: row.step_title,
-    shipmentTrackingDescription: row.shipment_tracking_description,
-    shipmentTrackingEventId: row.shipment_tracking_event_id,
-    shipmentTrackingEventTag: row.shipment_tracking_event_tag,
-    shipmentTrackingEventSubtag: row.shipment_tracking_event_subtag,
-    shipmentTrackingId: row.shipment_tracking_id,
-    taskTypeId: row.task_type_id,
-    taskTypeTitle: row.task_type_title || null,
-  };
-}
-
-export const withMetaAdapter = buildAdapter<
-  DesignEventWithMeta,
-  DesignEventWithMetaRow
->({
-  domain,
-  requiredProperties: [
-    "id",
-    "createdAt",
-    "actorId",
-    "targetId",
-    "targetTeamId",
-    "designId",
-    "bidId",
-    "type",
-    "quoteId",
-    "approvalStepId",
-    "approvalSubmissionId",
-    "commentId",
-    "actorName",
-    "actorRole",
-    "actorEmail",
-    "targetName",
-    "targetRole",
-    "targetEmail",
-    "targetTeamName",
-    "submissionTitle",
-    "stepTitle",
-    "shipmentTrackingId",
-    "shipmentTrackingDescription",
-    "shipmentTrackingEventId",
-    "shipmentTrackingEventTag",
-    "shipmentTrackingEventSubtag",
-    "taskTypeId",
-  ],
-  encodeTransformer: withMetaEncode,
+export const withMetaAdapter = fromSchema({
+  modelSchema: designEventWithMetaSchema,
+  rowSchema: designEventWithMetaRowSchema,
 });

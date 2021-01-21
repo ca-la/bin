@@ -529,12 +529,16 @@ test("findAllDesignsThroughCollaborator returns approval steps, progress and rel
   t.deepEqual(designs[0].lastStepDueAt, testDate, "has lastStepDueAt");
   t.deepEqual(designs[0].approvalSteps!.length, 4);
   t.deepEqual(designs[0].approvalSteps![1].state, "COMPLETED");
+  t.deepEqual(designs[0].approvalSteps![1].designId, designs[0].id);
   t.deepEqual(designs[0].approvalSteps![2].state, "BLOCKED");
+  t.deepEqual(designs[0].approvalSteps![2].designId, designs[0].id);
 
   t.deepEqual(designs[1].id, ownDesign.id);
   t.deepEqual(designs[1].approvalSteps!.length, 4);
   t.deepEqual(designs[1].approvalSteps![0].state, "CURRENT");
+  t.deepEqual(designs[1].approvalSteps![0].designId, designs[1].id);
   t.deepEqual(designs[1].approvalSteps![1].state, "BLOCKED");
+  t.deepEqual(designs[1].approvalSteps![1].designId, designs[1].id);
 });
 
 test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (t: tape.Test) => {

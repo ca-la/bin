@@ -9,6 +9,7 @@ import InvoiceAddress, {
 } from "../../domain-objects/invoice-address";
 import first from "../../services/first";
 import rethrow from "pg-rethrow";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const TABLE_NAME = "invoice_addresses";
 
@@ -23,6 +24,12 @@ export const createFromAddress = async (
   addressId: string
 ): Promise<InvoiceAddress> => {
   const address = await AddressesDAO.findById(addressId);
+  if (!address) {
+    throw new ResourceNotFoundError(
+      `Could not find Address with ID ${addressId}`
+    );
+  }
+
   return dao.createTrx(trx, {
     ...omit(address, "id"),
     addressId: address.id,
@@ -31,7 +38,7 @@ export const createFromAddress = async (
 
 export const findByAddressId = async (
   addressId: string
-): Promise<InvoiceAddress> => {
+): Promise<InvoiceAddress | null> => {
   return db(TABLE_NAME)
     .where({
       address_id: addressId,

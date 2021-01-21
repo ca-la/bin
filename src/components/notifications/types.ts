@@ -86,7 +86,7 @@ export type NotificationMessageForGraphQL = Omit<
   NotificationMessage,
   "attachments"
 > & {
-  attachments: NotificationMessageAttachment[];
+  attachments: NotificationMessageAttachmentForGraphQL[];
 };
 
 export enum NotificationFilter {

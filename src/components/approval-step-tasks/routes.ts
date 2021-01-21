@@ -57,12 +57,19 @@ const fetchDesignByApprovalStepTask = (
 ): ((this: AuthedContext<any>) => Promise<string>) =>
   async function (this: AuthedContext<IOTask>): Promise<string> {
     const approvalStepId = getApprovalStepId(this);
+
     if (!approvalStepId) {
       this.throw(400, "approvalStepId is missing");
     }
+
     const approvalStep = await db.transaction((trx: Knex.Transaction) =>
       approvalStepDAO.findById(trx, approvalStepId)
     );
+
+    if (!approvalStep) {
+      this.throw(404, `Could not find ApprovalStep with ID ${approvalStepId}`);
+    }
+
     return approvalStep.designId;
   };
 

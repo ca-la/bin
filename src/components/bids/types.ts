@@ -1,93 +1,89 @@
-import DesignEvent, { DesignEventRow } from "../design-events/types";
-import { Serialized } from "../../types/serialized";
+import * as z from "zod";
+import {
+  designEventSchema,
+  serializedDesignEventRowSchema,
+} from "../design-events/types";
+import { check } from "../../services/check";
 
-export interface BidAssignee {
-  type: "USER" | "TEAM";
-  id: string;
-  name: string;
-}
+export const bidAssigneeSchema = z.object({
+  type: z.enum(["USER", "TEAM"]),
+  id: z.string(),
+  name: z.string(),
+});
+export type BidAssignee = z.infer<typeof bidAssigneeSchema>;
 
-export interface BidDb {
-  id: string;
-  createdAt: Date;
-  createdBy: string;
-  dueDate: Date | null;
-  quoteId: string;
-  bidPriceCents: number;
-  revenueShareBasisPoints: number;
-  bidPriceProductionOnlyCents: number;
-  description: string | null;
-}
+export const bidDbSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  createdBy: z.string(),
+  dueDate: z.date().nullable(),
+  quoteId: z.string(),
+  bidPriceCents: z.number(),
+  revenueShareBasisPoints: z.number(),
+  bidPriceProductionOnlyCents: z.number(),
+  description: z.string().nullable(),
+});
+export type BidDb = z.infer<typeof bidDbSchema>;
 
-export interface BidDbRow {
-  id: string;
-  created_at: Date;
-  created_by: string;
-  due_date: Date | null;
-  quote_id: string;
-  bid_price_cents: number;
-  revenue_share_basis_points: number;
-  bid_price_production_only_cents: number;
-  description: string | null;
-}
+export const bidDbRowSchema = z.object({
+  id: z.string(),
+  created_at: z.date(),
+  created_by: z.string(),
+  due_date: z.date().nullable(),
+  quote_id: z.string(),
+  bid_price_cents: z.number(),
+  revenue_share_basis_points: z.number(),
+  bid_price_production_only_cents: z.number(),
+  description: z.string().nullable(),
+});
+export type BidDbRow = z.infer<typeof bidDbRowSchema>;
 
-export interface Bid extends BidDb {
-  acceptedAt: Date | null;
-  assignee: BidAssignee;
-  partnerUserId: string | null;
-}
+export const bidSchema = bidDbSchema.extend({
+  acceptedAt: z.date().nullable(),
+  assignee: bidAssigneeSchema.nullable(),
+});
+export type Bid = z.infer<typeof bidSchema>;
 
-export interface BidRow extends BidDbRow {
-  accepted_at: Date | null;
-  assignee: BidAssignee;
-  partner_user_id: string | null;
-}
+export const bidRowSchema = bidDbRowSchema.extend({
+  accepted_at: z.date().nullable(),
+  assignee: bidAssigneeSchema.nullable(),
+});
+export type BidRow = z.infer<typeof bidRowSchema>;
 
-export interface BidWithEvents extends Bid {
-  designEvents: DesignEvent[];
-}
+export const bidWithEventsSchema = bidSchema.extend({
+  designEvents: z.array(designEventSchema),
+});
+export type BidWithEvents = z.infer<typeof bidWithEventsSchema>;
 
-export interface BidWithEventsRow extends BidRow {
-  design_events: Serialized<DesignEventRow[]>;
-}
+export const bidWithEventsRowSchema = bidRowSchema.extend({
+  design_events: z.array(serializedDesignEventRowSchema),
+});
+export type BidWithEventsRow = z.infer<typeof bidWithEventsRowSchema>;
 
-export type BidSortByParam = "ACCEPTED" | "DUE";
+export const bidSortByParamSchema = z.enum(["ACCEPTED", "DUE"]);
+export type BidSortByParam = z.infer<typeof bidSortByParamSchema>;
 
-export function isBidSortByParam(
-  candidate: string | undefined
-): candidate is BidSortByParam {
-  return candidate === "ACCEPTED" || candidate === "DUE";
-}
+export const isBidSortByParam = (
+  candidate: unknown
+): candidate is BidSortByParam => check(bidSortByParamSchema, candidate);
 
-export interface BidCreationPayload {
-  quoteId: string;
-  description: string;
-  bidPriceCents: number;
-  dueDate: string;
-  projectDueInMs: number;
-  taskTypeIds: string[];
-  revenueShareBasisPoints: number;
-  bidPriceProductionOnlyCents: number;
-  assignee: {
-    type: "USER" | "TEAM";
-    id: string;
-  };
-}
+export const bidCreationPayloadSchema = z.object({
+  quoteId: z.string(),
+  description: z.string(),
+  bidPriceCents: z.number(),
+  dueDate: z.string(),
+  projectDueInMs: z.number(),
+  taskTypeIds: z.array(z.string()),
+  revenueShareBasisPoints: z.number(),
+  bidPriceProductionOnlyCents: z.number(),
+  assignee: z.object({
+    type: z.enum(["USER", "TEAM"]),
+    id: z.string(),
+  }),
+});
+export type BidCreationPayload = z.infer<typeof bidCreationPayloadSchema>;
 
-export function isBidCreationPayload(
-  candidate: Record<string, any>
-): candidate is BidCreationPayload {
-  const keyset = new Set(Object.keys(candidate));
-
-  return [
-    "quoteId",
-    "description",
-    "bidPriceCents",
-    "bidPriceProductionOnlyCents",
-    "dueDate",
-    "projectDueInMs",
-    "taskTypeIds",
-    "revenueShareBasisPoints",
-    "assignee",
-  ].every(keyset.has.bind(keyset));
-}
+export const isBidCreationPayload = (
+  candidate: unknown
+): candidate is BidCreationPayload =>
+  check(bidCreationPayloadSchema, candidate);

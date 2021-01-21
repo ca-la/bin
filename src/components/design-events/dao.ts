@@ -1,6 +1,7 @@
 import Knex from "knex";
 import rethrow from "pg-rethrow";
 
+import db from "../../services/db";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter, { withMetaAdapter } from "./adapter";
 import DesignEvent, {
@@ -9,7 +10,7 @@ import DesignEvent, {
   DesignEventWithMeta,
   DesignEventWithMetaRow,
   withMetaDomain,
-  ACTIVITY_STREAM_EVENTS,
+  activityStreamEventsSchema,
 } from "./types";
 import { DuplicateAcceptRejectError } from "./errors";
 import { taskTypesById } from "../tasks/templates";
@@ -39,6 +40,7 @@ function addMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
       "shipment_trackings.description as shipment_tracking_description",
       "shipment_tracking_events.tag as shipment_tracking_event_tag",
       "shipment_tracking_events.subtag as shipment_tracking_event_subtag",
+      db.raw("null as task_type_title"),
     ])
     .join("users as actor", "actor.id", "design_events.actor_id")
     .leftJoin("users as target", "target.id", "design_events.target_id")
@@ -119,7 +121,7 @@ const dao = {
         .select("design_events.*")
         .modify(addMeta)
         .orderBy("design_events.created_at", "asc")
-        .whereIn("design_events.type", ACTIVITY_STREAM_EVENTS)
+        .whereIn("design_events.type", activityStreamEventsSchema.options)
         .whereRaw(
           `design_events.design_id = ?
           AND (

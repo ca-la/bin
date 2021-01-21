@@ -27,7 +27,7 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: object[]) => first(rows));
+    .then((rows: BidRejectionRow[]) => first(rows));
 
   if (!created) {
     throw new Error("Failed to create bid rejection reasons.");

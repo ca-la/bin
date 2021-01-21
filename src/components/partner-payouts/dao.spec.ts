@@ -107,8 +107,8 @@ test("can create a payout log and find the logs", async (t: Test) => {
     const payout = await create(trx, data);
 
     t.deepEqual(
-      omit(payout, "createdAt", "shortId"),
-      data,
+      omit(payout, "createdAt", "shortId", "id"),
+      omit(data, "id"),
       "Returns the newly created resource"
     );
 

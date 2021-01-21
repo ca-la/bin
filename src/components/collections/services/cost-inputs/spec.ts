@@ -66,7 +66,7 @@ test("commitCostInputs commits cost inputs", async (t: Test) => {
   );
   t.equal(
     createEventStub.firstCall.args[1].approvalStepId,
-    checkoutStep.id,
+    checkoutStep!.id,
     "Costing is associated with the right step"
   );
   t.equal(createEventStub.callCount, 3);

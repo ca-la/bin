@@ -6,7 +6,11 @@ import {
   ProductDesignData,
   ProductDesignRow,
 } from "./product-designs-new";
-import DesignEvent, { DesignEventRow } from "../../design-events/types";
+import DesignEvent, {
+  DesignEventRow,
+  SerializedDesignEventRow,
+  serializedDesignEventRowSchema,
+} from "../../design-events/types";
 import eventDataAdapter from "../../design-events/adapter";
 import {
   dbDataAdapter as costInputDataAdapter,
@@ -30,7 +34,13 @@ export interface ProductDesignRowWithMeta extends ProductDesignRow {
 const encode = (row: ProductDesignRowWithMeta): ProductDesignDataWithMeta => {
   const { cost_inputs, events: eventRows, ...baseRow } = row;
   const events =
-    eventRows === null ? [] : eventDataAdapter.fromDbArray(eventRows);
+    eventRows === null
+      ? []
+      : eventDataAdapter.fromDbArray(
+          eventRows.map((rows: SerializedDesignEventRow) =>
+            serializedDesignEventRowSchema.parse(rows)
+          )
+        );
   const costInputs =
     cost_inputs === null
       ? []

@@ -227,9 +227,11 @@ export async function findUnpaidByUserId(
     .leftJoin("partner_payout_logs as l", "pricing_bids.id", "l.bid_id")
     .where({ "design_events.type": "ACCEPT_SERVICE_BID", "users.id": userId })
     .andWhere("design_events.created_at", ">", new Date(BID_CUTOFF_DATE))
-    .whereNotIn(
-      "pricing_bids.id",
-      db.raw("SELECT bid_id from design_events where type = 'REMOVE_PARTNER'")
+    .whereNotIn("pricing_bids.id", (subquery: Knex.QueryBuilder) =>
+      subquery
+        .from("design_events")
+        .select("bid_id")
+        .where({ type: "REMOVE_PARTNER" })
     )
     .groupBy(["pricing_bids.id", "design_events.bid_id"])
     .having(

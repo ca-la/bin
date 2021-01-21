@@ -204,7 +204,7 @@ function* getDesignsAndTasksByUser() {
 
 function* getAllDesigns() {
   const { role, userId } = this.state;
-  this.assert(this.state.role === User.ROLES.admin, 403);
+  this.assert(this.state.role === User.ROLES.ADMIN, 403);
 
   const designs = yield ProductDesignsDAO.findAll({
     limit: Number(this.query.limit) || 10,
@@ -290,7 +290,7 @@ function* updateDesign() {
   const { permissions, role, userId } = this.state;
   const { designId } = this.params;
 
-  const isAdmin = role === User.ROLES.admin;
+  const isAdmin = role === User.ROLES.ADMIN;
   const allowedParams = isAdmin
     ? ADMIN_ALLOWED_DESIGN_PARAMS
     : ALLOWED_DESIGN_PARAMS;

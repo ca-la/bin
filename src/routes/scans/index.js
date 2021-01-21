@@ -153,12 +153,12 @@ function* getAllScans() {
 
   let scans;
 
-  if (this.state.role === User.ROLES.admin) {
+  if (this.state.role === User.ROLES.ADMIN) {
     scans = yield ScansDAO.findAll({
       limit: Number(this.query.limit) || 10,
       offset: Number(this.query.offset) || 0,
     });
-  } else if (this.state.role === User.ROLES.fitPartner) {
+  } else if (this.state.role === User.ROLES.FIT_PARTNER) {
     scans = yield ScansDAO.findByFitPartner(this.state.userId, {
       limit: Number(this.query.limit) || 10,
       offset: Number(this.query.offset) || 0,

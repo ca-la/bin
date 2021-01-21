@@ -5,7 +5,6 @@ import * as TasksDAO from "../../dao/tasks";
 import * as TaskEventsDAO from "../../dao/task-events";
 import * as ProductDesignStageTasksDAO from "../../dao/product-design-stage-tasks";
 import * as ApprovalStepTasksDAO from "../../components/approval-step-tasks/dao";
-import { DetailsTaskWithAssignees } from "../../domain-objects/task-event";
 
 function createWithTransaction(
   taskId: string,
@@ -45,7 +44,7 @@ export default async function createTask(
   stageId?: string,
   approvalStepId?: string,
   trx?: Knex.Transaction
-): Promise<DetailsTaskWithAssignees> {
+): Promise<TaskEvent> {
   const create = createWithTransaction(
     taskId,
     taskEvent,

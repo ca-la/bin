@@ -28,7 +28,7 @@ function* replacePrices() {
   this.assert(vendorUserId, 400, "Vendor ID must be provided");
   yield verifyEligibility.call(this, vendorUserId);
 
-  const isAdmin = this.state.role === User.ROLES.admin;
+  const isAdmin = this.state.role === User.ROLES.ADMIN;
   const isCurrentUser = vendorUserId === this.state.userId;
 
   this.assert(

@@ -35,7 +35,7 @@ const ADDRESS_DATA = Object.freeze({
 function createUser({
   withSession = true,
   withAddress = false,
-  role = User.ROLES.user,
+  role = User.ROLES.USER,
 } = {}) {
   let user;
 
