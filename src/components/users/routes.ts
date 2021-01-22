@@ -193,7 +193,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
     yield MailChimp.subscribeToUsers({
       cohort: targetCohort && targetCohort.slug,
       email: user.email,
-      name: user.name,
+      name: user.name || "",
       referralCode: "n/a",
     });
   } catch (err) {

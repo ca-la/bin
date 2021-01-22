@@ -474,7 +474,7 @@ test("POST /users?cohort allows registration + adding a cohort user", async (t: 
     {
       cohort: "moma-demo-june-2020",
       email: newUser.email,
-      name: null,
+      name: "",
       referralCode: "n/a",
     },
     "Expect the correct tags for Mailchimp subscription"
@@ -520,7 +520,11 @@ test("GET /users?search with malformed RegExp throws 400", async (t: Test) => {
 });
 
 test("POST /users allows subscribing to a plan", async (t: Test) => {
-  const { teamUsersStub, createSubscriptionStub } = stubUserDependencies();
+  const {
+    teamUsersStub,
+    createSubscriptionStub,
+    mailchimpStub,
+  } = stubUserDependencies();
 
   sandbox()
     .stub(attachSource, "default")
@@ -549,6 +553,21 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   );
   t.equal(createSubscriptionStub.args[0][0].teamId, null);
   t.equal(createSubscriptionStub.args[0][0].userId, body.id);
+
+  t.deepEqual(
+    mailchimpStub.args,
+    [
+      [
+        {
+          cohort: null,
+          email: body.email,
+          name: "",
+          referralCode: "n/a",
+        },
+      ],
+    ],
+    "Calls Mailchimp stub with valid data"
+  );
 
   const [, teamBody] = await post("/users", {
     body: {
