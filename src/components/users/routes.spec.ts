@@ -571,3 +571,16 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   t.equal(createSubscriptionStub.args[1][0].teamId, "a-team-id");
   t.equal(createSubscriptionStub.args[1][0].userId, teamBody.id);
 });
+
+test("POST /users allows subscribing to a free plan without a token", async (t: Test) => {
+  stubUserDependencies();
+
+  const [response] = await post("/users", {
+    body: {
+      ...createBody,
+      stripeCardToken: null,
+    },
+  });
+
+  t.equal(response.status, 201);
+});

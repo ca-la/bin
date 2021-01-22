@@ -12,7 +12,7 @@ interface Options {
   userId: string;
   teamId: string | null;
   planId: string;
-  stripeCardToken?: string;
+  stripeCardToken?: string | null;
   subscriptionId?: string;
   isPaymentWaived?: boolean;
   trx: Knex.Transaction;
@@ -63,10 +63,8 @@ export default async function createOrUpdateSubscription(
     : null;
   const paymentMethodId = paymentMethod ? paymentMethod.id : null;
 
-  let subscription: Subscription;
-
   if (subscriptionId) {
-    subscription = await SubscriptionsDAO.update(
+    return SubscriptionsDAO.update(
       subscriptionId,
       {
         paymentMethodId,
@@ -75,21 +73,19 @@ export default async function createOrUpdateSubscription(
       },
       trx
     );
-  } else {
-    subscription = await SubscriptionsDAO.create(
-      {
-        cancelledAt: null,
-        id: uuid.v4(),
-        isPaymentWaived: Boolean(isPaymentWaived),
-        paymentMethodId,
-        planId,
-        stripeSubscriptionId,
-        userId: teamId ? null : userId,
-        teamId,
-      },
-      trx
-    );
   }
 
-  return subscription;
+  return SubscriptionsDAO.create(
+    {
+      cancelledAt: null,
+      id: uuid.v4(),
+      isPaymentWaived: Boolean(isPaymentWaived),
+      paymentMethodId,
+      planId,
+      stripeSubscriptionId,
+      userId: teamId ? null : userId,
+      teamId,
+    },
+    trx
+  );
 }

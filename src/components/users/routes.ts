@@ -35,7 +35,7 @@ const createBodySchema = z.object({
   email: z.string(),
   lastAcceptedDesignerTermsAt: z.string(),
   planId: z.string(),
-  stripeCardToken: z.string(),
+  stripeCardToken: z.string().nullable(),
 });
 type CreateBody = z.infer<typeof createBodySchema>;
 
@@ -46,7 +46,7 @@ const createWithTeamBodySchema = z.object({
   teamTitle: z.string(),
   subscription: z.object({
     planId: z.string(),
-    stripeCardToken: z.string(),
+    stripeCardToken: z.string().nullable(),
   }),
 });
 type CreateWithTeamBody = z.infer<typeof createWithTeamBodySchema>;
