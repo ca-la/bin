@@ -14,7 +14,7 @@ export async function duplicateDesigns(
   return db.transaction(async (trx: Knex.Transaction) => {
     return Promise.all(
       initialDesignIds.map((initialDesignId: string) => {
-        return findAndDuplicateDesign(initialDesignId, userId, trx);
+        return findAndDuplicateDesign(trx, initialDesignId, userId);
       })
     );
   });

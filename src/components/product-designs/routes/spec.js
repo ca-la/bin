@@ -7,7 +7,8 @@ const db = require("../../../services/db");
 const CollectionsDAO = require("../../collections/dao");
 const createUser = require("../../../test-helpers/create-user");
 const DesignEventsDAO = require("../../../components/design-events/dao");
-const ProductDesignsDAO = require("../dao");
+const createDesign = require("../../../services/create-design").default;
+
 const EmailService = require("../../../services/email");
 const { authHeader, get, patch, post } = require("../../../test-helpers/http");
 const { test, sandbox } = require("../../../test-helpers/fresh");
@@ -22,7 +23,7 @@ test("PATCH /product-designs/:id rejects empty data", (t) => {
     .then(({ user, session }) => {
       sessionId = session.id;
 
-      return ProductDesignsDAO.create({
+      return createDesign({
         userId: user.id,
       });
     })
@@ -83,7 +84,7 @@ test("PATCH /product-designs/:id allows admins to update a wider range of keys",
     .then(({ user, session }) => {
       sessionId = session.id;
 
-      return ProductDesignsDAO.create({
+      return createDesign({
         userId: user.id,
       });
     })
@@ -116,17 +117,17 @@ test("GET /product-designs allows searching", async (t) => {
 
   const { user, session } = await createUser({ role: "ADMIN" });
 
-  const first = await ProductDesignsDAO.create({
+  const first = await createDesign({
     userId: user.id,
     title: "Thing One",
   });
 
-  await ProductDesignsDAO.create({
+  await createDesign({
     userId: user.id,
     title: "Bzzt Two",
   });
 
-  const third = await ProductDesignsDAO.create({
+  const third = await createDesign({
     userId: user.id,
     title: "Thing Three",
   });
@@ -143,11 +144,11 @@ test("GET /product-designs allows searching", async (t) => {
 
 test("GET /product-designs allows fetching designs await quotes", async (t) => {
   const { user, session } = await createUser({ role: "ADMIN" });
-  const first = await ProductDesignsDAO.create({
+  const first = await createDesign({
     userId: user.id,
     title: "Thing One",
   });
-  const second = await ProductDesignsDAO.create({
+  const second = await createDesign({
     userId: user.id,
     title: "Bzzt Two",
   });
@@ -222,6 +223,7 @@ test("GET /product-designs allows fetching designs await quotes", async (t) => {
         createdAt: new Date(user.createdAt).toISOString(),
       },
       createdAt: new Date(first.createdAt).toISOString(),
+      role: "EDIT",
       permissions: {
         canComment: true,
         canDelete: true,
@@ -237,7 +239,7 @@ test("GET /product-designs allows fetching designs await quotes", async (t) => {
 test("GET /product-designs/:designId/upload-policy/:sectionId", async (t) => {
   const { user, session } = await createUser({ role: "ADMIN" });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     userId: user.id,
     title: "Design",
   });
@@ -284,7 +286,7 @@ test("GET /product-designs/:designId/collections returns collections", async (t)
     teamId: null,
     title: "Virgil Drop",
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     userId: user.id,
     title: "Design",
   });

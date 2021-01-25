@@ -7,7 +7,8 @@ import createUser from "../../test-helpers/create-user";
 
 import db from "../db";
 import * as CollectionsDAO from "../../components/collections/dao";
-import DesignsDAO from "../../components/product-designs/dao";
+import createDesign from "../../services/create-design";
+
 import * as PermissionsService from "./index";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
@@ -161,30 +162,36 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     title: "C2",
   });
 
-  const design1 = await DesignsDAO.create({
+  const design1 = await createDesign({
     productType: "TEE",
     title: "My Tee",
     userId: user.id,
   });
   await moveDesign(collection1.id, design1.id);
 
-  const design2 = await DesignsDAO.create({
+  const design2 = await createDesign({
     productType: "PANT",
     title: "My Pant",
     userId: user2.id,
   });
-  const design3 = await DesignsDAO.create({
+  const design3 = await createDesign({
     productType: "JACKET",
     title: "Bomber Jacket",
     userId: user2.id,
   });
-  const design4 = await DesignsDAO.create({
+  const design4 = await createDesign({
     productType: "WOVENS",
     title: "Oversize Hoodie",
     userId: user2.id,
   });
   await moveDesign(collection2.id, design4.id);
-  const { design: design5 } = await generateDesignEvent({
+  const design5 = await createDesign({
+    productType: "WOVENS",
+    title: "Oversize Hoodie",
+    userId: user.id,
+  });
+  await generateDesignEvent({
+    designId: design5.id,
     type: "COMMIT_QUOTE",
     actorId: user.id,
   });
@@ -376,7 +383,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     teamId: team.id,
     title: "C1",
   });
-  const design1 = await DesignsDAO.create({
+  const design1 = await createDesign({
     productType: "TEE",
     title: "My Tee",
     userId: owner.id,

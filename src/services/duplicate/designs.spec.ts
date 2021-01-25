@@ -35,7 +35,7 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
   });
 
   const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>
-    findAndDuplicateDesign(design.id, duplicatingUser.id, trx)
+    findAndDuplicateDesign(trx, design.id, duplicatingUser.id)
   );
 
   t.deepEqual(

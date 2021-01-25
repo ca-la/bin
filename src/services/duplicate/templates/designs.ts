@@ -21,9 +21,10 @@ import Node from "../../../components/nodes/domain-objects";
  * Design --> Nodes
  */
 export default async function findAndDuplicateTemplateDesign(
+  trx: Knex.Transaction,
   designId: string,
   newCreatorId: string,
-  trx: Knex.Transaction
+  collectionIds?: string[]
 ): Promise<Design> {
   const design = await DesignsDAO.findById(designId, undefined, undefined, trx);
 
@@ -36,7 +37,6 @@ export default async function findAndDuplicateTemplateDesign(
       omit(
         design,
         "collections",
-        "collectionIds",
         "imageIds",
         "imageLinks",
         "approvalSteps",
@@ -44,7 +44,10 @@ export default async function findAndDuplicateTemplateDesign(
         "firstStepCreatedAt",
         "lastStepDueAt"
       ),
-      { userId: newCreatorId }
+      {
+        userId: newCreatorId,
+        collectionIds: collectionIds || [],
+      }
     ),
     trx
   );

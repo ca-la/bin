@@ -39,9 +39,9 @@ test("findAndDuplicateTemplateDesign() empty node case", async (t: Test) => {
         .resolves({});
 
       const result = await findAndDuplicateTemplateDesign(
+        trx,
         d1,
-        "new-creator",
-        trx
+        "new-creator"
       );
 
       t.deepEqual(
@@ -93,9 +93,9 @@ test("findAndDuplicateTemplateDesign() empty node case", async (t: Test) => {
         .resolves({});
 
       const result = await findAndDuplicateTemplateDesign(
+        trx,
         d1,
-        "new-creator",
-        trx
+        "new-creator"
       );
 
       t.deepEqual(

@@ -5,7 +5,7 @@ import { pick } from "lodash";
 import { Variant } from "./types";
 import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
-import { create as createDesign } from "../product-designs/dao";
+import createDesign from "../../services/create-design";
 import API from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as ProductDesignVariantsDAO from "./dao";

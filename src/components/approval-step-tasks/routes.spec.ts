@@ -6,7 +6,8 @@ import ApprovalStep, {
   ApprovalStepType,
 } from "../approval-steps/domain-object";
 import uuid from "node-uuid";
-import ProductDesignsDAO from "../product-designs/dao";
+import createDesign from "../../services/create-design";
+
 import { staticProductDesign } from "../../test-helpers/factories/product-design";
 import Knex from "knex";
 import ProductDesign from "../product-designs/domain-objects/product-design";
@@ -19,7 +20,7 @@ import * as ApprovalStepTaskDAO from "./dao";
 test("GET /design-approval-step-tasks?approvalStepId returns tasks", async (t: tape.Test) => {
   const { session, user } = await createUser({});
 
-  const design: ProductDesign = await ProductDesignsDAO.create(
+  const design: ProductDesign = await createDesign(
     staticProductDesign({ id: "d1", userId: user.id })
   );
   const approvalStep: ApprovalStep = {
@@ -64,7 +65,7 @@ test("GET /design-approval-step-tasks?approvalStepId returns tasks", async (t: t
 test("POST /design-approval-step-task creates a task", async (t: tape.Test) => {
   const { session, user } = await createUser({});
 
-  const design: ProductDesign = await ProductDesignsDAO.create(
+  const design: ProductDesign = await createDesign(
     staticProductDesign({ id: "d1", userId: user.id })
   );
   const approvalStep: ApprovalStep = {

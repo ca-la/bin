@@ -30,6 +30,7 @@ const {
 } = require("../../../services/get-permissions");
 const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
+const useTransaction = require("../../../middleware/use-transaction").default;
 
 const {
   getDesignUploadPolicy,
@@ -51,6 +52,7 @@ const ALLOWED_DESIGN_PARAMS = [
   "retailPriceCents",
   "dueDate",
   "expectedCostCents",
+  "collectionIds",
 ];
 const ADMIN_ALLOWED_DESIGN_PARAMS = [
   ...ALLOWED_DESIGN_PARAMS,
@@ -246,14 +248,12 @@ function* getDesigns() {
 
 function* getDesign() {
   const { permissions, userId, role } = this.state;
-  const design = yield ProductDesignsDAO.findById(
-    this.params.designId,
-    ...(role === "PARTNER" ? [undefined, { bidUserId: userId }] : [])
-  );
-
-  if (!design) {
-    this.throw(404, "Design not found");
-  }
+  const design =
+    role === "PARTNER"
+      ? yield ProductDesignsDAO.findById(this.params.designId, undefined, {
+          bidUserId: userId,
+        })
+      : this.state.design;
 
   const hydratedDesign = yield attachResources(design, userId, permissions);
   this.body = hydratedDesign;
@@ -339,6 +339,11 @@ router.get(
 router.get("/upload-policy/:id", requireAuth, getDesignUploadPolicy);
 
 router.put("/:designId", requireAuth, canAccessDesignInParam, updateAllNodes);
-router.post("/templates/:templateDesignId", requireAuth, createFromTemplate);
+router.post(
+  "/templates/:templateDesignId",
+  requireAuth,
+  useTransaction,
+  createFromTemplate
+);
 
 module.exports = router.routes();

@@ -123,7 +123,7 @@ async function createAllTasks(
   return createTasksFromTemplates(designId, allTasks, trx);
 }
 
-export default async function createDesignTasks(
+export async function createDesignTasks(
   designId: string,
   designPhase: DesignPhase,
   trx: Knex.Transaction
@@ -135,3 +135,5 @@ export default async function createDesignTasks(
   const createdStages = await createStages(stageTemplates, designId, trx);
   return createAllTasks(stageTemplates, createdStages, designId, trx);
 }
+
+export default createDesignTasks;

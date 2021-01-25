@@ -6,7 +6,6 @@ import Collaborator, { Roles } from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
-import { isOwner as isDesignOwner } from "../../components/product-designs/dao/dao";
 import { Permissions } from "../../components/permissions/types";
 import { TeamUserRole, TeamUsersDAO } from "../../components/team-users";
 export { Permissions } from "../../components/permissions/types";
@@ -145,17 +144,11 @@ export async function getDesignPermissionsAndRole(
     };
   }
 
-  const isOwnerOfDesign = await isDesignOwner({
+  const isOwner = await CollectionsDAO.hasOwnership({
     designId,
     userId: sessionUserId,
     trx,
   });
-  const isOwnerOfCollection = await CollectionsDAO.hasOwnership({
-    designId,
-    userId: sessionUserId,
-    trx,
-  });
-  const isOwner = isOwnerOfDesign || isOwnerOfCollection;
 
   // For legacy designs with no "EDIT" collaborator for creator
   if (isOwner) {

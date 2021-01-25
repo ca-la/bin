@@ -10,12 +10,14 @@ import { createList as createTemplateDesigns } from "../../templates/designs/dao
 import ProductDesign = require("../domain-objects/product-design");
 import { omit } from "lodash";
 import generateNode, { staticNode } from "../../../test-helpers/factories/node";
+import generateCollection from "../../../test-helpers/factories/collection";
 import {
   createDesignRoot,
   findNodeTrees,
   findRootNodesByDesign,
 } from "../../nodes/dao";
 import * as CreationService from "../../templates/services/create-from-design-template";
+import * as CreateDesignTasksService from "../../../services/create-design-tasks";
 
 test("POST /product-designs/templates/:templateDesignId returns a 401 if not logged in", async (t: Test) => {
   const templateDesignId = uuid.v4();
@@ -51,6 +53,9 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
   const { user: u2 } = await createUser({ withSession: false, role: "ADMIN" });
   const { session, user } = await createUser();
 
+  sandbox().stub(CreateDesignTasksService, "createDesignTasks");
+
+  const { collection } = await generateCollection();
   const design = await db.transaction(
     async (trx: Knex.Transaction): Promise<ProductDesign> => {
       const newDesign = await createDesign(
@@ -71,8 +76,11 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
 
   const creationSpy = sandbox().spy(CreationService, "default");
 
-  const [response, body] = await post(
-    `/product-designs/templates/${design.id}`,
+  const [
+    response,
+    body,
+  ] = await post(
+    `/product-designs/templates/${design.id}?collectionId=${collection.id}`,
     { headers: authHeader(session.id) }
   );
 
@@ -90,10 +98,11 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
   );
 
   t.equal(creationSpy.callCount, 1);
-  t.deepEqual(creationSpy.args[0][0], {
+  t.deepEqual(creationSpy.args[0][1], {
     isPhidias: false,
     newCreatorId: user.id,
     templateDesignId: design.id,
+    collectionId: collection.id,
   });
 });
 
@@ -101,6 +110,8 @@ test("POST /product-designs/templates/:templateDesignId?isPhidias=true returns a
   const { user: u2 } = await createUser({ withSession: false, role: "ADMIN" });
   const { session, user } = await createUser();
   const rootNode = staticNode({ createdBy: u2.id, title: "node-0" });
+
+  sandbox().stub(CreateDesignTasksService, "createDesignTasks");
 
   const design = await db.transaction(
     async (trx: Knex.Transaction): Promise<ProductDesign> => {

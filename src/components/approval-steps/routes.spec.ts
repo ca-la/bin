@@ -22,7 +22,7 @@ import ApprovalStep, {
 } from "./domain-object";
 import DesignEvent from "../design-events/types";
 import ProductDesign from "../product-designs/domain-objects/product-design";
-import * as ProductDesignsDAO from "../product-designs/dao";
+import createDesign from "../../services/create-design";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import * as uuid from "node-uuid";
 import * as NotificationsDAO from "../notifications/dao";
@@ -368,7 +368,7 @@ test("PATCH /design-approval-steps/:stepId updates collaboratorId", async (t: Te
   const { user: actor, session } = await createUser({ withSession: true });
   const { user: assignee } = await createUser({ withSession: false });
 
-  const d1: ProductDesign = await ProductDesignsDAO.create(
+  const d1: ProductDesign = await createDesign(
     staticProductDesign({ id: "d1", userId: actor.id })
   );
 
@@ -472,7 +472,7 @@ test("PATCH /design-approval-steps/:stepId updates teamUserId", async (t: Test) 
   const { user: actor, session } = await createUser({ withSession: true });
   const { user: assignee } = await createUser({ withSession: false });
 
-  const d1: ProductDesign = await ProductDesignsDAO.create(
+  const d1: ProductDesign = await createDesign(
     staticProductDesign({ id: "d1", userId: actor.id })
   );
 

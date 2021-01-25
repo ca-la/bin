@@ -6,7 +6,6 @@ import Knex from "knex";
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import createUser from "../../../test-helpers/create-user";
-import ProductDesignsDAO from "../../product-designs/dao";
 import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
@@ -25,6 +24,7 @@ import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
 import createDesign from "../../../services/create-design";
+import * as ProductDesignsDAO from "../../product-designs/dao";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
@@ -442,12 +442,6 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     id: uuid.v4(),
     title: "Nacho collection",
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
-  });
 
   await API.post("/collections", {
     headers: API.authHeader(session.id),
@@ -457,13 +451,13 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     headers: API.authHeader(session2.id),
     body: theirs,
   });
-  const designOne = await ProductDesignsDAO.create({
+  const designOne = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: user.id,
   });
-  const designTwo = await ProductDesignsDAO.create({
+  const designTwo = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt Two",
@@ -471,6 +465,7 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
   });
   await moveDesign(mine.id, designOne.id);
   await moveDesign(mine.id, designTwo.id);
+
   const [deleteResponse] = await API.del(`/collections/${mine.id}`, {
     headers: API.authHeader(session.id),
   });

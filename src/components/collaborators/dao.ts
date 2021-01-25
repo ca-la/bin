@@ -102,13 +102,13 @@ export async function create(
   if (!created) {
     throw new Error("Failed to create rows");
   }
-
   const collaborator = validate<CollaboratorRow, Collaborator>(
     TABLE_NAME,
     isCollaboratorRow,
     dataAdapter,
     created
   );
+
   return attachUser(collaborator);
 }
 

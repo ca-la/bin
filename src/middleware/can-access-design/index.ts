@@ -8,6 +8,7 @@ import {
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import filterError = require("../../services/filter-error");
 import { requireQueryParam } from "../require-query-param";
+import { findById } from "../../components/product-designs/dao";
 
 export function* attachDesignPermissions(
   this: Koa.Context,
@@ -106,6 +107,9 @@ export function* canAccessDesignInState(
   this: Koa.Context,
   next: () => Promise<any>
 ): any {
+  this.state.design = yield findById(this.state.designId);
+
+  this.assert(this.state.design, 404, `Design not found`);
   yield attachDesignPermissions.call(this, this.state.designId);
 
   const { permissions } = this.state;

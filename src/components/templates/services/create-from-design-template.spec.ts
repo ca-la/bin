@@ -1,3 +1,5 @@
+import Knex from "knex";
+import db from "../../../services/db";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import * as DesignsDAO from "../designs/dao";
 import * as DuplicateDesign from "../../../services/duplicate/templates/designs";
@@ -14,19 +16,21 @@ test("createFromDesignTemplate() empty case", async (t: Test) => {
   const findStub = sandbox().stub(DesignsDAO, "findByDesignId").resolves(null);
   const duplicateSpy = sandbox().spy(DuplicateDesign, "default");
 
-  try {
-    await createFromDesignTemplate({
-      newCreatorId: u1,
-      templateDesignId: d1,
-      isPhidias: true,
-    });
-    t.fail("Should not get here.");
-  } catch (error) {
-    t.equal(
-      error.message,
-      'Template for design "00bb187a-4a4c-4d75-8356-802b2fda6434" does not exist.'
-    );
-  }
+  await db.transaction(async (trx: Knex.Transaction) => {
+    try {
+      await createFromDesignTemplate(trx, {
+        newCreatorId: u1,
+        templateDesignId: d1,
+        isPhidias: true,
+      });
+      t.fail("Should not get here.");
+    } catch (error) {
+      t.equal(
+        error.message,
+        'Template for design "00bb187a-4a4c-4d75-8356-802b2fda6434" does not exist.'
+      );
+    }
+  });
 
   t.equal(findStub.callCount, 1);
   t.deepEqual(findStub.args[0][0], d1);
@@ -50,10 +54,12 @@ test("createFromDesignTemplate() non-empty case for phidias", async (t: Test) =>
     .stub(DuplicateDesign, "default")
     .resolves(duplicatedDesign1);
 
-  const result = await createFromDesignTemplate({
-    newCreatorId: u1,
-    templateDesignId: d1,
-    isPhidias: true,
+  const result = await db.transaction(async (trx: Knex.Transaction) => {
+    return createFromDesignTemplate(trx, {
+      newCreatorId: u1,
+      templateDesignId: d1,
+      isPhidias: true,
+    });
   });
 
   t.deepEqual(
@@ -66,8 +72,8 @@ test("createFromDesignTemplate() non-empty case for phidias", async (t: Test) =>
   t.deepEqual(findStub.args[0][0], d1);
 
   t.equal(duplicateStub.callCount, 1);
-  t.equal(duplicateStub.args[0][0], d1);
-  t.equal(duplicateStub.args[0][1], u1);
+  t.equal(duplicateStub.args[0][1], d1);
+  t.equal(duplicateStub.args[0][2], u1);
 });
 
 test("createFromDesignTemplate() non-empty case for preview tool", async (t: Test) => {
@@ -87,9 +93,11 @@ test("createFromDesignTemplate() non-empty case for preview tool", async (t: Tes
     .stub(DuplicatePreviewToolDesign, "findAndDuplicateDesign")
     .resolves(duplicatedDesign1);
 
-  const result = await createFromDesignTemplate({
-    newCreatorId: u1,
-    templateDesignId: d1,
+  const result = await db.transaction(async (trx: Knex.Transaction) => {
+    return createFromDesignTemplate(trx, {
+      newCreatorId: u1,
+      templateDesignId: d1,
+    });
   });
 
   t.deepEqual(
@@ -102,6 +110,6 @@ test("createFromDesignTemplate() non-empty case for preview tool", async (t: Tes
   t.deepEqual(findStub.args[0][0], d1);
 
   t.equal(duplicateStub.callCount, 1);
-  t.equal(duplicateStub.args[0][0], d1);
-  t.equal(duplicateStub.args[0][1], u1);
+  t.equal(duplicateStub.args[0][1], d1);
+  t.equal(duplicateStub.args[0][2], u1);
 });

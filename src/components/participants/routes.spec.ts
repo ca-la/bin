@@ -4,6 +4,7 @@ import * as PermissionsService from "../../services/get-permissions";
 import { authHeader, get } from "../../test-helpers/http";
 
 import * as ParticipantsDAO from "./dao";
+import ProductDesignsDAO from "../product-designs/dao";
 import { MentionType } from "../comments/types";
 import Session from "../../domain-objects/session";
 import { Participant } from "./types";
@@ -38,6 +39,8 @@ test("GET /participants?designId", async (t: Test) => {
   const permissionsStub = sandbox()
     .stub(PermissionsService, "getDesignPermissions")
     .resolves(fullPermissions);
+
+  sandbox().stub(ProductDesignsDAO, "findById").resolves({});
   sandbox()
     .stub(ParticipantsDAO, "findByDesign")
     .resolves([collaboratorParticipant]);

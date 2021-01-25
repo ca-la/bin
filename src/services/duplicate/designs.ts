@@ -18,9 +18,10 @@ import { findAndDuplicateVariants } from "./variants";
  *        --> ProductDesignVariants
  */
 export async function findAndDuplicateDesign(
+  trx: Knex.Transaction,
   designId: string,
   newCreatorId: string,
-  trx: Knex.Transaction
+  collectionIds?: string[]
 ): Promise<Design> {
   const design = await DesignsDAO.findById(designId);
   if (!design) {
@@ -31,7 +32,6 @@ export async function findAndDuplicateDesign(
       omit(
         design,
         "collections",
-        "collectionIds",
         "imageIds",
         "imageLinks",
         "approvalSteps",
@@ -39,7 +39,10 @@ export async function findAndDuplicateDesign(
         "firstStepCreatedAt",
         "lastStepDueAt"
       ),
-      { userId: newCreatorId }
+      {
+        userId: newCreatorId,
+        collectionIds: collectionIds || [],
+      }
     ),
     trx
   );

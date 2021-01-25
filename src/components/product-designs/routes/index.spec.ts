@@ -8,7 +8,7 @@ import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as ProductDesignStagesDAO from "../../../dao/product-design-stages";
 import * as ProductDesignsDAO from "../dao/dao";
 
-import { authHeader, get } from "../../../test-helpers/http";
+import { authHeader, get, post } from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
 import createUser = require("../../../test-helpers/create-user");
 import createDesign from "../../../services/create-design";
@@ -180,4 +180,21 @@ test("GET /product-designs allows filtering by team", async (t: tape.Test) => {
     200,
     "succeeds for different user if they are an admin"
   );
+});
+
+test("POST /product-designs end-to-end", async (t: tape.Test) => {
+  const { user, session } = await createUser({ role: "USER" });
+  sandbox().stub(EmailService, "enqueueSend").returns(Promise.resolve());
+
+  const [response, design] = await post(`/product-designs?userId=${user.id}`, {
+    headers: authHeader(session.id),
+    body: {},
+  });
+
+  t.equal(response.status, 201);
+  t.equal(design.userId, user.id);
+
+  const collaborators = await CollaboratorsDAO.findByUserId(user.id);
+  t.equal(collaborators[0].userId, user.id);
+  t.equal(collaborators[0].designId, design.id);
 });
