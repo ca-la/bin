@@ -81,3 +81,21 @@ export async function findById(
 
   return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
 }
+
+export async function findFreeAndDefaultForTeams(
+  trx: Knex.Transaction
+): Promise<Plan | null> {
+  const result = await trx(TABLE_NAME)
+    .where({
+      is_default: true,
+      base_cost_per_billing_interval_cents: 0,
+      per_seat_cost_per_billing_interval_cents: 0,
+    })
+    .then((rows: PlanRow[]) => first(rows));
+
+  if (!result) {
+    return null;
+  }
+
+  return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
+}

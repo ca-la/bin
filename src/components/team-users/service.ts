@@ -9,6 +9,7 @@ import {
   UnsavedTeamUser,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
+import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
 import { areThereAvailableSeatsInTeamPlan } from "../plans/find-team-plans";
@@ -113,6 +114,8 @@ export async function createTeamUser(
       "You cannot add a user with the specified role"
     );
   }
+
+  await createTeamUserLock(trx, unsavedTeamUser.teamId);
 
   const teamUsers = await TeamUsersDAO.find(trx, {
     teamId: unsavedTeamUser.teamId,

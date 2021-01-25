@@ -324,3 +324,57 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
     await trx.rollback();
   }
 });
+
+test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
+  const trx = await db.transaction();
+
+  const freeDefaultPlanId = uuid.v4();
+  try {
+    const freeDefaultPlan = await PlansDAO.create(trx, {
+      id: freeDefaultPlanId,
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 1234,
+      revenueShareBasisPoints: 1200,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_123",
+      title: "Free default plan",
+      isDefault: true,
+      isPublic: false,
+      ordering: null,
+      description: null,
+      baseCostPerBillingIntervalCents: 0,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
+    });
+
+    await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      revenueShareBasisPoints: 5000,
+      costOfGoodsShareBasisPoints: 0,
+      stripePlanId: "plan_456",
+      title: "Some More",
+      isDefault: false,
+      isPublic: false,
+      ordering: null,
+      description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
+    });
+
+    const plan = await PlansDAO.findFreeAndDefaultForTeams(trx);
+    t.deepEqual(plan, freeDefaultPlan, "Found free and default plan");
+  } finally {
+    await trx.rollback();
+  }
+});

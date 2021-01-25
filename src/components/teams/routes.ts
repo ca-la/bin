@@ -6,6 +6,8 @@ import { check } from "../../services/check";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO from "./dao";
+import * as PlansDAO from "../plans/dao";
+import createOrUpdateSubscription from "../subscriptions/create-or-update";
 import { TeamDb, unsavedTeamSchema, teamTypeSchema, TeamType } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
@@ -31,6 +33,18 @@ function* createTeam(this: TrxContext<AuthedContext>) {
   const unsavedTeam = parsed.data;
 
   const created = yield createTeamWithOwner(trx, unsavedTeam.title, actorId);
+
+  // subscribe team to a free plan or don't if default plan is not free
+  const freeDefaultPlan = yield PlansDAO.findFreeAndDefaultForTeams(trx);
+  if (freeDefaultPlan) {
+    yield createOrUpdateSubscription({
+      trx,
+      teamId: created.id,
+      planId: freeDefaultPlan.id,
+      userId: actorId,
+    });
+  }
+
   yield emit<TeamDb, RouteCreated<TeamDb, typeof domain>>({
     type: "route.created",
     domain,

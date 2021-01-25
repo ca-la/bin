@@ -11,6 +11,8 @@ import createUser from "../../test-helpers/create-user";
 import { Role } from "../users/types";
 import * as PubSub from "../../services/pubsub";
 import * as TeamsService from "./service";
+import * as PlansDAO from "../plans/dao";
+import * as SubscriptionService from "../subscriptions/create-or-update";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -54,6 +56,13 @@ function setup({
       updated: t1,
     }),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
+    findFreeDefaultPlanStub: sandbox()
+      .stub(PlansDAO, "findFreeAndDefaultForTeams")
+      .resolves({ id: "a-free-plan-id" }),
+    createOrUpdateSubscriptionStub: sandbox()
+      .stub(SubscriptionService, "default")
+      .resolves(),
+
     now,
   };
 }
@@ -99,6 +108,77 @@ test("POST /teams", async (t: Test) => {
   });
 
   t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
+});
+
+test("POST /teams creates subscription with free plan", async (t: Test) => {
+  const { findFreeDefaultPlanStub, createOrUpdateSubscriptionStub } = setup();
+
+  const [response, body] = await post("/teams", {
+    headers: authHeader("a-session-id"),
+    body: {
+      title: t1.title,
+    },
+  });
+
+  t.equal(response.status, 201);
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify(t1)),
+    "returns the created team from the DAO"
+  );
+
+  t.equal(
+    findFreeDefaultPlanStub.callCount,
+    1,
+    "Calls correct DAO function to get free default plan"
+  );
+
+  t.deepEqual(
+    createOrUpdateSubscriptionStub.args[0][0].teamId,
+    "a-team-id",
+    "calls createOrUpdateSubscription with correct teamId"
+  );
+  t.deepEqual(
+    createOrUpdateSubscriptionStub.args[0][0].planId,
+    "a-free-plan-id",
+    "calls createOrUpdateSubscription with correct planId"
+  );
+  t.deepEqual(
+    createOrUpdateSubscriptionStub.args[0][0].userId,
+    "a-user-id",
+    "calls createOrUpdateSubscription with correct planId"
+  );
+});
+
+test("POST /teams creates the team without subscription if plan is not free", async (t: Test) => {
+  const { findFreeDefaultPlanStub, createOrUpdateSubscriptionStub } = setup();
+  findFreeDefaultPlanStub.resolves(null);
+
+  const [response, body] = await post("/teams", {
+    headers: authHeader("a-session-id"),
+    body: {
+      title: t1.title,
+    },
+  });
+
+  t.equal(response.status, 201);
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify(t1)),
+    "returns the created team from the DAO"
+  );
+
+  t.equal(
+    findFreeDefaultPlanStub.callCount,
+    1,
+    "Calls correct DAO function to get free default plan"
+  );
+
+  t.equal(
+    createOrUpdateSubscriptionStub.callCount,
+    0,
+    "don't call createOrUpdateSubscription for the team when default plan is not free"
+  );
 });
 
 test("GET /teams", async (t: Test) => {
@@ -405,6 +485,11 @@ test("DELETE /teams/:id as ADMIN", async (t: Test) => {
 });
 
 test("POST -> GET /teams end-to-end", async (t: Test) => {
+  sandbox()
+    .stub(PlansDAO, "findFreeAndDefaultForTeams")
+    .resolves({ id: "a-free-plan-id" });
+  sandbox().stub(SubscriptionService, "default").resolves();
+
   const designer = await createUser();
   const another = await createUser();
 

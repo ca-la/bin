@@ -7,11 +7,15 @@ import db from "../../services/db";
 import * as PubSub from "../../services/pubsub";
 import * as UsersDAO from "../users/dao";
 import * as FindTeamPlans from "../plans/find-team-plans";
+import * as TeamUserLockService from "./create-team-user-lock";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 import TeamsDAO from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import { Role, TeamUser, TeamUserDb } from "./types";
+import { generateTeam } from "../../test-helpers/factories/team";
+import generatePlan from "../../test-helpers/factories/plan";
+import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType, TeamUserRole } from "../../published-types";
 
 const now = new Date();
@@ -58,6 +62,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     deleteStub: sandbox()
       .stub(TeamUsersDAO, "deleteById")
       .resolves({ teamId: "a-team-id" }),
+    createTeamUserLockStub: sandbox()
+      .stub(TeamUserLockService, "default")
+      .resolves(),
     emitStub: sandbox().stub(PubSub, "emit").resolves(),
     areThereAvailableSeatsInTeamPlanStub: sandbox()
       .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
@@ -253,6 +260,69 @@ test("POST /team-users: calls areThereAvailableSeatsInTeamPlan with isAdmin for 
     areThereAvailableSeatsInTeamPlanStub.args[1][3],
     true,
     "called with isAdmin true for request from admin user"
+  );
+});
+
+test("POST /team-users: that we cannot add team users above the restriction (team-users lock) if team has a capacity and we send multiple simultanious requests", async (t: Test) => {
+  const trx = await db.transaction();
+
+  const { user: teamUser, session: teamUserSession } = await createUser({
+    role: "PARTNER",
+  });
+  const { team } = await generateTeam(teamUser.id);
+
+  const freeAndDefaultTeamPlan = await generatePlan(trx, {
+    title: "Team Plan",
+    isDefault: true,
+    baseCostPerBillingIntervalCents: 0,
+    perSeatCostPerBillingIntervalCents: 0,
+    maximumSeatsPerTeam: 2,
+  });
+
+  // Team's subscription
+  await SubscriptionsDAO.create(
+    {
+      id: uuid.v4(),
+      cancelledAt: null,
+      planId: freeAndDefaultTeamPlan.id,
+      paymentMethodId: null,
+      stripeSubscriptionId: "123",
+      userId: null,
+      teamId: team.id,
+      isPaymentWaived: false,
+    },
+    trx
+  );
+
+  trx.commit();
+
+  // call two simultaneous requests
+  const [responseTeammate1, responseTeammate2] = await Promise.all([
+    post("/team-users", {
+      headers: authHeader(teamUserSession.id),
+      body: {
+        teamId: team.id,
+        userEmail: "teammate1@example.com",
+        role: "ADMIN",
+      },
+    }),
+
+    // this one should fail
+    await post("/team-users", {
+      headers: authHeader(teamUserSession.id),
+      body: {
+        teamId: team.id,
+        userEmail: "teammate2@example.com",
+        role: "ADMIN",
+      },
+    }),
+  ]);
+
+  t.equal(responseTeammate1[0].status, 201, "first team user created");
+  t.equal(
+    responseTeammate2[0].status,
+    402,
+    "second team user is not created because of the limit (2 - owner + first team member)"
   );
 });
 
