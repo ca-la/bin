@@ -1,6 +1,7 @@
 import Router from "koa-router";
 
 import * as PlansDAO from "./dao";
+import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import useTransaction from "../../middleware/use-transaction";
 import { Plan } from "./plan";
@@ -87,6 +88,10 @@ function* createPlan(
     maximumSeatsPerTeam,
     includesFulfillment,
     upgradeToPlanId,
+  });
+  yield PlanStripePricesDAO.create(trx, {
+    planId: createdPlan.id,
+    stripePriceId: stripePlanId,
   });
   this.status = 201;
   this.body = createdPlan;

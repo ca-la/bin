@@ -1,6 +1,7 @@
 import uuid from "node-uuid";
 
 import * as PlansDAO from "./dao";
+import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
 import { Plan, BillingInterval } from "./plan";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
@@ -119,6 +120,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .stub(PlansDAO, "findAll")
       .resolves([firstPlan, secretPlan, littleBitPlan]),
     findByIdStub: sandbox().stub(PlansDAO, "findById").resolves(littleBitPlan),
+    createStripePriceStub: sandbox()
+      .stub(PlanStripePricesDAO, "create")
+      .resolves(),
   };
 }
 
@@ -182,12 +186,13 @@ test("GET /plans?withPrivate=true returns all plans for admins", async (t: Test)
 });
 
 test("POST /plans valid for the admin", async (t: Test) => {
-  const { createStub } = setup({ role: "ADMIN" });
+  const { createStub, createStripePriceStub } = setup({ role: "ADMIN" });
+  const stripePriceId = "plan_FeBI1CSrMOAqHs";
 
   const [response, body] = await post("/plans", {
     headers: authHeader("a-session-id"),
     body: {
-      stripePlanId: "plan_FeBI1CSrMOAqHs",
+      stripePlanId: stripePriceId,
       title: "Uncapped",
       isDefault: false,
       billingInterval: "ANNUALLY",
@@ -217,6 +222,11 @@ test("POST /plans valid for the admin", async (t: Test) => {
     createStub.args[0][1],
     planDataToCreate,
     "calls create with the correct values"
+  );
+  t.deepEqual(
+    createStripePriceStub.args[0][1],
+    { planId: body.id, stripePriceId },
+    "creates a PlanStripePrice row for the given stripe price ID"
   );
 });
 
