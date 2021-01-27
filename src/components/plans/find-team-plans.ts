@@ -1,27 +1,6 @@
 import Knex from "knex";
-
-import { validateEvery } from "../../services/validate-from-db";
-import { dataAdapter, isPlanRow, Plan, PlanRow } from "./domain-object";
-
-export default async function findTeamPlans(
-  trx: Knex.Transaction,
-  teamId: string
-): Promise<Plan[]> {
-  const result = await trx("subscriptions")
-    .innerJoin("plans", "subscriptions.plan_id", "plans.id")
-    .whereRaw(
-      `
-      subscriptions.team_id = ? and (
-        subscriptions.cancelled_at is null or
-        subscriptions.cancelled_at > now()
-      )
-    `,
-      [teamId]
-    )
-    .select("plans.*");
-
-  return validateEvery<PlanRow, Plan>("plans", isPlanRow, dataAdapter, result);
-}
+import { findTeamPlans } from "./dao";
+import { Plan } from "./types";
 
 export async function areThereAvailableSeatsInTeamPlan(
   trx: Knex.Transaction,

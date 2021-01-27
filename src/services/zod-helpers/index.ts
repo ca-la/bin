@@ -1,4 +1,5 @@
 import * as z from "zod";
+import parseNumericString from "../parse-numeric-string";
 
 export const dateStringToDate = z
   .string()
@@ -9,4 +10,15 @@ export const nullableDateStringToNullableDate = z
   .nullable()
   .transform((nullableDateString: string | null): Date | null =>
     nullableDateString ? new Date(nullableDateString) : null
+  );
+
+export const numberStringToNumber = z.string().transform(parseNumericString);
+
+export const nullableNumberStringToNumber = z
+  .string()
+  .nullable()
+  .transform((nullableNumberString: string | null) =>
+    nullableNumberString === null
+      ? null
+      : parseNumericString(nullableNumberString)
   );

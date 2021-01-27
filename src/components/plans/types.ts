@@ -1,0 +1,75 @@
+import * as z from "zod";
+
+export enum BillingInterval {
+  MONTHLY = "MONTHLY",
+  ANNUALLY = "ANNUALLY",
+}
+export const billingIntervalSchema = z.nativeEnum(BillingInterval);
+
+export const planDbSchema = z.object({
+  id: z.string(),
+  billingInterval: billingIntervalSchema,
+  createdAt: z.date(),
+  monthlyCostCents: z.number(), // bigint
+  revenueShareBasisPoints: z.number(),
+  costOfGoodsShareBasisPoints: z.number(),
+  stripePlanId: z.string(),
+  title: z.string(),
+  isDefault: z.boolean(),
+  isPublic: z.boolean(),
+  description: z.string().nullable(),
+  ordering: z.number().nullable(),
+  baseCostPerBillingIntervalCents: z.number(), // bigint
+  perSeatCostPerBillingIntervalCents: z.number(), // bigint
+  canCheckOut: z.boolean(),
+  canSubmit: z.boolean(),
+  maximumSeatsPerTeam: z.number().nullable(),
+  includesFulfillment: z.boolean(),
+  upgradeToPlanId: z.string().nullable(),
+});
+export type PlanDb = z.infer<typeof planDbSchema>;
+
+export const planDbRowSchema = z.object({
+  id: z.string(),
+  billing_interval: billingIntervalSchema,
+  created_at: z.date(),
+  monthly_cost_cents: z.string(), // bigint
+  revenue_share_basis_points: z.number(),
+  cost_of_goods_share_basis_points: z.number(),
+  stripe_plan_id: z.string(),
+  title: z.string(),
+  is_default: z.boolean(),
+  is_public: z.boolean(),
+  description: z.string().nullable(),
+  ordering: z.number().nullable(),
+  base_cost_per_billing_interval_cents: z.string(), // bigint
+  per_seat_cost_per_billing_interval_cents: z.string(), // bigint
+  can_check_out: z.boolean(),
+  can_submit: z.boolean(),
+  maximum_seats_per_team: z.string().nullable(),
+  includes_fulfillment: z.boolean(),
+  upgrade_to_plan_id: z.string().nullable(),
+});
+export type PlanDbRow = z.infer<typeof planDbRowSchema>;
+
+export const planSchema = planDbSchema.extend({
+  stripePriceIds: z.array(z.string()),
+});
+export type Plan = z.infer<typeof planSchema>;
+
+export const planRowSchema = planDbRowSchema.extend({
+  stripe_price_ids: z.array(z.string()),
+});
+export type PlanRow = z.infer<typeof planRowSchema>;
+
+export const createPlanRequestSchema = z.object({
+  billingInterval: billingIntervalSchema,
+  revenueShareBasisPoints: z.number(),
+  costOfGoodsShareBasisPoints: z.number(),
+  stripePlanId: z.string(),
+  title: z.string(),
+  isDefault: z.boolean(),
+  description: z.string().nullable(),
+  baseCostPerBillingIntervalCents: z.number(),
+});
+export type CreatePlanRequest = z.infer<typeof createPlanRequestSchema>;

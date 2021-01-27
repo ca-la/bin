@@ -1,18 +1,24 @@
 import uuid from "node-uuid";
 
-import * as PlansDAO from "./dao";
-import { Plan, BillingInterval } from "./domain-object";
 import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
+
+import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
+import TeamsDAO from "../teams/dao";
+import * as SubscriptionsDAO from "../subscriptions/dao";
+import * as PlansDAO from "./dao";
+import { Plan, BillingInterval } from "./types";
+import generatePlan from "../../test-helpers/factories/plan";
+import { TeamType } from "../teams/types";
+import generateCollection from "../../test-helpers/factories/collection";
+import createUser from "../../test-helpers/create-user";
+import { PlanStripePriceType } from "../plan-stripe-price/types";
 
 test("PlansDAO supports creation and retrieval", async (t: Test) => {
   const trx = await db.transaction();
 
-  const p1id = uuid.v4();
-
   try {
     const plan1 = await PlansDAO.create(trx, {
-      id: p1id,
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
       revenueShareBasisPoints: 1200,
@@ -32,8 +38,13 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
+    await PlanStripePricesDAO.create(trx, {
+      planId: plan1.id,
+      stripePriceId: "a-stripe-price-id",
+      type: PlanStripePriceType.BASE_COST,
+    });
+
     await PlansDAO.create(trx, {
-      id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
       revenueShareBasisPoints: 5000,
@@ -53,8 +64,13 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       upgradeToPlanId: plan1.id,
     });
 
-    const p1Found = await PlansDAO.findById(trx, p1id);
+    const p1Found = await PlansDAO.findById(trx, plan1.id);
     t.equal(p1Found && p1Found.title, "A little Bit", "finds by ID");
+    t.deepEqual(
+      p1Found!.stripePriceIds,
+      ["a-stripe-price-id"],
+      "joins any PlanStripePrices"
+    );
 
     const plans = await PlansDAO.findAll(trx);
 
@@ -374,6 +390,123 @@ test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
 
     const plan = await PlansDAO.findFreeAndDefaultForTeams(trx);
     t.deepEqual(plan, freeDefaultPlan, "Found free and default plan");
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("PlansDAO.findCollectionTeamPlans", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const teamPlan = await generatePlan(trx, { title: "Team Plan" });
+    const userPlan = await generatePlan(trx, { title: "User Plan" });
+
+    const team = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "A team",
+      type: TeamType.DESIGNER,
+    });
+
+    const { collection, createdBy } = await generateCollection(
+      {
+        teamId: team.id,
+      },
+      trx
+    );
+
+    // Team's subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: teamPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    // An unrelated individual-user subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: userPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: createdBy.id,
+        teamId: null,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const teamPlans = await PlansDAO.findCollectionTeamPlans(
+      trx,
+      collection.id
+    );
+    t.equal(teamPlans.length, 1);
+    t.deepEqual(teamPlans[0], teamPlan);
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("PlansDAO.findTeamPlans", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const teamPlan = await generatePlan(trx, { title: "Team Plan" });
+    const userPlan = await generatePlan(trx, { title: "User Plan" });
+
+    const team = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "A team",
+      type: TeamType.DESIGNER,
+    });
+
+    // Team's subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: teamPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    // An unrelated individual-user subscription
+    const { user } = await createUser({ withSession: false });
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: userPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: user.id,
+        teamId: null,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const teamPlans = await PlansDAO.findTeamPlans(trx, team.id);
+    t.equal(teamPlans.length, 1);
+    t.deepEqual(teamPlans[0], teamPlan);
   } finally {
     await trx.rollback();
   }

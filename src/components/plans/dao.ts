@@ -2,26 +2,43 @@ import Knex from "knex";
 import uuid from "node-uuid";
 import rethrow = require("pg-rethrow");
 
+import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
-import first from "../../services/first";
-import { dataAdapter, isPlanRow, Plan, PlanRow } from "./domain-object";
-import { validate, validateEvery } from "../../services/validate-from-db";
+import { buildDao } from "../../services/cala-component/cala-dao";
+import { rawDataAdapter, dataAdapter } from "./adapter";
+import { Plan, PlanDb } from "./types";
 
-const TABLE_NAME = "plans";
+function withStripePriceIds(query: Knex.QueryBuilder) {
+  return query
+    .select(
+      db.raw(
+        "array_remove(array_agg(plan_stripe_prices.stripe_price_id), null) AS stripe_price_ids"
+      )
+    )
+    .leftJoin("plan_stripe_prices", "plan_stripe_prices.plan_id", "plans.id")
+    .groupBy("plans.id");
+}
+
+const rawDao = buildDao("plans", "plans", rawDataAdapter, {
+  orderColumn: "ordering",
+});
+
+const dao = buildDao("plans", "plans", dataAdapter, {
+  orderColumn: "ordering",
+  queryModifier: withStripePriceIds,
+});
 
 export async function create(
   trx: Knex.Transaction,
-  data: MaybeUnsaved<Plan>
+  data: MaybeUnsaved<PlanDb>
 ): Promise<Plan> {
-  const rowData = dataAdapter.forInsertion({
-    id: uuid.v4(),
-    ...data,
-  });
-
-  const result = await trx(TABLE_NAME)
-    .insert(rowData, "*")
-    .then((rows: PlanRow[]) => first(rows))
+  const result = await rawDao
+    .create(trx, {
+      ...data,
+      createdAt: new Date(),
+      id: uuid.v4(),
+    })
     .catch(rethrow)
     .catch(
       filterError(
@@ -35,67 +52,75 @@ export async function create(
       )
     );
 
-  return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
+  const found = await dao.findById(trx, result.id);
+
+  if (!found) {
+    throw new Error("Could not find created Plan");
+  }
+
+  return found;
 }
 
 export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
-  const result = await trx(TABLE_NAME)
-    .select("*")
-    .orderBy("ordering", "asc")
-    .orderBy("created_at", "desc");
-
-  return validateEvery<PlanRow, Plan>(
-    TABLE_NAME,
-    isPlanRow,
-    dataAdapter,
-    result
+  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
+    query.orderBy("created_at", "asc")
   );
 }
 
 export async function findPublic(trx: Knex.Transaction): Promise<Plan[]> {
-  const result = await trx(TABLE_NAME)
-    .select("*")
-    .where({ is_public: true })
-    .orderBy("ordering", "asc");
-
-  return validateEvery<PlanRow, Plan>(
-    TABLE_NAME,
-    isPlanRow,
-    dataAdapter,
-    result
-  );
+  return dao.find(trx, { isPublic: true });
 }
 
 export async function findById(
   trx: Knex.Transaction,
   id: string
 ): Promise<Plan | null> {
-  const result = await trx(TABLE_NAME)
-    .select("*")
-    .where({ id })
-    .then((rows: PlanRow[]) => first(rows));
-
-  if (!result) {
-    return null;
-  }
-
-  return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
+  return dao.findById(trx, id);
 }
 
 export async function findFreeAndDefaultForTeams(
   trx: Knex.Transaction
 ): Promise<Plan | null> {
-  const result = await trx(TABLE_NAME)
-    .where({
-      is_default: true,
-      base_cost_per_billing_interval_cents: 0,
-      per_seat_cost_per_billing_interval_cents: 0,
-    })
-    .then((rows: PlanRow[]) => first(rows));
+  return dao.findOne(trx, {
+    isDefault: true,
+    baseCostPerBillingIntervalCents: 0,
+    perSeatCostPerBillingIntervalCents: 0,
+  });
+}
 
-  if (!result) {
-    return null;
-  }
+export function findCollectionTeamPlans(
+  trx: Knex.Transaction,
+  collectionId: string
+): Promise<Plan[]> {
+  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
+    query
+      .join("subscriptions", "plans.id", "subscriptions.plan_id")
+      .join("collections", "subscriptions.team_id", "collections.team_id")
+      .whereRaw(
+        `
+        collections.id = ? and (
+          subscriptions.cancelled_at is null or
+          subscriptions.cancelled_at > now()
+        )
+      `,
+        [collectionId]
+      )
+  );
+}
 
-  return validate<PlanRow, Plan>(TABLE_NAME, isPlanRow, dataAdapter, result);
+export function findTeamPlans(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<Plan[]> {
+  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
+    query.join("subscriptions", "plans.id", "subscriptions.plan_id").whereRaw(
+      `
+        subscriptions.team_id = ? and (
+          subscriptions.cancelled_at is null or
+          subscriptions.cancelled_at > now()
+        )
+      `,
+      [teamId]
+    )
+  );
 }

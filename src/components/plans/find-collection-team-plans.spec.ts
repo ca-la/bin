@@ -1,6 +1,9 @@
 import uuid from "node-uuid";
 
-import findCollectionTeamPlans from "./find-collection-team-plans";
+import {
+  canCheckOutTeamCollection,
+  canSubmitTeamCollection,
+} from "./find-collection-team-plans";
 import { test, Test } from "../../test-helpers/fresh";
 import generatePlan from "../../test-helpers/factories/plan";
 import generateCollection from "../../test-helpers/factories/collection";
@@ -9,61 +12,147 @@ import TeamsDAO from "../teams/dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType } from "../teams/types";
 
-test("findCollectionTeamPlans", async (t: Test) => {
+test("canCheckoutTeamCollection", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    const teamPlan = await generatePlan(trx, { title: "Team Plan" });
-    const userPlan = await generatePlan(trx, { title: "User Plan" });
+    const canCheckOut = await generatePlan(trx, {
+      title: "Can check out",
+      canCheckOut: true,
+    });
+    const cannotCheckOut = await generatePlan(trx, {
+      title: "Cannot check out",
+      canCheckOut: false,
+    });
 
-    const team = await TeamsDAO.create(trx, {
+    const canTeam = await TeamsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
       id: uuid.v4(),
-      title: "A team",
+      title: "Can",
+      type: TeamType.DESIGNER,
+    });
+    const cannotTeam = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "Cannot",
       type: TeamType.DESIGNER,
     });
 
-    const { collection, createdBy } = await generateCollection(
-      {
-        teamId: team.id,
-      },
-      trx
-    );
-
-    // Team's subscription
     await SubscriptionsDAO.create(
       {
         id: uuid.v4(),
         cancelledAt: null,
-        planId: teamPlan.id,
+        planId: canCheckOut.id,
         paymentMethodId: null,
         stripeSubscriptionId: "123",
         userId: null,
-        teamId: team.id,
+        teamId: canTeam.id,
         isPaymentWaived: false,
       },
       trx
     );
 
-    // An unrelated individual-user subscription
     await SubscriptionsDAO.create(
       {
         id: uuid.v4(),
         cancelledAt: null,
-        planId: userPlan.id,
+        planId: cannotCheckOut.id,
         paymentMethodId: null,
         stripeSubscriptionId: "123",
-        userId: createdBy.id,
-        teamId: null,
+        userId: null,
+        teamId: cannotTeam.id,
         isPaymentWaived: false,
       },
       trx
     );
 
-    const teamPlans = await findCollectionTeamPlans(trx, collection.id);
-    t.equal(teamPlans.length, 1);
-    t.deepEqual(teamPlans[0], teamPlan);
+    const { collection: canCollection } = await generateCollection(
+      { teamId: canTeam.id },
+      trx
+    );
+
+    const { collection: cannotCollection } = await generateCollection(
+      { teamId: cannotTeam.id },
+      trx
+    );
+
+    t.true(await canCheckOutTeamCollection(trx, canCollection.id));
+    t.false(await canCheckOutTeamCollection(trx, cannotCollection.id));
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("canSubmitTeamCollection", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const canSubmit = await generatePlan(trx, {
+      title: "Can submit",
+      canSubmit: true,
+    });
+    const cannotSubmit = await generatePlan(trx, {
+      title: "Cannot submit",
+      canSubmit: false,
+    });
+
+    const canTeam = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "Can",
+      type: TeamType.DESIGNER,
+    });
+    const cannotTeam = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "Cannot",
+      type: TeamType.DESIGNER,
+    });
+
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: canSubmit.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: canTeam.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: cannotSubmit.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: cannotTeam.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const { collection: canCollection } = await generateCollection(
+      { teamId: canTeam.id },
+      trx
+    );
+
+    const { collection: cannotCollection } = await generateCollection(
+      { teamId: cannotTeam.id },
+      trx
+    );
+
+    t.true(await canSubmitTeamCollection(trx, canCollection.id));
+    t.false(await canSubmitTeamCollection(trx, cannotCollection.id));
   } finally {
     await trx.rollback();
   }

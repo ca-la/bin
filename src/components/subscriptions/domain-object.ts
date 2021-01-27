@@ -1,6 +1,6 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-import { Plan } from "../plans/domain-object";
+import { Plan } from "../plans/types";
 
 interface SubscriptionBase {
   id: string;

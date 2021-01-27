@@ -10,7 +10,7 @@ import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
 import * as PlansDAO from "../../plans/dao";
-import { BillingInterval } from "../../plans/domain-object";
+import { BillingInterval } from "../../plans/types";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";

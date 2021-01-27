@@ -4,10 +4,10 @@ import * as PlansDAO from "./dao";
 import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import useTransaction from "../../middleware/use-transaction";
-import { Plan } from "./plan";
-import { isCreatePlanInputRequest } from "./domain-object";
+import { CreatePlanRequest, createPlanRequestSchema, Plan } from "./types";
 import { typeGuard } from "../../middleware/type-guard";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
+import { check } from "../../services/check";
 
 const router = new Router();
 
@@ -104,7 +104,9 @@ router.get("/:planId", useTransaction, getById);
 router.post(
   "/",
   requireAdmin,
-  typeGuard(isCreatePlanInputRequest),
+  typeGuard((candidate: any): candidate is CreatePlanRequest =>
+    check(createPlanRequestSchema, candidate)
+  ),
   useTransaction,
   createPlan
 );

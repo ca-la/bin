@@ -9,7 +9,7 @@ import TeamUsersDAO from "../team-users/dao";
 import db from "../../services/db";
 import * as SubscriptionsDAO from "./dao";
 import * as PlansDAO from "../plans/dao";
-import { BillingInterval } from "../plans/domain-object";
+import { BillingInterval } from "../plans/types";
 import PaymentMethodsDAO from "../payment-methods/dao";
 
 test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) => {

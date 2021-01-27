@@ -13,7 +13,7 @@ import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User from "../users/domain-object";
 import { authHeader, get, patch, post } from "../../test-helpers/http";
-import { Plan, BillingInterval } from "../plans/domain-object";
+import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 interface SetupOptions {

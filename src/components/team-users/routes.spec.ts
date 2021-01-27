@@ -264,37 +264,41 @@ test("POST /team-users: calls areThereAvailableSeatsInTeamPlan with isAdmin for 
 });
 
 test("POST /team-users: that we cannot add team users above the restriction (team-users lock) if team has a capacity and we send multiple concurrent requests", async (t: Test) => {
-  const trx = await db.transaction();
-
   const { user: teamUser, session: teamUserSession } = await createUser({
     role: "PARTNER",
   });
   const { team } = await generateTeam(teamUser.id);
 
-  const freeAndDefaultTeamPlan = await generatePlan(trx, {
-    title: "Team Plan",
-    isDefault: true,
-    baseCostPerBillingIntervalCents: 0,
-    perSeatCostPerBillingIntervalCents: 0,
-    maximumSeatsPerTeam: 2,
-  });
+  const trx = await db.transaction();
 
-  // Team's subscription
-  await SubscriptionsDAO.create(
-    {
-      id: uuid.v4(),
-      cancelledAt: null,
-      planId: freeAndDefaultTeamPlan.id,
-      paymentMethodId: null,
-      stripeSubscriptionId: "123",
-      userId: null,
-      teamId: team.id,
-      isPaymentWaived: false,
-    },
-    trx
-  );
+  try {
+    const freeAndDefaultTeamPlan = await generatePlan(trx, {
+      title: "Team Plan",
+      isDefault: true,
+      baseCostPerBillingIntervalCents: 0,
+      perSeatCostPerBillingIntervalCents: 0,
+      maximumSeatsPerTeam: 2,
+    });
 
-  trx.commit();
+    // Team's subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: freeAndDefaultTeamPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    await trx.commit();
+  } catch (e) {
+    await trx.rollback();
+  }
 
   // call two simultaneous requests
   const [[r1], [r2]] = await Promise.all([

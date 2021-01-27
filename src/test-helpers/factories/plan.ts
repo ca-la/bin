@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import * as PlansDAO from "../../components/plans/dao";
-import { Plan, BillingInterval } from "../../components/plans/domain-object";
+import { Plan, BillingInterval } from "../../components/plans/types";
 
 export default async function generatePlan(
   trx: Knex.Transaction,

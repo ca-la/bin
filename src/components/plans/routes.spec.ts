@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 
 import * as PlansDAO from "./dao";
 import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
-import { Plan, BillingInterval } from "./plan";
+import { PlanDb, BillingInterval } from "./types";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
 import { Role as UserRole } from "../users/domain-object";
@@ -10,7 +10,7 @@ import SessionsDAO from "../../dao/sessions";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
 
 const now = new Date();
-const planDataToCreate: Unsaved<Plan> = {
+const planDataToCreate: Unsaved<PlanDb> = {
   isPublic: false,
   ordering: null,
   monthlyCostCents: 5_000_00,
@@ -29,7 +29,7 @@ const planDataToCreate: Unsaved<Plan> = {
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
-const createdPlan: Plan = {
+const createdPlan: PlanDb = {
   ...planDataToCreate,
   id: "a-plan-id",
   createdAt: now,
@@ -39,7 +39,7 @@ const createdPlan: Plan = {
   ordering: null,
 };
 
-const firstPlan: Plan = {
+const firstPlan: PlanDb = {
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
@@ -61,7 +61,7 @@ const firstPlan: Plan = {
   upgradeToPlanId: null,
 };
 
-const secretPlan: Plan = {
+const secretPlan: PlanDb = {
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
@@ -83,7 +83,7 @@ const secretPlan: Plan = {
   upgradeToPlanId: null,
 };
 
-const littleBitPlan: Plan = {
+const littleBitPlan: PlanDb = {
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
