@@ -263,7 +263,7 @@ test("POST /team-users: calls areThereAvailableSeatsInTeamPlan with isAdmin for 
   );
 });
 
-test("POST /team-users: that we cannot add team users above the restriction (team-users lock) if team has a capacity and we send multiple simultanious requests", async (t: Test) => {
+test("POST /team-users: that we cannot add team users above the restriction (team-users lock) if team has a capacity and we send multiple concurrent requests", async (t: Test) => {
   const trx = await db.transaction();
 
   const { user: teamUser, session: teamUserSession } = await createUser({
@@ -297,7 +297,7 @@ test("POST /team-users: that we cannot add team users above the restriction (tea
   trx.commit();
 
   // call two simultaneous requests
-  const [responseTeammate1, responseTeammate2] = await Promise.all([
+  const [[r1], [r2]] = await Promise.all([
     post("/team-users", {
       headers: authHeader(teamUserSession.id),
       body: {
@@ -318,11 +318,10 @@ test("POST /team-users: that we cannot add team users above the restriction (tea
     }),
   ]);
 
-  t.equal(responseTeammate1[0].status, 201, "first team user created");
-  t.equal(
-    responseTeammate2[0].status,
-    402,
-    "second team user is not created because of the limit (2 - owner + first team member)"
+  t.deepEqual(
+    [r1.status, r2.status].sort(),
+    [201, 402],
+    "Only one request succeeds: one team user is created, another one is not because of the limit (2 - owner + new team member)"
   );
 });
 
