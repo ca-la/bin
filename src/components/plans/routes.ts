@@ -7,6 +7,7 @@ import useTransaction from "../../middleware/use-transaction";
 import { Plan } from "./plan";
 import { isCreatePlanInputRequest } from "./domain-object";
 import { typeGuard } from "../../middleware/type-guard";
+import { PlanStripePriceType } from "../plan-stripe-price/types";
 
 const router = new Router();
 
@@ -92,6 +93,7 @@ function* createPlan(
   yield PlanStripePricesDAO.create(trx, {
     planId: createdPlan.id,
     stripePriceId: stripePlanId,
+    type: PlanStripePriceType.BASE_COST,
   });
   this.status = 201;
   this.body = createdPlan;

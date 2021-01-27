@@ -7,6 +7,7 @@ import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
 import { Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
+import { PlanStripePriceType } from "../plan-stripe-price/types";
 
 const now = new Date();
 const planDataToCreate: Unsaved<Plan> = {
@@ -225,7 +226,7 @@ test("POST /plans valid for the admin", async (t: Test) => {
   );
   t.deepEqual(
     createStripePriceStub.args[0][1],
-    { planId: body.id, stripePriceId },
+    { planId: body.id, stripePriceId, type: PlanStripePriceType.BASE_COST },
     "creates a PlanStripePrice row for the given stripe price ID"
   );
 });
