@@ -148,7 +148,7 @@ test("CollectionsDAO#findByTeam", async (t: Test) => {
   }
 });
 
-test("CollectionsDAO#findByUser finds all collections and searches", async (t: Test) => {
+async function findSetup() {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
   const { user: user3 } = await createUser({ withSession: false });
@@ -244,6 +244,28 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
     userId: user1.id,
   });
 
+  return {
+    user1,
+    user2,
+    user3,
+    collection1,
+    collection2,
+    collection3,
+    collection4,
+    collection5,
+  };
+}
+
+test("CollectionsDAO#findByUser finds all collections and searches", async (t: Test) => {
+  const {
+    user1,
+    user3,
+    collection1,
+    collection2,
+    collection4,
+    collection5,
+  } = await findSetup();
+
   return db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection4.id);
 
@@ -282,6 +304,38 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
       deletedTeamUserCollections,
       [],
       "does not find the team's collections"
+    );
+  });
+});
+
+test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches", async (t: Test) => {
+  const { user1, collection1, collection2, collection4 } = await findSetup();
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, collection4.id);
+
+    const collections = await CollectionsDAO.findDirectlySharedWithUser(trx, {
+      userId: user1.id,
+    });
+
+    t.deepEqual(
+      collections,
+      [collection2, collection1],
+      "only collections i am directly shared on are returned"
+    );
+
+    const searchCollections = await CollectionsDAO.findDirectlySharedWithUser(
+      trx,
+      {
+        userId: user1.id,
+        search: "Early yEars",
+      }
+    );
+
+    t.deepEqual(
+      searchCollections,
+      [collection1],
+      "Collections I searched for are returned"
     );
   });
 });

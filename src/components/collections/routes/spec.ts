@@ -423,6 +423,33 @@ test("GET /collections", async (t: tape.Test) => {
   t.equal(forbiddenTeam.status, 403, "Cannot get another team's collection");
 });
 
+test("GET /collections returns directly shared collections when called", async (t: tape.Test) => {
+  const { user, session } = await createUser();
+
+  const directStub = sandbox()
+    .stub(CollectionsDAO, "findDirectlySharedWithUser")
+    .resolves([
+      {
+        id: uuid.v4(),
+        title: "Stub collection",
+        teamId: null,
+      },
+    ]);
+
+  sandbox().stub(CollaboratorsDAO, "findByCollectionAndUser").resolves([]);
+
+  const [getResponse, collections] = await API.get(
+    `/collections?userId=${user.id}&isDirectlyShared=true`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(getResponse.status, 200);
+  t.equal(directStub.callCount, 1);
+  t.equal(collections[0].title, "Stub collection");
+});
+
 test("DELETE /collections/:id", async (t: tape.Test) => {
   const { session, user } = await createUser();
   const { session: session2, user: user2 } = await createUser();

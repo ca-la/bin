@@ -150,6 +150,49 @@ export async function findByUser(
   );
 }
 
+// Find a list of collections which a user was "directly" shared on - i.e. via
+// the collection sharing mechanism, not via being part of a team that owns the
+// collection. These collections may or may not belong to other teams.
+export async function findDirectlySharedWithUser(
+  trx: Knex.Transaction,
+  options: {
+    userId: string;
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }
+): Promise<CollectionDb[]> {
+  const collections: CollectionDbRow[] = await trx
+    .from(TABLE_NAME)
+    .select("collections.*")
+    .distinct("collections.id")
+    .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.search) {
+        query.where(db.raw("(collections.title ~* ?)", options.search));
+      }
+    })
+    .where({
+      "collections.deleted_at": null,
+      "collaborators.user_id": options.userId,
+    })
+    .andWhereRaw(
+      `
+  collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now()
+`
+    )
+    .modify(limitOrOffset(options.limit, options.offset))
+    .orderBy("collections.created_at", "desc")
+    .catch(rethrow);
+
+  return validateEvery<CollectionDbRow, CollectionDb>(
+    TABLE_NAME,
+    isCollectionRow,
+    dataAdapter,
+    collections
+  );
+}
+
 export async function findByTeam(trx: Knex.Transaction, teamId: string) {
   const collections: CollectionDbRow[] = await trx
     .from(TABLE_NAME)

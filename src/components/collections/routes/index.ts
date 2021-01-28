@@ -117,6 +117,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     isCosted,
     isSubmitted,
     isExpired,
+    isDirectlyShared,
     limit,
     offset,
     search,
@@ -126,12 +127,17 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
-    const collections = yield CollectionsDAO.findByUser(trx, {
+    const options = {
       userId: userIdToQuery,
       limit: Number(limit),
       offset: Number(offset),
       search,
-    });
+    };
+
+    const collections =
+      isDirectlyShared === "true"
+        ? yield CollectionsDAO.findDirectlySharedWithUser(trx, options)
+        : yield CollectionsDAO.findByUser(trx, options);
 
     const withPermissions: Collection[] = [];
 
