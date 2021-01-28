@@ -238,7 +238,7 @@ function addTrackingId(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
-function addTrackignEventTag(query: Knex.QueryBuilder): Knex.QueryBuilder {
+function addTrackingEventTag(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
       .select("shipment_tracking_events.tag")
@@ -249,7 +249,7 @@ function addTrackignEventTag(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
-function addTrackignEventSubtag(query: Knex.QueryBuilder): Knex.QueryBuilder {
+function addTrackingEventSubtag(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
       .select("shipment_tracking_events.subtag")
@@ -278,8 +278,8 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addApprovalSubmissionTitle)
     .modify(addShipmentTrackingDescription)
     .modify(addTrackingId)
-    .modify(addTrackignEventTag)
-    .modify(addTrackignEventSubtag);
+    .modify(addTrackingEventTag)
+    .modify(addTrackingEventSubtag);
 }
 
 export async function findByUserId(
