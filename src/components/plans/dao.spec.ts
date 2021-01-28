@@ -1,6 +1,6 @@
 import uuid from "node-uuid";
 
-import { test, Test } from "../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 
 import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
@@ -249,6 +249,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
+    sandbox().useFakeTimers(new Date(2016, 2, 1));
     const private3 = await PlansDAO.create(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
@@ -270,6 +271,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
+    sandbox().useFakeTimers(new Date(2017, 2, 1));
     const publicOrder2 = await PlansDAO.create(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
@@ -291,6 +293,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
+    sandbox().useFakeTimers(new Date(2018, 2, 1));
     const publicOrder1 = await PlansDAO.create(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
@@ -312,6 +315,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
+    sandbox().useFakeTimers(new Date(2019, 2, 1));
     const private4 = await PlansDAO.create(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
@@ -339,7 +343,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
     const plansIds = plans.map(({ id }: Plan) => id);
     t.deepEqual(
       plansIds,
-      [publicOrder1.id, publicOrder2.id, private3.id, private4.id],
+      [publicOrder1.id, publicOrder2.id, private4.id, private3.id],
       "Public plans ordered by ordering in asc and private by created_at in desc"
     );
   } finally {

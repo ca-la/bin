@@ -67,7 +67,7 @@ export async function create(
 
 export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
   return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
-    query.orderBy("created_at", "asc")
+    query.orderBy("created_at", "desc")
   );
 }
 
