@@ -1,4 +1,8 @@
 import * as z from "zod";
+import {
+  planStripePriceRowSchema,
+  planStripePriceSchema,
+} from "../plan-stripe-price/types";
 
 export enum BillingInterval {
   MONTHLY = "MONTHLY",
@@ -53,12 +57,12 @@ export const planDbRowSchema = z.object({
 export type PlanDbRow = z.infer<typeof planDbRowSchema>;
 
 export const planSchema = planDbSchema.extend({
-  stripePriceIds: z.array(z.string()),
+  stripePrices: z.array(planStripePriceSchema),
 });
 export type Plan = z.infer<typeof planSchema>;
 
 export const planRowSchema = planDbRowSchema.extend({
-  stripe_price_ids: z.array(z.string()),
+  stripe_prices: z.array(planStripePriceRowSchema),
 });
 export type PlanRow = z.infer<typeof planRowSchema>;
 

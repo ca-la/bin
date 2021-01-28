@@ -12,12 +12,16 @@ import { Plan, PlanDb } from "./types";
 function withStripePriceIds(query: Knex.QueryBuilder) {
   return query
     .select(
-      db.raw(
-        "array_remove(array_agg(plan_stripe_prices.stripe_price_id), null) AS stripe_price_ids"
-      )
+      db.raw(`
+    COALESCE(
+      JSON_AGG(plan_stripe_prices)
+              FILTER (WHERE plan_stripe_prices.plan_id IS NOT NULL),
+      '[]'
+    ) AS stripe_prices
+    `)
     )
     .leftJoin("plan_stripe_prices", "plan_stripe_prices.plan_id", "plans.id")
-    .groupBy("plans.id");
+    .groupBy(["plans.id"]);
 }
 
 const rawDao = buildDao("plans", "plans", rawDataAdapter, {

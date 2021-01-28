@@ -67,8 +67,14 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
     const p1Found = await PlansDAO.findById(trx, plan1.id);
     t.equal(p1Found && p1Found.title, "A little Bit", "finds by ID");
     t.deepEqual(
-      p1Found!.stripePriceIds,
-      ["a-stripe-price-id"],
+      p1Found!.stripePrices,
+      [
+        {
+          planId: plan1.id,
+          stripePriceId: "a-stripe-price-id",
+          type: PlanStripePriceType.BASE_COST,
+        },
+      ],
       "joins any PlanStripePrices"
     );
 
