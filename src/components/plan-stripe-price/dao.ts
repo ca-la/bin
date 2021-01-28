@@ -1,18 +1,26 @@
 import Knex from "knex";
 
 import { dataAdapter } from "./adapter";
-import { PlanStripePrice } from "./types";
+import { PlanStripePrice, PlanStripePriceRow } from "./types";
 
-export async function create(trx: Knex.Transaction, data: PlanStripePrice) {
-  const rows = await trx
-    .insert(dataAdapter.forInsertion(data), "*")
-    .into("plan_stripe_prices");
+export async function createAll(
+  trx: Knex.Transaction,
+  prices: PlanStripePrice[]
+) {
+  const rows = await trx<PlanStripePriceRow>("plan_stripe_prices").insert(
+    prices.map(dataAdapter.forInsertion.bind(dataAdapter)),
+    "*"
+  );
 
-  if (rows.length !== 1) {
+  if (rows.length !== prices.length) {
     throw new Error("Could not insert PlanStripePrice");
   }
 
-  const inserted = rows[0];
+  return dataAdapter.fromDbArray(rows);
+}
 
-  return dataAdapter.fromDb(inserted);
+export async function create(trx: Knex.Transaction, data: PlanStripePrice) {
+  const rows = await createAll(trx, [data]);
+
+  return rows[0];
 }

@@ -1,13 +1,13 @@
 import Router from "koa-router";
 
 import * as PlansDAO from "./dao";
-import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import useTransaction from "../../middleware/use-transaction";
 import { CreatePlanRequest, createPlanRequestSchema, Plan } from "./types";
 import { typeGuard } from "../../middleware/type-guard";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
 import { check } from "../../services/check";
+import { createPlan } from "./create-plan";
 
 const router = new Router();
 
@@ -39,7 +39,7 @@ function* getById(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   this.body = plan;
 }
 
-function* createPlan(
+function* create(
   this: TrxContext<AuthedContext<Unsaved<Plan>>>
 ): Iterator<any, any, any> {
   const {
@@ -68,33 +68,32 @@ function* createPlan(
       ? baseCostPerBillingIntervalCents
       : Math.ceil(baseCostPerBillingIntervalCents / 12);
 
-  const createdPlan = yield PlansDAO.create(trx, {
-    // we don't allow people to create public plans via this API in general
-    // those are very visible and it would be very bad if someone accidentally made one
-    isPublic: false,
-    // ordering for private plans should be null
-    ordering: null,
-    billingInterval,
-    monthlyCostCents,
-    revenueShareBasisPoints,
-    costOfGoodsShareBasisPoints,
-    stripePlanId,
-    title,
-    isDefault,
-    description,
-    baseCostPerBillingIntervalCents,
-    perSeatCostPerBillingIntervalCents,
-    canCheckOut,
-    canSubmit,
-    maximumSeatsPerTeam,
-    includesFulfillment,
-    upgradeToPlanId,
-  });
-  yield PlanStripePricesDAO.create(trx, {
-    planId: createdPlan.id,
-    stripePriceId: stripePlanId,
-    type: PlanStripePriceType.BASE_COST,
-  });
+  const createdPlan = yield createPlan(
+    trx,
+    {
+      // we don't allow people to create public plans via this API in general
+      // those are very visible and it would be very bad if someone accidentally made one
+      isPublic: false,
+      // ordering for private plans should be null
+      ordering: null,
+      billingInterval,
+      monthlyCostCents,
+      revenueShareBasisPoints,
+      costOfGoodsShareBasisPoints,
+      stripePlanId,
+      title,
+      isDefault,
+      description,
+      baseCostPerBillingIntervalCents,
+      perSeatCostPerBillingIntervalCents,
+      canCheckOut,
+      canSubmit,
+      maximumSeatsPerTeam,
+      includesFulfillment,
+      upgradeToPlanId,
+    },
+    [{ stripePriceId: stripePlanId, type: PlanStripePriceType.BASE_COST }]
+  );
   this.status = 201;
   this.body = createdPlan;
 }
@@ -108,7 +107,7 @@ router.post(
     check(createPlanRequestSchema, candidate)
   ),
   useTransaction,
-  createPlan
+  create
 );
 
 export default router.routes();
