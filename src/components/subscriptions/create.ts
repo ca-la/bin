@@ -6,31 +6,19 @@ import * as SubscriptionsDAO from "./dao";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 import InvalidDataError from "../../errors/invalid-data";
-import { Subscription } from "./domain-object";
 
-interface Options {
+interface CreateOptions {
+  planId: string;
+  stripeCardToken: string | null;
   userId: string;
   teamId: string | null;
-  planId: string;
-  stripeCardToken?: string | null;
-  subscriptionId?: string;
-  isPaymentWaived?: boolean;
-  trx: Knex.Transaction;
+  isPaymentWaived: boolean;
 }
 
-export default async function createOrUpdateSubscription(
-  options: Options
-): Promise<Subscription> {
-  const {
-    planId,
-    stripeCardToken,
-    subscriptionId,
-    userId,
-    teamId,
-    isPaymentWaived,
-    trx,
-  } = options;
-
+export async function createSubscription(
+  trx: Knex.Transaction,
+  { planId, stripeCardToken, userId, teamId, isPaymentWaived }: CreateOptions
+) {
   const plan = await PlansDAO.findById(trx, planId);
   if (!plan) {
     throw new InvalidDataError(`Invalid plan ID: ${planId}`);
@@ -42,6 +30,7 @@ export default async function createOrUpdateSubscription(
     isPaymentWaived ||
     (plan.baseCostPerBillingIntervalCents === 0 &&
       plan.perSeatCostPerBillingIntervalCents === 0);
+
   if (!isPlanFree) {
     if (!stripeCardToken) {
       throw new InvalidDataError("Missing stripe card token");
@@ -62,18 +51,6 @@ export default async function createOrUpdateSubscription(
     ? stripeSubscription.id
     : null;
   const paymentMethodId = paymentMethod ? paymentMethod.id : null;
-
-  if (subscriptionId) {
-    return SubscriptionsDAO.update(
-      subscriptionId,
-      {
-        paymentMethodId,
-        planId,
-        stripeSubscriptionId,
-      },
-      trx
-    );
-  }
 
   return SubscriptionsDAO.create(
     {

@@ -12,7 +12,7 @@ import { Role } from "../users/types";
 import * as PubSub from "../../services/pubsub";
 import * as TeamsService from "./service";
 import * as PlansDAO from "../plans/dao";
-import * as SubscriptionService from "../subscriptions/create-or-update";
+import * as SubscriptionService from "../subscriptions/create";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -59,8 +59,8 @@ function setup({
     findFreeDefaultPlanStub: sandbox()
       .stub(PlansDAO, "findFreeAndDefaultForTeams")
       .resolves({ id: "a-free-plan-id" }),
-    createOrUpdateSubscriptionStub: sandbox()
-      .stub(SubscriptionService, "default")
+    createSubscriptionStub: sandbox()
+      .stub(SubscriptionService, "createSubscription")
       .resolves(),
 
     now,
@@ -111,7 +111,7 @@ test("POST /teams", async (t: Test) => {
 });
 
 test("POST /teams creates subscription with free plan", async (t: Test) => {
-  const { findFreeDefaultPlanStub, createOrUpdateSubscriptionStub } = setup();
+  const { findFreeDefaultPlanStub, createSubscriptionStub } = setup();
 
   const [response, body] = await post("/teams", {
     headers: authHeader("a-session-id"),
@@ -134,24 +134,24 @@ test("POST /teams creates subscription with free plan", async (t: Test) => {
   );
 
   t.deepEqual(
-    createOrUpdateSubscriptionStub.args[0][0].teamId,
+    createSubscriptionStub.args[0][1].teamId,
     "a-team-id",
     "calls createOrUpdateSubscription with correct teamId"
   );
   t.deepEqual(
-    createOrUpdateSubscriptionStub.args[0][0].planId,
+    createSubscriptionStub.args[0][1].planId,
     "a-free-plan-id",
     "calls createOrUpdateSubscription with correct planId"
   );
   t.deepEqual(
-    createOrUpdateSubscriptionStub.args[0][0].userId,
+    createSubscriptionStub.args[0][1].userId,
     "a-user-id",
-    "calls createOrUpdateSubscription with correct planId"
+    "calls createOrUpdateSubscription with correct userId"
   );
 });
 
 test("POST /teams creates the team without subscription if plan is not free", async (t: Test) => {
-  const { findFreeDefaultPlanStub, createOrUpdateSubscriptionStub } = setup();
+  const { findFreeDefaultPlanStub, createSubscriptionStub } = setup();
   findFreeDefaultPlanStub.resolves(null);
 
   const [response, body] = await post("/teams", {
@@ -175,7 +175,7 @@ test("POST /teams creates the team without subscription if plan is not free", as
   );
 
   t.equal(
-    createOrUpdateSubscriptionStub.callCount,
+    createSubscriptionStub.callCount,
     0,
     "don't call createOrUpdateSubscription for the team when default plan is not free"
   );
@@ -488,7 +488,7 @@ test("POST -> GET /teams end-to-end", async (t: Test) => {
   sandbox()
     .stub(PlansDAO, "findFreeAndDefaultForTeams")
     .resolves({ id: "a-free-plan-id" });
-  sandbox().stub(SubscriptionService, "default").resolves();
+  sandbox().stub(SubscriptionService, "createSubscription").resolves();
 
   const designer = await createUser();
   const another = await createUser();

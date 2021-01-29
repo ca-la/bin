@@ -19,7 +19,7 @@ import { authHeader, get, patch, post, put } from "../../test-helpers/http";
 import { baseUser } from "./domain-object";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
 import * as TeamsService from "../teams/service";
-import * as SubscriptionService from "../subscriptions/create-or-update";
+import * as SubscriptionService from "../subscriptions/create";
 
 const createBody = {
   email: "user@example.com",
@@ -44,7 +44,7 @@ function stubUserDependencies() {
       id: "a-team-id",
     });
   const createSubscriptionStub = sandbox()
-    .stub(SubscriptionService, "default")
+    .stub(SubscriptionService, "createSubscription")
     .resolves();
   const createSessionStub = sandbox()
     .stub(SessionsDAO, "createForUser")
@@ -546,13 +546,13 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   t.equal(teamUsersStub.firstCall.args[1], body.email);
   t.equal(teamUsersStub.firstCall.args[2], body.id);
 
-  t.equal(createSubscriptionStub.args[0][0].planId, "a-plan-id");
+  t.equal(createSubscriptionStub.args[0][1].planId, "a-plan-id");
   t.equal(
-    createSubscriptionStub.args[0][0].stripeCardToken,
+    createSubscriptionStub.args[0][1].stripeCardToken,
     "a-stripe-card-token"
   );
-  t.equal(createSubscriptionStub.args[0][0].teamId, null);
-  t.equal(createSubscriptionStub.args[0][0].userId, body.id);
+  t.equal(createSubscriptionStub.args[0][1].teamId, null);
+  t.equal(createSubscriptionStub.args[0][1].userId, body.id);
 
   t.deepEqual(
     mailchimpStub.args,
@@ -582,13 +582,13 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
     },
   });
 
-  t.equal(createSubscriptionStub.args[1][0].planId, "a-plan-id");
+  t.equal(createSubscriptionStub.args[1][1].planId, "a-plan-id");
   t.equal(
-    createSubscriptionStub.args[1][0].stripeCardToken,
+    createSubscriptionStub.args[1][1].stripeCardToken,
     "a-stripe-card-token"
   );
-  t.equal(createSubscriptionStub.args[1][0].teamId, "a-team-id");
-  t.equal(createSubscriptionStub.args[1][0].userId, teamBody.id);
+  t.equal(createSubscriptionStub.args[1][1].teamId, "a-team-id");
+  t.equal(createSubscriptionStub.args[1][1].userId, teamBody.id);
 });
 
 test("POST /users allows subscribing to a free plan without a token", async (t: Test) => {

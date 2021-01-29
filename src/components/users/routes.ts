@@ -10,7 +10,7 @@ import claimDesignInvitations = require("../../services/claim-design-invitations
 import CohortsDAO = require("../../components/cohorts/dao");
 import CohortUsersDAO = require("../../components/cohorts/users/dao");
 import compact from "../../services/compact";
-import createOrUpdateSubscription from "../subscriptions/create-or-update";
+import { createSubscription } from "../subscriptions/create";
 import db from "../../services/db";
 import DuplicationService = require("../../services/duplicate");
 import filterError = require("../../services/filter-error");
@@ -88,12 +88,12 @@ async function createWithTeam(
 
   const team = await createTeamWithOwner(trx, teamTitle, user.id);
 
-  await createOrUpdateSubscription({
+  await createSubscription(trx, {
     userId: user.id,
     teamId: team.id,
     stripeCardToken,
     planId,
-    trx,
+    isPaymentWaived: false,
   });
 
   await TeamUsersDAO.claimAllByEmail(trx, email, user.id);
@@ -127,12 +127,12 @@ async function createWithoutTeam(
     { requirePassword: false, trx }
   );
 
-  await createOrUpdateSubscription({
+  await createSubscription(trx, {
     userId: user.id,
     teamId: null,
     stripeCardToken,
     planId,
-    trx,
+    isPaymentWaived: false,
   });
 
   await TeamUsersDAO.claimAllByEmail(trx, email, user.id);

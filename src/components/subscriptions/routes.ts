@@ -4,7 +4,7 @@ import Router from "koa-router";
 import * as SubscriptionsDAO from "./dao";
 import attachPlan from "./attach-plan";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
-import createOrUpdateSubscription from "./create-or-update";
+import { createSubscription } from "./create";
 import db from "../../services/db";
 import requireAuth = require("../../middleware/require-auth");
 import { hasProperties } from "../../services/require-properties";
@@ -88,13 +88,12 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
   const userId = isAdmin && body.userId ? body.userId : this.state.userId;
 
   const subscription = yield db.transaction((trx: Knex.Transaction) => {
-    return createOrUpdateSubscription({
-      stripeCardToken,
+    return createSubscription(trx, {
+      stripeCardToken: stripeCardToken || null,
       planId,
       userId,
       teamId: body.teamId || null,
-      isPaymentWaived: isAdmin && body.isPaymentWaived,
-      trx,
+      isPaymentWaived: Boolean(isAdmin && body.isPaymentWaived),
     }).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
         this.throw(400, err)
