@@ -26,6 +26,7 @@
     "form-data": "2.1.2",
     "google-libphonenumber": "2.0.9",
     "graphql-iso-date": "^3.6.1",
+    "graphql-parse-resolve-info": "^4.10.0",
     "hashids": "^1.2.2",
     "knex": "^0.21.15",
     "koa": "^1.6.2",

@@ -1,6 +1,6 @@
-import { test, Test } from "../test-helpers/fresh";
-import { extractSortedTypes, buildTypes } from "./service";
-import { GraphQLType, TypesContainer } from "./types";
+import { test, Test } from "../../test-helpers/fresh";
+import { extractSortedTypes, buildTypes } from "./utils";
+import { GraphQLType, TypesContainer } from "../types";
 
 test("extractSortedTypes", async (t: Test) => {
   const typeBlank: Pick<GraphQLType, "type" | "body"> = {

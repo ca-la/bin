@@ -69,6 +69,17 @@ export function buildDao<
     return adapter.fromDbArray(rows);
   };
 
+  const count = async (
+    trx: Knex.Transaction,
+    filter: Partial<Model> = {}
+  ): Promise<number> => {
+    const namespacedFilter = getNamespacedFilter(filter);
+
+    const result = await trx(tableName).where(namespacedFilter).count("*");
+
+    return Number(result[0].count);
+  };
+
   const findOne = async (
     trx: Knex.Transaction,
     filter: Partial<Model>,
@@ -217,6 +228,7 @@ export function buildDao<
 
   return {
     find,
+    count,
     findOne,
     findById,
     update,

@@ -534,6 +534,53 @@ test(
       }
     };
     await describeUpdate();
+
+    const describeCount = async (): Promise<void> => {
+      interface TestCase {
+        title: string;
+        filter: Partial<Widget>;
+        result: number;
+      }
+      const testCases: TestCase[] = [
+        {
+          title: "Empty filter",
+          filter: {},
+          result: 3,
+        },
+        {
+          title: "One",
+          filter: { title: "Other Widget" },
+          result: 1,
+        },
+        {
+          title: "Some by companyName",
+          filter: { title: "Widget" },
+          result: 2,
+        },
+        {
+          title: "Empty result",
+          filter: { title: "Don't find me" },
+          result: 0,
+        },
+      ];
+      for (const testCase of testCases) {
+        const trx = await db.transaction();
+        try {
+          const result = await dao.count(trx, testCase.filter);
+          t.deepEqual(result, testCase.result, `count / ${testCase.title}`);
+          t.deepEqual(
+            emitStub.args,
+            [],
+            `count / ${testCase.title}, no emit() called`
+          );
+        } finally {
+          await trx.rollback();
+          emitStub.resetHistory();
+          modifierStub.resetHistory();
+        }
+      }
+    };
+    await describeCount();
   },
   setup,
   tearDown

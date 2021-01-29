@@ -45,6 +45,7 @@ export const {
   createAll,
   find,
   findById,
+  count,
   findBySubmissionId,
   findOne,
   findByDesign,

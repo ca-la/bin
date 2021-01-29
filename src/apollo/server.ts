@@ -9,7 +9,7 @@ import { GraphQLContextBase } from "./types";
 import { endpoints, Endpoint } from "./endpoints";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { ENABLE_APOLLO_PLAYGROUND } from "../config";
-import { extractSortedTypes, buildTypes } from "./service";
+import { extractSortedTypes, buildTypes } from "./services";
 import { logServerError } from "../services/logger";
 
 function extractResolvers() {
@@ -63,10 +63,6 @@ type Mutation {
 
 const typeDefs = `
 scalar GraphQLDateTime
-input ListOptions {
-  limit: Int = 20
-  skip: Int = 0
-}
 scalar Date
 type ListMeta {
   total: Int!

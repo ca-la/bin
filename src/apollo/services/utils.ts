@@ -5,7 +5,7 @@ import {
   TypesContainer,
   Middleware,
   MiddlewareComponent,
-} from "./types";
+} from "../types";
 
 interface AwaitingType {
   type: GraphQLType;
@@ -97,6 +97,19 @@ function composeMiddleware<
   m2: MiddlewareComponent<Args, C1, C2>,
   m3: MiddlewareComponent<Args, C2, C3>
 ): Middleware<Args, C3>;
+
+function composeMiddleware<
+  Args,
+  C1 extends GraphQLContextBase,
+  C2 extends GraphQLContextBase,
+  C3 extends GraphQLContextBase,
+  C4 extends GraphQLContextBase
+>(
+  m1: MiddlewareComponent<Args, GraphQLContextBase, C1>,
+  m2: MiddlewareComponent<Args, C1, C2>,
+  m3: MiddlewareComponent<Args, C2, C3>,
+  m4: MiddlewareComponent<Args, C3, C4>
+): Middleware<Args, C4>;
 
 function composeMiddleware(...middlewareList: any[]) {
   return async (args: any, context: GraphQLContextBase) => {
