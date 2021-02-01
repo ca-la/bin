@@ -3,7 +3,7 @@ import { Subscription, SubscriptionWithPlan } from "./domain-object";
 import * as PlansDAO from "../plans/dao";
 import db from "../../services/db";
 
-export default async function atttachPlan(
+export default async function attachPlan(
   subscription: Subscription
 ): Promise<SubscriptionWithPlan> {
   const plan = await db.transaction((trx: Knex.Transaction) =>

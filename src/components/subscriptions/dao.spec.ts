@@ -306,3 +306,66 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
     t.equal(updated.paymentMethodId, pm2.id);
   });
 });
+
+test("findForTeamWithPlans", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const plan = await PlansDAO.create(trx, {
+      id: uuid.v4(),
+      billingInterval: BillingInterval.MONTHLY,
+      monthlyCostCents: 4567,
+      costOfGoodsShareBasisPoints: 0,
+      revenueShareBasisPoints: 1200,
+      stripePlanId: "plan_456",
+      title: "Some More",
+      isDefault: true,
+      isPublic: false,
+      ordering: null,
+      description: null,
+      baseCostPerBillingIntervalCents: 4567,
+      perSeatCostPerBillingIntervalCents: 0,
+      canSubmit: true,
+      canCheckOut: true,
+      maximumSeatsPerTeam: null,
+      includesFulfillment: true,
+      upgradeToPlanId: null,
+    });
+
+    const pm1 = await PaymentMethodsDAO.create({
+      userId: user.id,
+      stripeCustomerId: "customer1",
+      stripeSourceId: "source1",
+      lastFourDigits: "1234",
+    });
+
+    const subscription = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("3000-01-01"),
+        planId: plan.id,
+        paymentMethodId: pm1.id,
+        stripeSubscriptionId: "123",
+        teamId: team.id,
+        userId: user.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const subscriptions = await SubscriptionsDAO.findForTeamWithPlans(
+      trx,
+      team.id
+    );
+    t.deepEqual(subscriptions, [
+      {
+        ...subscription,
+        plan: {
+          ...plan,
+          stripePrices: [],
+        },
+      },
+    ]);
+  });
+});

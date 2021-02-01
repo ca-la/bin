@@ -6,6 +6,7 @@ import { check } from "../../services/check";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO from "./dao";
+import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as PlansDAO from "../plans/dao";
 import { createSubscription } from "../subscriptions/create";
 import { TeamDb, unsavedTeamSchema, teamTypeSchema, TeamType } from "./types";
@@ -144,6 +145,19 @@ function* findTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
+function* findTeamSubscriptions(this: TrxContext<AuthedContext>) {
+  const { trx } = this.state;
+  const { isActive } = this.query;
+  const { id } = this.params;
+
+  const subscriptions = yield SubscriptionsDAO.findForTeamWithPlans(trx, id, {
+    isActive: isActive === "true",
+  });
+
+  this.body = subscriptions;
+  this.status = 200;
+}
+
 function* deleteTeam(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
   const { id } = this.params;
@@ -206,6 +220,14 @@ export default {
           findTeamById
         ),
         deleteTeam,
+      ],
+    },
+    "/:id/subscriptions": {
+      get: [
+        useTransaction,
+        requireAuth,
+        requireTeamRoles(Object.values(TeamUserRole), findTeamById),
+        findTeamSubscriptions,
       ],
     },
   },
