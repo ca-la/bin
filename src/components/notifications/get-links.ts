@@ -17,6 +17,7 @@ export enum LinkType {
   Collection = "COLLECTION",
   ApprovalStep = "APPROVAL_STEP",
   ShipmentTracking = "SHIPMENT_TRACKING",
+  Team = "TEAM",
 }
 
 interface Meta {
@@ -67,6 +68,10 @@ export type LinkBase =
       design: Meta;
       approvalStep: Meta;
       shipmentTrackingId: string;
+    }
+  | {
+      type: LinkType.Team;
+      team: Meta;
     };
 
 export function constructHtmlLink(deepLink: string, title: string): string {
@@ -167,6 +172,18 @@ export default function getLinks(linkBase: LinkBase): Links {
 
       const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTrackingId}`;
       const title = normalizeTitle(design);
+
+      return {
+        deepLink,
+        htmlLink: constructHtmlLink(deepLink, title),
+      };
+    }
+
+    case LinkType.Team: {
+      const { team } = linkBase;
+
+      const deepLink = `${STUDIO_HOST}/teams/${team.id}`;
+      const title = normalizeTitle(team);
 
       return {
         deepLink,

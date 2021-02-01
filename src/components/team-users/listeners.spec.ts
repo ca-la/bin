@@ -16,6 +16,8 @@ import {
   TeamUserDb,
 } from "./types";
 import { baseUser } from "../users/domain-object";
+import NotificationsLayer from "./notifications";
+import { NotificationType } from "../notifications/types";
 
 const now = new Date();
 
@@ -59,11 +61,14 @@ function setup() {
       .resolves([tu1, tu2]),
     irisStub: sandbox().stub(IrisService, "sendMessage").resolves(),
     clock: sandbox().useFakeTimers(now),
+    notificationsSendStub: sandbox()
+      .stub(NotificationsLayer[NotificationType.INVITE_TEAM_USER], "send")
+      .resolves(),
   };
 }
 
 test("route.created", async (t: Test) => {
-  const { irisStub } = setup();
+  const { irisStub, notificationsSendStub } = setup();
 
   const trx = await db.transaction();
 
@@ -90,6 +95,27 @@ test("route.created", async (t: Test) => {
         channels: ["teams/a-team-id"],
       },
       "Send list of team users via realtime on team user create"
+    );
+    t.equal(
+      notificationsSendStub.args[0][1],
+      "actor-id",
+      "Marks correct actor"
+    );
+    t.deepEqual(
+      notificationsSendStub.args[0][2],
+      {
+        recipientUserId: tu1.userId,
+        recipientCollaboratorId: null,
+        recipientTeamUserId: tu1.id,
+      },
+      "Sends to correct recipient"
+    );
+    t.deepEqual(
+      notificationsSendStub.args[0][3],
+      {
+        teamId: tu1.teamId,
+      },
+      "Notification tied to team"
     );
   } finally {
     await trx.rollback();

@@ -11,8 +11,9 @@ import {
 } from "../../services/pubsub/cala-events";
 import { realtimeTeamUsersListUpdated } from "./realtime";
 import TeamUsersDAO from "./dao";
-
 import * as IrisService from "../../components/iris/send-message";
+import notifications from "./notifications";
+import { NotificationType } from "../notifications/types";
 
 async function sendTeamUsersListUpdatedMessage(
   trx: Knex.Transaction,
@@ -29,8 +30,22 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
   ) => {
     const {
       trx,
-      created: { teamId },
+      created: { id, teamId, userId },
+      actorId,
     } = event;
+
+    await notifications[NotificationType.INVITE_TEAM_USER].send(
+      trx,
+      actorId,
+      {
+        recipientUserId: userId,
+        recipientCollaboratorId: null,
+        recipientTeamUserId: id,
+      },
+      {
+        teamId,
+      }
+    );
 
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },

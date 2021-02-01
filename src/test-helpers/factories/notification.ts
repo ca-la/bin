@@ -22,13 +22,13 @@ import * as ProductDesignStagesDAO from "../../dao/product-design-stages";
 import * as TasksDAO from "../../dao/task-events";
 import * as ApprovalStepDAO from "../../components/approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "../../components/approval-step-submissions/dao";
+import { standardDao as TeamsDAO } from "../../components/teams/dao";
 
 import generateCollection from "./collection";
 import CollectionDb from "../../components/collections/domain-object";
 import User from "../../components/users/domain-object";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 import { templateNotification } from "../../components/notifications/models/base";
-// tslint:disable-next-line:max-line-length
 import ProductDesignCanvasAnnotation from "../../components/product-design-canvas-annotations/domain-object";
 import { DetailsTask } from "../../domain-objects/task-event";
 import Canvas from "../../components/canvases/domain-object";
@@ -51,6 +51,8 @@ import ApprovalStep from "../../components/approval-steps/domain-object";
 import generateShipmentTracking from "./shipment-tracking";
 import generateShipmentTrackingEvent from "./shipment-tracking-event";
 import { ShipmentTrackingEvent } from "../../components/shipment-tracking-events/types";
+import { TeamDb } from "../../components/teams/types";
+import { generateTeam } from "./team";
 
 interface NotificationWithResources {
   actor: User;
@@ -66,6 +68,7 @@ interface NotificationWithResources {
   stage: ProductDesignStage;
   comment: Comment;
   approvalStep: ApprovalStep;
+  team: TeamDb;
   id: string;
 }
 
@@ -194,6 +197,19 @@ export default async function generateNotification(
   if (!submission) {
     throw new Error("Could not find submission");
   }
+
+  const { team } = await db.transaction(async (trx: Knex.Transaction) =>
+    options.teamId
+      ? {
+          team: await TeamsDAO.findOne(trx, { id: options.teamId }),
+        }
+      : await generateTeam(actor.id)
+  );
+
+  if (!team) {
+    throw new Error("Could not find team");
+  }
+
   const base = {
     id,
     actor,
@@ -208,6 +224,7 @@ export default async function generateNotification(
     recipient,
     stage,
     task,
+    team,
   };
 
   const baseNotification = {
@@ -576,6 +593,19 @@ export default async function generateNotification(
         shipmentTrackingEventId: event.id,
         trackingEventTag: event.tag,
         trackingEventSubtag: event.subtag,
+      });
+
+      return {
+        ...base,
+        notification,
+      };
+    }
+
+    case NotificationType.INVITE_TEAM_USER: {
+      const notification = await create({
+        ...baseNotification,
+        teamId: team.id,
+        type: options.type,
       });
 
       return {
