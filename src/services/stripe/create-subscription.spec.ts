@@ -38,35 +38,6 @@ test("createSubscription calls the correct api", async (t: Test) => {
   );
 });
 
-test("createSubscription allows calling with null source", async (t: Test) => {
-  const fakeResponse = {
-    headers: {
-      get(): string {
-        return "application/json";
-      },
-    },
-    status: 200,
-    json(): object {
-      return {
-        id: "sub_123",
-        status: "active",
-      };
-    },
-  };
-
-  const fetchStub = sandbox().stub(Fetch, "fetch").resolves(fakeResponse);
-  await createSubscription({
-    stripeCustomerId: "cus_123",
-    stripePlanId: "plan_123",
-    stripeSourceId: null,
-  });
-
-  t.equal(
-    fetchStub.firstCall.args[1].body,
-    "items[0][plan]=plan_123&customer=cus_123"
-  );
-});
-
 test("createSubscription fails if marked incomplete", async (t: Test) => {
   const fakeResponse = {
     headers: {
