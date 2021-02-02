@@ -24,8 +24,8 @@ export type NotificationKeys = Exclude<
 
 export type CalaNotification<
   type extends NotificationType,
-  RequiredFields extends NotificationKeys,
-  OptionalFields extends NotificationKeys
+  RequiredFields extends NotificationKeys = never,
+  OptionalFields extends NotificationKeys = never
 > = Omit<
   BaseNotification,
   | RequiredFields
@@ -49,8 +49,8 @@ export type CalaNotificationArgument<
 >;
 
 interface NotificationSchema {
-  required: NotificationKeys;
-  optional: NotificationKeys;
+  required?: NotificationKeys;
+  optional?: NotificationKeys;
 }
 
 export type NotificationsLayerSchema = Partial<
@@ -60,15 +60,19 @@ export type NotificationsLayerSchema = Partial<
 export type NotificationsLayer<LS extends NotificationsLayerSchema> = {
   [type in keyof LS]: NotificationComponent<
     Extract<type, NotificationType>,
-    Extract<LS[type], NotificationSchema>["required"],
-    Extract<LS[type], NotificationSchema>["optional"]
+    Extract<LS[type], NotificationSchema>["required"] extends string
+      ? Extract<LS[type], NotificationSchema>["required"]
+      : never,
+    Extract<LS[type], NotificationSchema>["optional"] extends string
+      ? Extract<LS[type], NotificationSchema>["optional"]
+      : never
   >;
 };
 
 export interface NotificationComponent<
   type extends NotificationType,
-  RequiredFields extends NotificationKeys,
-  OptionalFields extends NotificationKeys
+  RequiredFields extends NotificationKeys = never,
+  OptionalFields extends NotificationKeys = never
 > {
   notificationSample?: CalaNotification<type, RequiredFields, OptionalFields>;
   notificationRowSample?: {
@@ -93,11 +97,8 @@ export interface NotificationComponent<
 
 export const buildNotificationComponent = <
   type extends NotificationType,
-  RequiredFields extends NotificationKeys,
-  OptionalFields extends NotificationKeys = Exclude<
-    NotificationKeys,
-    NotificationKeys
-  >
+  RequiredFields extends NotificationKeys = never,
+  OptionalFields extends NotificationKeys = never
 >(
   type: type,
   messageBuilder: NotificationMessageBuilder

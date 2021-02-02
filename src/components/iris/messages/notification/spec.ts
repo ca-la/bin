@@ -44,6 +44,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
     stageId: "112-333",
     taskId: "abc-123",
     taskTitle: "Some title",
+    teamTitle: null,
     trackingEventTag: null,
     trackingEventSubtag: null,
     trackingId: null,
@@ -94,6 +95,7 @@ test("sendMessage can early return if the notification is missing data", async (
     stageId: "112-333",
     taskId: "abc-123",
     taskTitle: "Some title",
+    teamTitle: null,
     trackingId: null,
     type: NotificationType.TASK_ASSIGNMENT,
   };
@@ -134,6 +136,7 @@ test("sendMessage can early return if the notification is missing data", async (
     sentEmailAt: new Date("2019-02-02"),
     shipmentTrackingDescription: null,
     taskTitle: null,
+    teamTitle: null,
     trackingEventTag: null,
     trackingEventSubtag: null,
     trackingId: null,

@@ -131,6 +131,7 @@ import {
   ApprovalStepSubmissionAssignmentNotification,
   FullApprovalStepSubmissionAssignmentNotification,
 } from "../approval-step-submissions/types";
+import { FullInviteTeamUserNotification } from "../team-users/notifications";
 export { NotificationType } from "./types";
 
 export type Notification =
@@ -182,7 +183,8 @@ export type FullNotification =
   | FullShipmentTrackingCreateNotification
   | FullShipmentTrackingUpdateNotification
   | FullApprovalStepAssignmentNotification
-  | FullApprovalStepSubmissionAssignmentNotification;
+  | FullApprovalStepSubmissionAssignmentNotification
+  | FullInviteTeamUserNotification;
 
 export type NotificationRow =
   | AnnotationCommentCreateNotificationRow
@@ -258,6 +260,7 @@ export function encode(
     shipmentTrackingId: row.shipment_tracking_id,
     stageId: row.stage_id,
     taskId: row.task_id,
+    teamId: row.team_id,
     type: row.type,
   };
 }
@@ -291,6 +294,7 @@ export function decode(
     shipment_tracking_id: data.shipmentTrackingId,
     stage_id: data.stageId,
     task_id: data.taskId,
+    team_id: data.teamId,
     type: data.type,
   };
 }
@@ -430,6 +434,8 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     trackingId: rowData.tracking_id,
     stageId: rowData.stage_id,
     taskId: rowData.task_id,
+    teamId: rowData.team_id,
+    teamTitle: rowData.team_title,
     taskTitle: rowData.task_title,
     type: rowData.type,
   } as FullNotification;

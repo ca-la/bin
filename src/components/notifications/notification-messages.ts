@@ -185,6 +185,54 @@ export function getApprovalBaseWithAssets(
   };
 }
 
+interface TeamBaseWithAssets {
+  base: Omit<NotificationMessage, "html" | "title" | "text">;
+  actorName: string;
+  teamHtmlLink: string;
+}
+
+export function getTeamBaseWithAssets(
+  notification: FullNotification
+): TeamBaseWithAssets | null {
+  const { teamId, type, teamTitle } = notification;
+
+  if (!teamId) {
+    return null;
+  }
+
+  const team = {
+    id: teamId,
+    title: teamTitle,
+  };
+
+  const { deepLink } = getLinks({
+    team,
+    type: LinkType.Team,
+  });
+
+  const teamHtmlLink = constructHtmlLink(deepLink, normalizeTitle(team));
+
+  const baseMessage = createBaseMessage(notification);
+  const actorName = escapeHtml(
+    baseMessage.actor.name || baseMessage.actor.email
+  );
+  const location: BreadCrumb[] = [
+    { text: normalizeTitle(team), url: deepLink },
+  ];
+
+  return {
+    base: {
+      ...baseMessage,
+      imageUrl: null,
+      link: deepLink,
+      location,
+      type,
+    },
+    actorName,
+    teamHtmlLink,
+  };
+}
+
 export async function createNotificationMessage(
   notification: FullNotification
 ): Promise<NotificationMessage | null> {

@@ -74,6 +74,13 @@ function addDesignTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
     .whereNull("d.deleted_at");
 }
 
+function addTeamTitle(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select("teams.title as team_title")
+    .leftJoin("teams", "teams.id", "n.team_id")
+    .whereNull("teams.deleted_at");
+}
+
 function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query.select((subquery: Knex.QueryBuilder) =>
     subquery
@@ -274,6 +281,7 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addMeasurement)
     .modify(addAnnotation)
     .modify(addTaskTitle)
+    .modify(addTeamTitle)
     .modify(addApprovalStepTitle)
     .modify(addApprovalSubmissionTitle)
     .modify(addShipmentTrackingDescription)

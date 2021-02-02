@@ -2,6 +2,7 @@ import ApprovalSteps from "./approval-steps";
 import ApprovalSubmissions from "./approval-step-submissions";
 import ShipmentTrackings from "./shipment-trackings";
 import DesignEvents from "./design-events";
+import TeamUsers from "./team-users";
 import { NotificationType } from "./notifications/domain-object";
 import {
   registerMessageBuilder,
@@ -13,6 +14,7 @@ export const calaComponents = [
   ApprovalSubmissions,
   ShipmentTrackings,
   DesignEvents,
+  TeamUsers,
 ];
 
 type AllComponentsUnion = typeof calaComponents[number];
@@ -28,7 +30,8 @@ type ExtractComponent<
 type AllNotificationsUnion = Extract<
   | ExtractComponent<typeof ApprovalSubmissions>["notificationSample"]
   | ExtractComponent<typeof ApprovalSteps>["notificationSample"]
-  | ExtractComponent<typeof ShipmentTrackings>["notificationSample"],
+  | ExtractComponent<typeof ShipmentTrackings>["notificationSample"]
+  | ExtractComponent<typeof TeamUsers>["notificationSample"],
   object
 >;
 

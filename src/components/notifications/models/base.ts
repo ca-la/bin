@@ -31,6 +31,7 @@ export interface BaseNotificationRow {
   shipment_tracking_event_id: null;
   stage_id: null;
   task_id: null;
+  team_id: null;
   type: NotificationType;
 }
 
@@ -59,6 +60,7 @@ export interface RowKeyMapping {
   shipment_tracking_id: "shipmentTrackingId";
   stage_id: "stageId";
   task_id: "taskId";
+  team_id: "teamId";
   type: "type";
 }
 
@@ -78,6 +80,7 @@ export interface BaseFullNotificationRow {
   tracking_event_tag: null;
   tracking_event_subtag: null;
   tracking_id: null;
+  team_title: null;
 }
 
 export interface BaseNotification {
@@ -106,6 +109,7 @@ export interface BaseNotification {
   shipmentTrackingEventId: null;
   stageId: null;
   taskId: null;
+  teamId: null;
   type: NotificationType;
 }
 
@@ -135,6 +139,7 @@ export interface StrictNotification {
   shipmentTrackingId: string;
   stageId: string;
   taskId: string;
+  teamId: string;
   type: NotificationType;
 }
 
@@ -151,6 +156,7 @@ export interface BaseFullNotification {
   approvalStepTitle: null;
   approvalSubmissionTitle: null;
   shipmentTrackingDescription: null;
+  teamTitle: null;
   trackingId: null;
   trackingEventTag: null;
   trackingEventSubtag: null;
@@ -179,4 +185,5 @@ export const templateNotification = {
   shipmentTrackingEventId: null,
   stageId: null,
   taskId: null,
+  teamId: null,
 };
