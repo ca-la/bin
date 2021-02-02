@@ -513,3 +513,75 @@ test("TeamUsersDAO.findByUserAndDesign", async (t: Test) => {
     await trx.rollback();
   }
 });
+
+test("TeamUsersDAO.countNonViewers", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    sandbox().useFakeTimers(testDate);
+    const team = await TeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "Test Team",
+      createdAt: testDate,
+      deletedAt: null,
+      type: TeamType.DESIGNER,
+    });
+
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "admin@example.com",
+      teamId: team.id,
+      role: Role.ADMIN,
+      createdAt: testDate,
+      deletedAt: null,
+      updatedAt: testDate,
+    });
+
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "editor@example.com",
+      teamId: team.id,
+      role: Role.EDITOR,
+      createdAt: testDate,
+      deletedAt: null,
+      updatedAt: testDate,
+    });
+
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "deleted@example.com",
+      teamId: team.id,
+      role: Role.EDITOR,
+      createdAt: testDate,
+      deletedAt: testDate,
+      updatedAt: testDate,
+    });
+
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "viewer@example.com",
+      teamId: team.id,
+      role: Role.VIEWER,
+      createdAt: testDate,
+      deletedAt: null,
+      updatedAt: testDate,
+    });
+
+    t.equal(
+      await TeamUsersDAO.countNonViewers(trx, team.id),
+      2,
+      "counts non viewers that are not deleted"
+    );
+    t.equal(
+      await TeamUsersDAO.countNonViewers(trx, uuid.v4()),
+      0,
+      "returns zero for non-existent team"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
