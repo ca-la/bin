@@ -42,7 +42,11 @@ export interface CalaDao<Model> {
     filter?: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model[]>;
-  count: (trx: Transaction, filter?: Partial<Model>) => Promise<number>;
+  count: (
+    trx: Transaction,
+    filter?: Partial<Model>,
+    modifier?: (query: QueryBuilder) => QueryBuilder
+  ) => Promise<number>;
   findOne: (
     trx: Transaction,
     filter: Partial<Model>,

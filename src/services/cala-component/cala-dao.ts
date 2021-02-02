@@ -71,11 +71,15 @@ export function buildDao<
 
   const count = async (
     trx: Knex.Transaction,
-    filter: Partial<Model> = {}
+    filter: Partial<Model> = {},
+    modifier: QueryModifier = identity
   ): Promise<number> => {
     const namespacedFilter = getNamespacedFilter(filter);
 
-    const result = await trx(tableName).where(namespacedFilter).count("*");
+    const result = await trx(tableName)
+      .count("*")
+      .where(namespacedFilter)
+      .modify(modifier);
 
     return Number(result[0].count);
   };

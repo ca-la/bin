@@ -2,7 +2,7 @@ import Knex from "knex";
 import uuid from "node-uuid";
 import { omit } from "lodash";
 
-import { buildDao } from "./cala-dao";
+import { buildDao, QueryModifier } from "./cala-dao";
 import { buildAdapter } from "./cala-adapter";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as PubSub from "../../services/pubsub/emitter";
@@ -539,6 +539,7 @@ test(
       interface TestCase {
         title: string;
         filter: Partial<Widget>;
+        modifier?: QueryModifier;
         result: number;
       }
       const testCases: TestCase[] = [
@@ -558,6 +559,13 @@ test(
           result: 2,
         },
         {
+          title: "With a query modifier",
+          filter: {},
+          modifier: (query: Knex.QueryBuilder) =>
+            query.where({ title: "Widget" }),
+          result: 2,
+        },
+        {
           title: "Empty result",
           filter: { title: "Don't find me" },
           result: 0,
@@ -566,7 +574,11 @@ test(
       for (const testCase of testCases) {
         const trx = await db.transaction();
         try {
-          const result = await dao.count(trx, testCase.filter);
+          const result = await dao.count(
+            trx,
+            testCase.filter,
+            testCase.modifier
+          );
           t.deepEqual(result, testCase.result, `count / ${testCase.title}`);
           t.deepEqual(
             emitStub.args,
