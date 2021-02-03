@@ -103,6 +103,25 @@ export function requireTeamRoles<StateT>(
   };
 }
 
+async function assertSeatAvailability(
+  trx: Knex.Transaction,
+  teamId: string,
+  isAdmin?: boolean
+) {
+  const nonViewerCount = await TeamUsersDAO.countNonViewers(trx, teamId);
+  const areThereSeatsInTeamPlan = await areThereAvailableSeatsInTeamPlan(
+    trx,
+    teamId,
+    nonViewerCount,
+    isAdmin
+  );
+  if (!areThereSeatsInTeamPlan) {
+    throw new InsufficientPlanError(
+      "Your plan does not allow to add more team users, please upgrade"
+    );
+  }
+}
+
 export async function createTeamUser(
   trx: Knex.Transaction,
   actorTeamRole: TeamUserRole,
@@ -117,19 +136,8 @@ export async function createTeamUser(
 
   await createTeamUserLock(trx, unsavedTeamUser.teamId);
 
-  const teamUsers = await TeamUsersDAO.find(trx, {
-    teamId: unsavedTeamUser.teamId,
-  });
-  const areThereSeatsInTeamPlan = await areThereAvailableSeatsInTeamPlan(
-    trx,
-    unsavedTeamUser.teamId,
-    teamUsers.length,
-    isAdmin
-  );
-  if (!areThereSeatsInTeamPlan) {
-    throw new InsufficientPlanError(
-      "Your plan does not allow to add more team users, please upgrade"
-    );
+  if (unsavedTeamUser.role !== TeamUserRole.VIEWER) {
+    await assertSeatAvailability(trx, unsavedTeamUser.teamId, isAdmin);
   }
 
   const { userEmail } = unsavedTeamUser;
@@ -154,9 +162,19 @@ export async function createTeamUser(
 
 export async function updateTeamUser(
   trx: Knex.Transaction,
-  teamUserId: string,
-  actorTeamRole: TeamUserRole,
-  patch: TeamUserUpdate
+  {
+    teamId,
+    teamUserId,
+    actorTeamRole,
+    patch,
+    isAdmin,
+  }: {
+    teamId: string;
+    teamUserId: string;
+    actorTeamRole: TeamUserRole;
+    patch: TeamUserUpdate;
+    isAdmin?: boolean;
+  }
 ): Promise<TeamUser> {
   for (const keyToUpdate of Object.keys(patch) as (keyof TeamUserUpdate)[]) {
     switch (keyToUpdate) {
@@ -166,6 +184,11 @@ export async function updateTeamUser(
           throw new UnauthorizedError(
             "You cannot update a user with the specified role"
           );
+        }
+
+        if (role !== TeamUserRole.VIEWER) {
+          await createTeamUserLock(trx, teamId);
+          await assertSeatAvailability(trx, teamId, isAdmin);
         }
 
         if (role === TeamUserRole.OWNER) {

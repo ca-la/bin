@@ -91,19 +91,25 @@ function* update(
   const { body } = this.request;
 
   if (!isTeamUserUpdate(body)) {
-    this.throw("Update can only include role", 403);
+    this.throw(403, "Update can only include role");
   }
   if (!isTeamUserRole(body.role)) {
-    this.throw(`Invalid team user role: ${body.role}`, 403);
+    this.throw(403, `Invalid team user role: ${body.role}`);
   }
 
   const isTryingToUpdateTeamOwner = teamUser.role === TeamUserRole.OWNER;
   if (isTryingToUpdateTeamOwner) {
-    this.throw(`You cannot update team owner role`, 403);
+    this.throw(403, `You cannot update team owner role`);
   }
 
   const before = yield TeamUsersDAO.findById(trx, teamUserId);
-  const updated = yield updateTeamUser(trx, teamUserId, actorTeamRole, body);
+  const updated = yield updateTeamUser(trx, {
+    teamId: before.teamId,
+    teamUserId,
+    actorTeamRole,
+    patch: body,
+    isAdmin: this.state.role === "ADMIN",
+  });
 
   yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
     type: "route.updated",
@@ -126,7 +132,7 @@ function* deleteTeamUser(
 
   const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
   if (isTryingToDeleteTeamOwner) {
-    this.throw(`You cannot delete the owner of the team`, 403);
+    this.throw(403, `You cannot delete the owner of the team`);
   }
 
   const deleted = yield TeamUsersDAO.deleteById(trx, teamUserId);

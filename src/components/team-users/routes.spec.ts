@@ -49,6 +49,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       role: TeamUserRole.ADMIN,
     }),
     findTeamMembersStub: sandbox().stub(TeamUsersDAO, "find").resolves([tu1]),
+    findTeamNonViewerStub: sandbox()
+      .stub(TeamUsersDAO, "countNonViewers")
+      .resolves(1),
     createStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(tuDb1),
     findTeamUserByIdStub: sandbox()
       .stub(TeamUsersDAO, "findById")
