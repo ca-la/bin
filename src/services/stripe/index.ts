@@ -78,6 +78,23 @@ export async function sendTransfer(
   });
 }
 
+async function findCustomer(email: string): Promise<{ id: string } | null> {
+  const found = await makeRequest<{ id: string }[]>({
+    method: "get",
+    path: "/customers",
+    data: {
+      email,
+      limit: 1,
+    },
+  });
+
+  if (found.length === 0) {
+    return null;
+  }
+
+  return found[0];
+}
+
 async function createCustomer({
   email,
   name,
@@ -117,6 +134,13 @@ export async function findOrCreateCustomerId(
       `Email is required to create stripe customer for User ${user.id}`
     );
   }
+
+  const existingCustomer = await findCustomer(user.email);
+
+  if (existingCustomer) {
+    return existingCustomer.id;
+  }
+
   const customer = await createCustomer({
     name: user.name || "",
     email: user.email,

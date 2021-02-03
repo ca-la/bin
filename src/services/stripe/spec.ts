@@ -1,7 +1,11 @@
+import Knex from "knex";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import * as RequestService from "./make-request";
-import { getBalances, sendTransfer } from ".";
+import PaymentMethodsDAO from "../../components/payment-methods/dao";
+import * as UsersDAO from "../../components/users/dao";
 import insecureHash from "../insecure-hash";
+
+import * as RequestService from "./make-request";
+import { findOrCreateCustomerId, getBalances, sendTransfer } from ".";
 
 test("sendTransfer with a Bid Id", async (t: Test) => {
   const makeRequestStub = sandbox().stub(RequestService, "default").resolves();
@@ -118,4 +122,87 @@ test("getBalances", async (t: Test) => {
     card: 200456,
     financing: 100789,
   });
+});
+
+test("findOrCreateCustomerId: no existing customer", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(PaymentMethodsDAO, "findByUserId").resolves([]);
+  sandbox()
+    .stub(UsersDAO, "findById")
+    .resolves({ email: "example@example.com", name: "Exemplar" });
+  const requestStub = sandbox().stub(RequestService, "default");
+
+  requestStub.onFirstCall().resolves([]); // GET /customers email=example@example.com
+  requestStub.onSecondCall().resolves({ id: "a-stripe-customer-id" }); // POST /customers
+
+  const customerId = await findOrCreateCustomerId("a-user-id", trx);
+
+  t.equal(customerId, "a-stripe-customer-id", "returns Stripe response ID");
+
+  t.deepEqual(
+    requestStub.args,
+    [
+      [
+        {
+          method: "get",
+          path: "/customers",
+          data: { email: "example@example.com", limit: 1 },
+        },
+      ],
+      [
+        {
+          method: "post",
+          path: "/customers",
+          data: { email: "example@example.com", description: "Exemplar" },
+        },
+      ],
+    ],
+    "makes the correct calls to Stripe"
+  );
+});
+
+test("findOrCreateCustomerId: stripe customer no PaymentMethod", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(PaymentMethodsDAO, "findByUserId").resolves([]);
+  sandbox()
+    .stub(UsersDAO, "findById")
+    .resolves({ email: "example@example.com", name: "Exemplar" });
+  const requestStub = sandbox().stub(RequestService, "default");
+
+  requestStub.onFirstCall().resolves([{ id: "a-stripe-customer-id" }]); // GET /customers email=example@example.com
+
+  const customerId = await findOrCreateCustomerId("a-user-id", trx);
+
+  t.equal(customerId, "a-stripe-customer-id", "returns Stripe response ID");
+
+  t.deepEqual(
+    requestStub.args,
+    [
+      [
+        {
+          method: "get",
+          path: "/customers",
+          data: { email: "example@example.com", limit: 1 },
+        },
+      ],
+    ],
+    "makes the correct calls to Stripe"
+  );
+});
+
+test("findOrCreateCustomerId: stripe customer with PaymentMethod", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox()
+    .stub(PaymentMethodsDAO, "findByUserId")
+    .resolves([{ stripeCustomerId: "a-stripe-customer-id" }]);
+  sandbox()
+    .stub(UsersDAO, "findById")
+    .resolves({ email: "example@example.com", name: "Exemplar" });
+  const requestStub = sandbox().stub(RequestService, "default");
+
+  const customerId = await findOrCreateCustomerId("a-user-id", trx);
+
+  t.equal(customerId, "a-stripe-customer-id", "returns Stripe response ID");
+
+  t.deepEqual(requestStub.args, [], "doesn't lookup user from Stripe");
 });

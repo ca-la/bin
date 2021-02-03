@@ -13,6 +13,7 @@ interface GetRequest {
   path: string;
   additionalHeaders?: Record<string, string>;
   apiBase?: string;
+  data?: StripeDataObject;
 }
 
 interface PostRequest {
@@ -35,7 +36,7 @@ const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString("base64");
 export default async function makeRequest<ResponseType extends object = {}>(
   requestOptions: RequestOptions
 ): Promise<ResponseType> {
-  if (requestOptions.method === "post" && requestOptions.data) {
+  if (requestOptions.data !== undefined) {
     requestOptions.additionalHeaders = {
       ...requestOptions.additionalHeaders,
       "Content-Type": "application/x-www-form-urlencoded",
