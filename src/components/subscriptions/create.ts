@@ -6,6 +6,7 @@ import * as SubscriptionsDAO from "./dao";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 import InvalidDataError from "../../errors/invalid-data";
+import { findOrCreateCustomerId } from "../../services/stripe";
 
 interface CreateOptions {
   planId: string;
@@ -25,7 +26,6 @@ export async function createSubscription(
   }
 
   let paymentMethod = null;
-  let stripeSubscription = null;
   const isPlanFree =
     isPaymentWaived ||
     (plan.baseCostPerBillingIntervalCents === 0 &&
@@ -35,21 +35,22 @@ export async function createSubscription(
     if (!stripeCardToken) {
       throw new InvalidDataError("Missing stripe card token");
     }
+
     paymentMethod = await createPaymentMethod({
       token: stripeCardToken,
       userId,
       trx,
     });
-
-    stripeSubscription = await createStripeSubscription({
-      stripeCustomerId: paymentMethod.stripeCustomerId,
-      stripePlanId: plan.stripePlanId,
-      stripeSourceId: paymentMethod.stripeSourceId,
-    });
   }
-  const stripeSubscriptionId = stripeSubscription
-    ? stripeSubscription.id
-    : null;
+
+  const stripeSubscription = await createStripeSubscription({
+    stripeCustomerId: paymentMethod
+      ? paymentMethod.stripeCustomerId
+      : await findOrCreateCustomerId(userId, trx),
+    stripePlanId: plan.stripePlanId,
+    stripeSourceId: paymentMethod ? paymentMethod.stripeSourceId : null,
+  });
+
   const paymentMethodId = paymentMethod ? paymentMethod.id : null;
 
   return SubscriptionsDAO.create(
@@ -59,7 +60,7 @@ export async function createSubscription(
       isPaymentWaived: Boolean(isPaymentWaived),
       paymentMethodId,
       planId,
-      stripeSubscriptionId,
+      stripeSubscriptionId: stripeSubscription.id,
       userId: teamId ? null : userId,
       teamId,
     },
