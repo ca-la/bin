@@ -247,22 +247,25 @@ test("addSeatCharge", async (t: Test) => {
   // GET /subscriptions/:id
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
-    items: [
-      {
-        id: "a-subscription-item-id",
-        price: {
-          id: "a-stripe-price-id",
+    items: {
+      object: "list",
+      data: [
+        {
+          id: "a-subscription-item-id",
+          price: {
+            id: "a-stripe-price-id",
+          },
+          quantity: 3,
         },
-        quantity: 3,
-      },
-      {
-        id: "another-subscription-item-id",
-        price: {
-          id: "another-stripe-price-id",
+        {
+          id: "another-subscription-item-id",
+          price: {
+            id: "another-stripe-price-id",
+          },
+          quantity: 0,
         },
-        quantity: 0,
-      },
-    ],
+      ],
+    },
   });
 
   // POST /subscription_items/:id
@@ -448,22 +451,25 @@ test("addSeatCharge: failed payment", async (t: Test) => {
   // GET /subscriptions/:id
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
-    items: [
-      {
-        id: "a-subscription-item-id",
-        price: {
-          id: "a-stripe-price-id",
+    items: {
+      object: "list",
+      data: [
+        {
+          id: "a-subscription-item-id",
+          price: {
+            id: "a-stripe-price-id",
+          },
+          quantity: 3,
         },
-        quantity: 3,
-      },
-      {
-        id: "another-subscription-item-id",
-        price: {
-          id: "another-stripe-price-id",
+        {
+          id: "another-subscription-item-id",
+          price: {
+            id: "another-stripe-price-id",
+          },
+          quantity: 0,
         },
-        quantity: 0,
-      },
-    ],
+      ],
+    },
   });
 
   // POST /subscription_items/:id

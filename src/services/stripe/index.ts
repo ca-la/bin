@@ -253,7 +253,10 @@ type SubscriptionItemUpdate = z.infer<typeof subscriptionItemUpdateSchema>;
 const subscriptionSchema = z
   .object({
     id: z.string(),
-    items: z.array(subscriptionItemSchema),
+    items: z.object({
+      object: z.literal("list"),
+      data: z.array(subscriptionItemSchema),
+    }),
   })
   .passthrough();
 
@@ -308,7 +311,7 @@ export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
   const stripeSubscription = await getSubscription(
     subscription.stripeSubscriptionId
   );
-  const perSeatSubscriptionItem = stripeSubscription.items.find(
+  const perSeatSubscriptionItem = stripeSubscription.items.data.find(
     (subscriptionItem: SubscriptionItem) =>
       subscriptionItem.price.id === perSeatPrice.stripePriceId
   );
