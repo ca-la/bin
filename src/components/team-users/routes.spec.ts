@@ -457,6 +457,27 @@ test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
   );
 });
 
+test("PATCH /team-users/:id: upgrade from viewer to non-viewer no seats available", async (t: Test) => {
+  const viewer = {
+    ...tu1,
+    role: TeamUserRole.VIEWER,
+  };
+  const {
+    areThereAvailableSeatsInTeamPlanStub,
+    findTeamUserByIdStub,
+  } = setup();
+  areThereAvailableSeatsInTeamPlanStub.resolves(false);
+  findTeamUserByIdStub.resolves(viewer);
+  const [response] = await patch(`/team-users/${viewer.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.EDITOR,
+    },
+  });
+
+  t.equal(response.status, 402, "Responds with payment required");
+});
+
 test("PATCH /team-users/:id: upgrade from viewer to non-viewer", async (t: Test) => {
   const viewer = {
     ...tu1,

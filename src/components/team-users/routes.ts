@@ -110,7 +110,11 @@ function* update(
     actorTeamRole,
     patch: body,
     isAdmin: this.state.role === "ADMIN",
-  });
+  }).catch(
+    filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
+      this.throw(402, error.message)
+    )
+  );
 
   yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
     type: "route.updated",
