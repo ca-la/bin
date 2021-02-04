@@ -104,6 +104,7 @@ function* update(
 
   const before = yield TeamUsersDAO.findById(trx, teamUserId);
   const updated = yield updateTeamUser(trx, {
+    before,
     teamId: before.teamId,
     teamUserId,
     actorTeamRole,

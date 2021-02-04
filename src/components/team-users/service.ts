@@ -13,6 +13,7 @@ import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
 import { areThereAvailableSeatsInTeamPlan } from "../plans/find-team-plans";
+import { addSeatCharge as addStripeSeatCharge } from "../../services/stripe/index";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -128,27 +129,26 @@ export async function createTeamUser(
   unsavedTeamUser: UnsavedTeamUser,
   isAdmin?: boolean
 ) {
-  if (!allowedRolesMap[actorTeamRole].includes(unsavedTeamUser.role)) {
+  const { role, teamId, userEmail } = unsavedTeamUser;
+  if (!allowedRolesMap[actorTeamRole].includes(role)) {
     throw new UnauthorizedError(
       "You cannot add a user with the specified role"
     );
   }
 
-  await createTeamUserLock(trx, unsavedTeamUser.teamId);
+  await createTeamUserLock(trx, teamId);
 
-  if (unsavedTeamUser.role !== TeamUserRole.VIEWER) {
-    await assertSeatAvailability(trx, unsavedTeamUser.teamId, isAdmin);
+  if (role !== TeamUserRole.VIEWER) {
+    await assertSeatAvailability(trx, teamId, isAdmin);
   }
-
-  const { userEmail } = unsavedTeamUser;
 
   const user = await findUserByEmail(userEmail, trx);
 
   const created = await RawTeamUsersDAO.create(trx, {
     // Might be overridden if user is revived by DAO from existing deleted row
     id: uuid.v4(),
-    teamId: unsavedTeamUser.teamId,
-    role: unsavedTeamUser.role,
+    teamId,
+    role,
     createdAt: new Date(),
     deletedAt: null,
     updatedAt: new Date(),
@@ -157,18 +157,26 @@ export async function createTeamUser(
       : { userEmail, userId: null }),
   });
 
-  return TeamUsersDAO.findById(trx, created.id);
+  const found = await TeamUsersDAO.findById(trx, created.id);
+
+  if (role !== TeamUserRole.VIEWER) {
+    await addStripeSeatCharge(trx, teamId);
+  }
+
+  return found;
 }
 
 export async function updateTeamUser(
   trx: Knex.Transaction,
   {
+    before,
     teamId,
     teamUserId,
     actorTeamRole,
     patch,
     isAdmin,
   }: {
+    before: TeamUser;
     teamId: string;
     teamUserId: string;
     actorTeamRole: TeamUserRole;
@@ -195,6 +203,18 @@ export async function updateTeamUser(
           await TeamUsersDAO.transferOwnership(trx, teamUserId);
         } else {
           await RawTeamUsersDAO.update(trx, teamUserId, { role });
+        }
+
+        if (role !== TeamUserRole.VIEWER) {
+          if (!before) {
+            throw new Error(
+              `Could not find user being updated with ID ${teamUserId}`
+            );
+          }
+
+          if (before.role === TeamUserRole.VIEWER) {
+            await addStripeSeatCharge(trx, teamId);
+          }
         }
       }
     }

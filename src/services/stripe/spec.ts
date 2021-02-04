@@ -1,11 +1,22 @@
 import Knex from "knex";
+
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import PaymentMethodsDAO from "../../components/payment-methods/dao";
 import * as UsersDAO from "../../components/users/dao";
+import * as SubscriptionsDAO from "../../components/subscriptions/dao";
+import TeamUsersDAO from "../../components/team-users/dao";
 import insecureHash from "../insecure-hash";
+import { PlanStripePriceType } from "../../components/plan-stripe-price/types";
+import InvalidPaymentError from "../../errors/invalid-payment";
+import StripeError from "../../errors/stripe";
 
 import * as RequestService from "./make-request";
-import { findOrCreateCustomerId, getBalances, sendTransfer } from ".";
+import {
+  findOrCreateCustomerId,
+  addSeatCharge,
+  getBalances,
+  sendTransfer,
+} from ".";
 
 test("sendTransfer with a Bid Id", async (t: Test) => {
   const makeRequestStub = sandbox().stub(RequestService, "default").resolves();
@@ -205,4 +216,370 @@ test("findOrCreateCustomerId: stripe customer with PaymentMethod", async (t: Tes
   t.equal(customerId, "a-stripe-customer-id", "returns Stripe response ID");
 
   t.deepEqual(requestStub.args, [], "doesn't lookup user from Stripe");
+});
+
+test("addSeatCharge", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([
+      {
+        stripeSubscriptionId: "a-stripe-subscription-id",
+        plan: {
+          stripePrices: [
+            {
+              type: PlanStripePriceType.PER_SEAT,
+              stripePriceId: "a-stripe-price-id",
+            },
+            {
+              type: PlanStripePriceType.BASE_COST,
+              stripePriceId: "another-stripe-price-id",
+            },
+          ],
+        },
+      },
+    ]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+
+  // GET /subscriptions/:id
+  makeRequestStub.onFirstCall().resolves({
+    id: "a-stripe-subscription-id",
+    items: [
+      {
+        id: "a-subscription-item-id",
+        price: {
+          id: "a-stripe-price-id",
+        },
+        quantity: 3,
+      },
+      {
+        id: "another-subscription-item-id",
+        price: {
+          id: "another-stripe-price-id",
+        },
+        quantity: 0,
+      },
+    ],
+  });
+
+  // POST /subscription_items/:id
+  makeRequestStub.onSecondCall().resolves({
+    id: "a-subscription-item-id",
+    price: {
+      id: "a-stripe-price-id",
+    },
+    quantity: 4,
+  });
+
+  await addSeatCharge(trx, "a-team-id");
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+
+  t.deepEqual(
+    nonViewerCountStub.args,
+    [[trx, "a-team-id"]],
+    "looks up team's non-viewer count by team ID"
+  );
+
+  t.deepEqual(
+    makeRequestStub.args,
+    [
+      [
+        {
+          method: "get",
+          path: "/subscriptions/a-stripe-subscription-id",
+        },
+      ],
+      [
+        {
+          method: "post",
+          path: "/subscription_items/a-subscription-item-id",
+          data: {
+            payment_behavior: "error_if_incomplete",
+            proration_behavior: "always_invoice",
+            quantity: 4,
+          },
+        },
+      ],
+    ],
+    "makes the correct calls to Stripe"
+  );
+});
+
+test("addSeatCharge: no per-seat item", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([
+      {
+        stripeSubscriptionId: "a-stripe-subscription-id",
+        plan: {
+          stripePrices: [
+            {
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
+        },
+      },
+    ]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+
+  await addSeatCharge(trx, "a-team-id");
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+  t.equal(nonViewerCountStub.callCount, 0, "does not look up non-viewer count");
+  t.equal(makeRequestStub.callCount, 0, "does not make any requests to Stripe");
+});
+
+test("addSeatCharge: no stripe subscription", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([
+      {
+        id: "a-subscription-id",
+        stripeSubscriptionId: null,
+        plan: {
+          stripePrices: [
+            {
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
+        },
+      },
+    ]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+
+  try {
+    await addSeatCharge(trx, "a-team-id");
+    t.fail("should not succeed");
+  } catch (err) {
+    t.deepEqual(
+      err,
+      new Error(
+        "Could not find a stripe subscription for subscription with ID a-subscription-id"
+      ),
+      "throws when missing stripe subscription"
+    );
+  }
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+  t.equal(nonViewerCountStub.callCount, 0, "does not look up non-viewer count");
+  t.equal(makeRequestStub.callCount, 0, "does not make any requests to Stripe");
+});
+
+test("addSeatCharge: no team subscription", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+
+  try {
+    await addSeatCharge(trx, "a-team-id");
+    t.fail("should not succeed");
+  } catch (err) {
+    t.deepEqual(
+      err,
+      new Error("Could not find a subscription for team with ID a-team-id"),
+      "throws when missing team subscription"
+    );
+  }
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+  t.equal(nonViewerCountStub.callCount, 0, "does not look up non-viewer count");
+  t.equal(makeRequestStub.callCount, 0, "does not make any requests to Stripe");
+});
+
+test("addSeatCharge: failed payment", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([
+      {
+        stripeSubscriptionId: "a-stripe-subscription-id",
+        plan: {
+          stripePrices: [
+            {
+              type: PlanStripePriceType.PER_SEAT,
+              stripePriceId: "a-stripe-price-id",
+            },
+            {
+              type: PlanStripePriceType.BASE_COST,
+              stripePriceId: "another-stripe-price-id",
+            },
+          ],
+        },
+      },
+    ]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+
+  // GET /subscriptions/:id
+  makeRequestStub.onFirstCall().resolves({
+    id: "a-stripe-subscription-id",
+    items: [
+      {
+        id: "a-subscription-item-id",
+        price: {
+          id: "a-stripe-price-id",
+        },
+        quantity: 3,
+      },
+      {
+        id: "another-subscription-item-id",
+        price: {
+          id: "another-stripe-price-id",
+        },
+        quantity: 0,
+      },
+    ],
+  });
+
+  // POST /subscription_items/:id
+  makeRequestStub
+    .onSecondCall()
+    .rejects(new InvalidPaymentError("Your payment method was declined"));
+
+  try {
+    await addSeatCharge(trx, "a-team-id");
+    t.fail("should not succeed");
+  } catch (err) {
+    t.deepEqual(
+      err,
+      new InvalidPaymentError("Your payment method was declined")
+    );
+  }
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+
+  t.deepEqual(
+    nonViewerCountStub.args,
+    [[trx, "a-team-id"]],
+    "looks up team's non-viewer count by team ID"
+  );
+
+  t.deepEqual(
+    makeRequestStub.args,
+    [
+      [
+        {
+          method: "get",
+          path: "/subscriptions/a-stripe-subscription-id",
+        },
+      ],
+      [
+        {
+          method: "post",
+          path: "/subscription_items/a-subscription-item-id",
+          data: {
+            payment_behavior: "error_if_incomplete",
+            proration_behavior: "always_invoice",
+            quantity: 4,
+          },
+        },
+      ],
+    ],
+    "makes the correct calls to Stripe"
+  );
+});
+
+test("addSeatCharge: stripe subscription not found", async (t: Test) => {
+  const trx = (sandbox().stub() as unknown) as Knex.Transaction;
+  const teamPlansStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([
+      {
+        stripeSubscriptionId: "a-stripe-subscription-id",
+        plan: {
+          stripePrices: [
+            {
+              type: PlanStripePriceType.PER_SEAT,
+              stripePriceId: "a-stripe-price-id",
+            },
+            {
+              type: PlanStripePriceType.BASE_COST,
+              stripePriceId: "another-stripe-price-id",
+            },
+          ],
+        },
+      },
+    ]);
+  const nonViewerCountStub = sandbox()
+    .stub(TeamUsersDAO, "countNonViewers")
+    .resolves(4);
+  const makeRequestStub = sandbox().stub(RequestService, "default");
+
+  const resourceMissingError = new StripeError({
+    code: "resource_missing",
+    doc_url: "https://stripe.com/docs/error-codes/resource-missing",
+    message: "No such subscription: 'a-stripe-subscription-id'",
+    param: "id",
+    type: "invalid_request_error",
+  } as any);
+
+  // GET /subscriptions/:id
+  makeRequestStub.onFirstCall().rejects(resourceMissingError);
+
+  try {
+    await addSeatCharge(trx, "a-team-id");
+    t.fail("should not succeed");
+  } catch (err) {
+    t.deepEqual(err, resourceMissingError);
+  }
+
+  t.deepEqual(
+    teamPlansStub.args,
+    [[trx, "a-team-id", { isActive: true }]],
+    "looks up team plan by team ID"
+  );
+
+  t.equal(nonViewerCountStub.callCount, 0, "does not look up non-viewer count");
+
+  t.deepEqual(
+    makeRequestStub.args,
+    [
+      [
+        {
+          method: "get",
+          path: "/subscriptions/a-stripe-subscription-id",
+        },
+      ],
+    ],
+    "makes the correct calls to Stripe"
+  );
 });

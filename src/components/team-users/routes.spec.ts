@@ -8,6 +8,7 @@ import * as PubSub from "../../services/pubsub";
 import * as UsersDAO from "../users/dao";
 import * as FindTeamPlans from "../plans/find-team-plans";
 import * as TeamUserLockService from "./create-team-user-lock";
+import * as StripeService from "../../services/stripe";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 import TeamsDAO from "../teams/dao";
@@ -72,11 +73,14 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     areThereAvailableSeatsInTeamPlanStub: sandbox()
       .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
       .resolves(true),
+    addStripeSeatStub: sandbox()
+      .stub(StripeService, "addSeatCharge")
+      .resolves(),
   };
 }
 
 test("POST /team-users: valid", async (t: Test) => {
-  const { createStub } = setup();
+  const { createStub, addStripeSeatStub } = setup();
 
   const [response, body] = await post("/team-users", {
     headers: authHeader("a-session-id"),
@@ -98,10 +102,15 @@ test("POST /team-users: valid", async (t: Test) => {
     tuDb1,
     "calls create with the correct values"
   );
+  t.equal(
+    addStripeSeatStub.args[0][1],
+    "a-team-id",
+    "calls Stripe seat service function with team ID"
+  );
 });
 
 test("POST /team-users: invalid", async (t: Test) => {
-  setup();
+  const { addStripeSeatStub } = setup();
 
   const [invalid] = await post("/team-users", {
     headers: authHeader("a-session-id"),
@@ -113,6 +122,7 @@ test("POST /team-users: invalid", async (t: Test) => {
   });
 
   t.equal(invalid.status, 400, "Requires a valid role");
+  t.equal(addStripeSeatStub.callCount, 0, "Does not add Stripe seat charge");
 });
 
 test("POST /teams-user: unauthenticated", async (t: Test) => {
@@ -391,8 +401,8 @@ test("GET /team-users?teamId: CALA admin", async (t: Test) => {
   );
 });
 
-test("PATCH /team-users/:id: valid", async (t: Test) => {
-  const { updateStub, findTeamUserByIdStub } = setup();
+test("PATCH /team-users/:id: valid downgrade to viewer", async (t: Test) => {
+  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
   const [response, body] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -412,10 +422,76 @@ test("PATCH /team-users/:id: valid", async (t: Test) => {
     tu1.id,
     "Finds updated team user by id"
   );
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "does not call stripe add seat function when downgrading to viewer"
+  );
+});
+
+test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
+  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
+  const [response, body] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.EDITOR,
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(body, JSON.parse(JSON.stringify(tu1)), "Returns TeamUser");
+  t.deepEqual(
+    updateStub.args[0].slice(1),
+    [tu1.id, { role: TeamUserRole.EDITOR }],
+    "Updates user with new role"
+  );
+  t.deepEqual(
+    findTeamUserByIdStub.args[0][1],
+    tu1.id,
+    "Finds updated team user by id"
+  );
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "does not call stripe add seat function when changing between non-viewer roles"
+  );
+});
+
+test("PATCH /team-users/:id: upgrade from viewer to non-viewer", async (t: Test) => {
+  const viewer = {
+    ...tu1,
+    role: TeamUserRole.VIEWER,
+  };
+  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
+  findTeamUserByIdStub.resolves(viewer);
+  const [response, body] = await patch(`/team-users/${viewer.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.EDITOR,
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(body, JSON.parse(JSON.stringify(viewer)), "Returns TeamUser");
+  t.deepEqual(
+    updateStub.args[0].slice(1),
+    [viewer.id, { role: TeamUserRole.EDITOR }],
+    "Updates user with new role"
+  );
+  t.deepEqual(
+    findTeamUserByIdStub.args[0][1],
+    viewer.id,
+    "Finds updated team user by id"
+  );
+  t.equal(
+    addStripeSeatStub.args[0][1],
+    "a-team-id",
+    "calls stripe function to add a non-viewer seat charge"
+  );
 });
 
 test("PATCH /team-users/:id: invalid role", async (t: Test) => {
-  const { updateStub } = setup();
+  const { updateStub, addStripeSeatStub } = setup();
   const [response] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -425,10 +501,15 @@ test("PATCH /team-users/:id: invalid role", async (t: Test) => {
 
   t.equal(response.status, 403, "Responds with forbidden status");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function"
+  );
 });
 
 test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
-  const { updateStub } = setup();
+  const { updateStub, addStripeSeatStub } = setup();
   const [response] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -439,10 +520,20 @@ test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
 
   t.equal(response.status, 403, "Responds with forbidden status");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function"
+  );
 });
 
 test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test) => {
-  const { findActorTeamUserStub, updateStub, transferOwnershipStub } = setup();
+  const {
+    addStripeSeatStub,
+    findActorTeamUserStub,
+    updateStub,
+    transferOwnershipStub,
+  } = setup();
   findActorTeamUserStub.resolves({
     id: "a-team-owner",
     role: TeamUserRole.ADMIN,
@@ -461,62 +552,60 @@ test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test
     0,
     "Does not call special transfer ownership method"
   );
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function"
+  );
 });
 
-test("PATCH /team-users/:id: owners can transfer ownership", async (t: Test) => {
-  const { findActorTeamUserStub, updateStub, transferOwnershipStub } = setup();
-  findActorTeamUserStub.resolves({
-    id: "a-team-owner",
-    role: TeamUserRole.OWNER,
-  });
-  const [response] = await patch(`/team-users/${tu1.id}`, {
+test("PATCH /team-users/:id: owners can transfer ownership to viewer", async (t: Test) => {
+  const {
+    addStripeSeatStub,
+    findTeamUserByIdStub,
+    findActorTeamUserStub,
+    transferOwnershipStub,
+  } = setup();
+  const teamViewer: TeamUser = {
+    ...tu1,
+    id: "viewer",
+    role: Role.VIEWER,
+  };
+  const teamOwner: TeamUser = {
+    ...tu1,
+    id: "owner",
+    role: Role.OWNER,
+  };
+  findTeamUserByIdStub.onFirstCall().resolves(teamViewer); // requireTeamUserByTeamUserId
+  findTeamUserByIdStub.onSecondCall().resolves(teamViewer); // before update
+  findTeamUserByIdStub
+    .onThirdCall()
+    .resolves({ ...teamViewer, role: Role.OWNER }); // after update
+  findActorTeamUserStub.resolves(teamOwner);
+
+  const [response] = await patch(`/team-users/${teamViewer.id}`, {
     headers: authHeader("a-session-id"),
     body: {
       role: "OWNER",
     },
   });
 
-  t.equal(response.status, 200, "Responds with success");
-  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
+  t.equal(response.status, 200, "Responds with forbidden status");
   t.equal(
     transferOwnershipStub.callCount,
     1,
     "Calls the special transfer ownership method"
   );
-});
-
-test("PATCH /team-users/:id: doesn't allow team owner to self-downgrade", async (t: Test) => {
-  const {
-    findTeamUserByIdStub,
-    findActorTeamUserStub,
-    updateStub,
-    transferOwnershipStub,
-  } = setup();
-  const teamOwner: TeamUser = {
-    ...tu1,
-    role: Role.OWNER,
-  };
-  findTeamUserByIdStub.resolves(teamOwner);
-  findActorTeamUserStub.resolves(teamOwner);
-
-  const [response] = await patch(`/team-users/${tu1.id}`, {
-    headers: authHeader("a-session-id"),
-    body: {
-      role: "ADMIN",
-    },
-  });
-
-  t.equal(response.status, 403, "Responds with forbidden status");
-  t.equal(updateStub.callCount, 0, "Does not call the standard update method");
   t.equal(
-    transferOwnershipStub.callCount,
-    0,
-    "Does not call the special transfer ownership method"
+    addStripeSeatStub.callCount,
+    1,
+    "Calls stripe function to charge for new seat"
   );
 });
 
 test("PATCH /team-users/:id: admin can't downgrade owner", async (t: Test) => {
   const {
+    addStripeSeatStub,
     findTeamUserByIdStub,
     findActorTeamUserStub,
     updateStub,
@@ -545,6 +634,11 @@ test("PATCH /team-users/:id: admin can't downgrade owner", async (t: Test) => {
     transferOwnershipStub.callCount,
     0,
     "Does not call the special transfer ownership method"
+  );
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function"
   );
 });
 

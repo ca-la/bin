@@ -1,10 +1,17 @@
 import Knex from "knex";
+import * as z from "zod";
 import { insecureHash } from "../insecure-hash";
 import Logger from "../logger";
 import makeRequest from "./make-request";
 import PaymentMethodsDAO from "../../components/payment-methods/dao";
 import * as UsersDAO from "../../components/users/dao";
+import TeamUsersDAO from "../../components/team-users/dao";
 import { STRIPE_SECRET_KEY } from "../../config";
+import * as SubscriptionsDAO from "../../components/subscriptions/dao";
+import {
+  PlanStripePrice,
+  PlanStripePriceType,
+} from "../../components/plan-stripe-price/types";
 
 const STRIPE_CONNECT_API_BASE = "https://connect.stripe.com";
 
@@ -216,4 +223,113 @@ export async function getBalances(): Promise<Balances> {
   }
 
   return response.available[0].source_types;
+}
+
+const subscriptionItemSchema = z
+  .object({
+    id: z.string(),
+    quantity: z.number(),
+    price: z
+      .object({
+        id: z.string(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
+type SubscriptionItem = z.infer<typeof subscriptionItemSchema>;
+
+const subscriptionItemUpdateSchema = subscriptionItemSchema.partial().extend({
+  proration_behavior: z
+    .enum(["create_prorations", "none", "always_invoice"])
+    .optional(),
+  payment_behavior: z
+    .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
+    .optional(),
+});
+
+type SubscriptionItemUpdate = z.infer<typeof subscriptionItemUpdateSchema>;
+
+const subscriptionSchema = z
+  .object({
+    id: z.string(),
+    items: z.array(subscriptionItemSchema),
+  })
+  .passthrough();
+
+function getSubscription(subscriptionId: string) {
+  return makeRequest({
+    method: "get",
+    path: `/subscriptions/${subscriptionId}`,
+  }).then(subscriptionSchema.parse);
+}
+
+function updateStripeSubscriptionItem(
+  id: string,
+  data: SubscriptionItemUpdate
+) {
+  return makeRequest({
+    method: "post",
+    path: `/subscription_items/${id}`,
+    data,
+  }).then(subscriptionItemSchema.parse);
+}
+
+export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
+  const teamSubscriptions = await SubscriptionsDAO.findForTeamWithPlans(
+    trx,
+    teamId,
+    {
+      isActive: true,
+    }
+  );
+
+  if (teamSubscriptions.length === 0) {
+    throw new Error(`Could not find a subscription for team with ID ${teamId}`);
+  }
+
+  const subscription = teamSubscriptions[0];
+
+  if (subscription.stripeSubscriptionId === null) {
+    throw new Error(
+      `Could not find a stripe subscription for subscription with ID ${subscription.id}`
+    );
+  }
+
+  const perSeatPrice = subscription.plan.stripePrices.find(
+    (stripePrice: PlanStripePrice) =>
+      stripePrice.type === PlanStripePriceType.PER_SEAT
+  );
+
+  if (!perSeatPrice) {
+    return;
+  }
+
+  const stripeSubscription = await getSubscription(
+    subscription.stripeSubscriptionId
+  );
+  const perSeatSubscriptionItem = stripeSubscription.items.find(
+    (subscriptionItem: SubscriptionItem) =>
+      subscriptionItem.price.id === perSeatPrice.stripePriceId
+  );
+
+  if (!perSeatSubscriptionItem) {
+    throw new Error(
+      `Could not find a PER_SEAT subscription item with price ID ${perSeatPrice.stripePriceId}`
+    );
+  }
+
+  const currentNonViewerCount = await TeamUsersDAO.countNonViewers(trx, teamId);
+
+  if (currentNonViewerCount !== perSeatSubscriptionItem.quantity + 1) {
+    throw new Error(
+      "Stripe quantity does not match current non-viewer seat count."
+    );
+  }
+
+  await updateStripeSubscriptionItem(perSeatSubscriptionItem.id, {
+    quantity: currentNonViewerCount,
+    proration_behavior: "always_invoice",
+    payment_behavior: "error_if_incomplete",
+  });
 }
