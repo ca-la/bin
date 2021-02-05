@@ -1,6 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 
+import TeamUsersDAO from "../team-users/dao";
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
 import * as CreateStripeSubscription from "../../services/stripe/create-subscription";
@@ -8,6 +9,7 @@ import * as CreatePaymentMethod from "../payment-methods/create-payment-method";
 import * as StripeService from "../../services/stripe";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import InvalidDataError from "../../errors/invalid-data";
+import { PlanStripePriceType } from "../plan-stripe-price/types";
 
 import { createSubscription } from "./create";
 
@@ -42,6 +44,9 @@ function setup() {
       stripeSubscriptionId: "a-stripe-subscription-id",
       paymentMethodId: "a-payment-method-id",
     }),
+    teamUserCountStub: sandbox()
+      .stub(TeamUsersDAO, "countNonViewers")
+      .resolves(2),
   };
 }
 
@@ -57,7 +62,13 @@ test("createSubscription free plan", async (t: Test) => {
   findPlanStub.resolves({
     baseCostPerBillingIntervalCents: 0,
     perSeatCostPerBillingIntervalCents: 0,
-    stripePlanId: "a-stripe-plan-id",
+    stripePrices: [
+      {
+        planId: "a-free-plan",
+        stripePriceId: "a-stripe-price-id",
+        type: PlanStripePriceType.BASE_COST,
+      },
+    ],
   });
 
   await createSubscription(trx, options);
@@ -79,8 +90,15 @@ test("createSubscription free plan", async (t: Test) => {
       [
         {
           stripeCustomerId: "a-stripe-customer-id",
-          stripePlanId: "a-stripe-plan-id",
           stripeSourceId: null,
+          seatCount: null,
+          stripePrices: [
+            {
+              planId: "a-free-plan",
+              stripePriceId: "a-stripe-price-id",
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
         },
       ],
     ],
@@ -118,7 +136,13 @@ test("createSubscription paid plan but waived payment", async (t: Test) => {
   findPlanStub.resolves({
     baseCostPerBillingIntervalCents: 10,
     perSeatCostPerBillingIntervalCents: 100,
-    stripePlanId: "a-stripe-plan-id",
+    stripePrices: [
+      {
+        planId: "a-paid-plan",
+        stripePriceId: "a-stripe-price-id",
+        type: PlanStripePriceType.BASE_COST,
+      },
+    ],
   });
 
   await createSubscription(trx, {
@@ -138,9 +162,16 @@ test("createSubscription paid plan but waived payment", async (t: Test) => {
     [
       [
         {
+          seatCount: null,
           stripeCustomerId: "a-stripe-customer-id",
-          stripePlanId: "a-stripe-plan-id",
           stripeSourceId: null,
+          stripePrices: [
+            {
+              planId: "a-paid-plan",
+              stripePriceId: "a-stripe-price-id",
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
         },
       ],
     ],
@@ -179,7 +210,13 @@ test("createSubscription paid plan", async (t: Test) => {
   findPlanStub.resolves({
     baseCostPerBillingIntervalCents: 10,
     perSeatCostPerBillingIntervalCents: 100,
-    stripePlanId: "a-stripe-plan-id",
+    stripePrices: [
+      {
+        planId: "a-paid-plan",
+        stripePriceId: "a-stripe-price-id",
+        type: PlanStripePriceType.BASE_COST,
+      },
+    ],
   });
 
   try {
@@ -220,9 +257,16 @@ test("createSubscription paid plan", async (t: Test) => {
     [
       [
         {
+          seatCount: null,
           stripeCustomerId: "a-stripe-customer-id",
-          stripePlanId: "a-stripe-plan-id",
           stripeSourceId: "a-stripe-source-id",
+          stripePrices: [
+            {
+              planId: "a-paid-plan",
+              stripePriceId: "a-stripe-price-id",
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
         },
       ],
     ],
@@ -261,7 +305,13 @@ test("createSubscription paid plan for a team", async (t: Test) => {
   findPlanStub.resolves({
     baseCostPerBillingIntervalCents: 10,
     perSeatCostPerBillingIntervalCents: 100,
-    stripePlanId: "a-stripe-plan-id",
+    stripePrices: [
+      {
+        planId: "a-paid-plan",
+        stripePriceId: "a-stripe-price-id",
+        type: PlanStripePriceType.BASE_COST,
+      },
+    ],
   });
 
   try {
@@ -304,9 +354,16 @@ test("createSubscription paid plan for a team", async (t: Test) => {
     [
       [
         {
+          seatCount: 2,
           stripeCustomerId: "a-stripe-customer-id",
-          stripePlanId: "a-stripe-plan-id",
           stripeSourceId: "a-stripe-source-id",
+          stripePrices: [
+            {
+              planId: "a-paid-plan",
+              stripePriceId: "a-stripe-price-id",
+              type: PlanStripePriceType.BASE_COST,
+            },
+          ],
         },
       ],
     ],

@@ -5,6 +5,9 @@ import { format, green } from "../../services/colors";
 import db from "../../services/db";
 import { findOrCreateCustomerId } from "../../services/stripe";
 import createStripeSubscription from "../../services/stripe/create-subscription";
+import { PlanStripePriceRow } from "../../components/plan-stripe-price/types";
+import TeamUsersDAO from "../../components/team-users/dao";
+import { dataAdapter as stripePriceDataAdapter } from "../../components/plan-stripe-price/adapter";
 
 /*
 Create Stripe customer and subscription for every free subscription
@@ -16,7 +19,7 @@ interface SubscriptionWithRelativeData {
   user_id: string | null;
   team_id: string | null;
   team_owner_user_id: string | null;
-  stripe_plan_id: string;
+  stripe_prices: PlanStripePriceRow[];
 }
 
 async function main(...args: string[]): Promise<string> {
@@ -32,7 +35,12 @@ async function main(...args: string[]): Promise<string> {
         "s.user_id",
         "s.team_id",
         "tu.user_id as team_owner_user_id",
-        "p.stripe_plan_id as stripe_plan_id",
+        trx.raw(`
+          COALESCE(
+            JSON_AGG(plan_stripe_prices)
+                    FILTER (WHERE plan_stripe_prices.plan_id IS NOT NULL),
+            '[]'
+          ) AS stripe_prices`),
       ])
       .from("subscriptions as s")
       .leftJoin("team_users as tu", function () {
@@ -41,8 +49,10 @@ async function main(...args: string[]): Promise<string> {
           .andOn("tu.role", "=", trx.raw("?", ["OWNER"]));
       })
       .leftJoin("plans as p", "p.id", "s.plan_id")
+      .leftJoin("plan_stripe_prices", "plan_stripe_prices.plan_id", "p.id")
       .where({ stripe_subscription_id: null })
-      .whereRaw("cancelled_at is null or cancelled_at > now()");
+      .whereRaw("cancelled_at is null or cancelled_at > now()")
+      .groupBy(["s.id", "tu.user_id"]);
 
     log(
       `Found ${subscriptionsWithRelativeData.length} subscriptions without Stripe id`
@@ -67,8 +77,16 @@ async function main(...args: string[]): Promise<string> {
       );
       const stripeSubscription = await createStripeSubscription({
         stripeCustomerId,
-        stripePlanId: subscriptionWithData.stripe_plan_id,
+        stripePrices: stripePriceDataAdapter.fromDbArray(
+          subscriptionWithData.stripe_prices
+        ),
         stripeSourceId: null,
+        seatCount: subscriptionWithData.team_id
+          ? await TeamUsersDAO.countNonViewers(
+              trx,
+              subscriptionWithData.team_id
+            )
+          : null,
       });
 
       log(

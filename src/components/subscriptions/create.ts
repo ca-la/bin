@@ -3,6 +3,7 @@ import Knex from "knex";
 
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
+import TeamUsersDAO from "../team-users/dao";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 import InvalidDataError from "../../errors/invalid-data";
@@ -31,6 +32,10 @@ export async function createSubscription(
     (plan.baseCostPerBillingIntervalCents === 0 &&
       plan.perSeatCostPerBillingIntervalCents === 0);
 
+  const seatCount = teamId
+    ? await TeamUsersDAO.countNonViewers(trx, teamId)
+    : null;
+
   if (!isPlanFree) {
     if (!stripeCardToken) {
       throw new InvalidDataError("Missing stripe card token");
@@ -47,8 +52,9 @@ export async function createSubscription(
     stripeCustomerId: paymentMethod
       ? paymentMethod.stripeCustomerId
       : await findOrCreateCustomerId(userId, trx),
-    stripePlanId: plan.stripePlanId,
     stripeSourceId: paymentMethod ? paymentMethod.stripeSourceId : null,
+    stripePrices: plan.stripePrices,
+    seatCount,
   });
 
   const paymentMethodId = paymentMethod ? paymentMethod.id : null;

@@ -1,11 +1,16 @@
+import {
+  PlanStripePrice,
+  PlanStripePriceType,
+} from "../../components/plan-stripe-price/types";
 import InvalidPaymentError = require("../../errors/invalid-payment");
 import { StripeDataObject } from "./serialize-request-body";
 import makeRequest from "./make-request";
 
 interface Options {
-  stripePlanId: string;
   stripeCustomerId: string;
   stripeSourceId: string | null;
+  stripePrices: PlanStripePrice[];
+  seatCount: number | null;
 }
 
 interface Request extends StripeDataObject {
@@ -22,10 +27,24 @@ interface Response {
 export default async function createSubscription(
   options: Options
 ): Promise<Response> {
-  const { stripePlanId, stripeCustomerId, stripeSourceId } = options;
+  const { stripeCustomerId, stripeSourceId, stripePrices, seatCount } = options;
+  const hasPerSeatPrice = stripePrices.some(
+    (price: PlanStripePrice) => price.type === PlanStripePriceType.PER_SEAT
+  );
+
+  if (hasPerSeatPrice && seatCount === null) {
+    throw new Error(
+      "Must pass non-null seatCount when plan includes a PER_SEAT price type"
+    );
+  }
 
   const data: Request = {
-    items: [{ plan: stripePlanId }],
+    items: stripePrices.map((price: PlanStripePrice) => ({
+      price: price.stripePriceId,
+      ...(price.type === PlanStripePriceType.PER_SEAT
+        ? { quantity: seatCount || 0 }
+        : null),
+    })),
     customer: stripeCustomerId,
   };
 

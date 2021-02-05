@@ -46,8 +46,9 @@ export async function updateSubscription(
 
     stripeSubscription = await createStripeSubscription({
       stripeCustomerId: paymentMethod.stripeCustomerId,
-      stripePlanId: plan.stripePlanId,
+      stripePrices: plan.stripePrices,
       stripeSourceId: paymentMethod.stripeSourceId,
+      seatCount: null, // TODO: count non-viewer seats
     });
   }
   const stripeSubscriptionId = stripeSubscription
