@@ -1,3 +1,4 @@
+import Knex from "knex";
 import process from "process";
 import { chunk } from "lodash";
 
@@ -19,7 +20,11 @@ async function main(...args: string[]): Promise<string> {
   try {
     const planStripePlans = await trx<{ id: string; stripe_plan_id: string }>(
       "plans"
-    ).select(["id", "stripe_plan_id"]);
+    )
+      .select(["id", "stripe_plan_id"])
+      .whereNotIn("id", (subquery: Knex.QueryBuilder) =>
+        subquery.select("plan_id").from("plan_stripe_prices")
+      );
     log(`Found ${planStripePlans.length} plans`);
     const stripePricesToInsert: PlanStripePriceRow[] = [];
 
