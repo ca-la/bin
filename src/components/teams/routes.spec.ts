@@ -13,6 +13,8 @@ import * as PubSub from "../../services/pubsub";
 import * as TeamsService from "./service";
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionService from "../subscriptions/create";
+import * as SubscriptionUpgradeService from "../subscriptions/upgrade";
+import { Subscription } from "../subscriptions/domain-object";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -519,4 +521,180 @@ test("POST -> GET /teams end-to-end", async (t: Test) => {
   });
 
   t.deepEqual(notFound[1], [], "does not show team for a different user");
+});
+
+interface TeamSubscriptionPatchTestCase {
+  title: string;
+  userRole?: Role;
+  findTeamUserStub: Partial<TeamUser> | null;
+  upgradeTeamSubscriptionStub: Partial<Subscription> | null;
+  responseStatus: number;
+  requestBody?: any;
+  responseBody?: any;
+}
+
+const teamSubscriptionPathTestCases: TeamSubscriptionPatchTestCase[] = [
+  {
+    title: "PATCH /teams/:id/subscription missing all required properties",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    upgradeTeamSubscriptionStub: null,
+    responseStatus: 400,
+  },
+  {
+    title: "PATCH /teams/:id/subscription missing required planId property",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 400,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription missing required stripeCardToken property",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      planId: "a-plan-id",
+    },
+    responseStatus: 400,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription forbidden for regular user not a team OWNER",
+    userRole: "USER",
+    findTeamUserStub: null,
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription forbidden for a team user with VIEWER role",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.VIEWER },
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription forbidden for a team user with EDITOR role",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.EDITOR },
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription forbidden for a team user with ADMIN role",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.ADMIN },
+    upgradeTeamSubscriptionStub: null,
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription response successfully for a team user with OWNER role",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 200,
+    responseBody: {
+      id: "a-subscription-id",
+    },
+  },
+  {
+    title: "PATCH /teams/:id/subscription response successfully for CALA admin",
+    userRole: "ADMIN",
+    findTeamUserStub: null,
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
+    requestBody: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+    responseStatus: 200,
+    responseBody: {
+      id: "a-subscription-id",
+    },
+  },
+];
+
+for (const testCase of teamSubscriptionPathTestCases) {
+  test(testCase.title, async (t: Test) => {
+    setup({ role: testCase.userRole });
+    sandbox().stub(TeamUsersDAO, "findOne").resolves(testCase.findTeamUserStub);
+    sandbox()
+      .stub(SubscriptionUpgradeService, "upgradeTeamSubscription")
+      .resolves(testCase.upgradeTeamSubscriptionStub);
+
+    const [response, body] = await patch("/teams/a-team-id/subscription", {
+      headers: authHeader("a-session-id"),
+      ...(testCase.requestBody ? { body: testCase.requestBody } : null),
+    });
+    t.equal(
+      response.status,
+      testCase.responseStatus,
+      `responds with expected status: ${testCase.responseStatus}`
+    );
+
+    if (testCase.responseBody) {
+      t.deepEqual(body, JSON.parse(JSON.stringify(testCase.responseBody)));
+    }
+  });
+}
+
+test("PATH /teams/:id/subscription successfully and upgradeTeamSubscription called with right arguments", async (t: Test) => {
+  setup({ role: "USER" });
+  sandbox()
+    .stub(TeamUsersDAO, "findOne")
+    .resolves({ role: TeamUserRole.OWNER });
+  const upgradeTeamSubscriptionStub = sandbox()
+    .stub(SubscriptionUpgradeService, "upgradeTeamSubscription")
+    .resolves({
+      id: "a-subscription-id",
+    });
+
+  const [response, body] = await patch("/teams/a-team-id/subscription", {
+    headers: authHeader("a-session-id"),
+    body: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+  });
+
+  t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
+    userId: "a-user-id",
+    teamId: "a-team-id",
+    planId: "plan-id",
+    stripeCardToken: "a-stripe-card-token",
+  });
+
+  t.equal(response.status, 200, `responds with expected status: 200`);
+  t.deepEqual(body, JSON.parse(JSON.stringify({ id: "a-subscription-id" })));
 });

@@ -9,7 +9,16 @@ import TeamsDAO from "./dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as PlansDAO from "../plans/dao";
 import { createSubscription } from "../subscriptions/create";
-import { TeamDb, unsavedTeamSchema, teamTypeSchema, TeamType } from "./types";
+import { upgradeTeamSubscription } from "../subscriptions/upgrade";
+import {
+  TeamDb,
+  unsavedTeamSchema,
+  teamTypeSchema,
+  TeamType,
+  teamSubscriptionUpgradeSchema,
+  TeamSubscriptionUpgrade,
+} from "./types";
+import { typeGuardFromSchema } from "../../middleware/type-guard";
 import requireAdmin from "../../middleware/require-admin";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import { createTeamWithOwner } from "./service";
@@ -197,6 +206,24 @@ const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
   },
 });
 
+function* upgradeTeamSubscriptionRouteHandler(
+  this: TrxContext<AuthedContext<TeamSubscriptionUpgrade>>
+): Iterator<any, any, any> {
+  const { trx, userId } = this.state;
+  const { id: teamId } = this.params;
+  const { planId, stripeCardToken } = this.request.body;
+
+  const upgradedSubscription = yield upgradeTeamSubscription(trx, {
+    userId,
+    teamId,
+    planId,
+    stripeCardToken,
+  });
+
+  this.body = upgradedSubscription;
+  this.status = 200;
+}
+
 export default {
   prefix: "/teams",
   routes: {
@@ -228,6 +255,15 @@ export default {
         requireAuth,
         requireTeamRoles(Object.values(TeamUserRole), findTeamById),
         findTeamSubscriptions,
+      ],
+    },
+    "/:id/subscription": {
+      patch: [
+        useTransaction,
+        requireAuth,
+        typeGuardFromSchema(teamSubscriptionUpgradeSchema),
+        requireTeamRoles([TeamUserRole.OWNER], findTeamById),
+        upgradeTeamSubscriptionRouteHandler,
       ],
     },
   },

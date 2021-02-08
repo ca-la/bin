@@ -5,6 +5,7 @@ import Knex from "knex";
 import { test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 import { generateTeam } from "../../test-helpers/factories/team";
+import generatePlan from "../../test-helpers/factories/plan";
 import TeamUsersDAO from "../team-users/dao";
 import db from "../../services/db";
 import * as SubscriptionsDAO from "./dao";
@@ -185,7 +186,6 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
     const { team: team2, teamUser: teamUser2 } = await generateTeam(user.id);
     await TeamUsersDAO.deleteById(trx, teamUser2.id);
     const { user: user2 } = await createUser({ withSession: false });
-    const { user: user3 } = await createUser({ withSession: false });
     const { team: team3 } = await generateTeam(user2.id);
 
     const active3 = await SubscriptionsDAO.create(
@@ -195,7 +195,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
-        userId: user3.id,
+        userId: null,
         teamId: team.id,
         isPaymentWaived: false,
       },
@@ -211,7 +211,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
-        userId: user3.id,
+        userId: null,
         teamId: team2.id,
         isPaymentWaived: false,
       },
@@ -228,7 +228,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
-        userId: user3.id,
+        userId: null,
         teamId: team3.id,
         isPaymentWaived: false,
       },
@@ -348,7 +348,7 @@ test("findForTeamWithPlans", async (t: tape.Test) => {
         paymentMethodId: pm1.id,
         stripeSubscriptionId: "123",
         teamId: team.id,
-        userId: user.id,
+        userId: null,
         isPaymentWaived: false,
       },
       trx
@@ -367,5 +367,59 @@ test("findForTeamWithPlans", async (t: tape.Test) => {
         },
       },
     ]);
+  });
+});
+
+test("findActiveByTeamId", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const plan = await generatePlan(trx, { title: "Team Plan" });
+
+    // cancelled subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("2000-01-01"),
+        planId: plan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        teamId: team.id,
+        userId: null,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const noActiveSubscription = await SubscriptionsDAO.findActiveByTeamId(
+      trx,
+      team.id
+    );
+    t.equal(noActiveSubscription, null, "active subscription is not found");
+
+    const activeSubscription = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: new Date("3000-01-01"),
+        planId: plan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        teamId: team.id,
+        userId: null,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const subscription = await SubscriptionsDAO.findActiveByTeamId(
+      trx,
+      team.id
+    );
+    t.deepEqual(
+      subscription,
+      activeSubscription,
+      "found active team subscription"
+    );
   });
 });

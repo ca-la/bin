@@ -237,9 +237,11 @@ const subscriptionItemSchema = z
   })
   .passthrough();
 
-type SubscriptionItem = z.infer<typeof subscriptionItemSchema>;
+export type SubscriptionItem = z.infer<typeof subscriptionItemSchema>;
 
 const subscriptionItemUpdateSchema = subscriptionItemSchema.partial().extend({
+  price: z.string().optional(),
+  deleted: z.boolean().optional(),
   proration_behavior: z
     .enum(["create_prorations", "none", "always_invoice"])
     .optional(),
@@ -248,7 +250,9 @@ const subscriptionItemUpdateSchema = subscriptionItemSchema.partial().extend({
     .optional(),
 });
 
-type SubscriptionItemUpdate = z.infer<typeof subscriptionItemUpdateSchema>;
+export type SubscriptionItemUpdate = z.infer<
+  typeof subscriptionItemUpdateSchema
+>;
 
 const subscriptionSchema = z
   .object({
@@ -260,7 +264,22 @@ const subscriptionSchema = z
   })
   .passthrough();
 
-function getSubscription(subscriptionId: string) {
+export type Subscription = z.infer<typeof subscriptionSchema>;
+
+const subscriptionUpdateSchema = subscriptionSchema.partial().extend({
+  items: z.array(subscriptionItemUpdateSchema),
+  proration_behavior: z
+    .enum(["create_prorations", "none", "always_invoice"])
+    .optional(),
+  payment_behavior: z
+    .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
+    .optional(),
+  default_source: z.string().optional(),
+});
+
+export type SubscriptionUpdate = z.infer<typeof subscriptionUpdateSchema>;
+
+export function getSubscription(subscriptionId: string) {
   return makeRequest({
     method: "get",
     path: `/subscriptions/${subscriptionId}`,
@@ -276,6 +295,17 @@ function updateStripeSubscriptionItem(
     path: `/subscription_items/${id}`,
     data,
   }).then(subscriptionItemSchema.parse);
+}
+
+export async function updateSubscription(
+  subscriptionId: string,
+  subscriptionDataToUpdate: SubscriptionUpdate
+): Promise<Subscription> {
+  return makeRequest<Subscription>({
+    method: "post",
+    path: `/subscriptions/${subscriptionId}`,
+    data: subscriptionDataToUpdate,
+  }).then(subscriptionSchema.parse);
 }
 
 export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {

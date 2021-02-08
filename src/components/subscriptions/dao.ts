@@ -144,3 +144,24 @@ export async function update(
     res
   );
 }
+
+export async function findActiveByTeamId(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<Subscription | null> {
+  const row = await trx<SubscriptionRow>(TABLE_NAME)
+    .where({ team_id: teamId })
+    .andWhereRaw("(cancelled_at is null or cancelled_at > now())")
+    .first();
+
+  if (!row) {
+    return null;
+  }
+
+  return validate<SubscriptionRow, Subscription>(
+    TABLE_NAME,
+    isSubscriptionRow,
+    dataAdapter,
+    row
+  );
+}
