@@ -13,7 +13,6 @@ interface GetRequest {
   path: string;
   additionalHeaders?: Record<string, string>;
   apiBase?: string;
-  data?: StripeDataObject;
 }
 
 interface PostRequest {
@@ -36,18 +35,20 @@ const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString("base64");
 export default async function makeRequest<ResponseType extends object = {}>(
   requestOptions: RequestOptions
 ): Promise<ResponseType> {
-  if (requestOptions.data !== undefined) {
-    requestOptions.additionalHeaders = {
-      ...requestOptions.additionalHeaders,
-      "Content-Type": "application/x-www-form-urlencoded",
-    };
-  }
+  if (isPostRequest(requestOptions)) {
+    if (requestOptions.idempotencyKey) {
+      requestOptions.additionalHeaders = {
+        ...requestOptions.additionalHeaders,
+        "Idempotency-Key": requestOptions.idempotencyKey,
+      };
+    }
 
-  if (isPostRequest(requestOptions) && requestOptions.idempotencyKey) {
-    requestOptions.additionalHeaders = {
-      ...requestOptions.additionalHeaders,
-      "Idempotency-Key": requestOptions.idempotencyKey,
-    };
+    if (requestOptions.data !== undefined) {
+      requestOptions.additionalHeaders = {
+        ...requestOptions.additionalHeaders,
+        "Content-Type": "application/x-www-form-urlencoded",
+      };
+    }
   }
 
   const fetcher = getFetcher({

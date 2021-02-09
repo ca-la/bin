@@ -156,8 +156,7 @@ test("findOrCreateCustomerId: no existing customer", async (t: Test) => {
       [
         {
           method: "get",
-          path: "/customers",
-          data: { email: "example@example.com", limit: 1 },
+          path: "/customers?email=example%40example.com&limit=1",
         },
       ],
       [
@@ -192,8 +191,7 @@ test("findOrCreateCustomerId: stripe customer no PaymentMethod", async (t: Test)
       [
         {
           method: "get",
-          path: "/customers",
-          data: { email: "example@example.com", limit: 1 },
+          path: "/customers?email=example%40example.com&limit=1",
         },
       ],
     ],

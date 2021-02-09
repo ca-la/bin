@@ -1,5 +1,6 @@
 import Knex from "knex";
 import * as z from "zod";
+import querystring from "querystring";
 import { insecureHash } from "../insecure-hash";
 import Logger from "../logger";
 import makeRequest from "./make-request";
@@ -86,13 +87,14 @@ export async function sendTransfer(
 }
 
 async function findCustomer(email: string): Promise<{ id: string } | null> {
+  const query = querystring.stringify({
+    email,
+    limit: 1,
+  });
+
   const found = await makeRequest<{ id: string }[]>({
     method: "get",
-    path: "/customers",
-    data: {
-      email,
-      limit: 1,
-    },
+    path: `/customers?${query}`,
   });
 
   if (found.length === 0) {
