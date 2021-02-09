@@ -1,9 +1,9 @@
 import Knex from "knex";
 import process from "process";
 
-import { log, logServerError } from "../../services/logger";
-import { format, green } from "../../services/colors";
-import db from "../../services/db";
+import { log, logServerError } from "../services/logger";
+import { format, green } from "../services/colors";
+import db from "../services/db";
 
 /*
 Moves all non-team collections into the personal team for each user.
