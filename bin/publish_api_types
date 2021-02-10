@@ -15,7 +15,8 @@ run() {
   rm -rf published-types-dist
   npx tsc --build src/published-types/tsconfig.json
 
-  cp src/published-types/package.json .npmrc published-types-dist
+  cp src/published-types/package.json published-types-dist
+  cp .npmrc published-types-dist || true
 
   (
     cd published-types-dist
