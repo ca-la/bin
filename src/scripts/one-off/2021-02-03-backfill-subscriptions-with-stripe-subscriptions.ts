@@ -82,7 +82,7 @@ async function main(...args: string[]): Promise<string> {
         ),
         stripeSourceId: null,
         seatCount: subscriptionWithData.team_id
-          ? await TeamUsersDAO.countNonViewers(
+          ? await TeamUsersDAO.countBilledUsers(
               trx,
               subscriptionWithData.team_id
             )

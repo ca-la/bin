@@ -60,8 +60,8 @@ async function setup() {
       stripeSourceId: "a-stripe-source-id",
       paymentMethodId: "a-payment-method-id",
     });
-  const countNonViewersTeamUsersStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+  const countBilledUsersTeamUsersStub = sandbox()
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(3);
   const upgradeStripeSubscriptionStub = sandbox()
     .stub(UpgradeStripeSubscription, "default")
@@ -76,7 +76,7 @@ async function setup() {
     upgradeStripeSubscriptionStub,
     updateCalaSubscriptionStub,
     createCalaSubscriptionStub,
-    countNonViewersTeamUsersStub,
+    countBilledUsersTeamUsersStub,
   };
 }
 
@@ -301,7 +301,7 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
     findPlanStub,
     findActiveTeamSubscriptionStub,
     createPaymentMethodStub,
-    countNonViewersTeamUsersStub,
+    countBilledUsersTeamUsersStub,
     upgradeStripeSubscriptionStub,
     updateCalaSubscriptionStub,
     createCalaSubscriptionStub,
@@ -352,7 +352,7 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
     "calls create payment method  with correct args"
   );
   t.deepEqual(
-    countNonViewersTeamUsersStub.args,
+    countBilledUsersTeamUsersStub.args,
     [[trxStub, "a-team-id"]],
     "calls method to get count of non viewers team users with correct team id"
   );

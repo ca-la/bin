@@ -33,7 +33,7 @@ export async function createSubscription(
       plan.perSeatCostPerBillingIntervalCents === 0);
 
   const seatCount = teamId
-    ? await TeamUsersDAO.countNonViewers(trx, teamId)
+    ? await TeamUsersDAO.countBilledUsers(trx, teamId)
     : null;
 
   if (!isPlanFree) {

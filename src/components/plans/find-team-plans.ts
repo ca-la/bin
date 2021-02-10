@@ -1,6 +1,6 @@
 import Knex from "knex";
 import { findTeamPlans } from "./dao";
-import { Plan } from "./types";
+import { Plan, TeamPlanOption } from "./types";
 
 export async function areThereAvailableSeatsInTeamPlan(
   trx: Knex.Transaction,
@@ -19,4 +19,17 @@ export async function areThereAvailableSeatsInTeamPlan(
       plan.maximumSeatsPerTeam === null ||
       plan.maximumSeatsPerTeam > currentTeamUsers
   );
+}
+
+export function attachTeamOptionData(
+  plan: Plan,
+  billedUserCount: number
+): TeamPlanOption {
+  return {
+    ...plan,
+    billedUserCount,
+    totalBillingIntervalCostCents:
+      plan.baseCostPerBillingIntervalCents +
+      billedUserCount * plan.perSeatCostPerBillingIntervalCents,
+  };
 }

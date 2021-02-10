@@ -100,7 +100,7 @@ export async function upgradeTeamSubscription(
     trx
   );
 
-  const seatCount = await TeamUsersDAO.countNonViewers(trx, teamId);
+  const seatCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
   // working with Stripe API after we finish with our DB
   // to make sure we won't make successful request and update in Stripe and then
   // graceful rollback in our DB on error.

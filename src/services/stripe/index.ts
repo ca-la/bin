@@ -354,7 +354,10 @@ export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
     );
   }
 
-  const currentNonViewerCount = await TeamUsersDAO.countNonViewers(trx, teamId);
+  const currentNonViewerCount = await TeamUsersDAO.countBilledUsers(
+    trx,
+    teamId
+  );
 
   if (currentNonViewerCount !== perSeatSubscriptionItem.quantity + 1) {
     throw new Error(

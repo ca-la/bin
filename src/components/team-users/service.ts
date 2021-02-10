@@ -109,7 +109,7 @@ async function assertSeatAvailability(
   teamId: string,
   isAdmin?: boolean
 ) {
-  const nonViewerCount = await TeamUsersDAO.countNonViewers(trx, teamId);
+  const nonViewerCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
   const areThereSeatsInTeamPlan = await areThereAvailableSeatsInTeamPlan(
     trx,
     teamId,

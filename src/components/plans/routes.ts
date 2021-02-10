@@ -1,9 +1,16 @@
 import Router from "koa-router";
 
 import * as PlansDAO from "./dao";
+import TeamUsersDAO from "../team-users/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import useTransaction from "../../middleware/use-transaction";
-import { CreatePlanRequest, createPlanRequestSchema, Plan } from "./types";
+import {
+  CreatePlanRequest,
+  createPlanRequestSchema,
+  Plan,
+  TeamPlanOption,
+} from "./types";
+import { attachTeamOptionData } from "./find-team-plans";
 import { typeGuard } from "../../middleware/type-guard";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
 import { check } from "../../services/check";
@@ -12,7 +19,7 @@ import { createPlan } from "./create-plan";
 const router = new Router();
 
 function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
-  const { withPrivate } = this.query;
+  const { withPrivate, teamId } = this.query;
   const { trx, role } = this.state;
   const isAdmin = role === "ADMIN";
 
@@ -20,9 +27,17 @@ function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     this.throw(403, "Private plans cannot be listed.");
   }
 
-  const plans = withPrivate
+  let plans = withPrivate
     ? yield PlansDAO.findAll(trx)
     : yield PlansDAO.findPublic(trx);
+
+  if (teamId) {
+    const billedUserCount = yield TeamUsersDAO.countBilledUsers(trx, teamId);
+    plans = plans.map(
+      (plan: Plan): TeamPlanOption =>
+        attachTeamOptionData(plan, billedUserCount)
+    );
+  }
 
   this.status = 200;
   this.body = plans;
@@ -30,11 +45,19 @@ function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
 
 function* getById(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const { trx } = this.state;
+  const { teamId } = this.query;
 
-  const plan = yield PlansDAO.findById(trx, this.params.planId);
+  let plan = yield PlansDAO.findById(trx, this.params.planId);
+
   if (!plan) {
     this.throw(404, "Plan not found");
   }
+
+  if (teamId) {
+    const billedUserCount = yield TeamUsersDAO.countBilledUsers(trx, teamId);
+    plan = attachTeamOptionData(plan, billedUserCount);
+  }
+
   this.status = 200;
   this.body = plan;
 }

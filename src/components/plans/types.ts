@@ -61,6 +61,13 @@ export const planSchema = planDbSchema.extend({
 });
 export type Plan = z.infer<typeof planSchema>;
 
+export const teamPlanOptionSchema = planSchema.extend({
+  billedUserCount: z.number(),
+  totalBillingIntervalCostCents: z.number(),
+});
+
+export type TeamPlanOption = z.infer<typeof teamPlanOptionSchema>;
+
 export const planRowSchema = planDbRowSchema.extend({
   stripe_prices: z.array(planStripePriceRowSchema),
 });

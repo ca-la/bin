@@ -2,6 +2,7 @@ import uuid from "node-uuid";
 
 import * as PlansDAO from "./dao";
 import * as CreatePlanService from "./create-plan";
+import TeamUsersDAO from "../team-users/dao";
 import { PlanDb, BillingInterval } from "./types";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
@@ -52,7 +53,7 @@ const firstPlan: PlanDb = {
   description: "The First One",
   ordering: 1,
   baseCostPerBillingIntervalCents: 7890,
-  perSeatCostPerBillingIntervalCents: 0,
+  perSeatCostPerBillingIntervalCents: 100,
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
@@ -141,6 +142,25 @@ test("GET /plans lists public plans in order", async (t: Test) => {
   t.equal(body[1].baseCostPerBillingIntervalCents, 1234);
 });
 
+test("GET /plans attaches team data when requested", async (t: Test) => {
+  sandbox().stub(TeamUsersDAO, "countBilledUsers").resolves(3);
+  setup();
+
+  const [response, body] = await get("/plans?teamId=x");
+
+  t.equal(response.status, 200);
+
+  t.equal(body.length, 2);
+
+  t.equal(body[0].title, "The First One");
+  t.equal(body[0].billedUserCount, 3);
+  t.equal(body[0].totalBillingIntervalCostCents, 8190);
+
+  t.equal(body[1].title, "A little Bit");
+  t.equal(body[1].billedUserCount, 3);
+  t.equal(body[1].totalBillingIntervalCostCents, 1234);
+});
+
 test("GET /plans/:id returns a plan", async (t: Test) => {
   const { findByIdStub } = setup();
 
@@ -150,6 +170,27 @@ test("GET /plans/:id returns a plan", async (t: Test) => {
 
   t.deepEqual(body, JSON.parse(JSON.stringify(littleBitPlan)), "Returns plan");
   t.deepEqual(findByIdStub.args[0][1], littleBitPlan.id, "Finds plan by id");
+});
+
+test("GET /plans/:id attaches team data when requested", async (t: Test) => {
+  sandbox().stub(TeamUsersDAO, "countBilledUsers").resolves(3);
+  setup();
+
+  const [response, body] = await get(`/plans/${littleBitPlan.id}?teamId=X`);
+
+  t.equal(response.status, 200);
+
+  t.deepEqual(
+    body,
+    JSON.parse(
+      JSON.stringify({
+        ...littleBitPlan,
+        billedUserCount: 3,
+        totalBillingIntervalCostCents: 1234,
+      })
+    ),
+    "Returns plan"
+  );
 });
 
 test("GET /plans/:id returns 404 when non-existent", async (t: Test) => {

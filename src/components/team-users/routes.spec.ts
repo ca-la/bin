@@ -51,7 +51,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     }),
     findTeamMembersStub: sandbox().stub(TeamUsersDAO, "find").resolves([tu1]),
     findTeamNonViewerStub: sandbox()
-      .stub(TeamUsersDAO, "countNonViewers")
+      .stub(TeamUsersDAO, "countBilledUsers")
       .resolves(1),
     createStub: sandbox().stub(RawTeamUsersDAO, "create").resolves(tuDb1),
     findTeamUserByIdStub: sandbox()

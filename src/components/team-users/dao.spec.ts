@@ -514,7 +514,7 @@ test("TeamUsersDAO.findByUserAndDesign", async (t: Test) => {
   }
 });
 
-test("TeamUsersDAO.countNonViewers", async (t: Test) => {
+test("TeamUsersDAO.countBilledUsers", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
@@ -572,12 +572,12 @@ test("TeamUsersDAO.countNonViewers", async (t: Test) => {
     });
 
     t.equal(
-      await TeamUsersDAO.countNonViewers(trx, team.id),
+      await TeamUsersDAO.countBilledUsers(trx, team.id),
       2,
       "counts non viewers that are not deleted"
     );
     t.equal(
-      await TeamUsersDAO.countNonViewers(trx, uuid.v4()),
+      await TeamUsersDAO.countBilledUsers(trx, uuid.v4()),
       0,
       "returns zero for non-existent team"
     );

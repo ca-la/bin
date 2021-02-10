@@ -238,7 +238,7 @@ test("addSeatCharge", async (t: Test) => {
       },
     ]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
   const makeRequestStub = sandbox().stub(RequestService, "default");
 
@@ -332,7 +332,7 @@ test("addSeatCharge: no per-seat item", async (t: Test) => {
       },
     ]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
 
   await addSeatCharge(trx, "a-team-id");
@@ -365,7 +365,7 @@ test("addSeatCharge: no stripe subscription", async (t: Test) => {
       },
     ]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
 
   try {
@@ -397,7 +397,7 @@ test("addSeatCharge: no team subscription", async (t: Test) => {
     .stub(SubscriptionsDAO, "findForTeamWithPlans")
     .resolves([]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
 
   try {
@@ -442,7 +442,7 @@ test("addSeatCharge: failed payment", async (t: Test) => {
       },
     ]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
   const makeRequestStub = sandbox().stub(RequestService, "default");
 
@@ -544,7 +544,7 @@ test("addSeatCharge: stripe subscription not found", async (t: Test) => {
       },
     ]);
   const nonViewerCountStub = sandbox()
-    .stub(TeamUsersDAO, "countNonViewers")
+    .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(4);
   const makeRequestStub = sandbox().stub(RequestService, "default");
 

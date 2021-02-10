@@ -161,12 +161,14 @@ async function findByUserAndDesign(
   return adapter.fromDbArray(teamUsers);
 }
 
-async function countNonViewers(
+async function countBilledUsers(
   trx: Knex.Transaction,
   teamId: string
 ): Promise<number> {
+  const FREE_TEAM_USER_ROLES: TeamUserRole[] = [TeamUserRole.VIEWER];
+
   return dao.count(trx, { teamId }, (query: Knex.QueryBuilder) =>
-    query.whereNotIn("role", [TeamUserRole.VIEWER])
+    query.whereNotIn("role", FREE_TEAM_USER_ROLES)
   );
 }
 
@@ -177,5 +179,5 @@ export default {
   findByUserAndTeam,
   transferOwnership,
   findByUserAndDesign,
-  countNonViewers,
+  countBilledUsers,
 };

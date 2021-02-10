@@ -1,7 +1,11 @@
 import uuid from "node-uuid";
 
-import { areThereAvailableSeatsInTeamPlan } from "./find-team-plans";
+import {
+  areThereAvailableSeatsInTeamPlan,
+  attachTeamOptionData,
+} from "./find-team-plans";
 import { test, Test } from "../../test-helpers/fresh";
+import { Plan } from "./types";
 import generatePlan from "../../test-helpers/factories/plan";
 import db from "../../services/db";
 import TeamsDAO from "../teams/dao";
@@ -192,4 +196,18 @@ test("areThereAvailableSeatsInTeamPlan allows to add new team user for CALA admi
   } finally {
     await trx.rollback();
   }
+});
+
+test("attachTeamOptionData", async (t: Test) => {
+  const plan = {
+    billingInterval: "MONTHLY",
+    baseCostPerBillingIntervalCents: 20,
+    perSeatCostPerBillingIntervalCents: 100,
+  } as Plan;
+
+  t.deepEqual(attachTeamOptionData(plan, 5), {
+    ...plan,
+    billedUserCount: 5,
+    totalBillingIntervalCostCents: 520,
+  });
 });

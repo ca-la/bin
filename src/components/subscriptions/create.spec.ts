@@ -45,7 +45,7 @@ function setup() {
       paymentMethodId: "a-payment-method-id",
     }),
     teamUserCountStub: sandbox()
-      .stub(TeamUsersDAO, "countNonViewers")
+      .stub(TeamUsersDAO, "countBilledUsers")
       .resolves(2),
   };
 }
