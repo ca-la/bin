@@ -6,6 +6,7 @@ export {
 } from "../components/design-events/realtime";
 export { DesignEventWithMeta } from "../components/design-events/types";
 export * from "../components/plans/types";
+export * from "../components/plan-stripe-price/types";
 export * from "../components/permissions/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
