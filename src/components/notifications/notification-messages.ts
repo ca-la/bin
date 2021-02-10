@@ -3,6 +3,9 @@ import { escape as escapeOptionalHtml } from "lodash";
 
 import InvalidDataError from "../../errors/invalid-data";
 import * as CommentsDAO from "../../components/comments/dao";
+import * as PlansDAO from "../../components/plans/dao";
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import Collaborator from "../../components/collaborators/types";
 import {
   DEPRECATED_NOTIFICATION_TYPES,
   FullNotification,
@@ -233,6 +236,54 @@ export function getTeamBaseWithAssets(
   };
 }
 
+async function getNonUserInvitationMessage(options: {
+  notification: FullNotification;
+  collaborator: Collaborator;
+  escapedActorName: string;
+  resourceName: string;
+}): Promise<{
+  html: string;
+  link: string;
+}> {
+  const {
+    escapedActorName,
+    collaborator,
+    notification,
+    resourceName,
+  } = options;
+
+  if (!collaborator.userEmail) {
+    throw new Error(
+      `Notification ${notification.id} is missing both recipientUserId and a collaborator email`
+    );
+  }
+
+  const plan = await db.transaction((trx: Knex.Transaction) =>
+    PlansDAO.findFreeAndDefaultForTeams(trx)
+  );
+
+  if (!plan) {
+    throw new Error("No free default plan found");
+  }
+
+  const { htmlLink, deepLink } = getLinks({
+    type: LinkType.Subscribe,
+    returnToDesignId: notification.designId,
+    returnToCollectionId: notification.collectionId,
+    planId: plan.id,
+    invitationEmail: collaborator.userEmail,
+    title: resourceName,
+  });
+
+  return {
+    html: `${span(
+      escapedActorName,
+      "user-name"
+    )} invited you to collaborate on ${htmlLink}`,
+    link: deepLink,
+  };
+}
+
 export async function createNotificationMessage(
   notification: FullNotification
 ): Promise<NotificationMessage | null> {
@@ -255,6 +306,7 @@ export async function createNotificationMessage(
       if (!notification.collectionId && !notification.designId) {
         return null;
       }
+
       const designMeta = notification.designId
         ? { title: notification.designTitle, id: notification.designId }
         : null;
@@ -278,6 +330,39 @@ export async function createNotificationMessage(
         title: `${cleanName} invited you to collaborate on ${resourceName}`,
         text: `Invited you to collaborate on ${resourceName}`,
       };
+
+      if (!notification.recipientUserId) {
+        const collaborator = await CollaboratorsDAO.findById(
+          notification.collaboratorId
+        );
+
+        if (!collaborator) {
+          throw new Error(
+            `Collaborator ${notification.collaboratorId} not found`
+          );
+        }
+
+        // Invitation notifications may have:
+        //   1. a recipientUserId (for notifications directly to a auser)
+        //   2. a collaborator.userId (for accepted invitations)
+        //   3. a collaborator.userEmail (for un-accepted invitations)
+        // (3) should receive a "subscribe" link, (1) and (2) should receive a
+        //   link directly to the resource they're invited to.
+        if (!collaborator.userId) {
+          const { html, link } = await getNonUserInvitationMessage({
+            notification,
+            collaborator,
+            escapedActorName: cleanName,
+            resourceName,
+          });
+
+          return {
+            ...partialMessage,
+            html,
+            link,
+          };
+        }
+      }
 
       if (collectionMeta) {
         const { htmlLink, deepLink } = getLinks({

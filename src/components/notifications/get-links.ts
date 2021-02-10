@@ -1,4 +1,6 @@
 import { escape as escapeHtml } from "lodash";
+import qs from "querystring";
+
 import { STUDIO_HOST } from "../../config";
 import { ComponentType } from "../components/domain-object";
 import normalizeTitle from "../../services/normalize-title";
@@ -18,6 +20,7 @@ export enum LinkType {
   ApprovalStep = "APPROVAL_STEP",
   ShipmentTracking = "SHIPMENT_TRACKING",
   Team = "TEAM",
+  Subscribe = "SUBSCRIBE",
 }
 
 interface Meta {
@@ -72,6 +75,14 @@ export type LinkBase =
   | {
       type: LinkType.Team;
       team: Meta;
+    }
+  | {
+      type: LinkType.Subscribe;
+      title: string;
+      returnToDesignId: string | null;
+      returnToCollectionId: string | null;
+      planId: string;
+      invitationEmail: string;
     };
 
 export function constructHtmlLink(deepLink: string, title: string): string {
@@ -191,7 +202,33 @@ export default function getLinks(linkBase: LinkBase): Links {
       };
     }
 
-    default:
-      throw new Error("Neither a collection or design was specified!");
+    case LinkType.Subscribe: {
+      const {
+        returnToDesignId,
+        returnToCollectionId,
+        planId,
+        invitationEmail,
+        title,
+      } = linkBase;
+
+      const returnTo = returnToDesignId
+        ? `/designs/${returnToDesignId}`
+        : returnToCollectionId
+        ? `/collections/${returnToCollectionId}`
+        : null;
+
+      const queryString = qs.stringify({
+        planId,
+        invitationEmail,
+        ...(returnTo ? { returnTo } : null),
+      });
+
+      const deepLink = `${STUDIO_HOST}/subscribe?${queryString}`;
+
+      return {
+        deepLink,
+        htmlLink: constructHtmlLink(deepLink, title),
+      };
+    }
   }
 }

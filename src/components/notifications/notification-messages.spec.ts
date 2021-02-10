@@ -10,6 +10,7 @@ import * as TaskEventsDAO from "../../dao/task-events";
 import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import * as CommentAttachmentDAO from "../comment-attachments/dao";
+import * as PlansDAO from "../../components/plans/dao";
 import generateNotification from "../../test-helpers/factories/notification";
 import { createNotificationMessage } from "./notification-messages";
 import { STUDIO_HOST } from "../../config";
@@ -17,9 +18,12 @@ import { FullNotification, NotificationType } from "./domain-object";
 import generateCollection from "../../test-helpers/factories/collection";
 import * as NotificationAnnouncer from "../iris/messages/notification";
 import { deleteById } from "../../test-helpers/designs";
-import { findByUserId } from "./dao";
+import { findByUserId, update, findById } from "./dao";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import { registerMessageBuilders } from "../cala-components";
+
+registerMessageBuilders();
 
 test("annotation comment notification message", async (t: tape.Test) => {
   sandbox()
@@ -31,9 +35,6 @@ test("annotation comment notification message", async (t: tape.Test) => {
     createdBy: userOne.user.id,
     title: "test",
   });
-  if (!collection) {
-    throw new Error("Could not create collection");
-  }
 
   const { design, actor, collaborator } = await generateNotification({
     collectionId: collection.id,
@@ -204,9 +205,6 @@ test("collection submit notification message", async (t: tape.Test) => {
     createdBy: userOne.user.id,
     title: "test",
   });
-  if (!collection) {
-    throw new Error("Could not create collection");
-  }
 
   const { recipient } = await generateNotification({
     actorUserId: userOne.user.id,
@@ -302,7 +300,7 @@ test("commit cost inputs notification message", async (t: tape.Test) => {
   );
 });
 
-test("invite collaborator notification message", async (t: tape.Test) => {
+test("invite existing-user collaborator notification message", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -312,15 +310,18 @@ test("invite collaborator notification message", async (t: tape.Test) => {
     createdBy: userOne.user.id,
     title: "test collection",
   });
-  if (!collection) {
-    throw new Error("Could not create collection");
-  }
 
-  const { recipient } = await generateNotification({
+  const { recipient, notification } = await generateNotification({
     actorUserId: userOne.user.id,
     collectionId: collection.id,
     type: NotificationType.INVITE_COLLABORATOR,
   });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await update(trx, notification.id, { recipientUserId: recipient.id });
+    return findById(trx, notification.id);
+  });
+
   const { design: invColDesign } = await generateNotification({
     actorUserId: userOne.user.id,
     recipientUserId: recipient.id,
@@ -351,6 +352,42 @@ test("invite collaborator notification message", async (t: tape.Test) => {
     message.html.indexOf(
       `<a href="${STUDIO_HOST}/collections/${collection.id}/designs">`
     ) !== -1,
+    "message link goes to correct collection"
+  );
+});
+
+test("invite non-user collaborator notification message", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves({
+    id: "plan-1",
+  });
+
+  const { collaborator, design, notification } = await generateNotification({
+    type: NotificationType.INVITE_COLLABORATOR,
+  });
+
+  if (!notification) {
+    throw new Error("Missing notification");
+  }
+
+  await CollaboratorsDAO.update(collaborator.id, {
+    userId: null,
+    userEmail: "foo@example.com",
+  });
+
+  const message = await createNotificationMessage(notification);
+
+  if (!message) {
+    throw new Error("Did not create message");
+  }
+
+  const href = message.html.match(/href="(.+)"/)![1];
+
+  t.equal(
+    href,
+    `${STUDIO_HOST}/subscribe?planId=plan-1&invitationEmail=foo%40example.com&returnTo=%2Fdesigns%2F${design.id}`,
     "message link goes to correct collection"
   );
 });

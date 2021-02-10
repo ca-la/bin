@@ -12,6 +12,7 @@ import * as CollaboratorTasksDAO from "../../dao/collaborator-tasks";
 import * as NotificationsDAO from "../../components/notifications/dao";
 import * as TasksDAO from "../../dao/tasks";
 import * as TaskEventsDAO from "../../dao/task-events";
+import * as PlansDAO from "../../components/plans/dao";
 import * as DesignStagesDAO from "../../dao/product-design-stages";
 import * as DesignStageTasksDAO from "../../dao/product-design-stage-tasks";
 import * as CommentsDAO from "../../components/comments/dao";
@@ -1185,6 +1186,10 @@ test("immediatelySendInviteCollaborator", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
+
+  sandbox()
+    .stub(PlansDAO, "findFreeAndDefaultForTeams")
+    .resolves({ id: "plan-1" });
   const userOne = await createUser();
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
