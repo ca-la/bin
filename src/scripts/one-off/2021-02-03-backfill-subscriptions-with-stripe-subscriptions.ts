@@ -3,7 +3,7 @@ import process from "process";
 import { log, logServerError } from "../../services/logger";
 import { format, green } from "../../services/colors";
 import db from "../../services/db";
-import { findOrCreateCustomerId } from "../../services/stripe";
+import { findCustomer, findOrCreateCustomerId } from "../../services/stripe";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import { PlanStripePriceRow } from "../../components/plan-stripe-price/types";
 import TeamUsersDAO from "../../components/team-users/dao";
@@ -17,9 +17,12 @@ and save stripe subscription id
 interface SubscriptionWithRelativeData {
   id: string;
   user_id: string | null;
+  user_email: string | null;
   team_id: string | null;
   team_owner_user_id: string | null;
   stripe_prices: PlanStripePriceRow[];
+  plan_id: string;
+  is_paid: boolean;
 }
 
 async function main(...args: string[]): Promise<string> {
@@ -34,13 +37,19 @@ async function main(...args: string[]): Promise<string> {
         "s.id",
         "s.user_id",
         "s.team_id",
+        "s.plan_id",
         "tu.user_id as team_owner_user_id",
+        trx.raw(`(
+          p.base_cost_per_billing_interval_cents > 0
+       OR p.per_seat_cost_per_billing_interval_cents > 0
+        ) as is_paid`),
         trx.raw(`
           COALESCE(
             JSON_AGG(plan_stripe_prices)
                     FILTER (WHERE plan_stripe_prices.plan_id IS NOT NULL),
             '[]'
           ) AS stripe_prices`),
+        "users.email as user_email",
       ])
       .from("subscriptions as s")
       .leftJoin("team_users as tu", function () {
@@ -48,15 +57,28 @@ async function main(...args: string[]): Promise<string> {
           .andOnNull("tu.deleted_at")
           .andOn("tu.role", "=", trx.raw("?", ["OWNER"]));
       })
-      .leftJoin("plans as p", "p.id", "s.plan_id")
+      .join("plans as p", "p.id", "s.plan_id")
       .leftJoin("plan_stripe_prices", "plan_stripe_prices.plan_id", "p.id")
+      .join("users", "users.id", trx.raw("COALESCE(s.user_id, tu.user_id)"))
       .where({ stripe_subscription_id: null })
       .whereRaw("cancelled_at is null or cancelled_at > now()")
-      .groupBy(["s.id", "tu.user_id"]);
+      .groupBy(["s.id", "tu.user_id", "users.email", "p.id"]);
 
     log(
       `Found ${subscriptionsWithRelativeData.length} subscriptions without Stripe id`
     );
+
+    const subscriptionsWithPaidPlans = subscriptionsWithRelativeData.filter(
+      (sub: SubscriptionWithRelativeData) => sub.is_paid
+    );
+
+    if (subscriptionsWithPaidPlans.length !== 0) {
+      throw new Error(
+        `Paid plans were detected! Aborting operation.
+
+${JSON.stringify(subscriptionsWithPaidPlans, null, 2)}`
+      );
+    }
 
     let index: number = 0;
     for (const subscriptionWithData of subscriptionsWithRelativeData) {
@@ -65,8 +87,15 @@ async function main(...args: string[]): Promise<string> {
         subscriptionWithData.user_id || subscriptionWithData.team_owner_user_id;
 
       if (isDryRun) {
+        const maybeStripeCustomer = subscriptionWithData.user_email
+          ? await findCustomer(subscriptionWithData.user_email)
+          : null;
+
+        const maybeStripeCustomerId = maybeStripeCustomer
+          ? maybeStripeCustomer.id
+          : null;
         log(
-          `(${index}/${subscriptionsWithRelativeData.length}) Updating subscription with id ${subscriptionWithData.id} for user with id ${userId}`
+          `(${index}/${subscriptionsWithRelativeData.length}) Updating subscription with id ${subscriptionWithData.id} for user with email ${subscriptionWithData.user_email} (Stripe Customer ID: ${maybeStripeCustomerId})`
         );
         continue;
       }

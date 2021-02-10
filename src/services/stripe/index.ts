@@ -86,22 +86,39 @@ export async function sendTransfer(
   });
 }
 
-async function findCustomer(email: string): Promise<{ id: string } | null> {
+const customerSchema = z
+  .object({
+    id: z.string(),
+  })
+  .passthrough();
+
+type Customer = z.infer<typeof customerSchema>;
+
+const customerListSchema = z
+  .object({
+    object: z.literal("list"),
+    data: z.array(customerSchema),
+  })
+  .passthrough();
+
+type CustomerList = z.infer<typeof customerListSchema>;
+
+export async function findCustomer(email: string): Promise<Customer | null> {
   const query = querystring.stringify({
     email,
     limit: 1,
   });
 
-  const found = await makeRequest<{ id: string }[]>({
+  const found = await makeRequest<CustomerList>({
     method: "get",
     path: `/customers?${query}`,
-  });
+  }).then(customerListSchema.parse);
 
-  if (found.length === 0) {
+  if (found.data.length === 0) {
     return null;
   }
 
-  return found[0];
+  return found.data[0];
 }
 
 async function createCustomer({

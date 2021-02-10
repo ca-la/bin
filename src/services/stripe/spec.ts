@@ -143,7 +143,7 @@ test("findOrCreateCustomerId: no existing customer", async (t: Test) => {
     .resolves({ email: "example@example.com", name: "Exemplar" });
   const requestStub = sandbox().stub(RequestService, "default");
 
-  requestStub.onFirstCall().resolves([]); // GET /customers email=example@example.com
+  requestStub.onFirstCall().resolves({ object: "list", data: [] }); // GET /customers email=example@example.com
   requestStub.onSecondCall().resolves({ id: "a-stripe-customer-id" }); // POST /customers
 
   const customerId = await findOrCreateCustomerId("a-user-id", trx);
@@ -179,7 +179,9 @@ test("findOrCreateCustomerId: stripe customer no PaymentMethod", async (t: Test)
     .resolves({ email: "example@example.com", name: "Exemplar" });
   const requestStub = sandbox().stub(RequestService, "default");
 
-  requestStub.onFirstCall().resolves([{ id: "a-stripe-customer-id" }]); // GET /customers email=example@example.com
+  requestStub
+    .onFirstCall()
+    .resolves({ object: "list", data: [{ id: "a-stripe-customer-id" }] }); // GET /customers email=example@example.com
 
   const customerId = await findOrCreateCustomerId("a-user-id", trx);
 
