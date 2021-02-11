@@ -22,7 +22,15 @@ interface PostRequest {
   apiBase?: string;
 }
 
-export type RequestOptions = GetRequest | PostRequest;
+interface DeleteRequest {
+  method: "delete";
+  path: string;
+  data?: object;
+  additionalHeaders?: Record<string, string>;
+  apiBase?: string;
+}
+
+export type RequestOptions = GetRequest | PostRequest | DeleteRequest;
 
 type Fetcher<T> = (options: RequestOptions) => Promise<[number, T]>;
 

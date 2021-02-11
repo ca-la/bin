@@ -24,18 +24,23 @@ interface PostRequest {
   apiBase?: string;
 }
 
-function isPostRequest(candidate: any): candidate is PostRequest {
-  return "data" in candidate || "idempotencyKey" in candidate;
+interface DeleteRequest extends Omit<PostRequest, "method"> {
+  method: "delete";
 }
 
-type RequestOptions = GetRequest | PostRequest;
+type RequestWithBody = PostRequest | DeleteRequest;
+type RequestOptions = GetRequest | RequestWithBody;
+
+function isRequestWithBody(candidate: any): candidate is RequestWithBody {
+  return "data" in candidate || "idempotencyKey" in candidate;
+}
 
 const CREDENTIALS = Buffer.from(`${STRIPE_SECRET_KEY}:`).toString("base64");
 
 export default async function makeRequest<ResponseType extends object = {}>(
   requestOptions: RequestOptions
 ): Promise<ResponseType> {
-  if (isPostRequest(requestOptions)) {
+  if (isRequestWithBody(requestOptions)) {
     if (requestOptions.idempotencyKey) {
       requestOptions.additionalHeaders = {
         ...requestOptions.additionalHeaders,

@@ -6,6 +6,9 @@ import {
 } from "../../services/cala-component/cala-dao";
 import { TeamDb, TeamDbRow } from "./types";
 import { rawAdapter } from "./adapter";
+import { SubscriptionsDAO, isSubscriptionFree } from "../subscriptions";
+import { cancelSubscription } from "../../services/stripe/cancel-subscription";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const TABLE_NAME = "teams";
 
@@ -61,8 +64,44 @@ async function findByUser(
   );
 }
 
+async function deleteById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<TeamDb | null> {
+  const team = await standardDao.findById(trx, id);
+  if (!team) {
+    throw new ResourceNotFoundError(`Team "${id}" could not be found.`);
+  }
+
+  const subscriptions = await SubscriptionsDAO.findForTeamWithPlans(trx, id);
+  for (const subscription of subscriptions) {
+    if (subscription.cancelledAt !== null) {
+      continue;
+    }
+    if (!isSubscriptionFree(subscription)) {
+      throw new Error(
+        "Can't delete team while there is not cancelled paid subscription"
+      );
+    }
+
+    if (!subscription.stripeSubscriptionId) {
+      continue;
+    }
+    const cancelledAt = await cancelSubscription(
+      subscription.stripeSubscriptionId
+    );
+    await SubscriptionsDAO.update(subscription.id, { cancelledAt }, trx);
+  }
+  const { updated } = await standardDao.update(trx, id, {
+    deletedAt: new Date(),
+  });
+
+  return updated;
+}
+
 export default {
   findUnpaidTeams,
   findByUser,
+  deleteById,
   ...standardDao,
 };

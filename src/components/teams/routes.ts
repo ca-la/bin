@@ -171,14 +171,12 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   const { trx } = this.state;
   const { id } = this.params;
 
-  const { updated: team } = yield TeamsDAO.update(trx, id, {
-    deletedAt: new Date(),
-  });
-  if (!team) {
+  const deletedTeam = yield TeamsDAO.deleteById(trx, id);
+  if (!deletedTeam) {
     this.throw(404, `Team not found with ID: ${id}`);
   }
 
-  this.body = team;
+  this.body = deletedTeam;
   this.status = 200;
 }
 

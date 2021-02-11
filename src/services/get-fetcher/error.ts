@@ -1,5 +1,5 @@
 interface ErrorContext {
-  method: "get" | "post";
+  method: "get" | "post" | "delete";
   url: string;
   status: number;
   text: string;
