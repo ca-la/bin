@@ -11,7 +11,7 @@ import Timeline from "./domain-object";
 import { getTimeBuffer } from "../../services/add-time-buffer";
 import ProductDesign = require("../product-designs/domain-objects/product-design");
 import { DetailsTask } from "../../domain-objects/task-event";
-import { findAllDesignsThroughCollaborator } from "../product-designs/dao/dao";
+import { findAllDesignsThroughCollaboratorAndTeam } from "../product-designs/dao/dao";
 
 interface StageBreakdown {
   id: string;
@@ -286,7 +286,7 @@ export async function findAllByUserId(
   limit?: number,
   offset?: number
 ): Promise<Timeline[]> {
-  const designs = await findAllDesignsThroughCollaborator({
+  const designs = await findAllDesignsThroughCollaboratorAndTeam({
     userId,
     limit,
     offset,

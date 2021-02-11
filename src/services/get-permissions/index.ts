@@ -2,12 +2,13 @@ import Knex from "knex";
 import db from "../db";
 
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import Collaborator, { Roles } from "../../components/collaborators/types";
+import Collaborator from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { Permissions } from "../../components/permissions/types";
 import { TeamUserRole, TeamUsersDAO } from "../../components/team-users";
+import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../components/team-users/types";
 export { Permissions } from "../../components/permissions/types";
 
 export interface PermissionsAndRole {
@@ -16,13 +17,6 @@ export interface PermissionsAndRole {
 }
 
 const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
-
-const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<TeamUserRole, Roles> = {
-  [TeamUserRole.OWNER]: "EDIT",
-  [TeamUserRole.ADMIN]: "EDIT",
-  [TeamUserRole.EDITOR]: "EDIT",
-  [TeamUserRole.VIEWER]: "VIEW",
-};
 
 const ADMIN_PERMISSIONS: Permissions = {
   canComment: true,

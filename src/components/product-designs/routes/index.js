@@ -38,7 +38,7 @@ const {
 } = require("./upload-policy");
 const { getPaidDesigns } = require("./paid");
 const { updateAllNodes } = require("./phidias");
-const { findAllDesignsThroughCollaborator } = require("../dao/dao");
+const { findAllDesignsThroughCollaboratorAndTeam } = require("../dao/dao");
 const { createFromTemplate } = require("./templates");
 
 const router = new Router();
@@ -118,15 +118,17 @@ function* getDesignsByUser() {
   if (stageType) {
     filters.push({ type: "STAGE", value: stageType });
   }
-  const designs = yield ProductDesignsDaoTs.findAllDesignsThroughCollaborator({
-    userId: this.query.userId,
-    limit: this.query.limit,
-    offset: this.query.offset,
-    search: this.query.search,
-    sortBy: this.query.sortBy,
-    role,
-    filters,
-  });
+  const designs = yield ProductDesignsDaoTs.findAllDesignsThroughCollaboratorAndTeam(
+    {
+      userId: this.query.userId,
+      limit: this.query.limit,
+      offset: this.query.offset,
+      search: this.query.search,
+      sortBy: this.query.sortBy,
+      role,
+      filters,
+    }
+  );
   const designsWithPermissions = designs.map((design) => {
     const designPermissions = getPermissionsFromDesign({
       collaboratorRoles: [
@@ -182,7 +184,7 @@ function* getDesignsAndTasksByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
 
-  const designs = yield findAllDesignsThroughCollaborator({
+  const designs = yield findAllDesignsThroughCollaboratorAndTeam({
     userId: this.query.userId,
   });
 

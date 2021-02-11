@@ -6,7 +6,7 @@ import { isEqual } from "lodash";
 import { findById, findByIds } from "./";
 import {
   deleteByIds,
-  findAllDesignsThroughCollaborator,
+  findAllDesignsThroughCollaboratorAndTeam,
   findAllWithCostsAndEvents,
   findDesignByAnnotationId,
   findDesignByApprovalStepId,
@@ -201,7 +201,7 @@ test("ProductDesignsDAO supports creation/retrieval, enriched with image links",
   );
 });
 
-test("findAllDesignsThroughCollaborator finds all undeleted designs that the user collaborates on", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that the user collaborates on", async (t: tape.Test) => {
   const { user } = await createUser();
   const { user: notUser } = await createUser();
 
@@ -272,7 +272,9 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
   });
   await addDesign(collection.id, collectionSharedDesignDeleted.id);
 
-  const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
+  const designs = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: user.id,
+  });
   t.equal(
     designs.length,
     3,
@@ -325,7 +327,7 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
 
   await deleteById(collectionSharedDesignDeleted.id);
 
-  const designsAgain = await findAllDesignsThroughCollaborator({
+  const designsAgain = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
   });
   t.equal(
@@ -345,7 +347,7 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
     await CollectionsDAO.deleteById(trx, collection.id);
   });
 
-  const designsYetAgain = await findAllDesignsThroughCollaborator({
+  const designsYetAgain = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
   });
 
@@ -366,7 +368,7 @@ test("findAllDesignsThroughCollaborator finds all undeleted designs that the use
   );
 });
 
-test("findAllDesignsThroughCollaborator does not double product design images", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam does not double product design images", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     productType: "test",
@@ -410,12 +412,14 @@ test("findAllDesignsThroughCollaborator does not double product design images", 
   );
   await addDesign(collection.id, design.id);
 
-  const found = await findAllDesignsThroughCollaborator({ userId: user.id });
+  const found = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: user.id,
+  });
 
   t.deepEqual(found[0].imageIds, [asset.id], "does not duplicate image ids");
 });
 
-test("findAllDesignsThroughCollaborator finds all designs with a search string", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam finds all designs with a search string", async (t: tape.Test) => {
   const { user } = await createUser();
 
   const firstDesign = await createDesign({
@@ -435,7 +439,7 @@ test("findAllDesignsThroughCollaborator finds all designs with a search string",
   });
   await addDesign(collection.id, secondDesign.id);
 
-  const allDesigns = await findAllDesignsThroughCollaborator({
+  const allDesigns = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
   });
   t.equal(
@@ -444,7 +448,7 @@ test("findAllDesignsThroughCollaborator finds all designs with a search string",
     "returns all designs when no search is provided"
   );
 
-  const designSearch = await findAllDesignsThroughCollaborator({
+  const designSearch = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     search: "first",
   });
@@ -456,7 +460,7 @@ test("findAllDesignsThroughCollaborator finds all designs with a search string",
   t.deepEqual(designSearch[0].id, firstDesign.id, "should match ids");
 });
 
-test("findAllDesignsThroughCollaborator returns approval steps, progress and related fields", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam returns approval steps, progress and related fields", async (t: tape.Test) => {
   const testDate = new Date(2012, 11, 22);
   sandbox().useFakeTimers(testDate);
   sandbox().stub(PricingProductTypesDAO, "findByDesignId").resolves({
@@ -517,7 +521,9 @@ test("findAllDesignsThroughCollaborator returns approval steps, progress and rel
       dueAt: new Date(),
     });
   });
-  const designs = await findAllDesignsThroughCollaborator({ userId: user.id });
+  const designs = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: user.id,
+  });
   t.equal(designs.length, 2);
   t.deepEqual(designs[0].id, collectionSharedDesign.id);
   t.deepEqual(Number(designs[0].progress), 0.5, "has progress");
@@ -541,7 +547,7 @@ test("findAllDesignsThroughCollaborator returns approval steps, progress and rel
   t.deepEqual(designs[1].approvalSteps![1].designId, designs[1].id);
 });
 
-test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam respects limit, offset, sortBy", async (t: tape.Test) => {
   const { user } = await createUser();
 
   const d1 = await createDesign({
@@ -630,7 +636,7 @@ test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (
   ];
 
   for (const testCase of testCases) {
-    const allDesigns = await findAllDesignsThroughCollaborator({
+    const allDesigns = await findAllDesignsThroughCollaboratorAndTeam({
       userId: user.id,
       ...testCase.options,
     });
@@ -642,7 +648,7 @@ test("findAllDesignsThroughCollaborator respects limit, offset, sortBy", async (
   }
 });
 
-test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam filters by collection", async (t: tape.Test) => {
   const { user } = await createUser();
 
   const firstDesign = await createDesign({
@@ -672,7 +678,7 @@ test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.T
   });
   await addDesign(collectionTwo.id, secondDesign.id);
 
-  const allCollectionDesigns = await findAllDesignsThroughCollaborator({
+  const allCollectionDesigns = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     filters: [{ type: "COLLECTION", value: "*" }],
   });
@@ -688,7 +694,7 @@ test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.T
     )
   );
 
-  const collectionSearch = await findAllDesignsThroughCollaborator({
+  const collectionSearch = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     filters: [{ type: "COLLECTION", value: collectionOne.id }],
   });
@@ -700,7 +706,7 @@ test("findAllDesignsThroughCollaborator filters by collection", async (t: tape.T
   t.deepEqual(collectionSearch[0].id, firstDesign.id, "should match ids");
 });
 
-test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam filters by team", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: otherTeamOwner } = await createUser({ withSession: false });
   const { team } = await generateTeam(user.id);
@@ -742,7 +748,7 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
   });
   await addDesign(collectionThree.id, thirdDesign.id);
 
-  const teamDesigns = await findAllDesignsThroughCollaborator({
+  const teamDesigns = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     filters: [{ type: "TEAM", value: team.id }],
   });
@@ -761,13 +767,13 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
     "finds the correct team designs"
   );
 
-  const otherTeamsDesigns = await findAllDesignsThroughCollaborator({
+  const otherTeamsDesigns = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     filters: [{ type: "TEAM", value: otherTeam.id }],
   });
   t.deepEqual(otherTeamsDesigns, [], "returns empty results");
 
-  const nonTeamDesigns = await findAllDesignsThroughCollaborator({
+  const nonTeamDesigns = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
     filters: [{ type: "TEAM", value: null }],
   });
@@ -784,7 +790,7 @@ test("findAllDesignsThroughCollaborator filters by team", async (t: tape.Test) =
   );
 });
 
-test("findAllDesignsThroughCollaborator filters by current step", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam filters by current step", async (t: tape.Test) => {
   const { user } = await createUser();
   const d1 = await createDesign({
     productType: "test",
@@ -882,7 +888,7 @@ test("findAllDesignsThroughCollaborator filters by current step", async (t: tape
       });
     }
 
-    const designs = await findAllDesignsThroughCollaborator({
+    const designs = await findAllDesignsThroughCollaboratorAndTeam({
       userId: user.id,
       filters: [{ type: "STEP", value: testCase.filterStep }],
     });
@@ -894,7 +900,7 @@ test("findAllDesignsThroughCollaborator filters by current step", async (t: tape
   }
 });
 
-test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam filters by stage", async (t: tape.Test) => {
   const { user } = await createUser();
 
   const d1 = await createDesign({
@@ -1020,7 +1026,7 @@ test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) 
       }
     });
 
-    const designs = await findAllDesignsThroughCollaborator({
+    const designs = await findAllDesignsThroughCollaboratorAndTeam({
       userId: user.id,
       filters: [{ type: "STAGE", value: testCase.filterStage }],
     });
@@ -1032,7 +1038,7 @@ test("findAllDesignsThroughCollaborator filters by stage", async (t: tape.Test) 
   }
 });
 
-test("findAllDesignsThroughCollaborator find designs through a team", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: partner } = await createUser({ withSession: false });
   const { user: deletedTeamUser } = await createUser({ withSession: false });
@@ -1086,7 +1092,7 @@ test("findAllDesignsThroughCollaborator find designs through a team", async (t: 
     teamId: team.id,
   });
 
-  const designs = await findAllDesignsThroughCollaborator({
+  const designs = await findAllDesignsThroughCollaboratorAndTeam({
     userId: partner.id,
   });
   t.deepEqual(
@@ -1095,7 +1101,7 @@ test("findAllDesignsThroughCollaborator find designs through a team", async (t: 
     "Returns designs for team collaborator"
   );
 
-  const forDeletedTeamUser = await findAllDesignsThroughCollaborator({
+  const forDeletedTeamUser = await findAllDesignsThroughCollaboratorAndTeam({
     userId: deletedTeamUser.id,
   });
   t.deepEqual(
@@ -1528,7 +1534,7 @@ test("findById attached bidId for partners", async (t: tape.Test) => {
   t.equal(foundPairedDesign.bidId, bid.id, "Retrieves the correct bid id");
 });
 
-test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) => {
+test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: partner } = await createUser({
     withSession: false,
@@ -1566,7 +1572,9 @@ test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) =
     bidId: partnerRemovedBid.id,
     quoteId: partnerRemovedQuote.id,
   });
-  const [foundPartnerRemovedDesign] = await findAllDesignsThroughCollaborator({
+  const [
+    foundPartnerRemovedDesign,
+  ] = await findAllDesignsThroughCollaboratorAndTeam({
     userId: partner.id,
     role: "PARTNER",
   });
@@ -1591,7 +1599,7 @@ test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) =
     quoteId: quote.id,
   });
 
-  const [foundPairedDesign] = await findAllDesignsThroughCollaborator({
+  const [foundPairedDesign] = await findAllDesignsThroughCollaboratorAndTeam({
     userId: partner.id,
     role: "PARTNER",
   });
@@ -1599,6 +1607,62 @@ test("findAllDesignsThroughCollaborator attaches bid id", async (t: tape.Test) =
     throw new Error("Cannot find Design!");
   }
   t.equal(foundPairedDesign.bidId, bid.id, "Retrieves the correct bid id");
+});
+
+test("findAllDesignsThroughCollaboratorAndTeam finds team designs and assigns correct permissions", async (t: tape.Test) => {
+  const { user: owner } = await createUser({ withSession: false });
+  const { user: viewer } = await createUser({ withSession: false });
+  const { user: editor } = await createUser({ withSession: false });
+
+  const design = await generateDesign({ userId: owner.id });
+  const { team } = await generateTeam(owner.id);
+  const { collection } = await generateCollection({
+    createdBy: owner.id,
+    teamId: team.id,
+  });
+  await addDesign(collection.id, design.id);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: viewer.id,
+      userEmail: null,
+      role: TeamUserRole.VIEWER,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: editor.id,
+      userEmail: null,
+      role: TeamUserRole.EDITOR,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+  });
+
+  const viewerDesigns = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: viewer.id,
+  });
+  t.equal(viewerDesigns.length, 1, "Returns the only design");
+  t.deepEqual(
+    viewerDesigns[0].collaboratorRoles,
+    ["VIEW"],
+    "view collaborator role is correctly set"
+  );
+  const editorDesigns = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: editor.id,
+  });
+  t.equal(editorDesigns.length, 1, "Returns the only design");
+  t.deepEqual(
+    editorDesigns[0].collaboratorRoles,
+    ["EDIT"],
+    "edit collaborator role is correctly set"
+  );
 });
 
 test("getTitleAndOwnerByShipmentTracking", async (t: tape.Test) => {

@@ -27,6 +27,8 @@ import {
   ApprovalStepState,
   ApprovalStepType,
 } from "../../approval-steps/types";
+import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../team-users/types";
+import { Roles } from "../../../published-types";
 
 export const TABLE_NAME = "product_designs";
 
@@ -51,7 +53,7 @@ export type DesignFilter =
 /**
  * Find all designs that the user is a collaborator on.
  */
-export async function findAllDesignsThroughCollaborator(options: {
+export async function findAllDesignsThroughCollaboratorAndTeam(options: {
   userId: string;
   role?: Role;
   limit?: number;
@@ -60,13 +62,25 @@ export async function findAllDesignsThroughCollaborator(options: {
   sortBy?: string;
   filters?: DesignFilter[];
 }): Promise<ProductDesignWithApprovalSteps[]> {
+  const TEAM_USER_EDITOR_ROLES = Object.entries(
+    TEAM_USER_ROLE_TO_COLLABORATOR_ROLE
+  )
+    .filter(([, value]: [string, Roles]) => value === "EDIT")
+    .map(([key]: [string, Roles]) => key);
+
+  const TEAM_USER_VIEWER_ROLES = Object.entries(
+    TEAM_USER_ROLE_TO_COLLABORATOR_ROLE
+  )
+    .filter(([, value]: [string, Roles]) => value === "VIEW")
+    .map(([key]: [string, Roles]) => key);
+
   const result = await queryWithCollectionMeta(db)
     .leftJoin(
       db.raw(
         `
 (
   SELECT array_agg(subquery.role) as collaborator_roles, subquery.product_design_id FROM (
-  SELECT c.*, pd2.id as product_design_id
+  SELECT c.role, pd2.id as product_design_id
     FROM product_designs AS pd2
     JOIN collaborators AS c ON c.design_id = pd2.id
     LEFT JOIN team_users ON c.team_id = team_users.team_id
@@ -75,7 +89,7 @@ export async function findAllDesignsThroughCollaborator(options: {
     AND team_users.deleted_at IS NULL
     AND pd2.deleted_at IS NULL
   UNION
-  SELECT c.*, pd3.id as product_design_id
+  SELECT c.role, pd3.id as product_design_id
     FROM collaborators AS c
     JOIN collections AS co ON co.id = c.collection_id
     JOIN collection_designs AS cd ON cd.collection_id = co.id
@@ -86,12 +100,31 @@ export async function findAllDesignsThroughCollaborator(options: {
     AND co.deleted_at IS NULL
     AND team_users.deleted_at IS NULL
     AND pd3.deleted_at IS NULL
+  UNION
+  SELECT
+    CASE
+      WHEN tu.role = ANY(:editorRoles) THEN 'EDIT'
+      WHEN tu.role = ANY(:viewerRoles) THEN 'VIEW'
+    END AS role, pd4.id as product_design_id
+    FROM team_users as tu
+    JOIN teams ON teams.id = tu.team_id
+    JOIN collections ON collections.team_id = teams.id
+    JOIN collection_designs AS cd ON cd.collection_id = collections.id
+    JOIN product_designs AS pd4 ON pd4.id = cd.design_id
+  WHERE (tu.user_id = :userId)
+    AND collections.deleted_at IS NULL
+    AND tu.deleted_at IS NULL
+    AND pd4.deleted_at IS NULL
   ) AS subquery
   GROUP BY subquery.product_design_id
 ) AS design_collaborators
   ON design_collaborators.product_design_id = product_designs.id
 `,
-        { userId: options.userId }
+        {
+          userId: options.userId,
+          editorRoles: TEAM_USER_EDITOR_ROLES,
+          viewerRoles: TEAM_USER_VIEWER_ROLES,
+        }
       )
     )
     .select(

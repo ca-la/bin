@@ -80,7 +80,7 @@ test("GET /product-designs allows filtering by collection", async (t: tape.Test)
   const { user, session } = await createUser({ role: "USER" });
 
   const getDesignsStub = sandbox()
-    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaborator")
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
     .resolves([]);
 
   const [response] = await get(
@@ -109,7 +109,7 @@ test("GET /product-designs allows filtering by team", async (t: tape.Test) => {
   });
 
   const getDesignsStub = sandbox()
-    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaborator")
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
     .resolves([]);
 
   const [response] = await get(

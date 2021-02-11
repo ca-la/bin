@@ -1,4 +1,5 @@
 import User, { UserRow } from "../users/types";
+import { Roles } from "../collaborators/types";
 
 export const teamUserDomain = "TeamUser" as "TeamUser";
 export const rawTeamUserDomain = "TeamUserDb" as "TeamUserDb";
@@ -9,6 +10,13 @@ export enum Role {
   EDITOR = "EDITOR",
   VIEWER = "VIEWER",
 }
+
+export const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<Role, Roles> = {
+  [Role.OWNER]: "EDIT",
+  [Role.ADMIN]: "EDIT",
+  [Role.EDITOR]: "EDIT",
+  [Role.VIEWER]: "VIEW",
+};
 
 export const PARTNER_TEAM_BID_PREVIEWERS: Role[] = [Role.OWNER, Role.ADMIN];
 export const PARTNER_TEAM_BID_EDITORS: Role[] = [
