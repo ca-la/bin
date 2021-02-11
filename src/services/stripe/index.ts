@@ -156,10 +156,10 @@ export async function getBalances(): Promise<SourceTypes> {
   return response.available[0].source_types;
 }
 
-export async function addSeatCharge(
+async function getStripePerSeat(
   trx: Knex.Transaction,
   teamId: string
-): Promise<void> {
+): Promise<SubscriptionItem | null> {
   const teamSubscriptions = await SubscriptionsDAO.findForTeamWithPlans(
     trx,
     teamId,
@@ -186,7 +186,7 @@ export async function addSeatCharge(
   );
 
   if (!perSeatPrice) {
-    return;
+    return null;
   }
 
   const stripeSubscription = await StripeAPI.getSubscription(
@@ -203,6 +203,19 @@ export async function addSeatCharge(
     );
   }
 
+  return perSeatSubscriptionItem;
+}
+
+export async function addSeatCharge(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<void> {
+  const perSeatSubscriptionItem = await getStripePerSeat(trx, teamId);
+
+  if (!perSeatSubscriptionItem) {
+    return;
+  }
+
   const currentNonViewerCount = await TeamUsersDAO.countBilledUsers(
     trx,
     teamId
@@ -217,6 +230,34 @@ export async function addSeatCharge(
   await StripeAPI.updateStripeSubscriptionItem(perSeatSubscriptionItem.id, {
     quantity: currentNonViewerCount,
     proration_behavior: "always_invoice",
+    payment_behavior: "error_if_incomplete",
+  });
+}
+
+export async function removeSeatCharge(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<void> {
+  const perSeatSubscriptionItem = await getStripePerSeat(trx, teamId);
+
+  if (!perSeatSubscriptionItem) {
+    return;
+  }
+
+  const currentBilledUserCount = await TeamUsersDAO.countBilledUsers(
+    trx,
+    teamId
+  );
+
+  if (currentBilledUserCount !== perSeatSubscriptionItem.quantity - 1) {
+    throw new Error(
+      "Stripe quantity does not match current non-viewer seat count."
+    );
+  }
+
+  await StripeAPI.updateStripeSubscriptionItem(perSeatSubscriptionItem.id, {
+    quantity: currentBilledUserCount,
+    proration_behavior: "none",
     payment_behavior: "error_if_incomplete",
   });
 }

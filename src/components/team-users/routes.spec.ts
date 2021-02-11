@@ -76,6 +76,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     addStripeSeatStub: sandbox()
       .stub(StripeService, "addSeatCharge")
       .resolves(),
+    removeStripeSeatStub: sandbox()
+      .stub(StripeService, "removeSeatCharge")
+      .resolves(),
   };
 }
 
@@ -402,7 +405,12 @@ test("GET /team-users?teamId: CALA admin", async (t: Test) => {
 });
 
 test("PATCH /team-users/:id: valid downgrade to viewer", async (t: Test) => {
-  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
+  const {
+    updateStub,
+    findTeamUserByIdStub,
+    addStripeSeatStub,
+    removeStripeSeatStub,
+  } = setup();
   const [response, body] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -427,10 +435,20 @@ test("PATCH /team-users/:id: valid downgrade to viewer", async (t: Test) => {
     0,
     "does not call stripe add seat function when downgrading to viewer"
   );
+  t.equal(
+    removeStripeSeatStub.callCount,
+    1,
+    "calls stripe remove seat function when downgrading a non-viewer to a viewer"
+  );
 });
 
 test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
-  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
+  const {
+    updateStub,
+    findTeamUserByIdStub,
+    addStripeSeatStub,
+    removeStripeSeatStub,
+  } = setup();
   const [response, body] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
     body: {
@@ -454,6 +472,11 @@ test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
     addStripeSeatStub.callCount,
     0,
     "does not call stripe add seat function when changing between non-viewer roles"
+  );
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "does not call stripe remove seat function when changing between non-viewer roles"
   );
 });
 
@@ -483,7 +506,12 @@ test("PATCH /team-users/:id: upgrade from viewer to non-viewer", async (t: Test)
     ...tu1,
     role: TeamUserRole.VIEWER,
   };
-  const { updateStub, findTeamUserByIdStub, addStripeSeatStub } = setup();
+  const {
+    updateStub,
+    findTeamUserByIdStub,
+    addStripeSeatStub,
+    removeStripeSeatStub,
+  } = setup();
   findTeamUserByIdStub.resolves(viewer);
   const [response, body] = await patch(`/team-users/${viewer.id}`, {
     headers: authHeader("a-session-id"),
@@ -508,6 +536,12 @@ test("PATCH /team-users/:id: upgrade from viewer to non-viewer", async (t: Test)
     addStripeSeatStub.args[0][1],
     "a-team-id",
     "calls stripe function to add a non-viewer seat charge"
+  );
+
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "does not call stripe remove seat function when upgrading to a non-viewer"
   );
 });
 
@@ -691,16 +725,17 @@ test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) 
 });
 
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
-  const { deleteStub } = setup();
+  const { deleteStub, removeStripeSeatStub } = setup();
   const [response] = await del(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 204, "Allows deletion");
   t.equal(deleteStub.args[0][1], tu1.id);
+  t.equal(removeStripeSeatStub.callCount, 1, "Removes seat from Stripe");
 });
 
 test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
-  const { deleteStub, findActorTeamUserStub } = setup();
+  const { deleteStub, findActorTeamUserStub, removeStripeSeatStub } = setup();
   findActorTeamUserStub.resolves({
     id: "not-the-same",
     role: TeamUserRole.VIEWER,
@@ -711,10 +746,24 @@ test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
 
   t.equal(response.status, 403, "Does not allow deletion");
   t.equal(deleteStub.callCount, 0, "Does not delete with an invalid role");
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "Does not update Stripe seat count"
+  );
 });
 
 test("DEL /team-users/:id allows self-delete when non-admin", async (t: Test) => {
-  const { deleteStub, findActorTeamUserStub } = setup();
+  const {
+    deleteStub,
+    findTeamUserByIdStub,
+    findActorTeamUserStub,
+    removeStripeSeatStub,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: TeamUserRole.VIEWER,
+  });
   findActorTeamUserStub.resolves({
     id: tu1.id,
     role: TeamUserRole.VIEWER,
@@ -725,6 +774,11 @@ test("DEL /team-users/:id allows self-delete when non-admin", async (t: Test) =>
 
   t.equal(response.status, 204, "Allows deletion of self");
   t.equal(deleteStub.callCount, 1, "Deletes own team user");
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "Does not update Stripe seat count when user is a viewer"
+  );
 });
 
 test("DEL /team-users/:id doesn't allow team owner to self-delete", async (t: Test) => {

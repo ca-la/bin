@@ -22,6 +22,7 @@ import {
   requireTeamRoles,
   updateTeamUser,
   requireTeamUserByTeamUserId,
+  removeTeamUser,
 } from "./service";
 import TeamUsersDAO from "./dao";
 import { emit } from "../../services/pubsub";
@@ -133,14 +134,13 @@ function* deleteTeamUser(
   this: TrxContext<AuthedContext<TeamUserUpdate, { teamUser: TeamUser }>>
 ) {
   const { trx, teamUser, userId: actorUserId } = this.state;
-  const { teamUserId } = this.params;
 
   const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
   if (isTryingToDeleteTeamOwner) {
     this.throw(403, `You cannot delete the owner of the team`);
   }
 
-  const deleted = yield TeamUsersDAO.deleteById(trx, teamUserId);
+  const deleted = yield removeTeamUser(trx, teamUser);
 
   yield emit<TeamUser, RouteDeleted<TeamUser, typeof teamUserDomain>>({
     type: "route.deleted",

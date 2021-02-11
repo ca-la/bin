@@ -5,6 +5,7 @@ import { findByEmail as findUserByEmail } from "../users/dao";
 import {
   Role as TeamUserRole,
   TeamUser,
+  TeamUserDb,
   TeamUserUpdate,
   UnsavedTeamUser,
 } from "./types";
@@ -13,7 +14,10 @@ import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
 import { areThereAvailableSeatsInTeamPlan } from "../plans/find-team-plans";
-import { addSeatCharge as addStripeSeatCharge } from "../../services/stripe/index";
+import {
+  addSeatCharge as addStripeSeatCharge,
+  removeSeatCharge as removeStripeSeatCharge,
+} from "../../services/stripe/index";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -206,14 +210,12 @@ export async function updateTeamUser(
         }
 
         if (role !== TeamUserRole.VIEWER) {
-          if (!before) {
-            throw new Error(
-              `Could not find user being updated with ID ${teamUserId}`
-            );
-          }
-
           if (before.role === TeamUserRole.VIEWER) {
             await addStripeSeatCharge(trx, teamId);
+          }
+        } else {
+          if (before.role !== TeamUserRole.VIEWER) {
+            await removeStripeSeatCharge(trx, teamId);
           }
         }
       }
@@ -225,4 +227,19 @@ export async function updateTeamUser(
     throw new Error("Could not find updated team user");
   }
   return updated;
+}
+
+export async function removeTeamUser(
+  trx: Knex.Transaction,
+  teamUser: TeamUserDb
+) {
+  await createTeamUserLock(trx, teamUser.teamId);
+
+  const deleted = await TeamUsersDAO.deleteById(trx, teamUser.id);
+
+  if (teamUser.role !== TeamUserRole.VIEWER) {
+    await removeStripeSeatCharge(trx, teamUser.teamId);
+  }
+
+  return deleted;
 }
