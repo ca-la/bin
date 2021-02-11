@@ -29,7 +29,7 @@ interface DeleteRequest extends Omit<PostRequest, "method"> {
 }
 
 type RequestWithBody = PostRequest | DeleteRequest;
-type RequestOptions = GetRequest | RequestWithBody;
+export type RequestOptions = GetRequest | RequestWithBody;
 
 function isRequestWithBody(candidate: any): candidate is RequestWithBody {
   return "data" in candidate || "idempotencyKey" in candidate;

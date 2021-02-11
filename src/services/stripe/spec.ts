@@ -19,7 +19,9 @@ import {
 } from ".";
 
 test("sendTransfer with a Bid Id", async (t: Test) => {
-  const makeRequestStub = sandbox().stub(RequestService, "default").resolves();
+  const makeRequestStub = sandbox().stub(RequestService, "default").resolves({
+    id: "a-transfer-id",
+  });
   const data = {
     destination: "my wallet",
     amountCents: 2222,
@@ -44,7 +46,9 @@ test("sendTransfer with a Bid Id", async (t: Test) => {
 });
 
 test("sendTransfer with a invoice Id", async (t: Test) => {
-  const makeRequestStub = sandbox().stub(RequestService, "default").resolves();
+  const makeRequestStub = sandbox().stub(RequestService, "default").resolves({
+    id: "a-transfer-id",
+  });
   const data = {
     destination: "my wallet",
     amountCents: 2222,
@@ -69,7 +73,9 @@ test("sendTransfer with a invoice Id", async (t: Test) => {
 });
 
 test("sendTransfer with a sourceType", async (t: Test) => {
-  const makeRequestStub = sandbox().stub(RequestService, "default").resolves();
+  const makeRequestStub = sandbox().stub(RequestService, "default").resolves({
+    id: "a-transfer-id",
+  });
   const data = {
     destination: "my wallet",
     amountCents: 2222,
@@ -102,7 +108,7 @@ test("getBalances", async (t: Test) => {
           source_types: {
             bank_account: 300123,
             card: 200456,
-            financing: 100789,
+            fpx: 100789,
           },
         },
       ],
@@ -131,7 +137,7 @@ test("getBalances", async (t: Test) => {
   t.deepEqual(balance, {
     bank_account: 300123,
     card: 200456,
-    financing: 100789,
+    fpx: 100789,
   });
 });
 

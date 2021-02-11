@@ -1,20 +1,25 @@
 import Knex from "knex";
-import * as z from "zod";
-import querystring from "querystring";
 import { insecureHash } from "../insecure-hash";
-import Logger from "../logger";
-import makeRequest from "./make-request";
 import PaymentMethodsDAO from "../../components/payment-methods/dao";
 import * as UsersDAO from "../../components/users/dao";
 import TeamUsersDAO from "../../components/team-users/dao";
-import { STRIPE_SECRET_KEY } from "../../config";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import {
   PlanStripePrice,
   PlanStripePriceType,
 } from "../../components/plan-stripe-price/types";
 
-const STRIPE_CONNECT_API_BASE = "https://connect.stripe.com";
+import {
+  Charge,
+  ConnectAccount,
+  Customer,
+  SourceTypes,
+  SubscriptionItem,
+  Transfer,
+} from "./types";
+import * as StripeAPI from "./api";
+
+export * from "./types";
 
 interface StripeChargeOptions {
   customerId: string;
@@ -24,7 +29,7 @@ interface StripeChargeOptions {
   invoiceId: string;
 }
 
-export async function charge(options: StripeChargeOptions): Promise<object> {
+export async function charge(options: StripeChargeOptions): Promise<Charge> {
   const { customerId, sourceId, amountCents, description, invoiceId } = options;
 
   // Using a combination of invoiceId + sourceId ensures that:
@@ -36,18 +41,13 @@ export async function charge(options: StripeChargeOptions): Promise<object> {
     `${invoiceId}/${sourceId}/${amountCents}`
   );
 
-  return makeRequest({
-    method: "post",
-    path: "/charges",
-    data: {
-      amount: amountCents,
-      currency: "usd",
-      source: sourceId,
-      description,
-      customer: customerId,
-      transfer_group: invoiceId,
-    },
-    idempotencyKey,
+  return StripeAPI.createCharge(idempotencyKey, {
+    amount: amountCents,
+    currency: "usd",
+    source: sourceId,
+    description,
+    customer: customerId,
+    transfer_group: invoiceId,
   });
 }
 
@@ -62,7 +62,7 @@ interface StripeTransferOptions {
 
 export async function sendTransfer(
   options: StripeTransferOptions
-): Promise<object> {
+): Promise<Transfer> {
   const { description, bidId, destination, amountCents, invoiceId } = options;
   if (!invoiceId && !bidId) {
     throw new Error(`A Bid or Invoice ID is required`);
@@ -71,71 +71,24 @@ export async function sendTransfer(
     `${description}-${bidId || invoiceId}-${destination}`
   );
 
-  return makeRequest({
-    method: "post",
-    path: "/transfers",
-    data: {
-      amount: amountCents,
-      currency: "usd",
-      destination,
-      description,
-      transfer_group: bidId || invoiceId,
-      source_type: options.sourceType,
-    },
-    idempotencyKey,
+  return StripeAPI.createTransfer(idempotencyKey, {
+    amount: amountCents,
+    currency: "usd",
+    destination,
+    description,
+    transfer_group: bidId || invoiceId,
+    source_type: options.sourceType,
   });
 }
 
-const customerSchema = z
-  .object({
-    id: z.string(),
-  })
-  .passthrough();
-
-type Customer = z.infer<typeof customerSchema>;
-
-const customerListSchema = z
-  .object({
-    object: z.literal("list"),
-    data: z.array(customerSchema),
-  })
-  .passthrough();
-
-type CustomerList = z.infer<typeof customerListSchema>;
-
 export async function findCustomer(email: string): Promise<Customer | null> {
-  const query = querystring.stringify({
-    email,
-    limit: 1,
-  });
-
-  const found = await makeRequest<CustomerList>({
-    method: "get",
-    path: `/customers?${query}`,
-  }).then(customerListSchema.parse);
+  const found = await StripeAPI.findCustomersByEmail({ email, limit: 1 });
 
   if (found.data.length === 0) {
     return null;
   }
 
   return found.data[0];
-}
-
-async function createCustomer({
-  email,
-  name,
-}: {
-  email: string;
-  name: string;
-}): Promise<{ id: string }> {
-  return makeRequest<{ id: string }>({
-    method: "post",
-    path: "/customers",
-    data: {
-      email,
-      description: name,
-    },
-  });
 }
 
 export async function findOrCreateCustomerId(
@@ -167,8 +120,8 @@ export async function findOrCreateCustomerId(
     return existingCustomer.id;
   }
 
-  const customer = await createCustomer({
-    name: user.name || "",
+  const customer = await StripeAPI.createCustomer({
+    description: user.name || "",
     email: user.email,
   });
   return customer.id;
@@ -176,31 +129,16 @@ export async function findOrCreateCustomerId(
 
 // https://stripe.com/docs/connect/express-accounts#token-request
 export async function createConnectAccount(
-  authorizationCode: string
-): Promise<object> {
-  return makeRequest({
-    apiBase: STRIPE_CONNECT_API_BASE,
-    method: "post",
-    path: "/oauth/token",
-    data: {
-      client_secret: STRIPE_SECRET_KEY,
-      grant_type: "authorization_code",
-      code: authorizationCode,
-    },
+  code: string
+): Promise<ConnectAccount> {
+  return StripeAPI.createConnectAccount({
+    code,
   });
 }
 
 export async function createLoginLink(accountId: string): Promise<string> {
   try {
-    const response = await makeRequest<{ url: string }>({
-      method: "post",
-      path: `/accounts/${accountId}/login_links`,
-    });
-
-    if (!response || !response.url) {
-      Logger.log(response);
-      throw new Error("Could not parse Stripe login URL from response");
-    }
+    const response = await StripeAPI.createLoginLink({ accountId });
 
     return response.url;
   } catch (err) {
@@ -212,122 +150,16 @@ export async function createLoginLink(accountId: string): Promise<string> {
   }
 }
 
-// Stripe accounts can contain balances in one or more arbitrarily-named
-// "accounts"
-// Keys are account name, values are an integer number of cents.
-interface Balances {
-  [account: string]: number;
-}
-
-interface BalanceResponse {
-  object: "balance";
-  available: [
-    {
-      amount: number;
-      currency: string;
-      source_types: Balances;
-    }
-  ];
-}
-
-export async function getBalances(): Promise<Balances> {
-  const response = await makeRequest<BalanceResponse>({
-    method: "get",
-    path: `/balance`,
-  });
-
-  if (!response.available || !response.available[0]) {
-    Logger.logServerError("Stripe response: ", response);
-    throw new Error("Malformed Balance response");
-  }
+export async function getBalances(): Promise<SourceTypes> {
+  const response = await StripeAPI.getBalances();
 
   return response.available[0].source_types;
 }
 
-const subscriptionItemSchema = z
-  .object({
-    id: z.string(),
-    quantity: z.number(),
-    price: z
-      .object({
-        id: z.string(),
-      })
-      .passthrough(),
-  })
-  .passthrough();
-
-export type SubscriptionItem = z.infer<typeof subscriptionItemSchema>;
-
-const subscriptionItemUpdateSchema = subscriptionItemSchema.partial().extend({
-  price: z.string().optional(),
-  deleted: z.boolean().optional(),
-  proration_behavior: z
-    .enum(["create_prorations", "none", "always_invoice"])
-    .optional(),
-  payment_behavior: z
-    .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
-    .optional(),
-});
-
-export type SubscriptionItemUpdate = z.infer<
-  typeof subscriptionItemUpdateSchema
->;
-
-const subscriptionSchema = z
-  .object({
-    id: z.string(),
-    items: z.object({
-      object: z.literal("list"),
-      data: z.array(subscriptionItemSchema),
-    }),
-  })
-  .passthrough();
-
-export type Subscription = z.infer<typeof subscriptionSchema>;
-
-const subscriptionUpdateSchema = subscriptionSchema.partial().extend({
-  items: z.array(subscriptionItemUpdateSchema),
-  proration_behavior: z
-    .enum(["create_prorations", "none", "always_invoice"])
-    .optional(),
-  payment_behavior: z
-    .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
-    .optional(),
-  default_source: z.string().optional(),
-});
-
-export type SubscriptionUpdate = z.infer<typeof subscriptionUpdateSchema>;
-
-export function getSubscription(subscriptionId: string) {
-  return makeRequest({
-    method: "get",
-    path: `/subscriptions/${subscriptionId}`,
-  }).then(subscriptionSchema.parse);
-}
-
-function updateStripeSubscriptionItem(
-  id: string,
-  data: SubscriptionItemUpdate
-) {
-  return makeRequest({
-    method: "post",
-    path: `/subscription_items/${id}`,
-    data,
-  }).then(subscriptionItemSchema.parse);
-}
-
-export async function updateSubscription(
-  subscriptionId: string,
-  subscriptionDataToUpdate: SubscriptionUpdate
-): Promise<Subscription> {
-  return makeRequest<Subscription>({
-    method: "post",
-    path: `/subscriptions/${subscriptionId}`,
-    data: subscriptionDataToUpdate,
-  }).then(subscriptionSchema.parse);
-}
-
-export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
+export async function addSeatCharge(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<void> {
   const teamSubscriptions = await SubscriptionsDAO.findForTeamWithPlans(
     trx,
     teamId,
@@ -357,7 +189,7 @@ export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
     return;
   }
 
-  const stripeSubscription = await getSubscription(
+  const stripeSubscription = await StripeAPI.getSubscription(
     subscription.stripeSubscriptionId
   );
   const perSeatSubscriptionItem = stripeSubscription.items.data.find(
@@ -382,7 +214,7 @@ export async function addSeatCharge(trx: Knex.Transaction, teamId: string) {
     );
   }
 
-  await updateStripeSubscriptionItem(perSeatSubscriptionItem.id, {
+  await StripeAPI.updateStripeSubscriptionItem(perSeatSubscriptionItem.id, {
     quantity: currentNonViewerCount,
     proration_behavior: "always_invoice",
     payment_behavior: "error_if_incomplete",

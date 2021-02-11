@@ -15,7 +15,8 @@ import {
 } from "../../components/plan-stripe-price/types";
 
 import upgradeSubscription from "./upgrade-subscription";
-import * as StripeAPI from "./index";
+import * as StripeAPI from "./api";
+import { Subscription as StripeSubscription, SubscriptionItem } from "./types";
 
 const baseCostPrice = {
   stripePriceId: "stripe-price-id-1",
@@ -65,14 +66,14 @@ async function setup({
   newPlanData = {},
   subscriptionData = {},
 }: {
-  subscriptionItems?: StripeAPI.SubscriptionItem[];
+  subscriptionItems?: SubscriptionItem[];
   newPlanData?: Partial<Plan>;
   newPlanPrices?: Omit<PlanStripePrice, "planId">[] | null;
   subscriptionData?: Partial<Subscription>;
 }) {
   const trx = await db.transaction();
 
-  const stripeSubscriptionToUpdate: StripeAPI.Subscription = {
+  const stripeSubscriptionToUpdate: StripeSubscription = {
     id: stripeSubscriptionId,
     items: {
       object: "list",
@@ -643,7 +644,7 @@ test("upgradeSubscription calls the correct API", async (t: Test) => {
     );
     t.equal(
       fetchStub.firstCall.args[1].body,
-      "items[0][id]=subscription-item-id-to-update&items[0][price]=stripe-price-id-per-seat&items[0][quantity]=5&items[1][price]=stripe-price-id-3&proration_behavior=always_invoice&default_source=stripe-source-id&payment_behavior=error_if_incomplete",
+      "items[0][id]=subscription-item-id-to-update&items[0][quantity]=5&items[0][price]=stripe-price-id-per-seat&items[1][price]=stripe-price-id-3&proration_behavior=always_invoice&payment_behavior=error_if_incomplete&default_source=stripe-source-id",
       "fetch has been called with correct arguments to update the stripe subscription"
     );
   } finally {

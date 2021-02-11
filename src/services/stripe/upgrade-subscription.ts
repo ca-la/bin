@@ -5,12 +5,14 @@ import {
   PlanStripePriceType,
 } from "../../components/plan-stripe-price/types";
 import {
+  SubscriptionItem as StripeSubscriptionItem,
+  Subscription as StripeSubscription,
+} from "./types";
+import {
   getSubscription as getStripeSubscription,
   updateSubscription as updateStripeSubscription,
-  SubscriptionItem as StripeSubscriptionItem,
   SubscriptionItemUpdate as StripeSubscriptionItemToUpdate,
-  Subscription as StripeSubscription,
-} from "../../services/stripe";
+} from "./api";
 
 function hasPerSeatPriceWithoutSeatCount(
   hasPerSeatPrice: boolean,
