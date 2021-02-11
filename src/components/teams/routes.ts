@@ -9,6 +9,7 @@ import TeamsDAO from "./dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as PlansDAO from "../plans/dao";
 import { createSubscription } from "../subscriptions/create";
+import attachPlan from "../subscriptions/attach-plan";
 import { upgradeTeamSubscription } from "../subscriptions/upgrade";
 import {
   TeamDb,
@@ -218,7 +219,9 @@ function* upgradeTeamSubscriptionRouteHandler(
     stripeCardToken,
   });
 
-  this.body = upgradedSubscription;
+  const subscriptionWithPlan = yield attachPlan(upgradedSubscription);
+
+  this.body = subscriptionWithPlan;
   this.status = 200;
 }
 

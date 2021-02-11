@@ -15,6 +15,7 @@ import * as PlansDAO from "../plans/dao";
 import * as SubscriptionService from "../subscriptions/create";
 import * as SubscriptionUpgradeService from "../subscriptions/upgrade";
 import { Subscription } from "../subscriptions/domain-object";
+import * as attachPlan from "../subscriptions/attach-plan";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -65,6 +66,9 @@ function setup({
     createSubscriptionStub: sandbox()
       .stub(SubscriptionService, "createSubscription")
       .resolves(),
+    attachPlanStub: sandbox()
+      .stub(attachPlan, "default")
+      .callsFake((x: any) => x),
 
     now,
   };
@@ -667,7 +671,7 @@ for (const testCase of teamSubscriptionPathTestCases) {
 }
 
 test("PATH /teams/:id/subscription successfully and upgradeTeamSubscription called with right arguments", async (t: Test) => {
-  setup({ role: "USER" });
+  const { attachPlanStub } = setup({ role: "USER" });
   sandbox()
     .stub(TeamUsersDAO, "findOne")
     .resolves({ role: TeamUserRole.OWNER });
@@ -694,4 +698,5 @@ test("PATH /teams/:id/subscription successfully and upgradeTeamSubscription call
 
   t.equal(response.status, 200, `responds with expected status: 200`);
   t.deepEqual(body, JSON.parse(JSON.stringify({ id: "a-subscription-id" })));
+  t.equal(attachPlanStub.callCount, 1, "plan attached to subscription");
 });
