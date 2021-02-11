@@ -1,7 +1,7 @@
 import process from "process";
 
 import { log, logServerError } from "../../services/logger";
-import { format, green } from "../../services/colors";
+import { format, green, red } from "../../services/colors";
 import db from "../../services/db";
 import { findCustomer, findOrCreateCustomerId } from "../../services/stripe";
 import createStripeSubscription from "../../services/stripe/create-subscription";
@@ -104,25 +104,35 @@ ${JSON.stringify(subscriptionsWithPaidPlans, null, 2)}`
         userId as string,
         trx
       );
-      const stripeSubscription = await createStripeSubscription({
-        stripeCustomerId,
-        stripePrices: stripePriceDataAdapter.fromDbArray(
-          subscriptionWithData.stripe_prices
-        ),
-        stripeSourceId: null,
-        seatCount: subscriptionWithData.team_id
-          ? await TeamUsersDAO.countBilledUsers(
-              trx,
-              subscriptionWithData.team_id
-            )
-          : null,
-      });
+
+      let stripeSubscriptionId = null;
+      try {
+        const stripeSubscription = await createStripeSubscription({
+          stripeCustomerId,
+          stripePrices: stripePriceDataAdapter.fromDbArray(
+            subscriptionWithData.stripe_prices
+          ),
+          stripeSourceId: null,
+          seatCount: subscriptionWithData.team_id
+            ? await TeamUsersDAO.countBilledUsers(
+                trx,
+                subscriptionWithData.team_id
+              )
+            : null,
+        });
+        stripeSubscriptionId = stripeSubscription.id;
+      } catch (err) {
+        log(
+          `${red}-- There was an error creating the Stripe subscription for ID ${subscriptionWithData.id}. Skipping!\n${err.message}`
+        );
+        continue;
+      }
 
       log(
-        `(${index}/${subscriptionsWithRelativeData.length}) Updating subscription with id ${subscriptionWithData.id} with stripe id ${stripeSubscription.id}`
+        `(${index}/${subscriptionsWithRelativeData.length}) Updating subscription with id ${subscriptionWithData.id} with stripe id ${stripeSubscriptionId}`
       );
       await trx("subscriptions")
-        .update({ stripe_subscription_id: stripeSubscription.id })
+        .update({ stripe_subscription_id: stripeSubscriptionId })
         .where({ id: subscriptionWithData.id });
 
       await new Promise((resolve: (value: unknown) => void) => {
