@@ -181,14 +181,6 @@ export async function getCollectionPermissions(
   sessionRole: string,
   sessionUserId: string
 ): Promise<Permissions> {
-  if (collection.teamId !== null) {
-    return getTeamCollectionPermissions(
-      trx,
-      collection.teamId,
-      sessionUserId,
-      sessionRole
-    );
-  }
   const collaborators: Collaborator[] = await CollaboratorsDAO.findByCollectionAndUser(
     collection.id,
     sessionUserId,
@@ -199,6 +191,20 @@ export async function getCollectionPermissions(
       return collaborator.role;
     }
   );
+
+  const teamUsers = await TeamUsersDAO.findByUserAndCollection(
+    trx,
+    sessionUserId,
+    collection.id
+  );
+
+  for (const teamUser of teamUsers) {
+    const collaboratorRole = TEAM_USER_ROLE_TO_COLLABORATOR_ROLE[teamUser.role];
+    if (!collaboratorRole) {
+      throw new Error(`Missing team role mapping for "${teamUser.role}"`);
+    }
+    collaboratorRoles.push(collaboratorRole);
+  }
 
   // For legacy collections with no "EDIT" collaborator for creator
   if (sessionUserId === collection.createdBy) {

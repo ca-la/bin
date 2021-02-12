@@ -12,6 +12,48 @@ import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import generateCollection from "../../../test-helpers/factories/collection";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
+import { TeamUsersDAO } from "../../team-users";
+
+const collection = {
+  id: "a-collection-id",
+  createdBy: "a-user-id",
+  teamId: null,
+};
+const ownerCollaborator = {
+  userId: "a-user-id",
+  role: "EDIT",
+};
+const partnerCollaborator = {
+  userId: "a-partner-id",
+  role: "PARTNER",
+};
+
+function setupStubs() {
+  return {
+    sessionStub: sandbox().stub(SessionsDAO, "findById").resolves({
+      role: "USER",
+      userId: "a-user-id",
+    }),
+    findCollectionById: sandbox()
+      .stub(CollectionsDAO, "findById")
+      .resolves(collection),
+    collaboratorStub: sandbox()
+      .stub(CollaboratorsDAO, "findByCollectionAndUser")
+      .resolves([ownerCollaborator]),
+    moveDesignStub: sandbox()
+      .stub(CollectionDesignsDAO, "moveDesigns")
+      .resolves(1),
+    removeDesignStub: sandbox()
+      .stub(CollectionDesignsDAO, "removeDesigns")
+      .resolves(1),
+    findDesignsByCollectionId: sandbox()
+      .stub(ProductDesignsDAO, "findByCollectionId")
+      .resolves([{ id: "another-design-id" }]),
+    findTeamUsersByCollection: sandbox()
+      .stub(TeamUsersDAO, "findByUserAndCollection")
+      .resolves([]),
+  };
+}
 
 test("PUT + DEL /collections/:id/designs supports moving many designs to from/the collection", async (t: Test) => {
   const { user, session } = await createUser();
@@ -124,32 +166,7 @@ test("PUT + DEL /collections/:id/designs without designs", async (t: Test) => {
 });
 
 test("PUT /collections/:id/designs?designIds", async (t: Test) => {
-  const collection = {
-    id: "a-collection-id",
-    createdBy: "a-user-id",
-    teamId: null,
-  };
-  const ownerCollaborator = {
-    userId: "a-user-id",
-    role: "EDIT",
-  };
-  const partnerCollaborator = {
-    userId: "a-partner-id",
-    role: "PARTNER",
-  };
-  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
-    role: "USER",
-    userId: "a-user-id",
-  });
-  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
-  const collaboratorStub = sandbox()
-    .stub(CollaboratorsDAO, "findByCollectionAndUser")
-    .resolves([ownerCollaborator]);
-  sandbox().stub(CollectionDesignsDAO, "moveDesigns").resolves(1);
-  sandbox()
-    .stub(ProductDesignsDAO, "findByCollectionId")
-    .resolves([{ id: "another-design-id" }]);
-
+  const { sessionStub, collaboratorStub } = setupStubs();
   const ownerRequest = await API.put(
     `/collections/${collection.id}/designs?designIds=a-design-id`,
     { headers: { Authorization: "Token a-session-id" } }
@@ -182,31 +199,7 @@ test("PUT /collections/:id/designs?designIds", async (t: Test) => {
 });
 
 test("PUT /collections/:id/designs/:id", async (t: Test) => {
-  const collection = {
-    id: "a-collection-id",
-    createdBy: "a-user-id",
-    teamId: null,
-  };
-  const ownerCollaborator = {
-    userId: "a-user-id",
-    role: "EDIT",
-  };
-  const partnerCollaborator = {
-    userId: "a-partner-id",
-    role: "PARTNER",
-  };
-  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
-    role: "USER",
-    userId: "a-user-id",
-  });
-  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
-  const collaboratorStub = sandbox()
-    .stub(CollaboratorsDAO, "findByCollectionAndUser")
-    .resolves([ownerCollaborator]);
-  sandbox().stub(CollectionDesignsDAO, "moveDesigns").resolves(1);
-  sandbox()
-    .stub(ProductDesignsDAO, "findByCollectionId")
-    .resolves([{ id: "another-design-id" }]);
+  const { sessionStub, collaboratorStub } = setupStubs();
 
   const ownerRequest = await API.put(
     `/collections/${collection.id}/designs/a-design-id`,
@@ -240,32 +233,7 @@ test("PUT /collections/:id/designs/:id", async (t: Test) => {
 });
 
 test("DELETE /collections/:id/designs/:id", async (t: Test) => {
-  const collection = {
-    id: "a-collection-id",
-    createdBy: "a-user-id",
-    teamId: null,
-  };
-  const ownerCollaborator = {
-    userId: "a-user-id",
-    role: "EDIT",
-  };
-  const partnerCollaborator = {
-    userId: "a-partner-id",
-    role: "PARTNER",
-  };
-  const sessionStub = sandbox().stub(SessionsDAO, "findById").resolves({
-    role: "USER",
-    userId: "a-user-id",
-  });
-  sandbox().stub(CollectionsDAO, "findById").resolves(collection);
-  const collaboratorStub = sandbox()
-    .stub(CollaboratorsDAO, "findByCollectionAndUser")
-    .resolves([ownerCollaborator]);
-  sandbox().stub(CollectionDesignsDAO, "removeDesigns").resolves(1);
-  sandbox()
-    .stub(ProductDesignsDAO, "findByCollectionId")
-    .resolves([{ id: "another-design-id" }]);
-
+  const { sessionStub, collaboratorStub } = setupStubs();
   const ownerRequest = await API.del(
     `/collections/${collection.id}/designs/a-design-id`,
     { headers: { Authorization: "Token a-session-id" } }
@@ -301,7 +269,7 @@ test("GET /collections/:id/designs", async (t: Test) => {
   const { user, session } = await createUser();
 
   const createdAt = new Date();
-  const collection = await CollectionsDAO.create({
+  const c1 = await CollectionsDAO.create({
     createdAt,
     createdBy: user.id,
     deletedAt: null,
@@ -325,11 +293,11 @@ test("GET /collections/:id/designs", async (t: Test) => {
     userId: user.id,
   });
 
-  await API.put(`/collections/${collection.id}/designs/${design.id}`, {
+  await API.put(`/collections/${c1.id}/designs/${design.id}`, {
     headers: API.authHeader(session.id),
   });
 
-  const [, designs] = await API.get(`/collections/${collection.id}/designs`, {
+  const [, designs] = await API.get(`/collections/${c1.id}/designs`, {
     headers: API.authHeader(session.id),
   });
 
@@ -338,8 +306,8 @@ test("GET /collections/:id/designs", async (t: Test) => {
     designs[0],
     {
       ...design,
-      collectionIds: [collection.id],
-      collections: [{ id: collection.id, title: collection.title }],
+      collectionIds: [c1.id],
+      collections: [{ id: c1.id, title: c1.title }],
       createdAt: design.createdAt.toISOString(),
       permissions: {
         canComment: true,

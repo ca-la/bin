@@ -480,6 +480,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2, session: session2 } = await createUser();
   const { user: partnerUser, session: partnerSession } = await createUser();
+  const { team } = await generateTeam(user.id);
 
   const collection1 = await CollectionsDAO.create({
     createdAt: new Date(),
@@ -515,6 +516,15 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     description: null,
     id: uuid.v4(),
     teamId: null,
+    title: "C4",
+  });
+  const collection5 = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    teamId: team.id,
     title: "C4",
   });
   await generateCollaborator({
@@ -556,6 +566,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     role: "PARTNER",
     userEmail: null,
     userId: partnerUser.id,
+  });
+  await generateCollaborator({
+    collectionId: collection5.id,
+    designId: null,
+    invitationMessage: "",
+    role: "EDIT",
+    userEmail: null,
+    userId: user2.id,
   });
 
   const trx = await db.transaction();
@@ -663,12 +681,29 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       },
       "Returns no access permissions for the collection the user does not have access to."
     );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection5,
+        session2,
+        user2.id
+      ),
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns edit access permissions for the team collection the user is an edit collaborator on."
+    );
   } finally {
     await trx.rollback();
   }
 });
 
-test("#getCollectionPermissions", async (t: tape.Test) => {
+test("#findMostPermissiveRole", async (t: tape.Test) => {
   t.equal(
     PermissionsService.findMostPermissiveRole([
       "VIEW",

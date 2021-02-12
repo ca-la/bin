@@ -161,6 +161,26 @@ async function findByUserAndDesign(
   return adapter.fromDbArray(teamUsers);
 }
 
+async function findByUserAndCollection(
+  trx: Knex.Transaction,
+  userId: string,
+  collectionId: string
+) {
+  const teamUsers = await trx
+    .select("team_users.*")
+    .from("collections")
+    .join("team_users", "team_users.team_id", "collections.team_id")
+    .where({
+      "collections.deleted_at": null,
+      "collections.id": collectionId,
+      "team_users.deleted_at": null,
+      "team_users.user_id": userId,
+    })
+    .modify(withUser);
+
+  return adapter.fromDbArray(teamUsers);
+}
+
 async function countBilledUsers(
   trx: Knex.Transaction,
   teamId: string
@@ -179,5 +199,6 @@ export default {
   findByUserAndTeam,
   transferOwnership,
   findByUserAndDesign,
+  findByUserAndCollection,
   countBilledUsers,
 };

@@ -514,6 +514,112 @@ test("TeamUsersDAO.findByUserAndDesign", async (t: Test) => {
   }
 });
 
+test("TeamUsersDAO.findByUserAndCollection", async (t: Test) => {
+  const trx = await db.transaction();
+  const { user: owner } = await createUser({ withSession: false });
+  const { user: user1 } = await createUser({ withSession: false });
+  const { user: user2 } = await createUser({ withSession: false });
+  const { user: user3 } = await createUser({ withSession: false });
+  const { user: user4 } = await createUser({ withSession: false });
+  const { team, teamUser: tu1 } = await generateTeam(
+    user1.id,
+    {},
+    {
+      role: TeamUserRole.ADMIN,
+    }
+  );
+
+  try {
+    const tu2 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.EDITOR,
+      teamId: team.id,
+      userId: user2.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    const tu3 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user3.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      teamId: team.id,
+      userId: user4.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const collection = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: owner.id,
+      deletedAt: null,
+      description: null,
+      id: uuid.v4(),
+      teamId: team.id,
+      title: "C1",
+    });
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndCollection(trx, user1.id, collection.id),
+      [
+        {
+          ...tu1,
+          user: user1,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndCollection(trx, user2.id, collection.id),
+      [
+        {
+          ...tu2,
+          user: user2,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndCollection(trx, user3.id, collection.id),
+      [
+        {
+          ...tu3,
+          user: user3,
+        },
+      ],
+      "returns the team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndCollection(trx, user4.id, collection.id),
+      [],
+      "does not return the deleted team user"
+    );
+
+    t.deepEqual(
+      await TeamUsersDAO.findByUserAndCollection(trx, owner.id, collection.id),
+      [],
+      "does not return the non team user"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
 test("TeamUsersDAO.countBilledUsers", async (t: Test) => {
   const trx = await db.transaction();
 
