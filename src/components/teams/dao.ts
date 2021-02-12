@@ -18,6 +18,7 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
   rawAdapter,
   {
     orderColumn: "created_at",
+    orderDirection: "DESC",
   }
 );
 
