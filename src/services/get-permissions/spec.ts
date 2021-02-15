@@ -739,3 +739,51 @@ test("#findMostPermissiveRole", async (t: tape.Test) => {
     "Returns null if the list is empty"
   );
 });
+
+test("findMostPermissiveTeamRole", async (t: tape.Test) => {
+  interface TestCase {
+    title: string;
+    roles: TeamUserRole[];
+    result: TeamUserRole | null;
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "null",
+      roles: [],
+      result: null,
+    },
+    {
+      title: "Viewer",
+      roles: [TeamUserRole.VIEWER, TeamUserRole.VIEWER],
+      result: TeamUserRole.VIEWER,
+    },
+    {
+      title: "Editor",
+      roles: [TeamUserRole.VIEWER, TeamUserRole.EDITOR],
+      result: TeamUserRole.EDITOR,
+    },
+    {
+      title: "Admin",
+      roles: [TeamUserRole.ADMIN, TeamUserRole.VIEWER, TeamUserRole.EDITOR],
+      result: TeamUserRole.ADMIN,
+    },
+    {
+      title: "Owner",
+      roles: [
+        TeamUserRole.ADMIN,
+        TeamUserRole.OWNER,
+        TeamUserRole.VIEWER,
+        TeamUserRole.EDITOR,
+      ],
+      result: TeamUserRole.OWNER,
+    },
+  ];
+
+  for (const testCase of testCases) {
+    t.equal(
+      PermissionsService.findMostPermissiveTeamRole(testCase.roles),
+      testCase.result,
+      testCase.title
+    );
+  }
+});

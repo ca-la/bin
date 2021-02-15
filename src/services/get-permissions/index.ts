@@ -8,8 +8,12 @@ import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { Permissions } from "../../components/permissions/types";
 import { TeamUserRole, TeamUsersDAO } from "../../components/team-users";
-import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../components/team-users/types";
-export { Permissions } from "../../components/permissions/types";
+import {
+  TEAM_USER_ROLE_TO_COLLABORATOR_ROLE,
+  TEAM_ROLE_PERMISSIVENESS,
+} from "../../components/team-users/types";
+
+export { Permissions };
 
 export interface PermissionsAndRole {
   permissions: Permissions;
@@ -18,7 +22,7 @@ export interface PermissionsAndRole {
 
 const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
 
-const ADMIN_PERMISSIONS: Permissions = {
+export const ADMIN_PERMISSIONS: Permissions = {
   canComment: true,
   canDelete: true,
   canEdit: true,
@@ -38,7 +42,6 @@ export function getPermissionsFromDesign(options: {
   }
 
   const role = findMostPermissiveRole(options.collaboratorRoles);
-
   if (role === "EDIT") {
     return {
       canComment: true,
@@ -219,9 +222,39 @@ export async function getCollectionPermissions(
   });
 }
 
+export function findMostPermissiveTeamRole(
+  roles: TeamUserRole[]
+): TeamUserRole | null {
+  let bestRole: TeamUserRole | null = null;
+  for (const role of roles) {
+    if (
+      !bestRole ||
+      TEAM_ROLE_PERMISSIVENESS[role] > TEAM_ROLE_PERMISSIVENESS[bestRole]
+    ) {
+      bestRole = role;
+    }
+  }
+  return bestRole;
+}
+
 export function calculateTeamCollectionPermissions(
-  teamRole: TeamUserRole
+  roleOrRoles: TeamUserRole | TeamUserRole[]
 ): Permissions {
+  const teamRole: TeamUserRole | null = Array.isArray(roleOrRoles)
+    ? findMostPermissiveTeamRole(roleOrRoles)
+    : roleOrRoles;
+
+  if (teamRole === null) {
+    return {
+      canComment: true,
+      canDelete: false,
+      canEdit: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    };
+  }
+
   if (teamRole === TeamUserRole.VIEWER) {
     return {
       canComment: true,

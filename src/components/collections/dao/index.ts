@@ -9,7 +9,7 @@ import {
   partialDataAdapter,
   UPDATABLE_PROPERTIES,
 } from "../domain-object";
-import { CollectionDb, CollectionDbRow } from "../types";
+import { Collection, CollectionDb, CollectionDbRow } from "../types";
 import { CollectionDesignRow } from "../../../domain-objects/collection-design";
 
 import db from "../../../services/db";
@@ -23,6 +23,13 @@ import {
   MetaCollection,
   MetaCollectionRow,
 } from "../meta-domain-object";
+import {
+  ADMIN_PERMISSIONS,
+  calculateTeamCollectionPermissions,
+  getPermissionsFromDesign,
+} from "../../../services/get-permissions";
+import { Roles } from "../../collaborators/types";
+import { TeamUserRole } from "../../team-users";
 
 export const TABLE_NAME = "collections";
 
@@ -102,19 +109,36 @@ export async function update(
   );
 }
 
+type CollectionDbRowWithCollaboratorRoles = CollectionDbRow & {
+  collaborator_roles: Roles[];
+};
+
+type CollectionDbRowWithCollaboratorAndTeamRoles = CollectionDbRowWithCollaboratorRoles & {
+  team_roles: TeamUserRole[];
+};
+
 export async function findByUser(
   trx: Knex.Transaction,
   options: {
     userId: string;
+    sessionRole: string;
     limit?: number;
     offset?: number;
     search?: string;
   }
-): Promise<CollectionDb[]> {
-  const collections: CollectionDbRow[] = await trx
+): Promise<Collection[]> {
+  const collectionRows: CollectionDbRowWithCollaboratorAndTeamRoles[] = await trx
     .from(TABLE_NAME)
     .select("collections.*")
-    .distinct("collections.id")
+    .select(
+      trx.raw(
+        "array_remove(array_agg(collaborators.role), null) as collaborator_roles"
+      )
+    )
+    .select(
+      trx.raw("array_remove(array_agg(team_users.role), null) as team_roles")
+    )
+    .groupBy("collections.id")
     .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
     .leftJoin("teams", "teams.id", "collections.team_id")
     .leftJoin("team_users", "team_users.team_id", "teams.id")
@@ -142,12 +166,28 @@ export async function findByUser(
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collections
-  );
+  const collectionDbs: CollectionDb[] = validateEvery<
+    CollectionDbRow,
+    CollectionDb
+  >(TABLE_NAME, isCollectionRow, dataAdapter, collectionRows);
+
+  return collectionDbs.map((collection: CollectionDb, index: number) => ({
+    ...collection,
+    permissions:
+      options.sessionRole === "ADMIN"
+        ? ADMIN_PERMISSIONS
+        : collection.teamId !== null
+        ? calculateTeamCollectionPermissions(collectionRows[index].team_roles)
+        : getPermissionsFromDesign({
+            collaboratorRoles:
+              collection.createdBy === options.userId
+                ? [...collectionRows[index].collaborator_roles, "EDIT"]
+                : collectionRows[index].collaborator_roles,
+            isCheckedOut: true,
+            sessionRole: options.sessionRole,
+            sessionUserId: options.userId,
+          }),
+  }));
 }
 
 // Find a list of collections which a user was "directly" shared on - i.e. via
@@ -157,15 +197,17 @@ export async function findDirectlySharedWithUser(
   trx: Knex.Transaction,
   options: {
     userId: string;
+    sessionRole: string;
     limit?: number;
     offset?: number;
     search?: string;
   }
-): Promise<CollectionDb[]> {
-  const collections: CollectionDbRow[] = await trx
+): Promise<Collection[]> {
+  const collectionRows: CollectionDbRowWithCollaboratorRoles[] = await trx
     .from(TABLE_NAME)
     .select("collections.*")
-    .distinct("collections.id")
+    .select(trx.raw("array_agg(collaborators.role) as collaborator_roles"))
+    .groupBy("collections.id")
     .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
     .modify((query: Knex.QueryBuilder): void => {
       if (options.search) {
@@ -185,15 +227,32 @@ export async function findDirectlySharedWithUser(
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collections
-  );
+  const collectionDbs: CollectionDb[] = validateEvery<
+    CollectionDbRow,
+    CollectionDb
+  >(TABLE_NAME, isCollectionRow, dataAdapter, collectionRows);
+
+  return collectionDbs.map((collection: CollectionDb, index: number) => ({
+    ...collection,
+    permissions:
+      options.sessionRole === "ADMIN"
+        ? ADMIN_PERMISSIONS
+        : getPermissionsFromDesign({
+            collaboratorRoles:
+              collection.createdBy === options.userId
+                ? [...collectionRows[index].collaborator_roles, "EDIT"]
+                : collectionRows[index].collaborator_roles,
+            isCheckedOut: true,
+            sessionRole: options.sessionRole,
+            sessionUserId: options.userId,
+          }),
+  }));
 }
 
-export async function findByTeam(trx: Knex.Transaction, teamId: string) {
+export async function findByTeam(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<CollectionDb[]> {
   const collections: CollectionDbRow[] = await trx
     .from(TABLE_NAME)
     .select("collections.*")
@@ -211,6 +270,19 @@ export async function findByTeam(trx: Knex.Transaction, teamId: string) {
     dataAdapter,
     collections
   );
+}
+
+export async function findByTeamWithPermissionsByRole(
+  trx: Knex.Transaction,
+  teamId: string,
+  teamRole: TeamUserRole
+): Promise<Collection[]> {
+  const collectionsDb = await findByTeam(trx, teamId);
+  const permissions = calculateTeamCollectionPermissions(teamRole);
+  return collectionsDb.map((collection: CollectionDb) => ({
+    ...collection,
+    permissions,
+  }));
 }
 
 export async function findById(

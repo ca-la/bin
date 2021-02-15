@@ -18,6 +18,13 @@ export const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<Role, Roles> = {
   [Role.VIEWER]: "VIEW",
 };
 
+export const TEAM_ROLE_PERMISSIVENESS: Record<Role, number> = {
+  [Role.VIEWER]: 1,
+  [Role.EDITOR]: 2,
+  [Role.ADMIN]: 3,
+  [Role.OWNER]: 4,
+};
+
 export const PARTNER_TEAM_BID_PREVIEWERS: Role[] = [Role.OWNER, Role.ADMIN];
 export const PARTNER_TEAM_BID_EDITORS: Role[] = [
   Role.OWNER,

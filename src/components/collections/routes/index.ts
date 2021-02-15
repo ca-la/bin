@@ -131,53 +131,34 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
       userId: userIdToQuery,
       limit: Number(limit),
       offset: Number(offset),
+      sessionRole: role,
       search,
     };
 
-    const collections =
+    const collections: Collection[] =
       isDirectlyShared === "true"
         ? yield CollectionsDAO.findDirectlySharedWithUser(trx, options)
         : yield CollectionsDAO.findByUser(trx, options);
 
-    const withPermissions: Collection[] = [];
-
-    for (const collection of collections) {
-      withPermissions.push({
-        ...collection,
-        permissions: yield getCollectionPermissions(
-          trx,
-          collection,
-          role,
-          userIdToQuery
-        ),
-      });
-    }
-    this.body = withPermissions;
+    this.body = collections;
     this.status = 200;
   } else if (teamId !== undefined) {
+    let teamUserRole = TeamUserRole.ADMIN;
     if (role !== "ADMIN") {
       const teamUser = yield TeamUsersDAO.findOne(trx, {
         teamId,
         userId: currentUserId,
       });
       this.assert(teamUser, 403, "Only team users can list team collections");
+      teamUserRole = teamUser.role;
     }
-    const collections = yield CollectionsDAO.findByTeam(trx, teamId);
+    const collections: Collection[] = yield CollectionsDAO.findByTeamWithPermissionsByRole(
+      trx,
+      teamId,
+      teamUserRole
+    );
 
-    const withPermissions: Collection[] = [];
-
-    for (const collection of collections) {
-      withPermissions.push({
-        ...collection,
-        permissions: yield getCollectionPermissions(
-          trx,
-          collection,
-          role,
-          currentUserId
-        ),
-      });
-    }
-    this.body = withPermissions;
+    this.body = collections;
     this.status = 200;
   } else if (
     role === "ADMIN" &&

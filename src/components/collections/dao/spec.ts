@@ -266,39 +266,59 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
     collection5,
   } = await findSetup();
 
+  const permissions = {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditVariants: false,
+    canSubmit: true,
+    canView: true,
+  };
+
   return db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection4.id);
 
     const collections = await CollectionsDAO.findByUser(trx, {
       userId: user1.id,
+      sessionRole: "USER",
     });
 
     t.deepEqual(
       collections,
-      [collection5, collection2, collection1],
+      [
+        {
+          ...collection5,
+          permissions: { ...permissions, canEditVariants: true },
+        },
+        { ...collection2, permissions },
+        { ...collection1, permissions },
+      ],
       "all collections I can access are returned"
     );
 
     const searchCollections = await CollectionsDAO.findByUser(trx, {
       userId: user1.id,
       search: "Early yEars",
+      sessionRole: "USER",
     });
 
     t.deepEqual(
       searchCollections,
-      [collection1],
+      [{ ...collection1, permissions }],
       "Collections I searched for are returned"
     );
 
     const limitedOffsetCollections = await CollectionsDAO.findByUser(trx, {
       userId: user1.id,
       limit: 1,
+      sessionRole: "USER",
     });
 
     t.equal(limitedOffsetCollections.length, 1);
 
     const deletedTeamUserCollections = await CollectionsDAO.findByUser(trx, {
       userId: user3.id,
+      sessionRole: "USER",
     });
     t.deepEqual(
       deletedTeamUserCollections,
@@ -311,16 +331,29 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
 test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches", async (t: Test) => {
   const { user1, collection1, collection2, collection4 } = await findSetup();
 
+  const permissions = {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditVariants: false,
+    canSubmit: true,
+    canView: true,
+  };
+
   return db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection4.id);
 
     const collections = await CollectionsDAO.findDirectlySharedWithUser(trx, {
       userId: user1.id,
+      sessionRole: "USER",
     });
 
     t.deepEqual(
       collections,
-      [collection2, collection1],
+      [
+        { ...collection2, permissions },
+        { ...collection1, permissions },
+      ],
       "only collections i am directly shared on are returned"
     );
 
@@ -329,12 +362,13 @@ test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches",
       {
         userId: user1.id,
         search: "Early yEars",
+        sessionRole: "USER",
       }
     );
 
     t.deepEqual(
       searchCollections,
-      [collection1],
+      [{ ...collection1, permissions }],
       "Collections I searched for are returned"
     );
   });
