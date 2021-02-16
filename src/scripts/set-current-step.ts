@@ -12,6 +12,7 @@ import ApprovalStep, {
   approvalStepTypeSchema,
 } from "../components/approval-steps/types";
 import ResourceNotFoundError from "../errors/resource-not-found";
+import { registerMessageBuilders } from "../components/cala-components";
 
 import "../components/approval-steps/listeners";
 
@@ -20,6 +21,8 @@ const USAGE = `
 
   $ bin/run [env] [designId] [ApprovalStepType]
 `;
+
+registerMessageBuilders();
 
 async function setCurrentStep(designId: string, stepType: ApprovalStepType) {
   return db.transaction(async (trx: Knex.Transaction) => {
