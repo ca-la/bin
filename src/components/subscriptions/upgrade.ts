@@ -7,7 +7,6 @@ import { Subscription } from "./domain-object";
 import TeamUsersDAO from "../team-users/dao";
 import InvalidDataError from "../../errors/invalid-data";
 import upgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
-import InsufficientPlanError from "../../errors/insufficient-plan";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 
 interface UpgradeTeamOptions {
@@ -29,9 +28,7 @@ export async function upgradeTeamSubscription(
   }
 
   if (!newPlan.stripePrices.length) {
-    throw new InvalidDataError(
-      `Plan with id ${planId} doesn't have Stripe prices`
-    );
+    throw new Error(`Plan with id ${planId} doesn't have Stripe prices`);
   }
 
   const subscription = await SubscriptionsDAO.findActiveByTeamId(trx, teamId);
@@ -65,8 +62,8 @@ export async function upgradeTeamSubscription(
 
   const isUpgradeFromPaidPlanToFree = !isPreviusPlanFree && isPlanFree;
   if (isUpgradeFromPaidPlanToFree) {
-    throw new InsufficientPlanError(
-      `Downgrade to a free plan (id ${newPlan.id}) is not supported`
+    throw new InvalidDataError(
+      `Downgrade from paid plan to a free plan (id ${newPlan.id}) is not supported.`
     );
   }
 

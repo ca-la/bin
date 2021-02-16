@@ -25,6 +25,8 @@ import { buildRouter } from "../../services/cala-component/cala-router";
 import { createTeamWithOwner } from "./service";
 import { requireTeamRoles } from "../team-users/service";
 import { Role as TeamUserRole } from "../team-users/types";
+import filterError from "../../services/filter-error";
+import InvalidDataError from "../../errors/invalid-data";
 
 const domain = "Team" as "Team";
 
@@ -217,7 +219,11 @@ function* upgradeTeamSubscriptionRouteHandler(
     teamId,
     planId,
     stripeCardToken,
-  });
+  }).catch(
+    filterError(InvalidDataError, (err: InvalidDataError) => {
+      this.throw(400, err.message);
+    })
+  );
 
   const subscriptionWithPlan = yield attachPlan(upgradedSubscription);
 

@@ -16,6 +16,7 @@ import * as SubscriptionService from "../subscriptions/create";
 import * as SubscriptionUpgradeService from "../subscriptions/upgrade";
 import { Subscription } from "../subscriptions/domain-object";
 import * as attachPlan from "../subscriptions/attach-plan";
+import InvalidDataError from "../../errors/invalid-data";
 
 const now = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -699,4 +700,73 @@ test("PATH /teams/:id/subscription successfully and upgradeTeamSubscription call
   t.equal(response.status, 200, `responds with expected status: 200`);
   t.deepEqual(body, JSON.parse(JSON.stringify({ id: "a-subscription-id" })));
   t.equal(attachPlanStub.callCount, 1, "plan attached to subscription");
+});
+
+test("PATH /teams/:id/subscription catch InvalidDataError and set response status 400", async (t: Test) => {
+  setup({ role: "USER" });
+  sandbox()
+    .stub(TeamUsersDAO, "findOne")
+    .resolves({ role: TeamUserRole.OWNER });
+  const upgradeTeamSubscriptionStub = sandbox()
+    .stub(SubscriptionUpgradeService, "upgradeTeamSubscription")
+    .throws(
+      new InvalidDataError("Can't downgrade from paid plan to free plan")
+    );
+
+  const [response, body] = await patch("/teams/a-team-id/subscription", {
+    headers: authHeader("a-session-id"),
+    body: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+  });
+
+  t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
+    userId: "a-user-id",
+    teamId: "a-team-id",
+    planId: "plan-id",
+    stripeCardToken: "a-stripe-card-token",
+  });
+
+  t.equal(
+    response.status,
+    400,
+    `responds with expected status 400 on InvalidDataError`
+  );
+  t.equal(
+    body.message,
+    "Can't downgrade from paid plan to free plan",
+    "with correct error message in body"
+  );
+});
+
+test("PATH /teams/:id/subscription catch other errors and set response status 500", async (t: Test) => {
+  setup({ role: "USER" });
+  sandbox()
+    .stub(TeamUsersDAO, "findOne")
+    .resolves({ role: TeamUserRole.OWNER });
+  const upgradeTeamSubscriptionStub = sandbox()
+    .stub(SubscriptionUpgradeService, "upgradeTeamSubscription")
+    .throws(new Error("Plan has no Stripe prices"));
+
+  const [response] = await patch("/teams/a-team-id/subscription", {
+    headers: authHeader("a-session-id"),
+    body: {
+      planId: "plan-id",
+      stripeCardToken: "a-stripe-card-token",
+    },
+  });
+
+  t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
+    userId: "a-user-id",
+    teamId: "a-team-id",
+    planId: "plan-id",
+    stripeCardToken: "a-stripe-card-token",
+  });
+
+  t.equal(
+    response.status,
+    500,
+    `responds with expected status 500 on generic error`
+  );
 });

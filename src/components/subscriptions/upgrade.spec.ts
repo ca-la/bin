@@ -9,6 +9,7 @@ import { PlanStripePriceType } from "../../components/plan-stripe-price/types";
 import { upgradeTeamSubscription } from "./upgrade";
 import * as CreatePaymentMethod from "../payment-methods/create-payment-method";
 import * as UpgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
+import InvalidDataError from "../../errors/invalid-data";
 
 const mockedPlan = {
   id: "a-plan-id",
@@ -44,7 +45,10 @@ async function setup() {
   const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
   const findPlanStub = sandbox()
     .stub(PlansDAO, "findById")
-    .resolves(mockedPlan);
+    .onFirstCall()
+    .resolves({ ...mockedPlan, id: "a-plan-id" })
+    .onSecondCall()
+    .resolves({ ...mockedPlan, id: "an-old-plan-id" });
   const findActiveTeamSubscriptionStub = sandbox()
     .stub(SubscriptionsDAO, "findActiveByTeamId")
     .resolves(mockedCalaSubscription);
@@ -88,7 +92,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
-  findPlanStub.resolves();
+  findPlanStub.onFirstCall().resolves();
 
   try {
     await upgradeTeamSubscription(trxStub, {
@@ -99,6 +103,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     });
     t.fail("should not succeed");
   } catch (err) {
+    t.equal(err instanceof InvalidDataError, true);
     t.equal(
       err.message,
       "Plan on which we want to upgrade to is not found with id: a-plan-id",
@@ -131,11 +136,13 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
+  // retrieve new plan
   findPlanStub.onFirstCall().resolves({
     ...mockedPlan,
     baseCostPerBillingIntervalCents: 0,
     perSeatCostPerBillingIntervalCents: 0,
   });
+  // retrieve current plan
   findPlanStub.onSecondCall().resolves({
     ...mockedPlan,
     baseCostPerBillingIntervalCents: 2000,
@@ -151,9 +158,10 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     });
     t.fail("should not succeed");
   } catch (err) {
+    t.equal(err instanceof InvalidDataError, true);
     t.equal(
       err.message,
-      "Downgrade to a free plan (id a-plan-id) is not supported",
+      "Downgrade from paid plan to a free plan (id a-plan-id) is not supported.",
       "throws correct error message when team's subscription doesn't have a stripe id"
     );
   }
@@ -217,7 +225,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices",
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
-  findPlanStub.resolves({ ...mockedPlan, stripePrices: [] });
+  findPlanStub.onFirstCall().resolves({ ...mockedPlan, stripePrices: [] });
 
   try {
     await upgradeTeamSubscription(trxStub, {

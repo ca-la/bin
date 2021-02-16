@@ -1,13 +1,9 @@
-import uuid from "node-uuid";
 import * as Fetch from "../fetch";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import generatePlan from "../../test-helpers/factories/plan";
-import db from "../../services/db";
-import TeamsDAO from "../../components/teams/dao";
-import * as SubscriptionsDAO from "../../components/subscriptions/dao";
+import { generatePlanWithoutDB } from "../../test-helpers/factories/plan";
 import { Subscription } from "../../components/subscriptions/domain-object";
-import { TeamType } from "../../components/teams/types";
+import { TeamDb, TeamType } from "../../components/teams/types";
 import { Plan } from "../../components/plans/types";
 import {
   PlanStripePriceType,
@@ -71,8 +67,6 @@ async function setup({
   newPlanPrices?: Omit<PlanStripePrice, "planId">[] | null;
   subscriptionData?: Partial<Subscription>;
 }) {
-  const trx = await db.transaction();
-
   const stripeSubscriptionToUpdate: StripeSubscription = {
     id: stripeSubscriptionId,
     items: {
@@ -121,18 +115,18 @@ async function setup({
   };
   const fetchStub = sandbox().stub(Fetch, "fetch").resolves(fakeFetchResponse);
 
-  const oldPlan = await generatePlan(
-    trx,
+  const oldPlan = generatePlanWithoutDB(
     {
+      id: "an-old-plan-id",
       title: "Old Team Plan",
       maximumSeatsPerTeam: null,
     },
     [baseCostPrice, baseCostPrice2, perSeatPrice]
   );
 
-  const newPlan = await generatePlan(
-    trx,
+  const newPlan = generatePlanWithoutDB(
     {
+      id: "a-new-plan-id",
       title: "New team plan",
       maximumSeatsPerTeam: null,
       baseCostPerBillingIntervalCents: 2000,
@@ -142,31 +136,30 @@ async function setup({
     newPlanPrices !== null ? newPlanPrices : undefined
   );
 
-  const team = await TeamsDAO.create(trx, {
+  const team: TeamDb = {
+    id: "a-team-id",
     createdAt: new Date(),
     deletedAt: null,
-    id: uuid.v4(),
     title: "A team",
     type: TeamType.DESIGNER,
-  });
+  };
 
-  const subscription = await SubscriptionsDAO.create(
+  const subscription: Subscription = Object.assign(
     {
-      id: uuid.v4(),
+      id: "a-current-subscription",
+      createdAt: new Date(),
       cancelledAt: null,
       planId: oldPlan.id,
-      paymentMethodId: null,
+      paymentMethodId: "pm1",
       stripeSubscriptionId,
+      isPaymentWaived: false,
       userId: null,
       teamId: team.id,
-      isPaymentWaived: false,
-      ...subscriptionData,
     },
-    trx
+    subscriptionData
   );
 
   return {
-    trx,
     getStripeSubscriptionStub,
     updateStripeSubscriptionStub,
     oldPlan,
@@ -179,7 +172,6 @@ async function setup({
 
 test("upgradeSubscription calls the correct api with correct prices to update", async (t: Test) => {
   const {
-    trx,
     subscription,
     newPlan,
     getStripeSubscriptionStub,
@@ -211,57 +203,52 @@ test("upgradeSubscription calls the correct api with correct prices to update", 
     newPlanPrices: [baseCostPrice, baseCostPrice3, perSeatPrice],
   });
 
-  try {
-    const seatCount = 4;
-    await upgradeSubscription({
-      subscription,
-      newPlan,
-      seatCount,
-      stripeSourceId,
-    });
+  const seatCount = 4;
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    t.deepEqual(
-      getStripeSubscriptionStub.callCount,
-      1,
-      "calls get Stripe subscription"
-    );
-    t.deepEqual(
-      getStripeSubscriptionStub.args[0][0],
-      stripeSubscriptionId,
-      "calls get Stripe subscription with stripe id from the CALA subscription"
-    );
-    t.deepEqual(
-      updateStripeSubscriptionStub.callCount,
-      1,
-      "calls update Stripe subscription"
-    );
+  t.deepEqual(
+    getStripeSubscriptionStub.callCount,
+    1,
+    "calls get Stripe subscription"
+  );
+  t.deepEqual(
+    getStripeSubscriptionStub.args[0][0],
+    stripeSubscriptionId,
+    "calls get Stripe subscription with stripe id from the CALA subscription"
+  );
+  t.deepEqual(
+    updateStripeSubscriptionStub.callCount,
+    1,
+    "calls update Stripe subscription"
+  );
 
-    t.deepEqual(
-      updateStripeSubscriptionStub.args[0][1],
-      {
-        items: [
-          { deleted: true, id: "subscription-item-id-to-delete" }, // deleted because this item price doesn't exist in the new plan
-          { price: baseCostPrice3.stripePriceId }, // new price from the new plan
-          {
-            id: "subscription-item-id-to-update",
-            price: perSeatPrice.stripePriceId,
-            quantity: seatCount,
-          },
-        ],
-        proration_behavior: "always_invoice",
-        default_source: stripeSourceId,
-        payment_behavior: "error_if_incomplete",
-      },
-      "calls with the correct subscription data to update"
-    );
-  } finally {
-    await trx.rollback();
-  }
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [
+        { deleted: true, id: "subscription-item-id-to-delete" }, // deleted because this item price doesn't exist in the new plan
+        { price: baseCostPrice3.stripePriceId }, // new price from the new plan
+        {
+          id: "subscription-item-id-to-update",
+          price: perSeatPrice.stripePriceId,
+          quantity: seatCount,
+        },
+      ],
+      proration_behavior: "always_invoice",
+      default_source: stripeSourceId,
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls with the correct subscription data to update"
+  );
 });
 
 test("upgradeSubscription calls the correct api with proration 'create_prorations' if the plan we upgrade to is free", async (t: Test) => {
   const {
-    trx,
     subscription,
     newPlan,
     getStripeSubscriptionStub,
@@ -297,56 +284,52 @@ test("upgradeSubscription calls the correct api with proration 'create_proration
     },
   });
 
-  try {
-    const seatCount = 4;
-    await upgradeSubscription({
-      subscription,
-      newPlan,
-      seatCount,
-      stripeSourceId,
-    });
+  const seatCount = 4;
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    t.deepEqual(
-      getStripeSubscriptionStub.callCount,
-      1,
-      "calls get Stripe subscription"
-    );
-    t.deepEqual(
-      getStripeSubscriptionStub.args[0][0],
-      stripeSubscriptionId,
-      "calls get Stripe subscription with stripe id from the CALA subscription"
-    );
-    t.deepEqual(
-      updateStripeSubscriptionStub.callCount,
-      1,
-      "calls update Stripe subscription"
-    );
+  t.deepEqual(
+    getStripeSubscriptionStub.callCount,
+    1,
+    "calls get Stripe subscription"
+  );
+  t.deepEqual(
+    getStripeSubscriptionStub.args[0][0],
+    stripeSubscriptionId,
+    "calls get Stripe subscription with stripe id from the CALA subscription"
+  );
+  t.deepEqual(
+    updateStripeSubscriptionStub.callCount,
+    1,
+    "calls update Stripe subscription"
+  );
 
-    t.deepEqual(
-      updateStripeSubscriptionStub.args[0][1],
-      {
-        items: [
-          { deleted: true, id: "subscription-item-id-to-delete" }, // deleted because this item price doesn't exist in the new plan
-          { price: baseCostPrice3.stripePriceId }, // new price from the new plan
-          {
-            id: "subscription-item-id-to-update",
-            price: perSeatPrice.stripePriceId,
-            quantity: seatCount,
-          },
-        ],
-        proration_behavior: "create_prorations",
-        default_source: stripeSourceId,
-        payment_behavior: "error_if_incomplete",
-      },
-      "calls with the correct subscription data to update"
-    );
-  } finally {
-    await trx.rollback();
-  }
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [
+        { deleted: true, id: "subscription-item-id-to-delete" }, // deleted because this item price doesn't exist in the new plan
+        { price: baseCostPrice3.stripePriceId }, // new price from the new plan
+        {
+          id: "subscription-item-id-to-update",
+          price: perSeatPrice.stripePriceId,
+          quantity: seatCount,
+        },
+      ],
+      proration_behavior: "create_prorations",
+      default_source: stripeSourceId,
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls with the correct subscription data to update"
+  );
 });
 
 test("upgradeSubscription fail because the CALA subscription doesn't have Stripe subscription id", async (t: Test) => {
-  const { trx, subscription, newPlan } = await setup({
+  const { subscription, newPlan } = await setup({
     subscriptionData: {
       stripeSubscriptionId: null,
     },
@@ -354,89 +337,72 @@ test("upgradeSubscription fail because the CALA subscription doesn't have Stripe
     newPlanPrices: [baseCostPrice, baseCostPrice3, perSeatPrice],
   });
 
-  try {
-    const seatCount = 4;
+  const seatCount = 4;
 
-    try {
-      await upgradeSubscription({
-        subscription,
-        newPlan,
-        seatCount,
-        stripeSourceId,
-      });
-    } catch (err) {
-      t.equal(
-        err.message,
-        `Subscription with id ${subscription.id} doesn't have associated stripe subscription id`,
-        "throws correct error message about subscription which miss the stripe subscription id"
-      );
-    }
-  } finally {
-    await trx.rollback();
+  try {
+    await upgradeSubscription({
+      subscription,
+      newPlan,
+      seatCount,
+      stripeSourceId,
+    });
+  } catch (err) {
+    t.equal(
+      err.message,
+      `Subscription with id ${subscription.id} doesn't have associated stripe subscription id`,
+      "throws correct error message about subscription which miss the stripe subscription id"
+    );
   }
 });
 
 test("upgradeSubscription fail because the CALA subscription doesn't have Stripe subscription id", async (t: Test) => {
-  const { trx, subscription, newPlan } = await setup({
+  const { subscription, newPlan } = await setup({
     subscriptionItems: [],
   });
 
-  try {
-    const seatCount = 4;
+  const seatCount = 4;
 
-    try {
-      await upgradeSubscription({
-        subscription,
-        newPlan: { ...newPlan, stripePrices: [] },
-        seatCount,
-        stripeSourceId,
-      });
-    } catch (err) {
-      t.equal(
-        err.message,
-        `New plan with id ${newPlan.id} doesn't have stripe prices`,
-        "throws correct error message about plan without stripe prices"
-      );
-    }
-  } finally {
-    await trx.rollback();
+  try {
+    await upgradeSubscription({
+      subscription,
+      newPlan: { ...newPlan, stripePrices: [] },
+      seatCount,
+      stripeSourceId,
+    });
+  } catch (err) {
+    t.equal(
+      err.message,
+      `New plan with id ${newPlan.id} doesn't have stripe prices`,
+      "throws correct error message about plan without stripe prices"
+    );
   }
 });
 
 test("upgradeSubscription fail because new Cala plan has per_seat price but we pass null as a seatCount", async (t: Test) => {
-  const { trx, subscription, newPlan } = await setup({
+  const { subscription, newPlan } = await setup({
     newPlanPrices: [baseCostPrice, baseCostPrice3, perSeatPrice],
   });
 
-  try {
-    const seatCount = null;
+  const seatCount = null;
 
-    try {
-      await upgradeSubscription({
-        subscription,
-        newPlan,
-        seatCount,
-        stripeSourceId,
-      });
-    } catch (err) {
-      t.equal(
-        err.message,
-        "Must pass non-null seatCount when plan includes a PER_SEAT price type",
-        "throws correct error message about null seatCount"
-      );
-    }
-  } finally {
-    await trx.rollback();
+  try {
+    await upgradeSubscription({
+      subscription,
+      newPlan,
+      seatCount,
+      stripeSourceId,
+    });
+  } catch (err) {
+    t.equal(
+      err.message,
+      "Must pass non-null seatCount when plan includes a PER_SEAT price type",
+      "throws correct error message about null seatCount"
+    );
   }
 });
 
 test("upgradeSubscription delete old plan prices and add new prices", async (t: Test) => {
-  const {
-    trx,
-    subscription,
-    newPlan,
-    updateStripeSubscriptionStub,
-  } = await setup({
+  const { subscription, newPlan, updateStripeSubscriptionStub } = await setup({
     subscriptionItems: [
       {
         id: "subscription-item-id-to-delete-1",
@@ -456,44 +422,35 @@ test("upgradeSubscription delete old plan prices and add new prices", async (t: 
     newPlanPrices: [baseCostPrice, baseCostPrice2, baseCostPrice3],
   });
 
-  try {
-    const seatCount = null;
+  const seatCount = null;
 
-    await upgradeSubscription({
-      subscription,
-      newPlan,
-      seatCount,
-      stripeSourceId,
-    });
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    t.deepEqual(
-      updateStripeSubscriptionStub.args[0][1],
-      {
-        items: [
-          { deleted: true, id: "subscription-item-id-to-delete-1" },
-          { deleted: true, id: "subscription-item-id-to-delete-2" },
-          { price: baseCostPrice.stripePriceId },
-          { price: baseCostPrice2.stripePriceId },
-          { price: baseCostPrice3.stripePriceId },
-        ],
-        proration_behavior: "always_invoice",
-        default_source: stripeSourceId,
-        payment_behavior: "error_if_incomplete",
-      },
-      "calls with the correct subscription items to delete"
-    );
-  } finally {
-    await trx.rollback();
-  }
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [
+        { deleted: true, id: "subscription-item-id-to-delete-1" },
+        { deleted: true, id: "subscription-item-id-to-delete-2" },
+        { price: baseCostPrice.stripePriceId },
+        { price: baseCostPrice2.stripePriceId },
+        { price: baseCostPrice3.stripePriceId },
+      ],
+      proration_behavior: "always_invoice",
+      default_source: stripeSourceId,
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls with the correct subscription items to delete"
+  );
 });
 
 test("upgradeSubscription skips prices identical in new and old plans and add new price", async (t: Test) => {
-  const {
-    trx,
-    subscription,
-    newPlan,
-    updateStripeSubscriptionStub,
-  } = await setup({
+  const { subscription, newPlan, updateStripeSubscriptionStub } = await setup({
     subscriptionItems: [
       {
         id: "subscription-item-id-to-skip-1",
@@ -513,33 +470,34 @@ test("upgradeSubscription skips prices identical in new and old plans and add ne
     newPlanPrices: [baseCostPrice, baseCostPrice2, baseCostPrice3],
   });
 
-  try {
-    const seatCount = null;
+  const seatCount = null;
 
-    await upgradeSubscription({
-      subscription,
-      newPlan,
-      seatCount,
-      stripeSourceId,
-    });
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    t.deepEqual(
-      updateStripeSubscriptionStub.args[0][1],
-      {
-        items: [{ price: baseCostPrice3.stripePriceId }],
-        proration_behavior: "always_invoice",
-        default_source: stripeSourceId,
-        payment_behavior: "error_if_incomplete",
-      },
-      "calls with the one new price to add without similar prices in old and new plans"
-    );
-  } finally {
-    await trx.rollback();
-  }
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [{ price: baseCostPrice3.stripePriceId }],
+      proration_behavior: "always_invoice",
+      default_source: stripeSourceId,
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls with the one new price to add without similar prices in old and new plans"
+  );
 });
 
-test("upgradeSubscription throws an error if plans prices are identical and there is nothing to call update with", async (t: Test) => {
-  const { trx, subscription, newPlan } = await setup({
+test("upgradeSubscription calls an API if plans prices are identical to update source", async (t: Test) => {
+  const {
+    subscription,
+    newPlan,
+    updateStripeSubscriptionStub,
+    fetchStub,
+  } = await setup({
     subscriptionItems: [
       {
         id: "subscription-item-id-to-skip-1",
@@ -555,35 +513,64 @@ test("upgradeSubscription throws an error if plans prices are identical and ther
         },
         quantity: 1,
       },
+      {
+        id: "subscription-item-id-to-skip-3",
+        price: {
+          id: perSeatPrice.stripePriceId,
+        },
+        quantity: 1,
+      },
     ],
-    newPlanPrices: [baseCostPrice, baseCostPrice2],
+    newPlanPrices: [baseCostPrice, baseCostPrice2, perSeatPrice],
   });
 
-  try {
-    const seatCount = null;
+  const seatCount = 1;
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    try {
-      await upgradeSubscription({
-        subscription,
-        newPlan,
-        seatCount,
-        stripeSourceId,
-      });
-    } catch (err) {
-      t.equal(
-        err.message,
-        `No subscription items in plan with id ${newPlan.id} to upgrade Stripe subscription with id ${subscription.id}, Stripe subscription id ${subscription.stripeSubscriptionId}`,
-        "throws with correct error message about the fact that there is no subscription items to update as plans prices are equal"
-      );
-    }
-  } finally {
-    await trx.rollback();
-  }
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [],
+      default_source: stripeSourceId,
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls without subscription items and with source"
+  );
+
+  // check second time to check how we call fetch
+  updateStripeSubscriptionStub.restore();
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
+
+  t.equal(fetchStub.callCount, 1, "fetch has been called");
+  t.equal(
+    fetchStub.firstCall.args[0],
+    `https://api.stripe.com/v1/subscriptions/${stripeSubscriptionId}`,
+    "fetch has been called with correct link to Stripe subscription update"
+  );
+  t.equal(
+    fetchStub.firstCall.args[1].method,
+    "post",
+    "fetch has been colled as post"
+  );
+  t.equal(
+    fetchStub.firstCall.args[1].body,
+    "payment_behavior=error_if_incomplete&default_source=stripe-source-id",
+    "fetch has been called without items or proration_behavior as we updating source here"
+  );
 });
 
 test("upgradeSubscription calls the correct API", async (t: Test) => {
   const {
-    trx,
     subscription,
     newPlan,
     updateStripeSubscriptionStub,
@@ -621,33 +608,29 @@ test("upgradeSubscription calls the correct API", async (t: Test) => {
   });
   updateStripeSubscriptionStub.restore();
 
-  try {
-    const seatCount = 5;
+  const seatCount = 5;
 
-    await upgradeSubscription({
-      subscription,
-      newPlan,
-      seatCount,
-      stripeSourceId,
-    });
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId,
+  });
 
-    t.equal(fetchStub.callCount, 1, "fetch has been called");
-    t.equal(
-      fetchStub.firstCall.args[0],
-      `https://api.stripe.com/v1/subscriptions/${stripeSubscriptionId}`,
-      "fetch has been called with correct link to Stripe subscription update"
-    );
-    t.equal(
-      fetchStub.firstCall.args[1].method,
-      "post",
-      "fetch has been colled as post"
-    );
-    t.equal(
-      fetchStub.firstCall.args[1].body,
-      "items[0][id]=subscription-item-id-to-update&items[0][quantity]=5&items[0][price]=stripe-price-id-per-seat&items[1][price]=stripe-price-id-3&proration_behavior=always_invoice&payment_behavior=error_if_incomplete&default_source=stripe-source-id",
-      "fetch has been called with correct arguments to update the stripe subscription"
-    );
-  } finally {
-    await trx.rollback();
-  }
+  t.equal(fetchStub.callCount, 1, "fetch has been called");
+  t.equal(
+    fetchStub.firstCall.args[0],
+    `https://api.stripe.com/v1/subscriptions/${stripeSubscriptionId}`,
+    "fetch has been called with correct link to Stripe subscription update"
+  );
+  t.equal(
+    fetchStub.firstCall.args[1].method,
+    "post",
+    "fetch has been colled as post"
+  );
+  t.equal(
+    fetchStub.firstCall.args[1].body,
+    "items[0][id]=subscription-item-id-to-update&items[0][quantity]=5&items[0][price]=stripe-price-id-per-seat&items[1][price]=stripe-price-id-3&proration_behavior=always_invoice&payment_behavior=error_if_incomplete&default_source=stripe-source-id",
+    "fetch has been called with correct arguments to update the stripe subscription"
+  );
 });

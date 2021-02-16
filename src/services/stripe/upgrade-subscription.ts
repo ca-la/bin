@@ -74,7 +74,6 @@ export default async function upgradeSubscription({
         subscriptionItem.price.id === newStripePrice.stripePriceId
     );
 
-    // if price is from the old subscription and it's not a per seat - go for next one
     const hasPerSeatPrice =
       newStripePrice.type === PlanStripePriceType.PER_SEAT;
     if (hasPerSeatPriceWithoutSeatCount(hasPerSeatPrice, seatCount)) {
@@ -83,18 +82,19 @@ export default async function upgradeSubscription({
       );
     }
 
+    // if price is from the old subscription and it's not a per seat - go for next one
     if (newStripePriceInOldSubscription && !hasPerSeatPrice) {
       continue;
-    } else if (
-      newStripePriceInOldSubscription &&
-      hasPerSeatPrice &&
-      newStripePriceInOldSubscription.quantity !== seatCount
-    ) {
-      newStripeSubscriptionItems.push({
-        id: newStripePriceInOldSubscription.id,
-        price: newStripePrice.stripePriceId,
-        quantity: seatCount,
-      });
+    } else if (newStripePriceInOldSubscription && hasPerSeatPrice) {
+      if (newStripePriceInOldSubscription.quantity === seatCount) {
+        continue;
+      } else {
+        newStripeSubscriptionItems.push({
+          id: newStripePriceInOldSubscription.id,
+          price: newStripePrice.stripePriceId,
+          quantity: seatCount,
+        });
+      }
     } else {
       // if price is not from the old subscription - add to the list of subscription items
       newStripeSubscriptionItems.push({
@@ -110,21 +110,20 @@ export default async function upgradeSubscription({
     ...newStripeSubscriptionItems,
   ];
 
-  if (newSubscriptionItems.length === 0) {
-    throw new Error(
-      `No subscription items in plan with id ${newPlan.id} to upgrade Stripe subscription with id ${subscription.id}, Stripe subscription id ${subscription.stripeSubscriptionId}`
-    );
-  }
-
   const isFreePlan =
     newPlan.baseCostPerBillingIntervalCents === 0 &&
     newPlan.perSeatCostPerBillingIntervalCents === 0;
+  // use this as a way to update source (card information)
+  const plansPricesAreIdentical = newSubscriptionItems.length === 0;
 
+  const prorationBehavior = isFreePlan ? "create_prorations" : "always_invoice";
   const updatedStripeSubscription = await updateStripeSubscription(
     subscription.stripeSubscriptionId,
     {
       items: newSubscriptionItems,
-      proration_behavior: isFreePlan ? "create_prorations" : "always_invoice",
+      ...(plansPricesAreIdentical
+        ? null
+        : { proration_behavior: prorationBehavior }),
       default_source: stripeSourceId,
       payment_behavior: "error_if_incomplete",
     }
