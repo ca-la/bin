@@ -32,35 +32,44 @@ function isUpdateRequest(body: any): body is { cancelledAt: Date } {
 const router = new Router();
 
 function* getList(this: AuthedContext): Iterator<any, any, any> {
-  const { userId, isActive } = this.query;
+  const { userId, isActive, teamId } = this.query;
 
-  if (!userId) {
-    this.throw(400, "User ID is required");
+  if (!userId && !teamId) {
+    this.throw(400, "User or Team ID is required");
   }
 
-  canAccessUserResource.call(this, userId);
+  if (userId) {
+    canAccessUserResource.call(this, userId);
+    const findOnlyActive = isActive === "true";
 
-  const findOnlyActive = isActive === "true";
+    const subscriptionsWithPlans = yield db.transaction(
+      async (trx: Knex.Transaction) => {
+        let subscriptions: Subscription[];
 
-  const subscriptionsWithPlans = yield db.transaction(
-    async (trx: Knex.Transaction) => {
-      let subscriptions: Subscription[];
+        if (findOnlyActive) {
+          subscriptions = await SubscriptionsDAO.findActive(userId, trx);
+        } else {
+          subscriptions = await SubscriptionsDAO.findForUser(userId, trx);
+        }
 
-      if (findOnlyActive) {
-        subscriptions = await SubscriptionsDAO.findActive(userId, trx);
-      } else {
-        subscriptions = await SubscriptionsDAO.findForUser(userId, trx);
+        return await Promise.all(
+          subscriptions.map((subscription: Subscription) =>
+            attachPlan(subscription)
+          )
+        );
       }
-
-      return await Promise.all(
-        subscriptions.map((subscription: Subscription) =>
-          attachPlan(subscription)
-        )
-      );
+    );
+    this.body = subscriptionsWithPlans;
+  } else {
+    if (this.state.role !== "ADMIN") {
+      this.throw(403);
     }
-  );
 
-  this.body = subscriptionsWithPlans;
+    this.body = yield db.transaction(async (trx: Knex.Transaction) =>
+      SubscriptionsDAO.findForTeamWithPlans(trx, teamId)
+    );
+  }
+
   this.status = 200;
 }
 

@@ -11,17 +11,18 @@ import db from "../../services/db";
 import PaymentMethodsDAO = require("../payment-methods/dao");
 import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
-import User from "../users/domain-object";
+import User, { Role } from "../users/domain-object";
 import { authHeader, get, patch, post } from "../../test-helpers/http";
 import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 interface SetupOptions {
   planOptions?: Partial<Uninserted<Plan>>;
+  role: Role;
 }
 
 async function setup(
-  options: SetupOptions = {}
+  options: SetupOptions = { role: "USER" }
 ): Promise<{
   session: Session;
   user: User;
@@ -129,6 +130,33 @@ test("GET /subscriptions?isActive=true lists active subscriptions", async (t: Te
   t.equal(findStub.firstCall.args[0], user.id);
 });
 
+test("GET /subscriptions?teamId lists a teams subscriptions for admins", async (t: Test) => {
+  const { session } = await createUser({ role: "ADMIN" });
+
+  const findStub = sandbox()
+    .stub(SubscriptionsDAO, "findForTeamWithPlans")
+    .resolves([{ id: "sub1" }]);
+  const [res, body] = await get("/subscriptions?teamId=aTeamId", {
+    headers: authHeader(session.id),
+  });
+
+  t.equal(res.status, 200);
+  t.equal(body.length, 1);
+  t.equal(body[0].id, "sub1");
+  t.equal(findStub.callCount, 1);
+  t.equal(findStub.firstCall.args[1], "aTeamId");
+});
+
+test("GET /subscriptions?teamId denies access to non-admins", async (t: Test) => {
+  const { session } = await createUser();
+
+  const [res] = await get("/subscriptions?teamId=aTeamId", {
+    headers: authHeader(session.id),
+  });
+
+  t.equal(res.status, 403, "Non-admin cannot get list of team subscriptions");
+});
+
 test("POST /subscriptions creates a subscription", async (t: Test) => {
   const { plan, session } = await setup();
 
@@ -174,6 +202,7 @@ test("POST /subscriptions allows omitting stripe info if the plan is free", asyn
       baseCostPerBillingIntervalCents: 0,
       perSeatCostPerBillingIntervalCents: 0,
     },
+    role: "USER",
   });
   const [res, body] = await post("/subscriptions", {
     headers: authHeader(session.id),
