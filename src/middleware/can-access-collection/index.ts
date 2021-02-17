@@ -108,7 +108,11 @@ export function* canSubmitCollection(
   >,
   next: () => Promise<any>
 ): any {
-  const { permissions, collection, trx } = this.state;
+  const { permissions, collection, trx, role } = this.state;
+
+  if (role === "ADMIN") {
+    return yield next;
+  }
 
   if (!permissions || !collection) {
     throw new Error(
@@ -148,7 +152,12 @@ export function* canCheckOutCollection(
   >,
   next: () => Promise<any>
 ): any {
-  const { permissions, collection, trx } = this.state;
+  const { permissions, collection, trx, role } = this.state;
+
+  if (role === "ADMIN") {
+    return yield next;
+  }
+
   if (!permissions || !collection) {
     throw new Error(
       "canCheckOutCollection must be chained with a canAccessCollection* call"

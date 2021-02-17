@@ -46,6 +46,14 @@ const TEAM_CONTEXT = {
   },
 };
 
+const ADMIN_CONTEXT = {
+  ...BASE_CONTEXT,
+  state: {
+    ...BASE_CONTEXT.state,
+    role: "ADMIN",
+  },
+};
+
 test("collection middleware can submit and check out with appropriate privileges", async (t: Test) => {
   sandbox().stub(RequireUserSubscription, "default").resolves();
   const submitNextStub = sandbox().stub().resolves();
@@ -137,4 +145,26 @@ test("canCheckOutCollection throws a 402 without a team plan", async (t: Test) =
   }
 
   t.equal(nextStub.callCount, 0);
+});
+
+test("canCheckOutCollection allows admins to checkout", async (t: Test) => {
+  sandbox()
+    .stub(FindCollectionTeamPlans, "canCheckOutTeamCollection")
+    .resolves(false);
+  const nextStub = sandbox().stub().resolves();
+
+  await canCheckOutPromise(ADMIN_CONTEXT, nextStub);
+
+  t.equal(nextStub.callCount, 1);
+});
+
+test("canSubmitCollection allows admins to submit", async (t: Test) => {
+  sandbox()
+    .stub(FindCollectionTeamPlans, "canSubmitTeamCollection")
+    .resolves(false);
+  const nextStub = sandbox().stub().resolves();
+
+  await canSubmitPromise(ADMIN_CONTEXT, nextStub);
+
+  t.equal(nextStub.callCount, 1);
 });
