@@ -62,7 +62,7 @@ async function setup() {
     .stub(CreatePaymentMethod, "default")
     .resolves({
       stripeSourceId: "a-stripe-source-id",
-      paymentMethodId: "a-payment-method-id",
+      id: "a-new-payment-method-id",
     });
   const countBilledUsersTeamUsersStub = sandbox()
     .stub(TeamUsersDAO, "countBilledUsers")
@@ -192,8 +192,14 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
   );
 });
 
-test("upgradeTeamSubscription: doesn't throw an error when tries to upgrade from free plan to a free plan", async (t: Test) => {
-  const { trxStub, findPlanStub } = await setup();
+test("upgradeTeamSubscription: upgrade from free plan to a free plan without stripeCardToken", async (t: Test) => {
+  const {
+    trxStub,
+    findPlanStub,
+    createPaymentMethodStub,
+    createCalaSubscriptionStub,
+    upgradeStripeSubscriptionStub,
+  } = await setup();
   findPlanStub.onFirstCall().resolves({
     ...mockedPlan,
     baseCostPerBillingIntervalCents: 0,
@@ -204,17 +210,63 @@ test("upgradeTeamSubscription: doesn't throw an error when tries to upgrade from
     baseCostPerBillingIntervalCents: 0,
     perSeatCostPerBillingIntervalCents: 0,
   });
+  const newCalaSubscriptionId = uuid.v4();
+  sandbox().stub(uuid, "v4").returns(newCalaSubscriptionId);
 
   try {
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
       userId: "a-user-id",
-      stripeCardToken: "a-stripe-card-token",
+      stripeCardToken: null,
     });
   } catch (err) {
     t.fail("should not fail");
   }
+
+  t.equal(
+    createPaymentMethodStub.callCount,
+    0,
+    "createPaymentMethod is not called for free plan"
+  );
+  t.deepEqual(
+    createCalaSubscriptionStub.args,
+    [
+      [
+        {
+          cancelledAt: null,
+          id: newCalaSubscriptionId,
+          isPaymentWaived: false,
+          paymentMethodId: mockedCalaSubscription.paymentMethodId, // called with old subscription payment method
+          planId: "a-plan-id",
+          stripeSubscriptionId: "a-stripe-subscription-id",
+          userId: null,
+          teamId: "a-team-id",
+        },
+        trxStub,
+      ],
+    ],
+    "create new CALA subscrpition with payment method id from old subscription as for free plan we don't create new payment method"
+  );
+
+  t.deepEqual(
+    upgradeStripeSubscriptionStub.args,
+    [
+      [
+        {
+          subscription: mockedCalaSubscription,
+          newPlan: {
+            ...mockedPlan,
+            baseCostPerBillingIntervalCents: 0,
+            perSeatCostPerBillingIntervalCents: 0,
+          },
+          seatCount: 3,
+          stripeSourceId: null,
+        },
+      ],
+    ],
+    "calls upgrade stripe subscription with null stripeSourceId as no payment method is created for free plan"
+  );
 });
 
 test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices", async (t: Test) => {
@@ -283,6 +335,48 @@ test("upgradeTeamSubscription: throws error if there is no active team subscript
       err.message,
       "Team with id a-team-id doesn't have an active subscription",
       "throws correct error message when team doesn't have an active subscription"
+    );
+  }
+
+  t.equal(
+    createPaymentMethodStub.callCount,
+    0,
+    "does not create Stripe source or new payment method"
+  );
+  t.equal(
+    createCalaSubscriptionStub.callCount,
+    0,
+    "does not create new Cala subscription"
+  );
+  t.equal(
+    upgradeStripeSubscriptionStub.callCount,
+    0,
+    "does not make any requests to Stripe"
+  );
+});
+
+test("upgradeTeamSubscription: throws an error when tries to upgrade to a paid plan without stripeCardToken", async (t: Test) => {
+  const {
+    trxStub,
+    createPaymentMethodStub,
+    createCalaSubscriptionStub,
+    upgradeStripeSubscriptionStub,
+  } = await setup();
+
+  try {
+    await upgradeTeamSubscription(trxStub, {
+      planId: "a-plan-id",
+      teamId: "a-team-id",
+      userId: "a-user-id",
+      stripeCardToken: null,
+    });
+    t.fail("should not succeed");
+  } catch (err) {
+    t.equal(err instanceof InvalidDataError, true);
+    t.equal(
+      err.message,
+      "Missing stripe card token",
+      "throws correct error message when tries to upgrade to a paid plan without stripeCardToken"
     );
   }
 
@@ -401,7 +495,7 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
           cancelledAt: null,
           id: newCalaSubscriptionId,
           isPaymentWaived: false,
-          paymentMethodId: "a-payment-method-id",
+          paymentMethodId: "a-new-payment-method-id",
           planId: "a-plan-id",
           stripeSubscriptionId: "a-stripe-subscription-id",
           userId: null,

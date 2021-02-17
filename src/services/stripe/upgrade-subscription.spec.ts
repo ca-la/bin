@@ -616,6 +616,62 @@ test("upgradeSubscription skips prices identical in new and old plans and add ne
   );
 });
 
+test("upgradeSubscription supports stripeSourceId null and skips sending default source to Stripe", async (t: Test) => {
+  const {
+    subscription,
+    newPlan,
+    updateStripeSubscriptionStub,
+    retrieveUpcomingInvoiceStub,
+  } = await setup({
+    subscriptionItems: [
+      {
+        id: "subscription-item-id-to-skip-1",
+        price: {
+          id: baseCostPrice.stripePriceId,
+        },
+        quantity: 1,
+      },
+      {
+        id: "subscription-item-id-to-skip-2",
+        price: {
+          id: baseCostPrice2.stripePriceId,
+        },
+        quantity: 1,
+      },
+    ],
+    newPlanPrices: [baseCostPrice, baseCostPrice2, baseCostPrice3],
+  });
+
+  const seatCount = null;
+
+  await upgradeSubscription({
+    subscription,
+    newPlan,
+    seatCount,
+    stripeSourceId: null,
+  });
+
+  t.deepEqual(
+    retrieveUpcomingInvoiceStub.args[0][0],
+    {
+      subscription: stripeSubscriptionId,
+      subscription_items: [{ price: baseCostPrice3.stripePriceId }],
+      subscription_proration_behavior: "always_invoice",
+    },
+    "retrieve upcoming invoice with correct args"
+  );
+
+  t.deepEqual(
+    updateStripeSubscriptionStub.args[0][1],
+    {
+      items: [{ price: baseCostPrice3.stripePriceId }],
+      proration_behavior: "always_invoice",
+      payment_behavior: "error_if_incomplete",
+    },
+    "calls with the one new price to add without similar prices in old and new plans"
+  );
+});
+
 test("upgradeSubscription calls an API if plans prices are identical to update source", async (t: Test) => {
   const {
     subscription,

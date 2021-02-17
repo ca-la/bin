@@ -555,14 +555,30 @@ const teamSubscriptionPathTestCases: TeamSubscriptionPatchTestCase[] = [
   },
   {
     title:
-      "PATCH /teams/:id/subscription missing required stripeCardToken property",
+      "PATCH /teams/:id/subscription accepts missing stripeCardToken property",
     userRole: "USER",
     findTeamUserStub: { role: TeamUserRole.OWNER },
-    upgradeTeamSubscriptionStub: null,
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
     requestBody: {
       planId: "a-plan-id",
     },
-    responseStatus: 400,
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /teams/:id/subscription accepts nullable stripeCardToken property",
+    userRole: "USER",
+    findTeamUserStub: { role: TeamUserRole.OWNER },
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
+    requestBody: {
+      planId: "a-plan-id",
+      stripeCardToken: null,
+    },
+    responseStatus: 200,
   },
   {
     title:

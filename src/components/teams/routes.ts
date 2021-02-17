@@ -218,7 +218,7 @@ function* upgradeTeamSubscriptionRouteHandler(
     userId,
     teamId,
     planId,
-    stripeCardToken,
+    stripeCardToken: stripeCardToken || null,
   }).catch(
     filterError(InvalidDataError, (err: InvalidDataError) => {
       this.throw(400, err.message);

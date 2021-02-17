@@ -13,7 +13,7 @@ interface UpgradeTeamOptions {
   planId: string;
   teamId: string;
   userId: string;
-  stripeCardToken: string;
+  stripeCardToken: string | null;
 }
 
 export async function upgradeTeamSubscription(
@@ -67,11 +67,18 @@ export async function upgradeTeamSubscription(
     );
   }
 
-  const paymentMethod = await createPaymentMethod({
-    token: stripeCardToken,
-    userId,
-    trx,
-  });
+  let paymentMethod = null;
+  if (!isPlanFree) {
+    if (stripeCardToken === null) {
+      throw new InvalidDataError("Missing stripe card token");
+    }
+
+    paymentMethod = await createPaymentMethod({
+      token: stripeCardToken,
+      userId,
+      trx,
+    });
+  }
 
   // cancel current team subscription in our DB
   await SubscriptionsDAO.update(
@@ -88,7 +95,9 @@ export async function upgradeTeamSubscription(
       cancelledAt: null,
       id: uuid.v4(),
       isPaymentWaived: subscription.isPaymentWaived,
-      paymentMethodId: subscription.paymentMethodId,
+      paymentMethodId: paymentMethod
+        ? paymentMethod.id
+        : subscription.paymentMethodId,
       planId,
       stripeSubscriptionId: subscription.stripeSubscriptionId,
       userId: null,
@@ -105,7 +114,7 @@ export async function upgradeTeamSubscription(
     subscription,
     newPlan,
     seatCount,
-    stripeSourceId: paymentMethod.stripeSourceId,
+    stripeSourceId: paymentMethod ? paymentMethod.stripeSourceId : null,
   });
 
   return newSubscription;

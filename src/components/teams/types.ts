@@ -44,7 +44,7 @@ export const unsavedTeamSchema = teamDbSchema.omit({
 
 export const teamSubscriptionUpgradeSchema = z.object({
   planId: z.string(),
-  stripeCardToken: z.string(),
+  stripeCardToken: z.string().nullable().optional(),
 });
 
 export type TeamSubscriptionUpgrade = z.infer<

@@ -64,7 +64,7 @@ export default async function upgradeSubscription({
   subscription: Subscription;
   newPlan: Plan;
   seatCount: number | null;
-  stripeSourceId: string;
+  stripeSourceId: string | null;
 }): Promise<StripeSubscription> {
   if (!subscription.stripeSubscriptionId) {
     throw new Error(
@@ -148,7 +148,7 @@ export default async function upgradeSubscription({
   const updateRequest: SubscriptionUpdate = {
     items: newSubscriptionItems,
     proration_behavior: "always_invoice",
-    default_source: stripeSourceId,
+    ...(stripeSourceId ? { default_source: stripeSourceId } : null),
     payment_behavior: "error_if_incomplete",
   };
 
