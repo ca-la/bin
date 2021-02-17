@@ -4,7 +4,9 @@ import querystring from "querystring";
 import { STRIPE_SECRET_KEY } from "../../config";
 
 import makeRequest, { RequestOptions } from "./make-request";
-import { StripeDataObject } from "./serialize-request-body";
+import serializeRequestBody, {
+  StripeDataObject,
+} from "./serialize-request-body";
 import {
   balanceSchema,
   chargeSchema,
@@ -15,6 +17,7 @@ import {
   subscriptionItemSchema,
   subscriptionSchema,
   transferSchema,
+  prorationBehaviourSchema,
 } from "./types";
 
 const STRIPE_CONNECT_API_BASE = "https://connect.stripe.com";
@@ -209,9 +212,7 @@ export function getSubscription(subscriptionId: string) {
 const subscriptionItemUpdateSchema = subscriptionItemSchema.partial().extend({
   price: z.string().optional(),
   deleted: z.boolean().optional(),
-  proration_behavior: z
-    .enum(["create_prorations", "none", "always_invoice"])
-    .optional(),
+  proration_behavior: prorationBehaviourSchema.optional(),
   payment_behavior: z
     .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
     .optional(),
@@ -238,9 +239,7 @@ export function updateStripeSubscriptionItem(
 
 const subscriptionUpdateSchema = subscriptionSchema.partial().extend({
   items: z.array(subscriptionItemUpdateSchema),
-  proration_behavior: z
-    .enum(["create_prorations", "none", "always_invoice"])
-    .optional(),
+  proration_behavior: prorationBehaviourSchema.optional(),
   payment_behavior: z
     .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
     .optional(),
@@ -261,5 +260,39 @@ export async function updateSubscription(
       path: `/subscriptions/${subscriptionId}`,
     },
     request,
+  });
+}
+
+const retrieveStripeInvoiceSchema = z.object({
+  subscription: z.string(),
+  subscription_items: z.array(subscriptionItemUpdateSchema),
+  subscription_proration_behavior: prorationBehaviourSchema.optional(),
+});
+
+type RetrieveStripeInvoice = z.infer<typeof retrieveStripeInvoiceSchema>;
+
+const stripeInvoiceSchema = z
+  .object({
+    subtotal: z.number(),
+    total: z.number(),
+    status: z.string(),
+  })
+  .passthrough();
+
+type StripeInvoice = z.infer<typeof stripeInvoiceSchema>;
+
+export async function retrieveUpcomingInvoice(
+  request: RetrieveStripeInvoice
+): Promise<StripeInvoice> {
+  const data = retrieveStripeInvoiceSchema.parse(request);
+  const queryParams = serializeRequestBody(data);
+
+  return safeRequest({
+    inputSchema: z.never(),
+    outputSchema: stripeInvoiceSchema,
+    options: {
+      method: "get",
+      path: `/invoices/upcoming?${queryParams}`,
+    },
   });
 }

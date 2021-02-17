@@ -7,18 +7,52 @@ import {
 import {
   SubscriptionItem as StripeSubscriptionItem,
   Subscription as StripeSubscription,
+  ProrationBehaviour,
 } from "./types";
 import {
   getSubscription as getStripeSubscription,
   updateSubscription as updateStripeSubscription,
+  SubscriptionUpdate,
   SubscriptionItemUpdate as StripeSubscriptionItemToUpdate,
+  retrieveUpcomingInvoice,
 } from "./api";
 
 function hasPerSeatPriceWithoutSeatCount(
-  hasPerSeatPrice: boolean,
+  stripePrices: PlanStripePrice[],
   seatCount: null | number
 ): seatCount is null {
+  const hasPerSeatPrice = stripePrices.some(
+    (stripePrice: PlanStripePrice) =>
+      stripePrice.type === PlanStripePriceType.PER_SEAT
+  );
   return hasPerSeatPrice && seatCount === null;
+}
+
+async function getProrationBehaviour(
+  subscriptionId: string,
+  request: SubscriptionUpdate,
+  newPlan: Plan
+): Promise<ProrationBehaviour> {
+  // use this as a way to update source (card information)
+  const plansPricesAreIdentical = request.items.length === 0;
+  const isFreePlan =
+    newPlan.baseCostPerBillingIntervalCents === 0 &&
+    newPlan.perSeatCostPerBillingIntervalCents === 0;
+
+  const isNoProration = plansPricesAreIdentical || isFreePlan;
+  if (isNoProration) {
+    return "none";
+  }
+
+  const upcomingInvoice = await retrieveUpcomingInvoice({
+    subscription: subscriptionId,
+    subscription_items: request.items,
+    subscription_proration_behavior: request.proration_behavior,
+  });
+
+  const isRefundOrPlanIsFree = upcomingInvoice.total <= 0;
+
+  return isRefundOrPlanIsFree ? "none" : "always_invoice";
 }
 
 export default async function upgradeSubscription({
@@ -41,6 +75,12 @@ export default async function upgradeSubscription({
   if (newPlan.stripePrices.length === 0) {
     throw new Error(
       `New plan with id ${newPlan.id} doesn't have stripe prices`
+    );
+  }
+
+  if (hasPerSeatPriceWithoutSeatCount(newPlan.stripePrices, seatCount)) {
+    throw new Error(
+      "Must pass non-null seatCount when plan includes a PER_SEAT price type"
     );
   }
 
@@ -76,11 +116,6 @@ export default async function upgradeSubscription({
 
     const hasPerSeatPrice =
       newStripePrice.type === PlanStripePriceType.PER_SEAT;
-    if (hasPerSeatPriceWithoutSeatCount(hasPerSeatPrice, seatCount)) {
-      throw new Error(
-        "Must pass non-null seatCount when plan includes a PER_SEAT price type"
-      );
-    }
 
     // if price is from the old subscription and it's not a per seat - go for next one
     if (newStripePriceInOldSubscription && !hasPerSeatPrice) {
@@ -110,22 +145,24 @@ export default async function upgradeSubscription({
     ...newStripeSubscriptionItems,
   ];
 
-  const isFreePlan =
-    newPlan.baseCostPerBillingIntervalCents === 0 &&
-    newPlan.perSeatCostPerBillingIntervalCents === 0;
-  // use this as a way to update source (card information)
-  const plansPricesAreIdentical = newSubscriptionItems.length === 0;
+  const updateRequest: SubscriptionUpdate = {
+    items: newSubscriptionItems,
+    proration_behavior: "always_invoice",
+    default_source: stripeSourceId,
+    payment_behavior: "error_if_incomplete",
+  };
 
-  const prorationBehavior = isFreePlan ? "create_prorations" : "always_invoice";
+  const prorationBehavior = await getProrationBehaviour(
+    subscription.stripeSubscriptionId,
+    updateRequest,
+    newPlan
+  );
+
   const updatedStripeSubscription = await updateStripeSubscription(
     subscription.stripeSubscriptionId,
     {
-      items: newSubscriptionItems,
-      ...(plansPricesAreIdentical
-        ? null
-        : { proration_behavior: prorationBehavior }),
-      default_source: stripeSourceId,
-      payment_behavior: "error_if_incomplete",
+      ...updateRequest,
+      proration_behavior: prorationBehavior,
     }
   );
 

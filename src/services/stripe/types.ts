@@ -87,3 +87,11 @@ export const subscriptionSchema = z
   .passthrough();
 
 export type Subscription = z.infer<typeof subscriptionSchema>;
+
+export const prorationBehaviourSchema = z.enum([
+  "create_prorations",
+  "none",
+  "always_invoice",
+]);
+
+export type ProrationBehaviour = z.infer<typeof prorationBehaviourSchema>;
