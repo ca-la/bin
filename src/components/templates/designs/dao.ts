@@ -118,6 +118,7 @@ export async function getAll(
       "product_designs.id",
       "template_designs.design_id"
     )
+    .where({ "product_designs.deleted_at": null })
     .modify((query: Knex.QueryBuilder) => {
       if (options.templateCategoryIds.length > 0) {
         query.whereIn(

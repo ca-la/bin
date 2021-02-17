@@ -7,6 +7,7 @@ import createUser from "../../../test-helpers/create-user";
 import db from "../../../services/db";
 import TemplateCategoriesDAO from "../categories/dao";
 import { createList, findByDesignId, getAll, remove, removeList } from "./dao";
+import ProductDesignsDAO from "../../product-designs/dao";
 
 test("createList() + removeList()", async (t: Test) => {
   const { user } = await createUser({ role: "ADMIN", withSession: false });
@@ -116,6 +117,14 @@ test("getAll()", async (t: Test) => {
     title: "Test Shirt",
     userId: user.id,
   });
+  const design4 = await createDesign({
+    productType: "SHIRT",
+    title: "Test Shirt",
+    userId: user.id,
+  });
+  await ProductDesignsDAO.update(design4.id, {
+    deletedAt: new Date(2020, 0, 1),
+  });
   await createDesign({
     productType: "???",
     title: "Random",
@@ -133,6 +142,7 @@ test("getAll()", async (t: Test) => {
         { designId: design1.id, templateCategoryId: category.id },
         { designId: design2.id, templateCategoryId: null },
         { designId: design3.id, templateCategoryId: category.id },
+        { designId: design4.id, templateCategoryId: category.id },
       ],
       trx
     );
