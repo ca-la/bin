@@ -7,6 +7,7 @@ import TeamUsersDAO from "../team-users/dao";
 import * as SubscriptionsDAO from "./dao";
 import { PlanStripePriceType } from "../../components/plan-stripe-price/types";
 import { upgradeTeamSubscription } from "./upgrade";
+import * as CreateSubscriptionFlow from "./create";
 import * as CreatePaymentMethod from "../payment-methods/create-payment-method";
 import * as UpgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
 import InvalidDataError from "../../errors/invalid-data";
@@ -52,6 +53,9 @@ async function setup() {
   const findActiveTeamSubscriptionStub = sandbox()
     .stub(SubscriptionsDAO, "findActiveByTeamId")
     .resolves(mockedCalaSubscription);
+  const createSubscriptionFlowStub = sandbox()
+    .stub(CreateSubscriptionFlow, "createSubscription")
+    .resolves();
   const updateCalaSubscriptionStub = sandbox()
     .stub(SubscriptionsDAO, "update")
     .resolves();
@@ -81,6 +85,7 @@ async function setup() {
     updateCalaSubscriptionStub,
     createCalaSubscriptionStub,
     countBilledUsersTeamUsersStub,
+    createSubscriptionFlowStub,
   };
 }
 
@@ -89,6 +94,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     trxStub,
     findPlanStub,
     createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
@@ -116,6 +122,12 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     0,
     "does not create Stripe source or new payment method"
   );
+
+  t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
+  );
   t.equal(
     createCalaSubscriptionStub.callCount,
     0,
@@ -133,6 +145,7 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     trxStub,
     findPlanStub,
     createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
@@ -181,6 +194,11 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     "does not create Stripe source or new payment method"
   );
   t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
+  );
+  t.equal(
     createCalaSubscriptionStub.callCount,
     0,
     "does not create new Cala subscription"
@@ -197,6 +215,7 @@ test("upgradeTeamSubscription: upgrade from free plan to a free plan without str
     trxStub,
     findPlanStub,
     createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
@@ -228,6 +247,11 @@ test("upgradeTeamSubscription: upgrade from free plan to a free plan without str
     createPaymentMethodStub.callCount,
     0,
     "createPaymentMethod is not called for free plan"
+  );
+  t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
   );
   t.deepEqual(
     createCalaSubscriptionStub.args,
@@ -274,6 +298,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices",
     trxStub,
     findPlanStub,
     createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
@@ -301,6 +326,11 @@ test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices",
     "does not create Stripe source or new payment method"
   );
   t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
+  );
+  t.equal(
     createCalaSubscriptionStub.callCount,
     0,
     "does not create new Cala subscription"
@@ -312,37 +342,48 @@ test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices",
   );
 });
 
-test("upgradeTeamSubscription: throws error if there is no active team subscription", async (t: Test) => {
+test("upgradeTeamSubscription: creates subscription if there is no active team subscription", async (t: Test) => {
   const {
     trxStub,
     findActiveTeamSubscriptionStub,
-    createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
   findActiveTeamSubscriptionStub.resolves();
+  createSubscriptionFlowStub.resolves(mockedCalaSubscription);
 
-  try {
-    await upgradeTeamSubscription(trxStub, {
-      planId: "a-plan-id",
-      teamId: "a-team-id",
-      userId: "a-user-id",
-      stripeCardToken: "a-stripe-card-token",
-    });
-    t.fail("should not succeed");
-  } catch (err) {
-    t.equal(
-      err.message,
-      "Team with id a-team-id doesn't have an active subscription",
-      "throws correct error message when team doesn't have an active subscription"
-    );
-  }
+  const createdSubscription = await upgradeTeamSubscription(trxStub, {
+    planId: "a-plan-id",
+    teamId: "a-team-id",
+    userId: "a-user-id",
+    stripeCardToken: "a-stripe-card-token",
+  });
 
-  t.equal(
-    createPaymentMethodStub.callCount,
-    0,
-    "does not create Stripe source or new payment method"
+  t.equal(createSubscriptionFlowStub.callCount, 1, "calls create subscription");
+  t.deepEqual(
+    createSubscriptionFlowStub.args,
+    [
+      [
+        trxStub,
+        {
+          planId: "a-plan-id",
+          teamId: "a-team-id",
+          userId: "a-user-id",
+          stripeCardToken: "a-stripe-card-token",
+          isPaymentWaived: false,
+        },
+      ],
+    ],
+    "calls create subscription with correct args"
   );
+
+  t.deepEqual(
+    createdSubscription,
+    mockedCalaSubscription,
+    "upgrade response with the subscription from create subscription flow"
+  );
+
   t.equal(
     createCalaSubscriptionStub.callCount,
     0,
@@ -359,6 +400,7 @@ test("upgradeTeamSubscription: throws an error when tries to upgrade to a paid p
   const {
     trxStub,
     createPaymentMethodStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
   } = await setup();
@@ -386,6 +428,11 @@ test("upgradeTeamSubscription: throws an error when tries to upgrade to a paid p
     "does not create Stripe source or new payment method"
   );
   t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
+  );
+  t.equal(
     createCalaSubscriptionStub.callCount,
     0,
     "does not create new Cala subscription"
@@ -406,6 +453,7 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
     countBilledUsersTeamUsersStub,
     upgradeStripeSubscriptionStub,
     updateCalaSubscriptionStub,
+    createSubscriptionFlowStub,
     createCalaSubscriptionStub,
   } = await setup();
 
@@ -485,6 +533,12 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
       ],
     ],
     "cancel subscrpition with correct subscription id and cancelledAt date"
+  );
+
+  t.equal(
+    createSubscriptionFlowStub.callCount,
+    0,
+    "doesn't call create subscription flow"
   );
 
   t.deepEqual(

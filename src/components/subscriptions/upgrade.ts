@@ -7,6 +7,7 @@ import { Subscription } from "./domain-object";
 import TeamUsersDAO from "../team-users/dao";
 import InvalidDataError from "../../errors/invalid-data";
 import upgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
+import { createSubscription } from "./create";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 
 interface UpgradeTeamOptions {
@@ -34,9 +35,13 @@ export async function upgradeTeamSubscription(
   const subscription = await SubscriptionsDAO.findActiveByTeamId(trx, teamId);
 
   if (!subscription) {
-    throw new Error(
-      `Team with id ${teamId} doesn't have an active subscription`
-    );
+    return createSubscription(trx, {
+      planId,
+      stripeCardToken,
+      userId,
+      teamId,
+      isPaymentWaived: false,
+    });
   }
 
   if (!subscription.stripeSubscriptionId) {
