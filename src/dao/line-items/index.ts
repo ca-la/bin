@@ -19,19 +19,14 @@ const TABLE_NAME = "line_items";
 
 export async function create(
   data: LineItem,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<LineItem> {
   if (!data || !isLineItem(data)) {
     throw new Error("Invalid data");
   }
   const rowData = dataAdapter.forInsertion(data);
-  const created = await db(TABLE_NAME)
+  const created = await ktx(TABLE_NAME)
     .insert(rowData, "*")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((rows: LineItemRow[]) => first<LineItemRow>(rows));
 
   if (!created) {
@@ -46,12 +41,33 @@ export async function create(
   );
 }
 
-export async function findById(id: string): Promise<LineItem | null> {
-  const lineItem = await db(TABLE_NAME)
+export async function createAll(
+  trx: Knex.Transaction,
+  data: LineItem[]
+): Promise<LineItem[]> {
+  const rowData = data.map(dataAdapter.forInsertion.bind(dataAdapter));
+  const created = await trx(TABLE_NAME).insert(rowData, "*");
+
+  if (created.length !== data.length) {
+    throw new Error("Created count does not match line item input count");
+  }
+
+  return validateEvery<LineItemRow, LineItem>(
+    TABLE_NAME,
+    isLineItemRow,
+    dataAdapter,
+    created
+  );
+}
+
+export async function findById(
+  id: string,
+  ktx: Knex = db
+): Promise<LineItem | null> {
+  const lineItem = await ktx<LineItemRow>(TABLE_NAME)
     .select("*")
     .where({ id })
-    .limit(1)
-    .then((rows: LineItemRow[]) => first<LineItemRow>(rows));
+    .first();
 
   if (!lineItem) {
     return null;
@@ -65,8 +81,11 @@ export async function findById(id: string): Promise<LineItem | null> {
   );
 }
 
-export async function findByInvoiceId(invoiceId: string): Promise<LineItem[]> {
-  const lineItems = await db(TABLE_NAME)
+export async function findByInvoiceId(
+  invoiceId: string,
+  ktx: Knex = db
+): Promise<LineItem[]> {
+  const lineItems = await ktx(TABLE_NAME)
     .select("*")
     .where({ invoice_id: invoiceId });
 
@@ -79,9 +98,10 @@ export async function findByInvoiceId(invoiceId: string): Promise<LineItem[]> {
 }
 
 export async function getLineItemsWithMetaByInvoiceId(
-  invoiceId: string
+  invoiceId: string,
+  ktx: Knex = db
 ): Promise<LineItemWithMeta[]> {
-  const lineItemsWithMeta = await db(TABLE_NAME)
+  const lineItemsWithMeta = await ktx(TABLE_NAME)
     .select(
       "li.*",
       "designs.title AS design_title",

@@ -21,7 +21,7 @@ import CollectionDb from "../../components/collections/domain-object";
 import Invoice = require("../../domain-objects/invoice");
 import LineItem from "../../domain-objects/line-item";
 import createDesignPaymentLocks from "./create-design-payment-locks";
-import { time, timeLog, timeEnd } from "../../services/logger";
+import { logServerError, time, timeLog, timeEnd } from "../../services/logger";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -55,13 +55,14 @@ function createInvoice(
   });
 }
 
-function createLineItem(
-  quote: PricingQuote,
+function createLineItems(
+  quotes: PricingQuote[],
   invoiceId: string,
   trx: Knex.Transaction
 ): Promise<LineItem> {
-  return LineItemsDAO.create(
-    {
+  return LineItemsDAO.createAll(
+    trx,
+    quotes.map((quote: PricingQuote) => ({
       createdAt: new Date(),
       description: "Design Production",
       designId: quote.designId,
@@ -69,8 +70,7 @@ function createLineItem(
       invoiceId,
       quoteId: quote.id,
       title: quote.designId || "",
-    },
-    trx
+    }))
   )
     .catch(rethrow)
     .catch(
@@ -78,9 +78,8 @@ function createLineItem(
         rethrow.ERRORS.UniqueViolation,
         (err: typeof rethrow.ERRORS.UniqueViolation) => {
           if (err.constraint === "one_line_item_per_design") {
-            throw new InvalidDataError(
-              `Design ${quote.designId} has already been paid for`
-            );
+            logServerError(err);
+            throw new InvalidDataError("Design has already been paid for");
           }
           throw err;
         }
@@ -109,8 +108,8 @@ async function processQuotesAfterInvoice(
   invoiceId: string,
   quotes: PricingQuote[]
 ): Promise<void> {
+  await createLineItems(quotes, invoiceId, trx);
   for (const quote of quotes) {
-    await createLineItem(quote, invoiceId, trx);
     await setApprovalStepsDueAtByPricingQuote(trx, quote);
   }
 }

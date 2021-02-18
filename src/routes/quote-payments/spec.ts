@@ -537,7 +537,7 @@ test(
     setupStubs();
 
     sandbox()
-      .stub(LineItemsDAO, "create")
+      .stub(LineItemsDAO, "createAll")
       .rejects(new InvalidDataError("Duplicate"));
 
     const paymentMethodTokenId = uuid.v4();
@@ -885,7 +885,11 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
   );
   t.equal(failed.length, 2, "Two responses include error messages");
   t.equal(failed[0].message, failed[1].message, "The errors are the same");
-  t.equal(failed[0].message, `Design ${d1.id} has already been paid for`);
+  t.equal(
+    failed[0].message,
+    "Design has already been paid for",
+    "Error message interprets the error type"
+  );
 });
 
 test("POST /quote-payments does not allow consecutive requests to succeed", async (t: Test) => {
@@ -996,5 +1000,9 @@ test("POST /quote-payments does not allow consecutive requests to succeed", asyn
   t.deepEqual(r2.status, 400);
 
   t.equal(b1.message, b2.message);
-  t.equal(b1.message, `Design ${d1.id} has already been paid for`);
+  t.equal(
+    b1.message,
+    "Design has already been paid for",
+    "Error message interprets the error type"
+  );
 });

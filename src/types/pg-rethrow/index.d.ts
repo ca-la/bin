@@ -5,7 +5,10 @@ declare module "pg-rethrow" {
 
   namespace Rethrow {
     const ForeignKeyViolation: { constraint: string } & ErrorConstructor;
-    const UniqueViolation: { constraint: string } & ErrorConstructor;
+    const UniqueViolation: {
+      constraint: string;
+      detail: string;
+    } & ErrorConstructor;
     const InvalidRegularExpression: ErrorConstructor;
     const InvalidTextRepresentation: ErrorConstructor;
 

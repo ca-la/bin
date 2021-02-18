@@ -4,6 +4,7 @@ import uuid from "node-uuid";
 import { test } from "../../test-helpers/fresh";
 import {
   create,
+  createAll,
   findById,
   findByInvoiceId,
   getLineItemsWithMetaByInvoiceId,
@@ -27,40 +28,77 @@ import generateLineItem from "../../test-helpers/factories/line-item";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 
 test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
-  const id = uuid.v4();
-
-  const invoiceData = {
-    description: "Payment for designs",
-    title: "Collection",
-    totalCents: 10,
-  };
-  let invoice: Invoice | undefined;
-  await db.transaction(async (trx: Knex.Transaction) => {
-    invoice = await createInvoice(trx, invoiceData);
-  });
-
-  if (!invoice) {
-    return t.fail();
-  }
   const { user } = await createUser({ withSession: false });
-  const design = await createDesign({
+
+  const d1 = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: user.id,
   });
 
-  const data: LineItem = {
+  const d2 = await createDesign({
+    productType: "TEESHIRT",
+    title: "Embellished White Tee",
+    userId: user.id,
+  });
+
+  const invoice = await db.transaction((trx: Knex.Transaction) =>
+    createInvoice(trx, {
+      description: "Payment for designs",
+      title: "Collection",
+      totalCents: 10,
+    })
+  );
+
+  const li1: LineItem = {
     createdAt: new Date(),
-    description: "test",
-    designId: design.id,
-    id,
+    description: d1.id,
+    designId: d1.id,
+    id: uuid.v4(),
     invoiceId: invoice.id,
     quoteId: null,
     title: "test",
   };
-  const inserted = await create(data);
-  const result = await findById(inserted.id);
-  t.deepEqual(result, inserted, "Returned inserted lineItem");
+
+  const li2: LineItem = {
+    createdAt: new Date(),
+    description: d2.id,
+    designId: d2.id,
+    id: uuid.v4(),
+    invoiceId: invoice.id,
+    quoteId: null,
+    title: "test",
+  };
+
+  const trx1 = await db.transaction();
+
+  try {
+    const inserted = await create(li1, trx1);
+    const result = await findById(inserted.id, trx1);
+    t.deepEqual(result, inserted, "Returned inserted lineItem");
+  } catch (err) {
+    t.fail(err);
+    throw err;
+  } finally {
+    await trx1.rollback();
+  }
+
+  const trx2 = await db.transaction();
+
+  try {
+    const multipleInserted = await createAll(trx2, [li1, li2]);
+
+    t.deepEqual(
+      multipleInserted,
+      await findByInvoiceId(invoice.id, trx2),
+      "returns inserted line items"
+    );
+  } catch (err) {
+    t.fail(err);
+    throw err;
+  } finally {
+    await trx2.rollback();
+  }
 });
 
 test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
