@@ -54,11 +54,8 @@ interface IOBid extends Bid {
   design: ProductDesign;
 }
 
-async function attachDesignToBid(
-  trx: Knex.Transaction,
-  bid: Bid
-): Promise<IOBid | null> {
-  const design = await ProductDesignsDAO.findByQuoteId(trx, bid.quoteId);
+async function attachDesignToBid(ktx: Knex, bid: Bid): Promise<IOBid | null> {
+  const design = await ProductDesignsDAO.findByQuoteId(ktx, bid.quoteId);
 
   if (!design) {
     return null;
@@ -70,14 +67,11 @@ async function attachDesignToBid(
   };
 }
 
-async function attachDesignsToBids(
-  trx: Knex.Transaction,
-  bids: Bid[]
-): Promise<IOBid[]> {
+async function attachDesignsToBids(ktx: Knex, bids: Bid[]): Promise<IOBid[]> {
   const ioBids: IOBid[] = [];
 
   for (const bid of bids) {
-    const maybeIOBid = await attachDesignToBid(trx, bid);
+    const maybeIOBid = await attachDesignToBid(ktx, bid);
     if (maybeIOBid) {
       ioBids.push(maybeIOBid);
     }
@@ -113,26 +107,21 @@ function* createAndAssignBid(
   this.status = 201;
 }
 
-function* listAllBids(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* listAllBids(this: AuthedContext): Iterator<any, any, any> {
   const { limit, offset, state }: GetListQuery = this.query;
-  const { trx } = this.state;
 
   if (!limit || !offset) {
     this.throw(400, "Must specify a limit and offset when fetching all bids!");
   }
 
-  const bids = yield BidsDAO.findAll(trx, { limit, offset, state });
+  const bids = yield BidsDAO.findAll(db, { limit, offset, state });
+  this.body = bids;
   this.body = bids;
   this.status = 200;
 }
 
-function* listBidsByAssignee(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* listBidsByAssignee(this: AuthedContext): Iterator<any, any, any> {
   const { state, userId, sortBy = "ACCEPTED" } = this.query;
-  const { trx } = this.state;
 
   if (!userId) {
     this.throw(400, "You must specify the user to retrieve bids for");
@@ -148,25 +137,25 @@ function* listBidsByAssignee(
   let bids: Bid[] = [];
   switch (state) {
     case "ACCEPTED":
-      bids = yield BidsDAO.findAcceptedByTargetId(trx, userId, sortBy);
+      bids = yield BidsDAO.findAcceptedByTargetId(db, userId, sortBy);
       break;
 
     case "EXPIRED":
       bids = yield BidsDAO.findOpenByTargetId(
-        trx,
+        db,
         userId,
         sortBy
       ).then((openBids: Bid[]): Bid[] => openBids.filter(isExpired));
       break;
 
     case "REJECTED":
-      bids = yield BidsDAO.findRejectedByTargetId(trx, userId, sortBy);
+      bids = yield BidsDAO.findRejectedByTargetId(db, userId, sortBy);
       break;
 
     case "OPEN":
     case undefined:
       bids = yield BidsDAO.findOpenByTargetId(
-        trx,
+        db,
         userId,
         sortBy
       ).then((openBids: Bid[]): Bid[] => openBids.filter(not(isExpired)));
@@ -175,7 +164,7 @@ function* listBidsByAssignee(
     default:
       this.throw(400, "Invalid status query");
   }
-  const ioBids: IOBid[] = yield attachDesignsToBids(trx, bids);
+  const ioBids: IOBid[] = yield attachDesignsToBids(db, bids);
 
   this.body = ioBids;
   this.status = 200;

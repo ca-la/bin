@@ -77,6 +77,7 @@ test("GET /bids?limit&offset as an admin fetching everything", async (t: Test) =
   t.equal(response.status, 200, "Successfully returns");
   t.deepEqual(bids, [b1], "Successfully returns the stub list");
   t.equal(findAllStub.callCount, 1, "Calls the findAll method exactly once");
+  t.equal(findAllStub.args[0][0], db, "Passing db to the BidsDAO.findAll()");
 
   const [badResponse, badBody] = await get("/bids", {
     headers: authHeader("a-session-id"),
@@ -102,8 +103,8 @@ test("GET /bids?userId", async (t: Test) => {
   t.deepEqual(bids, [b1d1], "returns only bids assigned to requested user");
 
   t.deepEqual(
-    findOpenStub.args[0].slice(1),
-    ["a-user-id", "ACCEPTED"],
+    findOpenStub.args[0],
+    [db, "a-user-id", "ACCEPTED"],
     "calls DAO function with correct arguments"
   );
 });

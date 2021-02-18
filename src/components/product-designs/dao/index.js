@@ -198,14 +198,13 @@ function findByCollectionId(collectionId, trx) {
     .then((designs) => designs.map(instantiate));
 }
 
-function findByQuoteId(trx, quoteId) {
-  return queryWithCollectionMeta(db)
+function findByQuoteId(ktx, quoteId) {
+  return queryWithCollectionMeta(ktx)
     .join("pricing_quotes", "pricing_quotes.design_id", "product_designs.id")
     .where({
       "pricing_quotes.id": quoteId,
       "product_designs.deleted_at": null,
     })
-    .transacting(trx)
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)

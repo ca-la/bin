@@ -161,12 +161,12 @@ export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
 }
 
 function findAllByState(
-  trx: Knex.Transaction,
+  ktx: Knex,
   state: "OPEN" | "ACCEPTED" | "REJECTED" | "EXPIRED"
 ): Knex.QueryBuilder {
   const statusEvent = statusToEvents[state];
 
-  return baseQuery(trx)
+  return baseQuery(ktx)
     .modify(removeUnassigned.bind(null, statusEvent))
     .modify((query: Knex.QueryBuilder) => {
       if (state === "OPEN") {
@@ -183,7 +183,7 @@ function findAllByState(
 }
 
 export async function findAll(
-  trx: Knex.Transaction,
+  ktx: Knex,
   modifiers: {
     limit?: number;
     offset?: number;
@@ -197,12 +197,12 @@ export async function findAll(
     case "ACCEPTED":
     case "REJECTED":
     case "EXPIRED": {
-      query = findAllByState(trx, modifiers.state);
+      query = findAllByState(ktx, modifiers.state);
       break;
     }
 
     default: {
-      query = baseQuery(trx);
+      query = baseQuery(ktx);
       break;
     }
   }
@@ -357,7 +357,7 @@ export async function findByBidIdAndUser(
 }
 
 export async function findOpenByTargetId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -370,7 +370,7 @@ export async function findOpenByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await baseQuery(trx)
+  const targetRows = await baseQuery(ktx)
     .modify(removeUnassigned.bind(null, statusToEvents.OPEN))
     .modify(forUserQuery(userId, PARTNER_TEAM_BID_PREVIEWERS))
     .modify(withAssignee)
@@ -380,7 +380,7 @@ export async function findOpenByTargetId(
 }
 
 export async function findAcceptedByTargetId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -393,7 +393,7 @@ export async function findAcceptedByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await baseQuery(trx)
+  const targetRows = await baseQuery(ktx)
     .modify(removeUnassigned.bind(null, statusToEvents.ACCEPTED))
     .modify(forUserQuery(targetId))
     .modify(withAssignee)
@@ -403,7 +403,7 @@ export async function findAcceptedByTargetId(
 }
 
 export async function findRejectedByTargetId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   targetId: string,
   sortBy: BidSortByParam
 ): Promise<Bid[]> {
@@ -416,7 +416,7 @@ export async function findRejectedByTargetId(
       sortingFunction = orderByDueDate;
       break;
   }
-  const targetRows = await baseQuery(trx)
+  const targetRows = await baseQuery(ktx)
     .modify(removeUnassigned.bind(null, statusToEvents.REJECTED))
     .modify(forUserQuery(targetId))
     .modify(withAssignee)

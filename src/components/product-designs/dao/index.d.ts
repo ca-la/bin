@@ -27,10 +27,7 @@ declare namespace ProductDesignsDAO {
     collectionId: string,
     trx?: Knex.Transaction
   ): Promise<ProductDesign[]>;
-  function findByQuoteId(
-    trx: Knex.Transaction,
-    id: string
-  ): Promise<ProductDesign | null>;
+  function findByQuoteId(ktx: Knex, id: string): Promise<ProductDesign | null>;
   function update(
     id: string,
     data: Partial<ProductDesign>
