@@ -19,13 +19,7 @@ import { hasProperties } from "../../services/require-properties";
 import createUPCsForCollection from "../../services/create-upcs-for-collection";
 import createSKUsForCollection from "../../services/create-skus-for-collection";
 import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
-import {
-  time,
-  timeLog,
-  timeEnd,
-  logServerError,
-  logWarning,
-} from "../../services/logger";
+import { logServerError, logWarning } from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
 import { createFromAddress } from "../../dao/invoice-addresses";
 import * as IrisService from "../../components/iris/send-message";
@@ -36,6 +30,7 @@ import * as SlackService from "../../services/slack";
 import * as UsersDAO from "../../components/users/dao";
 import Invoice from "../../domain-objects/invoice";
 import { CollectionDb } from "../../published-types";
+import { trackEvent, trackTime } from "../../middleware/tracking";
 
 const router = new Router();
 
@@ -127,22 +122,36 @@ async function sendSlackUpdate({
 async function handleQuotePayment(
   trx: Knex.Transaction,
   userId: string,
-  collectionId: string
+  collectionId: string,
+  trackTimeCallback: (
+    event: string,
+    callback: () => Promise<any>
+  ) => Promise<any>
 ): Promise<void> {
-  await transitionCheckoutState(trx, collectionId);
-  await createUPCsForCollection(trx, collectionId);
-  await createSKUsForCollection(trx, collectionId);
-  await createShopifyProductsForCollection(
-    trx,
-    userId,
-    collectionId
-  ).catch((err: Error): void =>
-    logServerError(
-      `Create Shopify Products for user ${userId} - Collection ${collectionId}: `,
-      err
+  await trackTimeCallback("transitionCheckoutState", () =>
+    transitionCheckoutState(trx, collectionId)
+  );
+  await trackTimeCallback("createUPCsForCollection", () =>
+    createUPCsForCollection(trx, collectionId)
+  );
+  await trackTimeCallback("createSKUsForCollection", () =>
+    createSKUsForCollection(trx, collectionId)
+  );
+  await trackTimeCallback("createShopifyProductsForCollection", () =>
+    createShopifyProductsForCollection(
+      trx,
+      userId,
+      collectionId
+    ).catch((err: Error): void =>
+      logServerError(
+        `Create Shopify Products for user ${userId} - Collection ${collectionId}: `,
+        err
+      )
     )
   );
-  await sendCollectionStatusUpdated(trx, collectionId);
+  await trackTimeCallback("sendCollectionStatusUpdated", () =>
+    sendCollectionStatusUpdated(trx, collectionId)
+  );
 }
 
 function* payQuote(
@@ -150,79 +159,78 @@ function* payQuote(
     AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
   >
 ): Iterator<any, any, any> {
-  time("payQuote");
-  try {
-    const { body } = this.request;
-    const { isWaived } = this.query;
-    const { userId, collection, trx } = this.state;
-    if (!collection) {
-      this.throw(403, "Unable to access collection");
-    }
-    timeLog(
-      "payQuote",
-      "params:",
-      { userId, isWaived, collectionId: collection.id },
-      "body:",
-      body
-    );
+  const { body } = this.request;
+  const { isWaived } = this.query;
+  const { userId, collection, trx } = this.state;
+  const trackEventPrefix = "quotePayments/payQuote";
+  if (!collection) {
+    this.throw(403, "Unable to access collection");
+  }
+  trackEvent(this, `${trackEventPrefix}/BEGIN`, {
+    body,
+    userId,
+    collectionId: collection.id,
+    isWaived,
+  });
+  const trackQuotePaymentTime = (event: string, callback: () => Promise<any>) =>
+    trackTime(this, `quotePayment/handleQuotePayment/${event}`, callback);
 
-    const invoiceAddressId = body.addressId
-      ? (yield createFromAddress(trx, body.addressId)).id
-      : null;
+  const invoiceAddressId = body.addressId
+    ? (yield createFromAddress(trx, body.addressId)).id
+    : null;
 
-    timeLog("payQuote", "invoiceAddressId");
-
-    let invoice: Invoice;
-    let paymentAmountCents = 0;
-    if (isWaived) {
-      invoice = yield payWaivedQuote(
+  let invoice: Invoice;
+  let paymentAmountCents = 0;
+  if (isWaived) {
+    invoice = yield trackTime(this, `${trackEventPrefix}/payWaivedQuote`, () =>
+      payWaivedQuote(
         trx,
         body.createQuotes,
         userId,
         collection,
-        invoiceAddressId
+        invoiceAddressId,
+        trackQuotePaymentTime
       ).catch(
         filterError(InvalidDataError, (err: InvalidDataError) =>
           this.throw(400, err.message)
         )
-      );
-      timeLog("payQuote", "payWaivedQuote");
-    } else if (isPayWithMethodRequest(body)) {
-      const {
-        invoice: paidInvoice,
-        nonCreditPaymentAmount,
-      } = yield payInvoiceWithNewPaymentMethod(
-        trx,
-        body.createQuotes,
-        body.paymentMethodTokenId,
-        userId,
-        collection,
-        invoiceAddressId
-      ).catch((err: Error) => {
-        if (err instanceof InvalidDataError || err instanceof StripeError) {
-          this.throw(400, err.message);
-        }
-        throw err;
-      });
-      invoice = paidInvoice;
-      paymentAmountCents = nonCreditPaymentAmount;
-      timeLog("payQuote", "payInvoiceWithNewPaymentMethod");
-    } else {
-      this.throw("Request must match type");
-    }
+      )
+    );
+  } else if (isPayWithMethodRequest(body)) {
+    const { invoice: paidInvoice, nonCreditPaymentAmount } = yield trackTime(
+      this,
+      `${trackEventPrefix}/payInvoiceWithNewPaymentMethod`,
+      () =>
+        payInvoiceWithNewPaymentMethod(
+          trx,
+          body.createQuotes,
+          body.paymentMethodTokenId,
+          userId,
+          collection,
+          invoiceAddressId
+        ).catch((err: Error) => {
+          if (err instanceof InvalidDataError || err instanceof StripeError) {
+            this.throw(400, err.message);
+          }
+          throw err;
+        })
+    );
 
-    yield handleQuotePayment(trx, userId, collection.id);
-    timeLog("payQuote", "handleQuotePayment");
-    yield sendSlackUpdate({ invoice, collection, paymentAmountCents });
-    timeLog("payQuote", "sendSlackUpdate");
-
-    this.body = invoice;
-    this.status = 201;
-    timeEnd("payQuote");
-  } catch (err) {
-    timeEnd("payQuote");
-    throw err;
+    invoice = paidInvoice;
+    paymentAmountCents = nonCreditPaymentAmount;
+  } else {
+    this.throw("Request must match type");
   }
+
+  yield trackTime(this, `${trackEventPrefix}/handleQuotePayment`, () =>
+    handleQuotePayment(trx, userId, collection.id, trackQuotePaymentTime)
+  );
+  yield trackTime(this, `${trackEventPrefix}/sendSlackUpdate`, () =>
+    sendSlackUpdate({ invoice, collection, paymentAmountCents })
+  );
+
+  this.body = invoice;
+  this.status = 201;
 }
 
 router.post(

@@ -54,7 +54,12 @@ interface WithJsonBody<T extends object | any[]> {
   };
 }
 
-interface AuthedState {
+interface PublicState {
+  tracking: import("../../middleware/tracking").TrackingEvent[];
+  trackingId: string;
+}
+
+interface AuthedState extends PublicState {
   userId: string;
   role: string;
   token: string;
@@ -66,7 +71,7 @@ interface PermittedState {
 
 type AuthedContext<
   BodyT = {},
-  StateT = AuthedState,
+  StateT = {},
   Params = null
 > = import("koa").ParameterizedContext<
   AuthedState & StateT,
@@ -78,7 +83,7 @@ type PublicContext<
   BodyT = {},
   StateT = {}
 > = import("koa").ParameterizedContext<
-  StateT,
+  PublicState & StateT,
   WithRouter & WithJsonBody<BodyT>
 >;
 

@@ -13,18 +13,18 @@ import errors = require("./middleware/errors");
 import headers = require("./middleware/headers");
 import jsonBody = require("./middleware/json-body");
 import loggerMiddleware = require("./middleware/logger");
-import metrics from "./middleware/metrics";
 import options = require("./middleware/options");
 import router from "./routes";
 import { registerMessageBuilders } from "./components/cala-components";
 import shopifyAuth from "./middleware/shopify-auth";
 import validatePagination from "./middleware/validate-pagination";
+import { track } from "./middleware/tracking";
 
 const app = new koa();
 
 app.use(compress());
 app.use(loggerMiddleware);
-app.use(metrics);
+app.use(track);
 app.use(errors);
 app.use(jsonBody);
 app.use(headers);

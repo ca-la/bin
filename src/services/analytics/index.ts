@@ -31,6 +31,7 @@ interface TrackOptions {
   payload: object;
   anonymousId?: string;
   userId?: string;
+  timestamp?: string;
 }
 
 interface TrackUser extends TrackOptions {
@@ -70,5 +71,18 @@ export async function trackMetric(
     // are only useful in aggregate, and are a separate category of events than
     // e.g. user-funnel things.
     anonymousId: "cala-api",
+  });
+}
+
+export async function batch(events: (TrackUser | TrackAnonymous)[]) {
+  await makeRequest("POST", "/batch", {
+    batch: events.map((event: TrackUser | TrackAnonymous) => ({
+      type: "track",
+      event: event.eventName,
+      properties: event.payload,
+      userId: event.userId,
+      anonymousId: event.anonymousId,
+      timestamp: event.timestamp,
+    })),
   });
 }

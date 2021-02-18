@@ -1,3 +1,4 @@
+import uuid from "node-uuid";
 import SessionsDAO from "../dao/sessions";
 import db from "../services/db";
 
@@ -28,6 +29,8 @@ export async function attachSession(
     token,
     role: session.role,
     userId: session.userId,
+    trackingId: uuid.v4(),
+    tracking: [],
   };
 }
 

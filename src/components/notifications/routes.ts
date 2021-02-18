@@ -8,6 +8,7 @@ import requireAuth = require("../../middleware/require-auth");
 import { createNotificationMessage } from "./notification-messages";
 import useTransaction from "../../middleware/use-transaction";
 import { NotificationMessage, NotificationFilter } from "./types";
+import { trackTime } from "../../middleware/tracking";
 
 const ALLOWED_UPDATE_KEYS = ["archivedAt"];
 
@@ -22,6 +23,7 @@ interface GetListQuery {
 function* getList(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   const { limit, offset, filter }: GetListQuery = this.query;
+  const trackEventPrefix = "notifications/getList";
 
   if ((limit && limit < 0) || (offset && offset < 0)) {
     this.throw(400, "Offset / Limit cannot be negative!");
@@ -31,15 +33,22 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, "Unknown filter");
   }
 
-  const notifications = yield db.transaction((trx: Knex.Transaction) =>
-    NotificationsDAO.findByUserId(trx, userId, {
-      limit: limit || 20,
-      offset: offset || 0,
-      filter,
-    })
+  const notifications = yield trackTime(
+    this,
+    `${trackEventPrefix}/findByUserId`,
+    () =>
+      db.transaction((trx: Knex.Transaction) =>
+        NotificationsDAO.findByUserId(trx, userId, {
+          limit: limit || 20,
+          offset: offset || 0,
+          filter,
+        })
+      )
   );
-  const messages: (NotificationMessage | null)[] = yield Promise.all(
-    notifications.map(createNotificationMessage)
+  const messages: (NotificationMessage | null)[] = yield trackTime(
+    this,
+    `${trackEventPrefix}/createNotificationMessage`,
+    () => Promise.all(notifications.map(createNotificationMessage))
   );
 
   this.status = 200;
@@ -51,9 +60,10 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
 function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
 
-  const unreadCountsByFilter = yield NotificationsDAO.findUnreadCountByFiltersByUserId(
-    db,
-    userId
+  const unreadCountsByFilter = yield trackTime(
+    this,
+    "notifications/getUnreadCount/findUnreadCountByFiltersByUserId",
+    () => NotificationsDAO.findUnreadCountByFiltersByUserId(db, userId)
   );
   const unreadNotificationsCount =
     unreadCountsByFilter[NotificationFilter.ARCHIVED] +

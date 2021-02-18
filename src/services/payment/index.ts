@@ -185,39 +185,42 @@ export async function payWaivedQuote(
   quoteRequests: CreateRequest,
   userId: string,
   collection: CollectionDb,
-  invoiceAddressId: string | null
+  invoiceAddressId: string | null,
+  trackTimeCallback: (
+    event: string,
+    callback: () => Promise<any>
+  ) => Promise<any>
 ): Promise<Invoice> {
   try {
-    time("payWaivedQuote");
-    await createDesignPaymentLocks(trx, quoteRequests);
-    timeLog("payWaivedQuote", "createDesignPaymentLocks");
-
-    const quotes: PricingQuote[] = await createQuotes(
-      quoteRequests,
-      userId,
-      trx
+    await trackTimeCallback("createDesignPaymentLocks", () =>
+      createDesignPaymentLocks(trx, quoteRequests)
     );
-    timeLog("payWaivedQuote", "createQuotes");
-    const designNames = await getDesignNames(quotes);
-    timeLog("payWaivedQuote", "getDesignNames");
+
+    const quotes: PricingQuote[] = await trackTimeCallback("createQuotes", () =>
+      createQuotes(quoteRequests, userId, trx)
+    );
+    const designNames = await trackTimeCallback("getDesignNames", () =>
+      getDesignNames(quotes)
+    );
     const collectionName = collection.title || "Untitled";
 
     const totalCents = getQuoteTotal(quotes);
-    timeLog("payWaivedQuote", "getQuoteTotal");
 
-    const invoice = await createInvoice(
-      designNames,
-      collectionName,
-      collection.id,
-      totalCents,
-      userId,
-      invoiceAddressId,
-      trx
+    const invoice = await trackTimeCallback("createInvoice", () =>
+      createInvoice(
+        designNames,
+        collectionName,
+        collection.id,
+        totalCents,
+        userId,
+        invoiceAddressId,
+        trx
+      )
     );
-    timeLog("payWaivedQuote", "createInvoice");
 
-    const spentResult = await spendCredit(userId, invoice, trx);
-    timeLog("payWaivedQuote", "spendCredit");
+    const spentResult = await trackTimeCallback("spendCredit", () =>
+      spendCredit(userId, invoice, trx)
+    );
 
     if (spentResult.nonCreditPaymentAmount) {
       throw new InvalidDataError(
@@ -225,15 +228,15 @@ export async function payWaivedQuote(
       );
     }
 
-    await processQuotesAfterInvoice(trx, invoice.id, quotes);
-    timeLog("payWaivedQuote", "processQuotesAfterInvoice");
+    await trackTimeCallback("processQuotesAfterInvoice", () =>
+      processQuotesAfterInvoice(trx, invoice.id, quotes)
+    );
 
-    const invoiceFound = InvoicesDAO.findByIdTrx(trx, invoice.id);
-    timeLog("payWaivedQuote", "InvoicesDAO.findByIdTrx");
-    timeEnd("payWaivedQuote");
+    const invoiceFound = await trackTimeCallback("findInvoice", () =>
+      InvoicesDAO.findByIdTrx(trx, invoice.id)
+    );
     return invoiceFound;
   } catch (err) {
-    timeEnd("payWaivedQuote");
     throw err;
   }
 }
