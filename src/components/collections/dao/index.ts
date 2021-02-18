@@ -118,7 +118,7 @@ type CollectionDbRowWithCollaboratorAndTeamRoles = CollectionDbRowWithCollaborat
 };
 
 export async function findByUser(
-  trx: Knex.Transaction,
+  ktx: Knex,
   options: {
     userId: string;
     sessionRole: string;
@@ -127,16 +127,16 @@ export async function findByUser(
     search?: string;
   }
 ): Promise<Collection[]> {
-  const collectionRows: CollectionDbRowWithCollaboratorAndTeamRoles[] = await trx
+  const collectionRows: CollectionDbRowWithCollaboratorAndTeamRoles[] = await ktx
     .from(TABLE_NAME)
     .select("collections.*")
     .select(
-      trx.raw(
+      ktx.raw(
         "array_remove(array_agg(collaborators.role), null) as collaborator_roles"
       )
     )
     .select(
-      trx.raw("array_remove(array_agg(team_users.role), null) as team_roles")
+      ktx.raw("array_remove(array_agg(team_users.role), null) as team_roles")
     )
     .groupBy("collections.id")
     .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
@@ -194,7 +194,7 @@ export async function findByUser(
 // the collection sharing mechanism, not via being part of a team that owns the
 // collection. These collections may or may not belong to other teams.
 export async function findDirectlySharedWithUser(
-  trx: Knex.Transaction,
+  ktx: Knex,
   options: {
     userId: string;
     sessionRole: string;
@@ -203,10 +203,10 @@ export async function findDirectlySharedWithUser(
     search?: string;
   }
 ): Promise<Collection[]> {
-  const collectionRows: CollectionDbRowWithCollaboratorRoles[] = await trx
+  const collectionRows: CollectionDbRowWithCollaboratorRoles[] = await ktx
     .from(TABLE_NAME)
     .select("collections.*")
-    .select(trx.raw("array_agg(collaborators.role) as collaborator_roles"))
+    .select(ktx.raw("array_agg(collaborators.role) as collaborator_roles"))
     .groupBy("collections.id")
     .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
     .modify((query: Knex.QueryBuilder): void => {
@@ -250,10 +250,10 @@ export async function findDirectlySharedWithUser(
 }
 
 export async function findByTeam(
-  trx: Knex.Transaction,
+  ktx: Knex,
   teamId: string
 ): Promise<CollectionDb[]> {
-  const collections: CollectionDbRow[] = await trx
+  const collections: CollectionDbRow[] = await ktx
     .from(TABLE_NAME)
     .select("collections.*")
     .join("teams", "teams.id", "collections.team_id")
@@ -273,11 +273,11 @@ export async function findByTeam(
 }
 
 export async function findByTeamWithPermissionsByRole(
-  trx: Knex.Transaction,
+  ktx: Knex,
   teamId: string,
   teamRole: TeamUserRole
 ): Promise<Collection[]> {
-  const collectionsDb = await findByTeam(trx, teamId);
+  const collectionsDb = await findByTeam(ktx, teamId);
   const permissions = calculateTeamCollectionPermissions(teamRole);
   return collectionsDb.map((collection: CollectionDb) => ({
     ...collection,
@@ -446,11 +446,11 @@ export async function findAllUnnotifiedCollectionsWithExpiringCostInputs(options
 export async function hasOwnership(options: {
   designId: string;
   userId: string;
-  trx?: Knex.Transaction;
+  ktx?: Knex;
 }): Promise<boolean> {
-  const { designId, trx, userId } = options;
+  const { designId, ktx = db, userId } = options;
 
-  const ownerRows: { created_by: string }[] = await db(TABLE_NAME)
+  const ownerRows: { created_by: string }[] = await ktx(TABLE_NAME)
     .select("collections.created_by AS created_by")
     .leftJoin(
       "collection_designs",
@@ -466,11 +466,6 @@ export async function hasOwnership(options: {
       "product_designs.id": designId,
       "product_designs.deleted_at": null,
       "collections.deleted_at": null,
-    })
-    .modify((query: Knex.QueryBuilder): void => {
-      if (trx) {
-        query.transacting(trx);
-      }
     });
 
   return ownerRows.some(

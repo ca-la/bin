@@ -1,5 +1,6 @@
 import Knex from "knex";
 
+import db from "../../services/db";
 import { emit } from "../../services/pubsub";
 import { RouteCreated } from "../../services/pubsub/cala-events";
 import { check } from "../../services/check";
@@ -103,9 +104,7 @@ function isTeamFilter(candidate: any): candidate is TeamFilter {
   return Object.values(TeamFilter).includes(candidate);
 }
 
-function* findTeams(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
-
+function* findTeams(this: AuthedContext) {
   const { userId, search, limit, offset, type, filter } = this.query;
 
   if (type) {
@@ -123,8 +122,8 @@ function* findTeams(this: TrxContext<AuthedContext>) {
       const modifier = searchAndPageModifer({ limit, offset, search, type });
       this.body =
         filter === TeamFilter.UNPAID
-          ? yield TeamsDAO.findUnpaidTeams(trx, modifier)
-          : yield TeamsDAO.find(trx, {}, modifier);
+          ? yield TeamsDAO.findUnpaidTeams(db, modifier)
+          : yield TeamsDAO.find(db, {}, modifier);
 
       this.status = 200;
       return;
@@ -140,15 +139,14 @@ function* findTeams(this: TrxContext<AuthedContext>) {
     );
   }
 
-  this.body = yield TeamsDAO.findByUser(trx, userId);
+  this.body = yield TeamsDAO.findByUser(db, userId);
   this.status = 200;
 }
 
-function* findTeam(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
+function* findTeam(this: AuthedContext) {
   const { id } = this.params;
 
-  const team = yield TeamsDAO.findById(trx, id);
+  const team = yield TeamsDAO.findById(db, id);
   if (!team) {
     this.throw(404, `Team not found with ID: ${id}`);
   }
@@ -157,12 +155,11 @@ function* findTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
-function* findTeamSubscriptions(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
+function* findTeamSubscriptions(this: AuthedContext) {
   const { isActive } = this.query;
   const { id } = this.params;
 
-  const subscriptions = yield SubscriptionsDAO.findForTeamWithPlans(trx, id, {
+  const subscriptions = yield SubscriptionsDAO.findForTeamWithPlans(db, id, {
     isActive: isActive === "true",
   });
 
@@ -236,12 +233,11 @@ export default {
   routes: {
     "/": {
       post: [useTransaction, requireAuth, createTeam],
-      get: [useTransaction, requireAuth, findTeams],
+      get: [requireAuth, findTeams],
     },
     "/:id": {
       ...standardRouter.routes["/:id"],
       get: [
-        useTransaction,
         requireAuth,
         requireTeamRoles(Object.values(TeamUserRole), findTeamById),
         findTeam,
@@ -258,7 +254,6 @@ export default {
     },
     "/:id/subscriptions": {
       get: [
-        useTransaction,
         requireAuth,
         requireTeamRoles(Object.values(TeamUserRole), findTeamById),
         findTeamSubscriptions,

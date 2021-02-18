@@ -585,10 +585,10 @@ function queryUnreadCountByUserId(
 }
 
 export async function findUnreadCountByFiltersByUserId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string
 ) {
-  const counts: Record<NotificationFilter, string> = await trx
+  const counts: Record<NotificationFilter, string> = await ktx
     .queryBuilder()
     .select([
       (query: Knex.QueryBuilder) =>

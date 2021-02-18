@@ -13,8 +13,8 @@ import Comment, { CommentRow, BaseComment } from "./types";
 
 const TABLE_NAME = "comments";
 
-export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
-  return db(TABLE_NAME)
+export function queryComments(ktx: Knex = db): Knex.QueryBuilder {
+  return ktx(TABLE_NAME)
     .select([
       "comments.*",
       { user_name: "users.name" },
@@ -22,7 +22,7 @@ export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
       { user_role: "users.role" },
     ])
     .select(
-      db.raw(`
+      ktx.raw(`
       coalesce(
         jsonb_agg(assets.*) filter (where assets.id is not null),
         '[]'
@@ -37,12 +37,7 @@ export function queryComments(trx?: Knex.Transaction): Knex.QueryBuilder {
     .leftJoin("assets", "assets.id", "comment_attachments.asset_id")
     .where({ "comments.deleted_at": null })
     .groupBy("comments.id", "users.name", "users.email", "users.role")
-    .orderBy("created_at", "asc")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    .orderBy("created_at", "asc");
 }
 
 export function queryById(

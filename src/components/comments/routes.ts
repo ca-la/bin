@@ -1,12 +1,12 @@
 import Router from "koa-router";
 
+import db from "../../services/db";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CommentDAO from "./dao";
 import requireAuth = require("../../middleware/require-auth");
 import { announceAnnotationCommentDeletion } from "../iris/messages/annotation-comment";
 import { announceTaskCommentDeletion } from "../iris/messages/task-comment";
 import { announceApprovalStepCommentDeletion } from "../iris/messages/approval-step-comment";
-import useTransaction from "../../middleware/use-transaction";
 import { requireQueryParam } from "../../middleware/require-query-param";
 
 const router = new Router();
@@ -16,15 +16,14 @@ interface GetListQuery {
 }
 
 function* getList(
-  this: TrxContext<AuthedContext<{}, {}, GetListQuery>>
+  this: AuthedContext<{}, {}, GetListQuery>
 ): Iterator<any, any, any> {
   const { annotationIds } = this.query;
-  const { trx } = this.state;
 
   const idList = Array.isArray(annotationIds) ? annotationIds : [annotationIds];
 
   const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(
-    trx,
+    db,
     idList
   );
 
@@ -71,13 +70,7 @@ function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-router.get(
-  "/",
-  requireAuth,
-  requireQueryParam("annotationIds"),
-  useTransaction,
-  getList
-);
+router.get("/", requireAuth, requireQueryParam("annotationIds"), getList);
 router.del("/:commentId", requireAuth, deleteComment);
 
 export default router.routes();

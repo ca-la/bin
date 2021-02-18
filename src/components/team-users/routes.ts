@@ -1,3 +1,4 @@
+import db from "../../services/db";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import { requireQueryParam } from "../../middleware/require-query-param";
@@ -33,7 +34,7 @@ import {
 } from "../../services/pubsub/cala-events";
 
 async function findTeamByTeamUser(
-  context: TrxContext<AuthedContext<any, { teamUser: TeamUser }>>
+  context: AuthedContext<any, { teamUser: TeamUser }>
 ) {
   return context.state.teamUser.teamId;
 }
@@ -71,11 +72,10 @@ function* create(
   this.status = 201;
 }
 
-function* getList(this: TrxContext<AuthedContext>) {
+function* getList(this: AuthedContext) {
   const { teamId } = this.request.query;
-  const { trx } = this.state;
 
-  this.body = yield TeamUsersDAO.find(trx, { teamId });
+  this.body = yield TeamUsersDAO.find(db, { teamId });
   this.status = 200;
 }
 
@@ -159,18 +159,17 @@ export default {
       post: [
         requireAuth,
         typeGuard(isUnsavedTeamUser),
-        useTransaction,
         requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           async (context: AuthedContext<{ teamId: string }>) =>
             context.request.body.teamId
         ),
+        useTransaction,
         create,
       ],
       get: [
         requireAuth,
         requireQueryParam("teamId"),
-        useTransaction,
         requireTeamRoles(
           Object.values(TeamUserRole),
           async (context: AuthedContext) => context.query.teamId
@@ -191,7 +190,6 @@ export default {
       ],
       del: [
         requireAuth,
-        useTransaction,
         requireTeamUserByTeamUserId,
         requireTeamRoles<{ teamUser: TeamUser }>(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
@@ -203,6 +201,7 @@ export default {
             ) => context.params.teamUserId === actorTeamUserId,
           }
         ),
+        useTransaction,
         deleteTeamUser,
       ],
     },

@@ -53,13 +53,13 @@ export function buildDao<
   };
 
   const find = async (
-    trx: Knex.Transaction,
+    ktx: Knex,
     filter: Partial<Model> = {},
     modifier: QueryModifier = identity
   ): Promise<Model[]> => {
     const namespacedFilter = getNamespacedFilter(filter);
 
-    const rows = await trx(tableName)
+    const rows = await ktx(tableName)
       .select(namespacedSplatSelect)
       .where(namespacedFilter)
       .orderBy(namespacedOrderColumn, orderDirection)
@@ -70,13 +70,13 @@ export function buildDao<
   };
 
   const count = async (
-    trx: Knex.Transaction,
+    ktx: Knex,
     filter: Partial<Model> = {},
     modifier: QueryModifier = identity
   ): Promise<number> => {
     const namespacedFilter = getNamespacedFilter(filter);
 
-    const result = await trx(tableName)
+    const result = await ktx(tableName)
       .count("*")
       .where(namespacedFilter)
       .modify(modifier);
@@ -85,11 +85,11 @@ export function buildDao<
   };
 
   const findOne = async (
-    trx: Knex.Transaction,
+    ktx: Knex,
     filter: Partial<Model>,
     modifier: QueryModifier = identity
   ): Promise<Model | null> => {
-    const row = await trx(tableName)
+    const row = await ktx(tableName)
       .select(namespacedSplatSelect)
       .where(getNamespacedFilter(filter))
       .orderBy(`${tableName}.${orderColumn}`, orderDirection)
@@ -105,11 +105,11 @@ export function buildDao<
   };
 
   const findById = async (
-    trx: Knex.Transaction,
+    ktx: Knex,
     id: string,
     modifier: QueryModifier = identity
   ): Promise<Model | null> => {
-    const row = await trx(tableName)
+    const row = await ktx(tableName)
       .select(namespacedSplatSelect)
       .where(getNamespacedFilter({ id } as Partial<Model>))
       .modify(queryModifier)

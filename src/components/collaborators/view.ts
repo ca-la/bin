@@ -6,18 +6,13 @@ export const ALIASES = {
   userId: "users_forcollaboratorsviewraw.id",
 };
 
-export const getBuilder = (trx?: Knex.Transaction): Knex.QueryBuilder =>
-  db
+export const getBuilder = (ktx: Knex = db): Knex.QueryBuilder =>
+  ktx
     .select("collaborators_forcollaboratorsviewraw.*")
-    .select(db.raw("to_json(users_forcollaboratorsviewraw.*) as user"))
+    .select(ktx.raw("to_json(users_forcollaboratorsviewraw.*) as user"))
     .from("collaborators AS collaborators_forcollaboratorsviewraw")
     .leftJoin(
       "users AS users_forcollaboratorsviewraw",
       "users_forcollaboratorsviewraw.id",
       "collaborators_forcollaboratorsviewraw.user_id"
-    )
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    );

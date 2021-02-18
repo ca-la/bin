@@ -113,12 +113,12 @@ const dao = {
   count: withMetaDao.count,
 
   findApprovalStepEvents: async (
-    trx: Knex.Transaction,
+    ktx: Knex,
     designId: string,
     approvalStepId: string
   ): Promise<DesignEventWithMeta[]> => {
     const designEventRows = (
-      await trx(TABLE_NAME)
+      await ktx(TABLE_NAME)
         .select("design_events.*")
         .modify(addMeta)
         .orderBy("design_events.created_at", "asc")

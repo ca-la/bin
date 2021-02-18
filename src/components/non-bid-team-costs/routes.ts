@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import uuid from "node-uuid";
 import { hasProperties } from "@cala/ts-lib";
+import db from "../../services/db";
 
 import NonBidTeamCostsDAO from "./dao";
 import filterError from "../../services/filter-error";
@@ -55,13 +56,12 @@ interface GetListQuery {
 
 function* listCosts(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   const { teamId }: GetListQuery = this.query;
-  const { trx } = this.state;
 
   if (!teamId) {
     this.throw(400, "You must specifiy a team ID");
   }
 
-  const byTeam = yield NonBidTeamCostsDAO.find(trx, { teamId });
+  const byTeam = yield NonBidTeamCostsDAO.find(db, { teamId });
 
   this.body = byTeam;
   this.status = 200;
@@ -81,7 +81,7 @@ function* deleteCost(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
 }
 
 router.post("/", requireAuth, requireAdmin, useTransaction, createCost);
-router.get("/", requireAuth, requireAdmin, useTransaction, listCosts);
+router.get("/", requireAuth, requireAdmin, listCosts);
 router.del("/:costId", requireAuth, requireAdmin, useTransaction, deleteCost);
 
 export default router.routes();

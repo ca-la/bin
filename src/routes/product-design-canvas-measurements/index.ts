@@ -1,3 +1,4 @@
+import db from "../../services/db";
 import Router from "koa-router";
 import Measurement from "../../domain-objects/product-design-canvas-measurement";
 import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
@@ -7,7 +8,6 @@ import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import requireAuth = require("../../middleware/require-auth");
 import * as NotificationsService from "../../services/create-notifications";
-import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -106,15 +106,14 @@ function* deleteMeasurement(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
-  const { trx } = this.state;
 
   let measurements = [];
   if (query.canvasId) {
-    measurements = yield MeasurementsDAO.findAllByCanvasId(query.canvasId, trx);
+    measurements = yield MeasurementsDAO.findAllByCanvasId(query.canvasId, db);
   } else if (query.designId) {
-    measurements = yield MeasurementsDAO.findAllByDesignId(trx, query.designId);
+    measurements = yield MeasurementsDAO.findAllByDesignId(db, query.designId);
   } else {
     this.throw(
       400,
@@ -138,7 +137,7 @@ function* getLabel(this: AuthedContext): Iterator<any, any, any> {
   this.body = label;
 }
 
-router.get("/", requireAuth, useTransaction, getList);
+router.get("/", requireAuth, getList);
 router.get("/label", requireAuth, getLabel);
 router.put("/:measurementId", requireAuth, createMeasurement);
 router.patch("/:measurementId", requireAuth, updateMeasurement);

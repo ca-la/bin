@@ -65,21 +65,18 @@ export async function create(
   return found;
 }
 
-export async function findAll(trx: Knex.Transaction): Promise<Plan[]> {
-  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
+export async function findAll(ktx: Knex): Promise<Plan[]> {
+  return dao.find(ktx, {}, (query: Knex.QueryBuilder) =>
     query.orderBy("created_at", "desc")
   );
 }
 
-export async function findPublic(trx: Knex.Transaction): Promise<Plan[]> {
-  return dao.find(trx, { isPublic: true });
+export async function findPublic(ktx: Knex): Promise<Plan[]> {
+  return dao.find(ktx, { isPublic: true });
 }
 
-export async function findById(
-  trx: Knex.Transaction,
-  id: string
-): Promise<Plan | null> {
-  return dao.findById(trx, id);
+export async function findById(ktx: Knex, id: string): Promise<Plan | null> {
+  return dao.findById(ktx, id);
 }
 
 export async function findFreeAndDefaultForTeams(

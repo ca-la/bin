@@ -33,7 +33,7 @@ function getDisplayName(
 }
 
 export async function getCollaboratorsFromCommentMentions(
-  trx: Knex.Transaction,
+  ktx: Knex,
   commentText: string
 ): Promise<{
   idNameMap: { [id: string]: string };
@@ -49,7 +49,7 @@ export async function getCollaboratorsFromCommentMentions(
         const collaborator = await CollaboratorsDAO.findById(
           mention.id,
           true,
-          trx
+          ktx
         );
 
         const name = getDisplayName(collaborator);
@@ -61,7 +61,7 @@ export async function getCollaboratorsFromCommentMentions(
       }
 
       case MentionType.TEAM_USER: {
-        const teamUser = await TeamUsersDAO.findById(trx, mention.id);
+        const teamUser = await TeamUsersDAO.findById(ktx, mention.id);
         if (!teamUser || !teamUser.user) {
           continue;
         }
@@ -79,11 +79,11 @@ export async function getCollaboratorsFromCommentMentions(
 }
 
 export async function getMentionsFromComment(
-  trx: Knex.Transaction,
+  ktx: Knex,
   commentText: string
 ): Promise<Record<string, string>> {
   const { idNameMap } = await getCollaboratorsFromCommentMentions(
-    trx,
+    ktx,
     commentText
   );
 
@@ -91,12 +91,12 @@ export async function getMentionsFromComment(
 }
 
 export async function addAtMentionDetailsForComment(
-  trx: Knex.Transaction,
+  ktx: Knex,
   comment: Comment
 ): Promise<CommentWithMentions> {
   return {
     ...comment,
-    mentions: await getMentionsFromComment(trx, comment.text),
+    mentions: await getMentionsFromComment(ktx, comment.text),
   };
 }
 
@@ -105,14 +105,14 @@ export async function addAtMentionDetailsForComment(
  * the information is a map of id's to resource names that will be displayed inline
  */
 export default async function addAtMentionDetails(
-  trx: Knex.Transaction,
+  ktx: Knex,
   comments: Comment[]
 ): Promise<CommentWithMentions[]> {
   const commentsWithMentions: CommentWithMentions[] = [];
 
   for (const comment of comments) {
     commentsWithMentions.push(
-      await addAtMentionDetailsForComment(trx, comment)
+      await addAtMentionDetailsForComment(ktx, comment)
     );
   }
 

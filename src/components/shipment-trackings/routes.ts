@@ -42,15 +42,14 @@ async function getDesignIdFromStep(approvalStepId: string): Promise<string> {
   return step.designId;
 }
 
-function* listByApprovalStepId(this: TrxContext<AuthedContext>) {
-  const { trx } = this.state;
+function* listByApprovalStepId(this: AuthedContext) {
   const { approvalStepId } = this.request.query;
 
-  const found = yield ShipmentTrackingsDAO.find(trx, { approvalStepId });
+  const found = yield ShipmentTrackingsDAO.find(db, { approvalStepId });
 
   const withMeta = [];
   for (const tracking of found) {
-    withMeta.push(yield attachMeta(trx, tracking));
+    withMeta.push(yield attachMeta(db, tracking));
   }
 
   this.body = withMeta;
@@ -165,7 +164,6 @@ const router: CalaRouter = {
   routes: {
     "/": {
       get: [
-        useTransaction,
         requireAuth,
         requireQueryParam("approvalStepId"),
         requireDesignIdBy(function getDesignIdFromQuery(

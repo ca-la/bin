@@ -3,10 +3,10 @@ import Knex from "knex";
 import { find } from "./dao";
 
 export async function isQuoteCommitted(
-  trx: Knex.Transaction,
+  ktx: Knex,
   designId: string
 ): Promise<boolean> {
-  const designEvents = await find(trx, {
+  const designEvents = await find(ktx, {
     designId,
     type: "COMMIT_QUOTE",
   });

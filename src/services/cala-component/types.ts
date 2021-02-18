@@ -1,4 +1,4 @@
-import { Transaction, QueryBuilder } from "knex";
+import Knex, { Transaction, QueryBuilder } from "knex";
 import { Middleware } from "koa-router";
 import DataAdapter from "../data-adapter";
 import {
@@ -38,21 +38,21 @@ export interface UpdateResult<Model> {
 
 export interface CalaDao<Model> {
   find: (
-    trx: Transaction,
+    ktx: Knex,
     filter?: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model[]>;
   count: (
-    trx: Transaction,
+    ktx: Knex,
     filter?: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<number>;
   findOne: (
-    trx: Transaction,
+    ktx: Knex,
     filter: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model | null>;
-  findById: (trx: Transaction, id: string) => Promise<Model | null>;
+  findById: (ktx: Knex, id: string) => Promise<Model | null>;
   update: (
     trx: Transaction,
     id: string,

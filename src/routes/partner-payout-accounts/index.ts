@@ -1,5 +1,6 @@
 import Router from "koa-router";
 import uuid from "node-uuid";
+import db from "../../services/db";
 
 import * as PartnerPayoutAccounts from "../../dao/partner-payout-accounts";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
@@ -10,13 +11,11 @@ import {
   createLoginLink,
   getBalances,
 } from "../../services/stripe";
-import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
-function* getAccounts(this: TrxContext<AuthedContext>) {
+function* getAccounts(this: AuthedContext) {
   const { userId, teamId } = this.query;
-  const { trx } = this.state;
 
   this.assert(userId || teamId, 400, "User ID of Team ID must be provided");
   if (userId) {
@@ -27,7 +26,7 @@ function* getAccounts(this: TrxContext<AuthedContext>) {
     if (this.state.role !== "ADMIN") {
       this.throw(403, "Must be an admin to view team payout accounts");
     }
-    const accounts = yield PartnerPayoutAccounts.findByTeamId(trx, teamId);
+    const accounts = yield PartnerPayoutAccounts.findByTeamId(db, teamId);
     this.body = accounts;
   }
   this.status = 200;
@@ -79,7 +78,7 @@ function* getPayoutBalances(this: AuthedContext) {
   this.status = 200;
 }
 
-router.get("/", requireAuth, useTransaction, getAccounts);
+router.get("/", requireAuth, getAccounts);
 router.post("/:accountId/login-link", requireAuth, postCreateLoginLink);
 router.post("/", requireAuth, createAccount);
 router.get("/balances", requireAuth, requireAdmin, getPayoutBalances);

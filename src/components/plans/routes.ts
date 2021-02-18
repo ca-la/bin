@@ -1,4 +1,5 @@
 import Router from "koa-router";
+import db from "../../services/db";
 
 import * as PlansDAO from "./dao";
 import TeamUsersDAO from "../team-users/dao";
@@ -18,9 +19,9 @@ import { createPlan } from "./create-plan";
 
 const router = new Router();
 
-function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+function* getPlans(this: AuthedContext): Iterator<any, any, any> {
   const { withPrivate, teamId } = this.query;
-  const { trx, role } = this.state;
+  const { role } = this.state;
   const isAdmin = role === "ADMIN";
 
   if (!isAdmin && withPrivate) {
@@ -28,11 +29,11 @@ function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   }
 
   let plans = withPrivate
-    ? yield PlansDAO.findAll(trx)
-    : yield PlansDAO.findPublic(trx);
+    ? yield PlansDAO.findAll(db)
+    : yield PlansDAO.findPublic(db);
 
   if (teamId) {
-    const billedUserCount = yield TeamUsersDAO.countBilledUsers(trx, teamId);
+    const billedUserCount = yield TeamUsersDAO.countBilledUsers(db, teamId);
     plans = plans.map(
       (plan: Plan): TeamPlanOption =>
         attachTeamOptionData(plan, billedUserCount)
@@ -43,18 +44,17 @@ function* getPlans(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   this.body = plans;
 }
 
-function* getById(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
-  const { trx } = this.state;
+function* getById(this: AuthedContext): Iterator<any, any, any> {
   const { teamId } = this.query;
 
-  let plan = yield PlansDAO.findById(trx, this.params.planId);
+  let plan = yield PlansDAO.findById(db, this.params.planId);
 
   if (!plan) {
     this.throw(404, "Plan not found");
   }
 
   if (teamId) {
-    const billedUserCount = yield TeamUsersDAO.countBilledUsers(trx, teamId);
+    const billedUserCount = yield TeamUsersDAO.countBilledUsers(db, teamId);
     plan = attachTeamOptionData(plan, billedUserCount);
   }
 
@@ -121,8 +121,8 @@ function* create(
   this.body = createdPlan;
 }
 
-router.get("/", useTransaction, getPlans);
-router.get("/:planId", useTransaction, getById);
+router.get("/", getPlans);
+router.get("/:planId", getById);
 router.post(
   "/",
   requireAdmin,

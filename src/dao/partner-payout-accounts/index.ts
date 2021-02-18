@@ -15,14 +15,9 @@ const { dataMapper } = PartnerPayoutAccount;
 
 const TABLE_NAME = "partner_payout_accounts";
 
-export async function findById(id: string, trx?: Knex.Transaction) {
-  return db(TABLE_NAME)
+export async function findById(id: string, ktx: Knex = db) {
+  return ktx(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then(first)
     .then(maybeInstantiate);
 }
@@ -37,8 +32,8 @@ export async function findByUserId(userId: string) {
     .catch(rethrow);
 }
 
-export async function findByTeamId(trx: Knex.Transaction, teamId: string) {
-  return trx(TABLE_NAME)
+export async function findByTeamId(ktx: Knex, teamId: string) {
+  return ktx(TABLE_NAME)
     .select("partner_payout_accounts.*")
     .join("team_users", "team_users.user_id", "partner_payout_accounts.user_id")
     .where({

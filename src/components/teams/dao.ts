@@ -23,10 +23,10 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
 );
 
 async function findUnpaidTeams(
-  trx: Knex.Transaction,
+  ktx: Knex,
   modifier: QueryModifier = (q: Knex.QueryBuilder) => q
 ) {
-  const rows = await trx(TABLE_NAME)
+  const rows = await ktx(TABLE_NAME)
     .distinct()
     .select("teams.*")
     .join("design_events", "teams.id", "design_events.target_team_id")
@@ -39,11 +39,11 @@ async function findUnpaidTeams(
     .where({ "design_events.type": "ACCEPT_SERVICE_BID" })
     .whereNotIn(
       "pricing_bids.id",
-      trx("design_events").select("bid_id").where({ type: "REMOVE_PARTNER" })
+      ktx("design_events").select("bid_id").where({ type: "REMOVE_PARTNER" })
     )
     .groupBy(["pricing_bids.id", "teams.id", "pricing_bids.bid_price_cents"])
     .having(
-      trx.raw(
+      ktx.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(partner_payout_logs.payout_amount_cents), 0)"
       )
     )
@@ -53,12 +53,12 @@ async function findUnpaidTeams(
 }
 
 async function findByUser(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string,
   filter: Partial<TeamDb> = {},
   modifier: QueryModifier = identity
 ) {
-  return standardDao.find(trx, filter, (query: QueryBuilder) =>
+  return standardDao.find(ktx, filter, (query: QueryBuilder) =>
     modifier(query)
       .join("team_users", "team_users.team_id", "teams.id")
       .where({ "team_users.user_id": userId, "team_users.deleted_at": null })

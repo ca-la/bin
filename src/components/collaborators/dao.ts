@@ -170,19 +170,15 @@ Updatable Properties: ${UPDATABLE_PROPERTIES.join(", ")}`.trim()
 export async function findById(
   collaboratorId: string,
   includeCancelled: boolean = false,
-  trx?: Knex.Transaction
+  ktx?: Knex
 ): Promise<CollaboratorWithUser | null> {
-  const collaboratorRow = await getCollaboratorViewBuilder()
+  const collaboratorRow = await getCollaboratorViewBuilder(ktx)
     .where({ [ALIASES.collaboratorId]: collaboratorId })
     .modify((query: Knex.QueryBuilder): void => {
-      if (trx) {
-        query.transacting(trx);
-      }
       if (!includeCancelled) {
         query.andWhereRaw("(cancelled_at IS null OR cancelled_at > now())");
       }
     })
-
     .then((rows: CollaboratorWithUserRow[]) =>
       first<CollaboratorWithUserRow>(rows)
     );
@@ -482,9 +478,9 @@ export async function findByDesignAndTeam(
 export async function findAllForUserThroughDesign(
   designId: string,
   userId: string,
-  trx?: Knex.Transaction
+  ktx?: Knex
 ): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getCollaboratorViewBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder(ktx)
     .select(selectRole)
     .joinRaw(
       `
@@ -532,12 +528,7 @@ export async function findAllForUserThroughDesign(
       `
 collaborators_forcollaboratorsviewraw.created_at DESC
     `
-    )
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    );
 
   return validateEvery<CollaboratorWithUserRow, CollaboratorWithUser>(
     TABLE_NAME,
@@ -550,16 +541,11 @@ collaborators_forcollaboratorsviewraw.created_at DESC
 export async function findByCollectionAndUser(
   collectionId: string,
   userId: string,
-  trx: Knex.Transaction
+  ktx: Knex
 ): Promise<CollaboratorWithUser[]> {
-  const collaboratorRows = await getCollaboratorViewBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder(ktx)
     .where({ collection_id: collectionId, user_id: userId })
-    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())");
 
   const collaborators = validateEvery<
     CollaboratorWithUserRow,

@@ -1012,8 +1012,6 @@ test("POST /bids blocks concurrent bid creation", async (t: Test) => {
 });
 
 test("GET /unpaid?userId=", async (t: Test) => {
-  const mockTransaction = await db.transaction();
-  sandbox().stub(db, "transaction").resolves(mockTransaction);
   const { sessionStub, findUnpaidBidsByUserStub } = setup("ADMIN");
 
   const [response, body] = await get("/bids/unpaid?userId=a-user-id", {
@@ -1024,8 +1022,8 @@ test("GET /unpaid?userId=", async (t: Test) => {
   t.deepEqual(body, [b1d1], "returns bids");
   t.deepEqual(
     findUnpaidBidsByUserStub.args,
-    [[mockTransaction, "a-user-id"]],
-    "passes a transaction to the DAO function"
+    [[db, "a-user-id"]],
+    "passes db to the DAO function"
   );
 
   sessionStub.resolves({ role: "USER", userId: "a-user-id" });
@@ -1041,8 +1039,6 @@ test("GET /unpaid?userId=", async (t: Test) => {
 });
 
 test("GET /unpaid?teamId=", async (t: Test) => {
-  const mockTransaction = await db.transaction();
-  sandbox().stub(db, "transaction").resolves(mockTransaction);
   const { findUnpaidBidsByTeamStub } = setup("ADMIN");
 
   const [response, body] = await get("/bids/unpaid?teamId=a-team-id", {
@@ -1053,14 +1049,12 @@ test("GET /unpaid?teamId=", async (t: Test) => {
   t.deepEqual(body, [b1d1], "returns bids");
   t.deepEqual(
     findUnpaidBidsByTeamStub.args,
-    [[mockTransaction, "a-team-id"]],
-    "passes a transaction to the DAO function"
+    [[db, "a-team-id"]],
+    "passes db to the DAO function"
   );
 });
 
 test("GET /unpaid with missing query", async (t: Test) => {
-  const mockTransaction = await db.transaction();
-  sandbox().stub(db, "transaction").resolves(mockTransaction);
   setup("ADMIN");
 
   const [response] = await get("/bids/unpaid", {

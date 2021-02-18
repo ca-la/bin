@@ -10,7 +10,6 @@ import { hasProperties } from "../../services/require-properties";
 import db from "../../services/db";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import backfillUpcsForDesign from "../../services/backfill-upcs-for-design";
-import useTransaction from "../../middleware/use-transaction";
 import { ProductDesignVariantIO } from "./types";
 import { enrichVariantInputsWithCodesIfCheckedOut } from "./service";
 import requireAuth = require("../../middleware/require-auth");
@@ -99,12 +98,9 @@ function* getVariants(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* backfillUpcs(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* backfillUpcs(this: AuthedContext): Iterator<any, any, any> {
   const { designId } = this.query;
-  const { trx } = this.state;
-  this.body = yield backfillUpcsForDesign(trx, designId);
+  this.body = yield backfillUpcsForDesign(db, designId);
   this.status = 200;
 }
 
@@ -120,7 +116,6 @@ router.post(
   "/backfill-upcs",
   requireQueryParam("designId"),
   requireAdmin,
-  useTransaction,
   backfillUpcs
 );
 export default router.routes();

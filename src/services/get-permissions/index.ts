@@ -97,7 +97,7 @@ export function getPermissionsFromDesign(options: {
 }
 
 export async function getDesignPermissionsAndRole(
-  trx: Knex.Transaction,
+  ktx: Knex,
   options: {
     designId: string;
     sessionRole: string;
@@ -109,7 +109,7 @@ export async function getDesignPermissionsAndRole(
   const combinedCollaborators = await CollaboratorsDAO.findAllForUserThroughDesign(
     designId,
     sessionUserId,
-    trx
+    ktx
   );
   const collaboratorRoles = combinedCollaborators.map(
     (collaborator: Collaborator): string => {
@@ -117,7 +117,7 @@ export async function getDesignPermissionsAndRole(
     }
   );
   const teamUsers = await TeamUsersDAO.findByUserAndDesign(
-    trx,
+    ktx,
     sessionUserId,
     designId
   );
@@ -144,14 +144,14 @@ export async function getDesignPermissionsAndRole(
   const isOwner = await CollectionsDAO.hasOwnership({
     designId,
     userId: sessionUserId,
-    trx,
+    ktx,
   });
 
   // For legacy designs with no "EDIT" collaborator for creator
   if (isOwner) {
     collaboratorRoles.push("EDIT");
   }
-  const isCheckedOut = await isQuoteCommitted(trx, designId);
+  const isCheckedOut = await isQuoteCommitted(ktx, designId);
 
   return {
     role,
@@ -179,7 +179,7 @@ export async function getDesignPermissions(options: {
 }
 
 export async function getCollectionPermissions(
-  trx: Knex.Transaction,
+  ktx: Knex,
   collection: CollectionDb,
   sessionRole: string,
   sessionUserId: string
@@ -187,7 +187,7 @@ export async function getCollectionPermissions(
   const collaborators: Collaborator[] = await CollaboratorsDAO.findByCollectionAndUser(
     collection.id,
     sessionUserId,
-    trx
+    ktx
   );
   const collaboratorRoles = collaborators.map(
     (collaborator: Collaborator): string => {
@@ -196,7 +196,7 @@ export async function getCollectionPermissions(
   );
 
   const teamUsers = await TeamUsersDAO.findByUserAndCollection(
-    trx,
+    ktx,
     sessionUserId,
     collection.id
   );

@@ -39,10 +39,10 @@ export async function create(
 }
 
 export async function findByStepId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   stepId: string
 ): Promise<Comment[]> {
-  const comments: CommentRow[] = await queryComments(trx)
+  const comments: CommentRow[] = await queryComments(ktx)
     .join(
       "design_approval_step_comments",
       "design_approval_step_comments.comment_id",

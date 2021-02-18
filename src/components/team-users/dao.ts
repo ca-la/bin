@@ -141,11 +141,11 @@ async function transferOwnership(trx: Knex.Transaction, newOwnerId: string) {
 }
 
 async function findByUserAndDesign(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string,
   designId: string
 ) {
-  const teamUsers = await trx
+  const teamUsers = await ktx
     .select("team_users.*")
     .from("collection_designs")
     .join("collections", "collections.id", "collection_designs.collection_id")
@@ -162,11 +162,11 @@ async function findByUserAndDesign(
 }
 
 async function findByUserAndCollection(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string,
   collectionId: string
 ) {
-  const teamUsers = await trx
+  const teamUsers = await ktx
     .select("team_users.*")
     .from("collections")
     .join("team_users", "team_users.team_id", "collections.team_id")
@@ -181,13 +181,10 @@ async function findByUserAndCollection(
   return adapter.fromDbArray(teamUsers);
 }
 
-async function countBilledUsers(
-  trx: Knex.Transaction,
-  teamId: string
-): Promise<number> {
+async function countBilledUsers(ktx: Knex, teamId: string): Promise<number> {
   const FREE_TEAM_USER_ROLES: TeamUserRole[] = [TeamUserRole.VIEWER];
 
-  return dao.count(trx, { teamId }, (query: Knex.QueryBuilder) =>
+  return dao.count(ktx, { teamId }, (query: Knex.QueryBuilder) =>
     query.whereNotIn("role", FREE_TEAM_USER_ROLES)
   );
 }

@@ -48,9 +48,9 @@ export async function create(
 
 export async function findByAnnotationId(
   annotationId: string,
-  trx?: Knex.Transaction
+  ktx?: Knex
 ): Promise<CommentWithMeta[]> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx)
     .where({
       annotation_id: annotationId,
     })
@@ -69,10 +69,10 @@ interface AnnotationToCommentsWithMentions {
 }
 
 export async function findByAnnotationIds(
-  trx: Knex.Transaction,
+  ktx: Knex,
   annotationIds: string[]
 ): Promise<AnnotationToCommentsWithMentions> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView(trx)
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx)
     .whereIn("annotation_id", annotationIds)
     .orderBy("created_at", "asc")
     .groupBy("ac.annotation_id");
@@ -89,7 +89,7 @@ export async function findByAnnotationIds(
     const { annotationId, ...baseComment } = validatedComment;
     const baseCommentWithAttachments = addAttachmentLinks(baseComment);
     const baseCommentWithMentions = await addAtMentionDetailsForComment(
-      trx,
+      ktx,
       baseCommentWithAttachments
     );
 

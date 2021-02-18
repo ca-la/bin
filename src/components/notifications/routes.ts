@@ -48,13 +48,11 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   );
 }
 
-function* getUnreadCount(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { trx, userId } = this.state;
+function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {
+  const { userId } = this.state;
 
   const unreadCountsByFilter = yield NotificationsDAO.findUnreadCountByFiltersByUserId(
-    trx,
+    db,
     userId
   );
   const unreadNotificationsCount =
@@ -134,7 +132,7 @@ function* setArchiveOlderThan(
 }
 
 router.get("/", requireAuth, getList);
-router.get("/unread", requireAuth, useTransaction, getUnreadCount);
+router.get("/unread", requireAuth, getUnreadCount);
 router.patch("/read", requireAuth, setRead);
 router.patch("/:notificationId", requireAuth, useTransaction, update);
 router.put("/archive", requireAuth, useTransaction, setArchiveOlderThan);

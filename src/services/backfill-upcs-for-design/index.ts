@@ -5,18 +5,18 @@ import { VariantDb } from "../../components/product-design-variants/types";
 import { computeUniqueUpc } from "../codes";
 
 export default async function backfillUpcsForDesign(
-  trx: Knex.Transaction,
+  ktx: Knex,
   designId: string
 ): Promise<VariantDb[]> {
   const updatedVariants: VariantDb[] = [];
-  const variants = await VariantsDAO.findByDesignId(designId, trx);
+  const variants = await VariantsDAO.findByDesignId(designId, ktx);
   for (const variant of variants) {
     if (variant.universalProductCode) {
       updatedVariants.push(variant);
     } else {
       const universalProductCode = await computeUniqueUpc();
       updatedVariants.push(
-        await VariantsDAO.update(variant.id, { universalProductCode }, trx)
+        await VariantsDAO.update(variant.id, { universalProductCode }, ktx)
       );
     }
   }

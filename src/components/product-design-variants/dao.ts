@@ -66,17 +66,12 @@ export async function updateEmptySkuByUpc(
 export async function update(
   id: string,
   data: Partial<VariantDb>,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<VariantDb> {
   const rowData = partialDataAdapter.toDb(data);
-  const updated = await db(TABLE_NAME)
+  const updated = await ktx(TABLE_NAME)
     .update(rowData, "*")
     .where({ id })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((rows: ProductDesignVariantRow[]) =>
       first<ProductDesignVariantRow>(rows)
     );
@@ -178,16 +173,11 @@ export async function replaceForDesign(
 
 export async function findByDesignId(
   designId: string,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<VariantDb[]> {
-  const variants = await db(TABLE_NAME)
+  const variants = await ktx(TABLE_NAME)
     .where({ design_id: designId })
     .orderBy("position", "asc")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .catch(rethrow);
 
   return validateEvery<ProductDesignVariantRow, VariantDb>(

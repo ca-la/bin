@@ -5,7 +5,6 @@ import db from "../../services/db";
 import requireAuth from "../../middleware/require-auth";
 import Knex from "knex";
 import ApprovalStepsDAO from "../approval-steps/dao";
-import useTransaction from "../../middleware/use-transaction";
 import {
   canAccessDesignInQuery,
   canAccessDesignInState,
@@ -90,17 +89,12 @@ const router: CalaRouter = {
         requireAuth,
         requireDesignIdBy(getDesignIdFromStep),
         canAccessDesignInState,
-        useTransaction,
 
         function* getApprovalStepStream(
-          this: TrxContext<
-            AuthedContext<{}, { designId: string }, { id: string }>
-          >
+          this: AuthedContext<{}, { designId: string }, { id: string }>
         ): Iterator<any, any, any> {
-          const { trx } = this.state;
-
           const comments = yield ApprovalStepCommentDAO.findByStepId(
-            trx,
+            db,
             this.params.id
           );
 
@@ -109,11 +103,11 @@ const router: CalaRouter = {
           }
 
           const commentsWithResources: CommentWithResources[] = (yield addAtMentionDetails(
-            trx,
+            db,
             comments
           )).map(addAttachmentLinks);
           const events: DesignEventWithMeta[] = (yield DesignEventsDAO.findApprovalStepEvents(
-            trx,
+            db,
             this.state.designId,
             this.params.id
           )).reduce(subtractDesignEventPairs, []);

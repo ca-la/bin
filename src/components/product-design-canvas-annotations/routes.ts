@@ -1,5 +1,6 @@
 import Router from "koa-router";
 
+import db from "../../services/db";
 import Annotation from "./domain-object";
 import {
   create,
@@ -16,7 +17,6 @@ import requireAuth = require("../../middleware/require-auth");
 import filterError = require("../../services/filter-error");
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
-import useTransaction from "../../middleware/use-transaction";
 
 const router = new Router();
 
@@ -78,18 +78,17 @@ function* deleteAnnotation(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const query: GetListQuery = this.query;
-  const { trx } = this.state;
 
   let annotations = [];
 
   if (query.canvasId && query.hasComments) {
-    annotations = yield findAllWithCommentsByCanvasId(trx, query.canvasId);
+    annotations = yield findAllWithCommentsByCanvasId(db, query.canvasId);
   } else if (query.canvasId) {
-    annotations = yield findAllByCanvasId(trx, query.canvasId);
+    annotations = yield findAllByCanvasId(db, query.canvasId);
   } else if (query.designId) {
-    annotations = yield findAllWithCommentsByDesign(trx, query.designId);
+    annotations = yield findAllWithCommentsByDesign(db, query.designId);
   } else {
     this.throw(
       400,
@@ -101,16 +100,13 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
   this.body = annotations;
 }
 
-function* getAnnotationComments(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { trx } = this.state;
+function* getAnnotationComments(this: AuthedContext): Iterator<any, any, any> {
   const comments = yield AnnotationCommentDAO.findByAnnotationId(
     this.params.annotationId,
-    trx
+    db
   );
   if (comments) {
-    const commentsWithMentions = yield addAtMentionDetails(trx, comments);
+    const commentsWithMentions = yield addAtMentionDetails(db, comments);
     const commentsWithAttachments = commentsWithMentions.map(
       addAttachmentLinks
     );
@@ -121,16 +117,11 @@ function* getAnnotationComments(
   }
 }
 
-router.get("/", requireAuth, useTransaction, getList);
+router.get("/", requireAuth, getList);
 router.put("/:annotationId", requireAuth, createAnnotation);
 router.patch("/:annotationId", requireAuth, updateAnnotation);
 router.del("/:annotationId", requireAuth, deleteAnnotation);
 
-router.get(
-  "/:annotationId/comments",
-  requireAuth,
-  useTransaction,
-  getAnnotationComments
-);
+router.get("/:annotationId/comments", requireAuth, getAnnotationComments);
 
 export default router.routes();

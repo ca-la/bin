@@ -75,11 +75,11 @@ export async function findActive(
 }
 
 export async function findForTeamWithPlans(
-  trx: Knex.Transaction,
+  ktx: Knex,
   teamId: string,
   { isActive }: { isActive?: boolean } = {}
 ): Promise<SubscriptionWithPlan[]> {
-  const res = await trx
+  const res = await ktx
     .from("subscriptions as s")
     .where({ team_id: teamId })
     .modify((builder: Knex.QueryBuilder) => {
@@ -91,9 +91,9 @@ export async function findForTeamWithPlans(
     .leftJoin("plan_stripe_prices", "plan_stripe_prices.plan_id", "plans.id")
     .groupBy(["s.id", "plans.id"])
     .select("s.*")
-    .select(trx.raw(`row_to_json(plans) as plan`))
+    .select(ktx.raw(`row_to_json(plans) as plan`))
     .select(
-      trx.raw(`
+      ktx.raw(`
       COALESCE(
         JSON_AGG(plan_stripe_prices)
                 FILTER (WHERE plan_stripe_prices.plan_id IS NOT NULL),

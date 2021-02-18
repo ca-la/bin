@@ -75,9 +75,7 @@ export function buildRouter<Model>(
                 if (!isFilter(this.query)) {
                   this.throw(400, "Disallowed filter properties");
                 }
-                const found = yield db.transaction(async (trx: Transaction) => {
-                  return dao.find(trx, this.query);
-                });
+                const found = yield dao.find(db, this.query);
 
                 this.body = found;
                 this.status = 200;

@@ -373,13 +373,10 @@ function* createTaskComment(
   this.body = commentWithMentions;
 }
 
-function* getTaskComments(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { trx } = this.state;
+function* getTaskComments(this: AuthedContext): Iterator<any, any, any> {
   const comments = yield TaskCommentDAO.findByTaskId(this.params.taskId);
   if (comments) {
-    const commentsWithMentions = yield addAtMentionDetails(trx, comments);
+    const commentsWithMentions = yield addAtMentionDetails(db, comments);
     const commentsWithAttachments = commentsWithMentions.map(
       addAttachmentLinks
     );
@@ -409,6 +406,6 @@ router.put(
   useTransaction,
   createTaskComment
 );
-router.get("/:taskId/comments", requireAuth, useTransaction, getTaskComments);
+router.get("/:taskId/comments", requireAuth, getTaskComments);
 
 export = router.routes();

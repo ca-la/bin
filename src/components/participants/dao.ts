@@ -4,8 +4,8 @@ import { MentionType } from "../comments/types";
 import { Participant } from "./types";
 import { dataAdapter } from "./adapter";
 
-const bidTaskTypeSubquery = (trx: Knex.Transaction, designId: string) =>
-  trx
+const bidTaskTypeSubquery = (ktx: Knex, designId: string) =>
+  ktx
     .select("bid_task_types.task_type_id")
     .from("bid_task_types")
     .join(
@@ -19,12 +19,12 @@ const bidTaskTypeSubquery = (trx: Knex.Transaction, designId: string) =>
     })
     .andWhere((subquery: Knex.QueryBuilder) =>
       subquery
-        .where("design_events.target_id", trx.raw("users.id"))
-        .orWhere("design_events.target_team_id", trx.raw("team_users.team_id"))
+        .where("design_events.target_id", ktx.raw("users.id"))
+        .orWhere("design_events.target_team_id", ktx.raw("team_users.team_id"))
     )
     .whereNotIn(
       "design_events.bid_id",
-      trx
+      ktx
         .select("design_events.bid_id")
         .from("design_events")
         .whereIn("design_events.type", ["REMOVE_PARTNER"])
@@ -32,15 +32,15 @@ const bidTaskTypeSubquery = (trx: Knex.Transaction, designId: string) =>
     .orderBy("bid_task_types.task_type_id");
 
 export async function findByDesign(
-  trx: Knex.Transaction,
+  ktx: Knex,
   designId: string
 ): Promise<Participant[]> {
-  const throughCollectionTeam = await trx
+  const throughCollectionTeam = await ktx
     .from("team_users")
     .select([
-      trx.raw("? AS type", [MentionType.TEAM_USER]),
+      ktx.raw("? AS type", [MentionType.TEAM_USER]),
       "team_users.id AS id",
-      trx.raw(
+      ktx.raw(
         `
 COALESCE(
   users.name,
@@ -51,7 +51,7 @@ COALESCE(
       ),
       "users.role",
       "users.id AS user_id",
-      trx.raw("to_json(array[]::text[]) AS bid_task_type_ids"),
+      ktx.raw("to_json(array[]::text[]) AS bid_task_type_ids"),
     ])
     .join("collections", "team_users.team_id", "collections.team_id")
     .join(
@@ -66,21 +66,21 @@ COALESCE(
     })
     .orderBy([{ column: "users.created_at", order: "asc" }]);
 
-  const throughCollaborators = await trx
+  const throughCollaborators = await ktx
     .from("collaborators")
     .select([
-      trx.raw(
+      ktx.raw(
         `
 CASE WHEN team_users.id IS NOT NULL THEN ?
 ELSE ? END
   AS type`,
         [MentionType.TEAM_USER, MentionType.COLLABORATOR]
       ),
-      trx.raw(`
+      ktx.raw(`
 CASE WHEN team_users.id IS NOT NULL THEN team_users.id
 ELSE collaborators.id END
   AS id`),
-      trx.raw(
+      ktx.raw(
         `
 COALESCE(
   users.name,
@@ -92,15 +92,15 @@ COALESCE(
       ),
       "users.role",
       "users.id AS user_id",
-      trx.raw("to_json(array(?)) AS bid_task_type_ids", [
-        bidTaskTypeSubquery(trx, designId),
+      ktx.raw("to_json(array(?)) AS bid_task_type_ids", [
+        bidTaskTypeSubquery(ktx, designId),
       ]),
     ])
     .leftJoin("team_users", "team_users.team_id", "collaborators.team_id")
     .leftJoin(
       "users",
       "users.id",
-      trx.raw(`COALESCE(team_users.user_id, collaborators.user_id)`)
+      ktx.raw(`COALESCE(team_users.user_id, collaborators.user_id)`)
     )
     .leftJoin(
       "collection_designs",
@@ -118,7 +118,7 @@ team_users.deleted_at IS NULL
     )
     .andWhere((query: Knex.QueryBuilder) =>
       query.where({ "collaborators.design_id": designId }).orWhere({
-        "collaborators.collection_id": trx.raw(
+        "collaborators.collection_id": ktx.raw(
           "collection_designs.collection_id"
         ),
         "collection_designs.design_id": designId,

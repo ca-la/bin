@@ -1,5 +1,6 @@
 import { sum } from "lodash";
 import Router from "koa-router";
+import db from "../../services/db";
 
 import requireAuth = require("../../middleware/require-auth");
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
@@ -8,7 +9,6 @@ import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAdmin = require("../../middleware/require-admin");
-import useTransaction from "../../middleware/use-transaction";
 import { FINANCING_MARGIN } from "../../config";
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
 import { findByQuoteId as findBidsByQuoteId } from "../../components/bids/dao";
@@ -182,15 +182,12 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* getBidsForQuote(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* getBidsForQuote(this: AuthedContext): Iterator<any, any, any> {
   const { quoteId } = this.params;
-  const { trx } = this.state;
   const quote = yield findById(quoteId);
   this.assert(quote, 404);
 
-  const bids = yield findBidsByQuoteId(trx, quoteId);
+  const bids = yield findBidsByQuoteId(db, quoteId);
 
   this.body = bids;
   this.status = 200;
@@ -201,6 +198,6 @@ router.get("/:quoteId", getQuote);
 
 router.post("/preview", requireAdmin, previewQuote);
 
-router.get("/:quoteId/bids", requireAdmin, useTransaction, getBidsForQuote);
+router.get("/:quoteId/bids", requireAdmin, getBidsForQuote);
 
 export = router.routes();

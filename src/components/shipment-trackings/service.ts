@@ -32,7 +32,7 @@ export function attachTrackingLink(
 }
 
 export async function attachDeliveryStatus(
-  _: Knex.Transaction,
+  _: Knex,
   shipmentTracking: ShipmentTracking
 ): Promise<ShipmentTracking & { deliveryStatus: DeliveryStatus }> {
   let tag = "Pending";
@@ -61,12 +61,12 @@ export async function attachDeliveryStatus(
 }
 
 export const attachMeta = async (
-  trx: Knex.Transaction,
+  ktx: Knex,
   shipmentTracking: ShipmentTracking
 ) => {
   return {
     ...attachTrackingLink(shipmentTracking),
-    ...(await attachDeliveryStatus(trx, shipmentTracking)),
+    ...(await attachDeliveryStatus(ktx, shipmentTracking)),
   };
 };
 

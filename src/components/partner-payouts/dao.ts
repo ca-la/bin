@@ -48,10 +48,10 @@ export async function create(
 }
 
 export async function findByPayoutAccountId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   accountId: string
 ): Promise<PartnerPayoutLogDb[]> {
-  const result = await trx(TABLE_NAME)
+  const result = await ktx(TABLE_NAME)
     .where({
       payout_account_id: accountId,
     })
@@ -67,10 +67,10 @@ export async function findByPayoutAccountId(
 }
 
 export async function findByUserId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string
 ): Promise<PartnerPayoutLog[]> {
-  const result = await trx(TABLE_NAME)
+  const result = await ktx(TABLE_NAME)
     .select(
       `${TABLE_NAME}.*`,
       "collections.id AS collection_id",
@@ -117,10 +117,10 @@ export async function findByUserId(
 }
 
 export async function findByBidId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   bidId: string
 ): Promise<PartnerPayoutLog[]> {
-  const logs = await trx(TABLE_NAME)
+  const logs = await ktx(TABLE_NAME)
     .select(
       "partner_payout_logs.*",
       "partner_payout_accounts.user_id AS payout_account_user_id",

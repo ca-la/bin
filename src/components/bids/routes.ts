@@ -33,6 +33,7 @@ import {
   hasProperties,
   hasOnlyProperties,
 } from "../../services/require-properties";
+import db from "../../services/db";
 import { PartnerPayoutLogDb } from "../partner-payouts/domain-object";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
@@ -400,13 +401,13 @@ interface GetByIdContext extends AuthedContext {
   };
 }
 
-function* getById(this: TrxContext<GetByIdContext>): Iterator<any, any, any> {
+function* getById(this: GetByIdContext): Iterator<any, any, any> {
   const { bidId } = this.params;
-  const { role, userId, trx } = this.state;
+  const { role, userId } = this.state;
   const bid =
     role === "ADMIN"
-      ? yield BidsDAO.findById(trx, bidId)
-      : yield BidsDAO.findByBidIdAndUser(trx, bidId, userId);
+      ? yield BidsDAO.findById(db, bidId)
+      : yield BidsDAO.findByBidIdAndUser(db, bidId, userId);
 
   if (bid) {
     this.body = bid;
@@ -472,19 +473,16 @@ function* postPayOut(
   this.status = 204;
 }
 
-function* getUnpaidBids(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* getUnpaidBids(this: AuthedContext): Iterator<any, any, any> {
   const { userId, teamId } = this.query;
-  const { trx } = this.state;
 
   if (!userId && !teamId) {
     this.throw(400, "query param 'userId' or 'teamId' is required");
   }
 
   const bids = userId
-    ? yield BidsDAO.findUnpaidByUserId(trx, userId)
-    : yield BidsDAO.findUnpaidByTeamId(trx, teamId);
+    ? yield BidsDAO.findUnpaidByUserId(db, userId)
+    : yield BidsDAO.findUnpaidByTeamId(db, teamId);
 
   this.body = bids;
   this.status = 200;
@@ -497,10 +495,10 @@ router.post(
   typeGuard(isBidCreationPayload),
   createAndAssignBid
 );
-router.get("/", requireAuth, useTransaction, listBids);
-router.get("/unpaid", requireAdmin, useTransaction, getUnpaidBids);
+router.get("/", requireAuth, listBids);
+router.get("/unpaid", requireAdmin, getUnpaidBids);
 
-router.get("/:bidId", requireAuth, useTransaction, getById);
+router.get("/:bidId", requireAuth, getById);
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del(
   "/:bidId/assignees/:partnerId",

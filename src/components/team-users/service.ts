@@ -1,6 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 
+import db from "../../services/db";
 import { findByEmail as findUserByEmail } from "../users/dao";
 import {
   Role as TeamUserRole,
@@ -36,13 +37,10 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
 };
 
 export function* requireTeamUserByTeamUserId(
-  this: TrxContext<AuthedContext<any, { teamUser: TeamUser }>>,
+  this: AuthedContext<any, { teamUser: TeamUser }>,
   next: () => Promise<any>
 ): Generator<any, any, any> {
-  const teamUser = yield TeamUsersDAO.findById(
-    this.state.trx,
-    this.params.teamUserId
-  );
+  const teamUser = yield TeamUsersDAO.findById(db, this.params.teamUserId);
 
   if (!teamUser) {
     return this.throw(
@@ -58,24 +56,20 @@ export function* requireTeamUserByTeamUserId(
 
 export function requireTeamRoles<StateT>(
   roles: TeamUserRole[],
-  getTeamId: (
-    context: TrxContext<AuthedContext<any, StateT>>
-  ) => Promise<string | null>,
+  getTeamId: (context: AuthedContext<any, StateT>) => Promise<string | null>,
   options: {
     allowSelf?: (
-      context: TrxContext<AuthedContext<any, StateT>>,
+      context: AuthedContext<any, StateT>,
       actorTeamUserId: string | null
     ) => Promise<boolean>;
     allowNoTeam?: boolean;
   } = {}
 ) {
   return function* (
-    this: TrxContext<
-      AuthedContext<any, { actorTeamRole?: TeamUserRole } & StateT>
-    >,
+    this: AuthedContext<any, { actorTeamRole?: TeamUserRole } & StateT>,
     next: () => Promise<any>
   ) {
-    const { trx, userId } = this.state;
+    const { userId } = this.state;
 
     if (this.state.role === "ADMIN") {
       this.state.actorTeamRole = TeamUserRole.OWNER;
@@ -85,7 +79,7 @@ export function requireTeamRoles<StateT>(
       if (teamId === null && !options.allowNoTeam) {
         this.throw(403, "You are not authorized to perform this team action");
       } else if (teamId !== null) {
-        const actorTeamUser = yield TeamUsersDAO.findOne(trx, {
+        const actorTeamUser = yield TeamUsersDAO.findOne(db, {
           teamId,
           userId,
         });

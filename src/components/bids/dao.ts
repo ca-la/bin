@@ -67,8 +67,8 @@ pricing_bids.*,
 ) AS accepted_at
 `);
 
-const baseQuery = (trx: Knex.Transaction) =>
-  trx(TABLE_NAME)
+const baseQuery = (ktx: Knex) =>
+  ktx(TABLE_NAME)
     .select(selectWithAcceptedAt)
     .groupBy(["pricing_bids.id"])
     .orderBy("pricing_bids.created_at", "DESC");
@@ -215,10 +215,10 @@ export async function findAll(
 }
 
 export async function findUnpaidByUserId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string
 ): Promise<Bid[]> {
-  const bids = await trx("users")
+  const bids = await ktx("users")
     .select(selectWithAcceptedAt)
     .join("design_events", "users.id", "design_events.actor_id")
     .join("product_designs as d", "design_events.design_id", "d.id")
@@ -235,7 +235,7 @@ export async function findUnpaidByUserId(
     )
     .groupBy(["pricing_bids.id", "design_events.bid_id"])
     .having(
-      db.raw(
+      ktx.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
       )
     )
@@ -247,10 +247,10 @@ export async function findUnpaidByUserId(
 }
 
 export async function findUnpaidByTeamId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   teamId: string
 ): Promise<Bid[]> {
-  const bids = await trx("teams")
+  const bids = await ktx("teams")
     .select(selectWithAcceptedAt)
     .join("design_events", "teams.id", "design_events.target_team_id")
     .join("product_designs as d", "design_events.design_id", "d.id")
@@ -263,14 +263,14 @@ export async function findUnpaidByTeamId(
     })
     .whereNotIn(
       "pricing_bids.id",
-      trx
+      ktx
         .select("bid_id")
         .from("design_events")
         .where({ type: "REMOVE_PARTNER" })
     )
     .groupBy(["pricing_bids.id", "design_events.bid_id"])
     .having(
-      db.raw(
+      ktx.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)"
       )
     )
@@ -316,19 +316,16 @@ function withAssignee(query: Knex.QueryBuilder) {
   );
 }
 
-function bidById(trx: Knex.Transaction, id: string) {
-  return baseQuery(trx)
+function bidById(ktx: Knex, id: string) {
+  return baseQuery(ktx)
     .modify(withAssignee)
     .where({ "pricing_bids.id": id })
     .orderBy("pricing_bids.created_at", "desc")
     .first();
 }
 
-export async function findById(
-  trx: Knex.Transaction,
-  id: string
-): Promise<Bid | null> {
-  const bid = await bidById(trx, id);
+export async function findById(ktx: Knex, id: string): Promise<Bid | null> {
+  const bid = await bidById(ktx, id);
 
   if (!bid) {
     return null;
@@ -338,11 +335,11 @@ export async function findById(
 }
 
 export async function findByBidIdAndUser(
-  trx: Knex.Transaction,
+  ktx: Knex,
   bidId: string,
   userId: string
 ): Promise<Bid | null> {
-  const query = bidById(trx, bidId)
+  const query = bidById(ktx, bidId)
     .modify(
       removeUnassigned.bind(null, {
         andAlsoContains: [],
@@ -429,10 +426,10 @@ export async function findRejectedByTargetId(
 }
 
 export async function findByQuoteId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   quoteId: string
 ): Promise<Bid[]> {
-  const bidRows = await baseQuery(trx)
+  const bidRows = await baseQuery(ktx)
     .where({ "pricing_bids.quote_id": quoteId })
     .modify(withAssignee)
     .modify(orderByAcceptedAt);

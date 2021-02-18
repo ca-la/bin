@@ -2,7 +2,7 @@ import Router from "koa-router";
 
 import filterError = require("../../../services/filter-error");
 import InvalidDataError from "../../../errors/invalid-data";
-
+import db from "../../../services/db";
 import {
   canAccessCollectionInParam,
   canDeleteCollection,
@@ -110,7 +110,7 @@ function* createCollection(
   this.status = 201;
 }
 
-function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
+function* getList(this: AuthedContext): Iterator<any, any, any> {
   const {
     userId,
     teamId,
@@ -122,7 +122,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
     offset,
     search,
   } = this.query;
-  const { role, trx, userId: currentUserId } = this.state;
+  const { role, userId: currentUserId } = this.state;
   const userIdToQuery =
     role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
@@ -137,15 +137,15 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
 
     const collections: Collection[] =
       isDirectlyShared === "true"
-        ? yield CollectionsDAO.findDirectlySharedWithUser(trx, options)
-        : yield CollectionsDAO.findByUser(trx, options);
+        ? yield CollectionsDAO.findDirectlySharedWithUser(db, options)
+        : yield CollectionsDAO.findByUser(db, options);
 
     this.body = collections;
     this.status = 200;
   } else if (teamId !== undefined) {
     let teamUserRole = TeamUserRole.ADMIN;
     if (role !== "ADMIN") {
-      const teamUser = yield TeamUsersDAO.findOne(trx, {
+      const teamUser = yield TeamUsersDAO.findOne(db, {
         teamId,
         userId: currentUserId,
       });
@@ -153,7 +153,7 @@ function* getList(this: TrxContext<AuthedContext>): Iterator<any, any, any> {
       teamUserRole = teamUser.role;
     }
     const collections: Collection[] = yield CollectionsDAO.findByTeamWithPermissionsByRole(
-      trx,
+      db,
       teamId,
       teamUserRole
     );
@@ -184,16 +184,14 @@ function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
-function* getCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
 
   if (collectionId) {
     const collection = yield CollectionsDAO.findById(collectionId);
     const permissions = yield getCollectionPermissions(
-      trx,
+      db,
       collection,
       role,
       userId
@@ -244,7 +242,7 @@ router.post(
   ),
   createCollection
 );
-router.get("/", requireAuth, useTransaction, getList);
+router.get("/", requireAuth, getList);
 
 router.del(
   "/:collectionId",
@@ -258,7 +256,6 @@ router.get(
   "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
-  useTransaction,
   getCollection
 );
 router.patch(
@@ -290,7 +287,6 @@ router.get(
 router.get(
   "/:collectionId/designs",
   requireAuth,
-  useTransaction,
   canAccessCollectionInParam,
   getCollectionDesigns
 );
