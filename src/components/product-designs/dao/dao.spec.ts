@@ -1804,23 +1804,29 @@ test("findPaidDesigns", async (t: Test) => {
 
 test("findMinimalByIds", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const design0 = await generateDesign({ userId: user.id });
-  const design1 = await generateDesign({ userId: user.id });
+  const design0 = await generateDesign({
+    userId: user.id,
+    createdAt: new Date(2012, 11, 24),
+  });
+  const design1 = await generateDesign({
+    userId: user.id,
+    createdAt: new Date(2012, 11, 25),
+  });
 
   t.deepEqual(
     await findMinimalByIds([design0.id, design1.id]),
     [
       {
-        title: design0.title,
-        id: design0.id,
-        created_at: design0.createdAt,
-        user_id: design0.userId,
-      },
-      {
         title: design1.title,
         id: design1.id,
         created_at: design1.createdAt,
         user_id: design1.userId,
+      },
+      {
+        title: design0.title,
+        id: design0.id,
+        created_at: design0.createdAt,
+        user_id: design0.userId,
       },
     ],
     "finds minimal version of each design"
