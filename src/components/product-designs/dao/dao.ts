@@ -586,3 +586,26 @@ export async function findPaidDesigns(
 
   return hydrated;
 }
+
+export interface ProductDesignMinimalRow {
+  id: string;
+  title: string;
+  created_at: Date;
+  user_id: string;
+}
+
+export async function findMinimalByIds(
+  ids: string[],
+  ktx: Knex = db
+): Promise<ProductDesignMinimalRow[]> {
+  const result = await ktx<ProductDesignMinimalRow>(TABLE_NAME)
+    .select(["id", "title", "created_at", "user_id"])
+    .whereIn("id", ids)
+    .orderBy("created_at", "desc");
+
+  if (result.length !== ids.length) {
+    throw new Error("Query returned different number of rows than requested");
+  }
+
+  return result;
+}

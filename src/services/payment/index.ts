@@ -7,8 +7,10 @@ import * as LineItemsDAO from "../../dao/line-items";
 import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
 import payInvoice = require("../../services/pay-invoice");
-import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
-import ProductDesignsDAO from "../../components/product-designs/dao";
+import {
+  findMinimalByIds,
+  ProductDesignMinimalRow,
+} from "../../components/product-designs/dao/dao";
 import spendCredit from "../../components/credits/spend-credit";
 import createPaymentMethod from "../../components/payment-methods/create-payment-method";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
@@ -93,8 +95,8 @@ const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
       quote.designId ? [...acc, quote.designId] : acc,
     []
   );
-  const designs = await ProductDesignsDAO.findByIds(designIds);
-  return designs.map((design: ProductDesign) => design.title);
+  const designs = await findMinimalByIds(designIds);
+  return designs.map((design: ProductDesignMinimalRow) => design.title);
 };
 
 const getQuoteTotal = (quotes: PricingQuote[]): number => {

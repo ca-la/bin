@@ -15,6 +15,7 @@ import {
   getTitleAndOwnerByShipmentTracking,
   findIdByQuoteId,
   findPaidDesigns,
+  findMinimalByIds,
 } from "./dao";
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -1799,4 +1800,40 @@ test("findPaidDesigns", async (t: Test) => {
 
   t.equal(limitOffset.length, 1, "Limits results");
   t.equal(limitOffset[0].id, design1.id, "Offsets results");
+});
+
+test("findMinimalByIds", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design0 = await generateDesign({ userId: user.id });
+  const design1 = await generateDesign({ userId: user.id });
+
+  t.deepEqual(
+    await findMinimalByIds([design0.id, design1.id]),
+    [
+      {
+        title: design0.title,
+        id: design0.id,
+        created_at: design0.createdAt,
+        user_id: design0.userId,
+      },
+      {
+        title: design1.title,
+        id: design1.id,
+        created_at: design1.createdAt,
+        user_id: design1.userId,
+      },
+    ],
+    "finds minimal version of each design"
+  );
+
+  try {
+    await findMinimalByIds([design0.id, uuid.v4()]);
+    t.fail("should not get here");
+  } catch (err) {
+    t.deepEqual(
+      err,
+      new Error("Query returned different number of rows than requested"),
+      "throws correct error"
+    );
+  }
 });
