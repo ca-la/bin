@@ -19,6 +19,23 @@ import { TeamUserRole, RawTeamUsersDAO } from "../../components/team-users";
 test("getPermissionFromDesign", async (t: tape.Test) => {
   t.deepEqual(
     PermissionsService.getPermissionsFromDesign({
+      collaboratorRoles: ["OWNER"],
+      isCheckedOut: false,
+      sessionRole: "USER",
+      sessionUserId: "a-session-user-id",
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: owner"
+  );
+  t.deepEqual(
+    PermissionsService.getPermissionsFromDesign({
       collaboratorRoles: ["EDIT"],
       isCheckedOut: false,
       sessionRole: "USER",
@@ -199,7 +216,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -207,7 +224,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: null,
     designId: design2.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -215,7 +232,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PREVIEW",
     userEmail: null,
     userId: user2.id,
@@ -223,7 +240,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user.id,
@@ -393,7 +410,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user1.id,
@@ -401,7 +418,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user2.id,
@@ -530,7 +547,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -538,7 +555,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: user2.id,
@@ -546,7 +563,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -554,7 +571,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection4.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user.id,
@@ -562,7 +579,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection4.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: partnerUser.id,
@@ -570,7 +587,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection5.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user2.id,
@@ -704,6 +721,19 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
 });
 
 test("#findMostPermissiveRole", async (t: tape.Test) => {
+  t.equal(
+    PermissionsService.findMostPermissiveRole([
+      "VIEW",
+      "PREVIEW",
+      "OWNER",
+      "VIEW",
+      "EDIT",
+      "EDIT",
+      "PARTNER",
+    ]),
+    "OWNER",
+    "Finds the most permissive role in the list"
+  );
   t.equal(
     PermissionsService.findMostPermissiveRole([
       "VIEW",

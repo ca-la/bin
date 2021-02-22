@@ -30,6 +30,7 @@ import Collaborator, {
   CollaboratorWithUser,
   CollaboratorRow,
   CollaboratorWithUserRow,
+  Roles as CollaboratorRole,
 } from "./types";
 import {
   PARTNER_TEAM_BID_EDITORS,
@@ -68,15 +69,17 @@ function handleForeignKeyViolation(
   throw err;
 }
 
-export async function create(
-  data: Unsaved<Collaborator>,
+export async function createAll(
+  data: Unsaved<Collaborator>[],
   trx?: Knex.Transaction
-): Promise<CollaboratorWithUser> {
-  const rowData = dataAdapter.forInsertion({
-    id: uuid.v4(),
-    ...data,
-    deletedAt: null,
-  });
+): Promise<CollaboratorWithUser[]> {
+  const rowData = data.map((unsaved: Unsaved<Collaborator>) =>
+    dataAdapter.forInsertion({
+      id: uuid.v4(),
+      ...unsaved,
+      deletedAt: null,
+    })
+  );
 
   const created = await db(TABLE_NAME)
     .insert(rowData, "*")
@@ -85,31 +88,48 @@ export async function create(
         query.transacting(trx);
       }
     })
-    .then((rows: CollaboratorRow[]) => first<CollaboratorRow>(rows))
-    .catch(rethrow)
-    .catch(
-      filterError(
-        rethrow.ERRORS.ForeignKeyViolation,
-        handleForeignKeyViolation.bind(
-          null,
-          data.collectionId,
-          data.designId,
-          data.userId
-        )
-      )
-    );
+    .catch(rethrow);
 
-  if (!created) {
+  if (created.length === 0) {
     throw new Error("Failed to create rows");
   }
-  const collaborator = validate<CollaboratorRow, Collaborator>(
+  const collaborators = validateEvery<CollaboratorRow, Collaborator>(
     TABLE_NAME,
     isCollaboratorRow,
     dataAdapter,
     created
   );
 
-  return attachUser(collaborator);
+  const collaboratorsWithUser: CollaboratorWithUser[] = [];
+
+  for (const collaborator of collaborators) {
+    collaboratorsWithUser.push(await attachUser(collaborator));
+  }
+
+  return collaboratorsWithUser;
+}
+
+export async function create(
+  data: Unsaved<Collaborator>,
+  trx?: Knex.Transaction
+): Promise<CollaboratorWithUser> {
+  const created = await createAll([data], trx).catch(
+    filterError(
+      rethrow.ERRORS.ForeignKeyViolation,
+      handleForeignKeyViolation.bind(
+        null,
+        data.collectionId,
+        data.designId,
+        data.userId
+      )
+    )
+  );
+
+  if (created.length !== 1) {
+    throw new Error("Failed to create row");
+  }
+
+  return created[0];
 }
 
 export async function update(
@@ -671,4 +691,18 @@ export async function findByDesignAndTaskType(
     dataAdapter,
     rows
   );
+}
+
+export async function deleteByDesignsAndRole(
+  trx: Knex.Transaction,
+  designIds: string[],
+  role: CollaboratorRole
+): Promise<void> {
+  await trx(TABLE_NAME)
+    .del()
+    .whereIn("design_id", designIds)
+    .andWhere({
+      role,
+    })
+    .catch(rethrow);
 }

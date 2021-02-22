@@ -36,7 +36,7 @@ test(`GET ${API_PATH} returns a list of notificationMessages for the user`, asyn
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -44,7 +44,7 @@ test(`GET ${API_PATH} returns a list of notificationMessages for the user`, asyn
   const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "raf@rafsimons.com",
     userId: null,
@@ -212,7 +212,7 @@ test(`PATCH ${API_PATH}/read marks notifications as read`, async (t: tape.Test) 
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -279,7 +279,7 @@ test(`PATCH ${API_PATH}/read returns 403 for wrong user`, async (t: tape.Test) =
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,

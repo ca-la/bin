@@ -231,7 +231,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   await generateCollaborator({
     collectionId: null,
     designId: designSharedDesign.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -247,7 +247,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user.id,
@@ -255,7 +255,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   await generateCollaborator({
     collectionId: null,
     designId: collectionSharedDesign.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -402,7 +402,7 @@ test("findAllDesignsThroughCollaboratorAndTeam does not double product design im
         cancelledAt: null,
         collectionId: collection.id,
         designId: null,
-        invitationMessage: "",
+        invitationMessage: null,
         role: "EDIT",
         userEmail: null,
         userId: user.id,
@@ -493,7 +493,7 @@ test("findAllDesignsThroughCollaboratorAndTeam returns approval steps, progress 
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -1076,7 +1076,7 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
   await generateCollaborator({
     collectionId: null,
     designId: designOne.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: null,
@@ -1086,7 +1086,7 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: null,
@@ -1552,7 +1552,7 @@ test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.
   await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: partner.id,

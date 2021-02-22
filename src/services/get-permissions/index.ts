@@ -20,7 +20,7 @@ export interface PermissionsAndRole {
   role: string | null;
 }
 
-const ROLE_ORDERING = ["EDIT", "PARTNER", "VIEW", "PREVIEW"];
+const ROLE_ORDERING = ["OWNER", "EDIT", "PARTNER", "VIEW", "PREVIEW"];
 
 export const ADMIN_PERMISSIONS: Permissions = {
   canComment: true,
@@ -42,7 +42,7 @@ export function getPermissionsFromDesign(options: {
   }
 
   const role = findMostPermissiveRole(options.collaboratorRoles);
-  if (role === "EDIT") {
+  if (role === "EDIT" || role === "OWNER") {
     return {
       canComment: true,
       canDelete: true,
@@ -147,9 +147,9 @@ export async function getDesignPermissionsAndRole(
     ktx,
   });
 
-  // For legacy designs with no "EDIT" collaborator for creator
+  // For legacy designs with no "OWNER" collaborator for creator
   if (isOwner) {
-    collaboratorRoles.push("EDIT");
+    collaboratorRoles.push("OWNER");
   }
   const isCheckedOut = await isQuoteCommitted(ktx, designId);
 

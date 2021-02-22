@@ -1,6 +1,7 @@
 import Knex from "knex";
 
 import ProductDesignsDAO from "../../product-designs/dao";
+import * as CollaboratorsDAO from "../../collaborators/dao";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import {
   getDesignPermissionsAndRole,
@@ -53,8 +54,23 @@ export function* putDesigns(this: AuthedContext): Iterator<any, any, any> {
 
 export function* deleteDesign(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId, designId } = this.params;
+  const { userId } = this.state;
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: [designId], trx });
+    await CollaboratorsDAO.deleteByDesignsAndRole(trx, [designId], "OWNER");
+    await CollaboratorsDAO.create(
+      {
+        cancelledAt: null,
+        collectionId: null,
+        designId,
+        invitationMessage: null,
+        role: "OWNER",
+        teamId: null,
+        userEmail: null,
+        userId,
+      },
+      trx
+    );
   });
   this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);
   this.status = 200;
@@ -63,6 +79,7 @@ export function* deleteDesign(this: AuthedContext): Iterator<any, any, any> {
 export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
   const { collectionId } = this.params;
   const { designIds } = this.query;
+  const { userId } = this.state;
 
   if (!designIds) {
     this.throw(400, "designIds is a required query parameter.");
@@ -76,6 +93,20 @@ export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: designIdList, trx });
+    await CollaboratorsDAO.deleteByDesignsAndRole(trx, designIdList, "OWNER");
+    await CollaboratorsDAO.createAll(
+      designIdList.map((designId: string) => ({
+        cancelledAt: null,
+        collectionId: null,
+        designId,
+        invitationMessage: null,
+        role: "OWNER",
+        teamId: null,
+        userEmail: null,
+        userId,
+      })),
+      trx
+    );
   });
 
   this.body = yield ProductDesignsDAO.findByCollectionId(collectionId);

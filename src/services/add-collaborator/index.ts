@@ -23,7 +23,7 @@ import {
 interface BaseOptions {
   email: string;
   role: Roles;
-  unsafeInvitationMessage?: string;
+  unsafeInvitationMessage?: string | null;
   inviterUserId: string;
   designId: string | null | undefined;
   collectionId: string | null | undefined;
@@ -46,15 +46,15 @@ export default async function addCollaborator(
     throw new Error("Inviter is not specified!");
   }
 
-  const escapedMessage = escapeHtml(unsafeInvitationMessage);
-  const invitationMessage = escapedMessage || "Check out CALA!";
+  const escapedMessage =
+    unsafeInvitationMessage && escapeHtml(unsafeInvitationMessage);
 
   const collaborator = user
     ? await CollaboratorsDAO.create({
         cancelledAt: null,
         collectionId: options.collectionId || null,
         designId: options.designId || null,
-        invitationMessage: "",
+        invitationMessage: null,
         role,
         userEmail: null,
         userId: user.id,
@@ -64,7 +64,7 @@ export default async function addCollaborator(
         cancelledAt: null,
         collectionId: options.collectionId || null,
         designId: options.designId || null,
-        invitationMessage,
+        invitationMessage: escapedMessage || "Check out CALA!",
         role,
         userEmail: normalizedEmail,
         userId: null,

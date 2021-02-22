@@ -47,7 +47,7 @@ test("Notifications DAO supports creation", async (t: tape.Test) => {
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.id,
@@ -87,7 +87,7 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.id,
@@ -95,7 +95,7 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
   const { collaborator: c2 } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "raf@rafsimons.com",
     userId: null,
@@ -270,7 +270,7 @@ test("Notifications DAO correctly filters out notifications for deleted designs"
   const { collaborator: designerCollab } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: designer.id,
@@ -278,7 +278,7 @@ test("Notifications DAO correctly filters out notifications for deleted designs"
   const { collaborator: partnerCollab } = await generateCollaborator({
     collectionId: null,
     designId: d1.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: partner.id,
@@ -587,7 +587,7 @@ test("Notifications DAO supports marking read", async (t: tape.Test) => {
   const { collaborator: c1 } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.id,

@@ -213,7 +213,7 @@ async function findSetup() {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user1.id,
@@ -221,7 +221,7 @@ async function findSetup() {
   await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user1.id,
@@ -230,7 +230,7 @@ async function findSetup() {
     cancelledAt: new Date("2018-04-20"),
     collectionId: collection3.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user1.id,
@@ -238,7 +238,7 @@ async function findSetup() {
   await generateCollaborator({
     collectionId: collection4.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user1.id,

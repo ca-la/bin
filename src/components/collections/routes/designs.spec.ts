@@ -6,6 +6,7 @@ import * as CollectionDesignsDAO from "../dao/design";
 import SessionsDAO from "../../../dao/sessions";
 import ProductDesignsDAO from "../../product-designs/dao";
 import API from "../../../test-helpers/http";
+import * as CreateDesignTasksService from "../../../services/create-design-tasks";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import createUser = require("../../../test-helpers/create-user");
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
@@ -13,6 +14,7 @@ import generateCollection from "../../../test-helpers/factories/collection";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
 import { TeamUsersDAO } from "../../team-users";
+import { generateTeam } from "../../../test-helpers/factories/team";
 
 const collection = {
   id: "a-collection-id",
@@ -40,6 +42,15 @@ function setupStubs() {
     collaboratorStub: sandbox()
       .stub(CollaboratorsDAO, "findByCollectionAndUser")
       .resolves([ownerCollaborator]),
+    createCollaboratorStub: sandbox()
+      .stub(CollaboratorsDAO, "create")
+      .resolves(ownerCollaborator),
+    createCollaboratorsStub: sandbox()
+      .stub(CollaboratorsDAO, "createAll")
+      .resolves([ownerCollaborator]),
+    deleteCollaboratorsStub: sandbox()
+      .stub(CollaboratorsDAO, "deleteByDesignsAndRole")
+      .resolves(),
     moveDesignStub: sandbox()
       .stub(CollectionDesignsDAO, "moveDesigns")
       .resolves(1),
@@ -56,19 +67,27 @@ function setupStubs() {
 }
 
 test("PUT + DEL /collections/:id/designs supports moving many designs to from/the collection", async (t: Test) => {
+  sandbox().stub(CreateDesignTasksService, "createDesignTasks").resolves();
   const { user, session } = await createUser();
-  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  const { team } = await generateTeam(user.id);
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
   const d1 = await generateDesign({
     createdAt: new Date("2019-04-20"),
     userId: user.id,
+    collectionIds: [c1.id],
   });
   const d2 = await generateDesign({
     createdAt: new Date("2019-04-21"),
     userId: user.id,
+    collectionIds: [c1.id],
   });
   const d3 = await generateDesign({
     createdAt: new Date("2019-04-22"),
     userId: user.id,
+    collectionIds: [c1.id],
   });
 
   const [response1, body1] = await API.put(
@@ -97,6 +116,21 @@ test("PUT + DEL /collections/:id/designs supports moving many designs to from/th
   t.deepEqual(
     body2.map((design: ProductDesign) => design.id),
     [d2.id]
+  );
+
+  t.ok(
+    await CollaboratorsDAO.findByDesignAndUser(d1.id, user.id),
+    "Creates a collaborator for the actor for first deleted design"
+  );
+
+  t.ok(
+    await CollaboratorsDAO.findByDesignAndUser(d3.id, user.id),
+    "Creates a collaborator for the actor for second deleted design"
+  );
+
+  t.notOk(
+    await CollaboratorsDAO.findByDesignAndUser(d2.id, user.id),
+    "Does not create a collaborator for the actor for the not deleted design"
   );
 });
 
@@ -233,7 +267,12 @@ test("PUT /collections/:id/designs/:id", async (t: Test) => {
 });
 
 test("DELETE /collections/:id/designs/:id", async (t: Test) => {
-  const { sessionStub, collaboratorStub } = setupStubs();
+  const {
+    sessionStub,
+    collaboratorStub,
+    createCollaboratorStub,
+    deleteCollaboratorsStub,
+  } = setupStubs();
   const ownerRequest = await API.del(
     `/collections/${collection.id}/designs/a-design-id`,
     { headers: { Authorization: "Token a-session-id" } }
@@ -244,6 +283,27 @@ test("DELETE /collections/:id/designs/:id", async (t: Test) => {
     ownerRequest[1],
     [{ id: "another-design-id" }],
     "request returns designs in collection"
+  );
+
+  t.deepEqual(
+    deleteCollaboratorsStub.args[0].slice(1),
+    [["a-design-id"], "OWNER"],
+    "deletes existing owner collaborators"
+  );
+
+  t.deepEqual(
+    createCollaboratorStub.args[0][0],
+    {
+      cancelledAt: null,
+      collectionId: null,
+      designId: "a-design-id",
+      invitationMessage: null,
+      role: "OWNER",
+      teamId: null,
+      userEmail: null,
+      userId: "a-user-id",
+    },
+    "creates OWNER collaborator for actor"
   );
 
   sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
@@ -287,7 +347,7 @@ test("GET /collections/:id/designs", async (t: Test) => {
   await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,

@@ -86,7 +86,7 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user2.id,
@@ -94,7 +94,7 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
   const { collaborator: collectionCollaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user3.id,
@@ -105,7 +105,7 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
     collectionId: collection.id,
     designId: null,
     cancelledAt: new Date(),
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user4.id,
@@ -116,7 +116,7 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
     collectionId: null,
     designId: design.id,
     cancelledAt: new Date(),
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user5.id,
@@ -140,6 +140,104 @@ test("CollaboratorsDAO.findByDesign returns design and collection collaborators"
   );
 });
 
+test("CollaboratorsDAO.createAll", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: other } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: "BOMBER",
+    title: "AW19",
+    userId: user.id,
+  });
+
+  const trx = await db.transaction();
+  try {
+    const created = await CollaboratorsDAO.createAll(
+      [
+        {
+          collectionId: null,
+          designId: design.id,
+          invitationMessage: null,
+          role: "EDIT",
+          userEmail: null,
+          userId: other.id,
+          cancelledAt: null,
+          teamId: null,
+        },
+        {
+          collectionId: null,
+          designId: design.id,
+          invitationMessage: null,
+          role: "EDIT",
+          userEmail: "invited@example.com",
+          userId: null,
+          cancelledAt: null,
+          teamId: null,
+        },
+      ],
+      trx
+    );
+
+    t.deepEqual(
+      created,
+      await CollaboratorsDAO.findAllByIds(trx, [created[0].id, created[1].id])
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("CollaboratorsDAO.deleteByDesignsAndRole", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { user: other } = await createUser({ withSession: false });
+  const design = await createDesign({
+    productType: "BOMBER",
+    title: "AW19",
+    userId: user.id,
+  });
+
+  const trx = await db.transaction();
+  try {
+    const created = await CollaboratorsDAO.createAll(
+      [
+        {
+          collectionId: null,
+          designId: design.id,
+          invitationMessage: null,
+          role: "VIEW",
+          userEmail: null,
+          userId: other.id,
+          cancelledAt: null,
+          teamId: null,
+        },
+        {
+          collectionId: null,
+          designId: design.id,
+          invitationMessage: null,
+          role: "VIEW",
+          userEmail: "invited@example.com",
+          userId: null,
+          cancelledAt: null,
+          teamId: null,
+        },
+      ],
+      trx
+    );
+    await CollaboratorsDAO.deleteByDesignsAndRole(trx, [design.id], "VIEW");
+
+    t.deepEqual(
+      [],
+      await CollaboratorsDAO.findAllByIds(trx, [created[0].id, created[1].id])
+    );
+    t.equal(
+      (await CollaboratorsDAO.findByDesign(design.id, trx)).length,
+      1,
+      "keeps existing non-view row created during design creation"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
 test("CollaboratorsDAO.create throws invalid data error", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const invalidId = uuid.v4();
@@ -152,7 +250,7 @@ test("CollaboratorsDAO.create throws invalid data error", async (t: Test) => {
   await generateCollaborator({
     collectionId: null,
     designId: invalidId,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -164,7 +262,7 @@ test("CollaboratorsDAO.create throws invalid data error", async (t: Test) => {
   await generateCollaborator({
     collectionId: invalidId,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -176,7 +274,7 @@ test("CollaboratorsDAO.create throws invalid data error", async (t: Test) => {
   await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: invalidId,
@@ -213,7 +311,7 @@ test("CollaboratorsDAO.findByDesign returns collection collaborators", async (t:
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user2.id,
@@ -240,7 +338,7 @@ test("CollaboratorsDAO.findByCollection returns collaborators", async (t: Test) 
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -395,7 +493,7 @@ test("CollaboratorsDAO.findByCollectionAndUser returns collaborators", async (t:
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -424,7 +522,7 @@ test("CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator", async (t
   await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -454,7 +552,7 @@ test("findAllForUserThroughDesign can find user collaborators", async (t: Test) 
   const { collaborator: collaboratorOne } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -462,7 +560,7 @@ test("findAllForUserThroughDesign can find user collaborators", async (t: Test) 
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user.id,
@@ -537,7 +635,7 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: null,
@@ -713,7 +811,7 @@ test("CollaboratorsDAO.update", async (t: Test) => {
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: friend.email,
     userId: null,
@@ -755,7 +853,7 @@ test("CollaboratorsDAO.update with the cancelled_at property", async (t: Test) =
     cancelledAt: tomorrow,
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PREVIEW",
     userId: partner.id,
   });
@@ -785,7 +883,7 @@ test("CollaboratorsDAO.update on a cancelled collaborator", async (t: Test) => {
     cancelledAt: new Date("2019-02-02"),
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PREVIEW",
     userId: partner.id,
   });
@@ -813,7 +911,7 @@ test("CollaboratorsDAO.findUnclaimedByEmail", async (t: Test) => {
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: newUserEmail,
     userId: null,
@@ -850,7 +948,7 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
     cancelledAt: null,
     collectionId: null,
     designId: quote.designId,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: partner.user.id,
@@ -905,7 +1003,7 @@ test("findByDesignAndUser find team", async (t: Test) => {
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: null,
@@ -932,7 +1030,7 @@ test("findByDesignAndTeam", async (t: Test) => {
   const { collaborator } = await generateCollaborator({
     collectionId: null,
     designId: design.id,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "PARTNER",
     userEmail: null,
     userId: null,
@@ -982,7 +1080,7 @@ test("findAllForUserThroughDesign team permissions", async (t: Test) => {
       {
         collectionId: null,
         designId: design.id,
-        invitationMessage: "",
+        invitationMessage: null,
         role: "PREVIEW",
         userEmail: null,
         userId: null,
@@ -1073,7 +1171,7 @@ test("findByDesignAndUser team permissions", async (t: Test) => {
       {
         collectionId: null,
         designId: design.id,
-        invitationMessage: "",
+        invitationMessage: null,
         role: "PREVIEW",
         userEmail: null,
         userId: null,

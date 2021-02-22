@@ -98,12 +98,12 @@ function decode(
 
         return {
           cancelled_at: collaborator.cancelledAt
-            ? new Date(collaborator.cancelledAt).toISOString()
+            ? new Date(collaborator.cancelledAt)
             : null,
           collection_id: collaborator.collectionId,
-          created_at: new Date(collaborator.createdAt).toISOString(),
+          created_at: new Date(collaborator.createdAt),
           deleted_at: collaborator.deletedAt
-            ? new Date(collaborator.deletedAt).toISOString()
+            ? new Date(collaborator.deletedAt)
             : null,
           design_id: collaborator.designId,
           id: collaborator.id,

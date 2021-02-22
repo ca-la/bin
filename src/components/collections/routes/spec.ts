@@ -294,7 +294,7 @@ test("GET /collections", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -302,7 +302,7 @@ test("GET /collections", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection2.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "VIEW",
     userEmail: null,
     userId: user.id,
@@ -601,7 +601,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: collaborator.user.id,

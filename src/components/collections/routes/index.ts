@@ -90,7 +90,7 @@ function* createCollection(
         cancelledAt: null,
         collectionId: collection.id,
         designId: null,
-        invitationMessage: "",
+        invitationMessage: null,
         role: "EDIT",
         userEmail: null,
         userId,

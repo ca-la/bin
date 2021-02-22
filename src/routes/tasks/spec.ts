@@ -264,7 +264,7 @@ test("GET /tasks?userId=:userId returns all tasks for a user", async (t: tape.Te
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -361,7 +361,7 @@ test("PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully", as
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -369,7 +369,7 @@ test("PUT /tasks/:taskId/assignees adds Collaborators to Tasks successfully", as
   const { collaborator: secondCollaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: secondUser.user.id,
@@ -446,7 +446,7 @@ test("PUT /tasks/:taskId when changing status to Completed", async (t: tape.Test
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -454,7 +454,7 @@ test("PUT /tasks/:taskId when changing status to Completed", async (t: tape.Test
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: secondUser.user.id,
@@ -798,7 +798,7 @@ test("GET list returns all tasks by resource with limit & offset", async (t: tap
     cancelledAt: null,
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,

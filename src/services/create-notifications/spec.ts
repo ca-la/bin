@@ -428,7 +428,7 @@ test("sendTaskCommentCreateNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -436,7 +436,7 @@ test("sendTaskCommentCreateNotification", async (t: tape.Test) => {
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -537,7 +537,7 @@ test("sendTaskCommentMentionNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -545,7 +545,7 @@ test("sendTaskCommentMentionNotification", async (t: tape.Test) => {
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -644,7 +644,7 @@ test("sendTaskCommentReplyNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -652,7 +652,7 @@ test("sendTaskCommentReplyNotification", async (t: tape.Test) => {
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -762,7 +762,7 @@ test("sendTaskAssignmentNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -770,7 +770,7 @@ test("sendTaskAssignmentNotification", async (t: tape.Test) => {
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -848,7 +848,7 @@ test("sendTaskAssignmentNotification does not send if assigned to self", async (
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -917,7 +917,7 @@ test("sendTaskAssignmentNotification does not send if assigned to collaborator w
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user.id,
@@ -925,7 +925,7 @@ test("sendTaskAssignmentNotification does not send if assigned to collaborator w
   const { collaborator: collaborator2 } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "test@test.test",
     userId: null,
@@ -998,7 +998,7 @@ test("sendTaskCompletionNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -1006,7 +1006,7 @@ test("sendTaskCompletionNotification", async (t: tape.Test) => {
   const { collaborator: collaboratorTwo } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -1014,7 +1014,7 @@ test("sendTaskCompletionNotification", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "test@test.test",
     userId: null,
@@ -1110,7 +1110,7 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userOne.user.id,
@@ -1118,7 +1118,7 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: userTwo.user.id,
@@ -1126,7 +1126,7 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
   await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "test@ca.la",
     userId: null,
@@ -1203,7 +1203,7 @@ test("immediatelySendInviteCollaborator", async (t: tape.Test) => {
   const { collaborator: collaboratorOne } = await generateCollaborator({
     collectionId: collection.id,
     designId: null,
-    invitationMessage: "",
+    invitationMessage: null,
     role: "EDIT",
     userEmail: "test@ca.la",
     userId: null,

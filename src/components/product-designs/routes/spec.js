@@ -72,7 +72,7 @@ test("PATCH /product-designs/:id allows certain params, rejects others", (t) => 
       t.equal(body.productType, "TEESHIRT");
       t.equal(body.title, "Fizz Buzz");
       t.equal(body.showPricingBreakdown, true);
-      t.equal(body.role, "EDIT");
+      t.equal(body.role, "OWNER");
     });
 });
 
@@ -223,7 +223,7 @@ test("GET /product-designs allows fetching designs await quotes", async (t) => {
         createdAt: new Date(user.createdAt).toISOString(),
       },
       createdAt: new Date(first.createdAt).toISOString(),
-      role: "EDIT",
+      role: "OWNER",
       permissions: {
         canComment: true,
         canDelete: true,

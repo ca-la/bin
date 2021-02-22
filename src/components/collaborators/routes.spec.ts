@@ -28,7 +28,7 @@ const col: Collaborator = {
   createdAt: new Date(),
   deletedAt: null,
   designId: null,
-  invitationMessage: "",
+  invitationMessage: null,
   role: "EDIT",
   teamId: null,
   userEmail: null,
