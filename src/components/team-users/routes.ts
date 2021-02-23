@@ -32,6 +32,7 @@ import {
   RouteUpdated,
   RouteDeleted,
 } from "../../services/pubsub/cala-events";
+import ConflictError from "../../errors/conflict";
 
 async function findTeamByTeamUser(
   context: AuthedContext<any, { teamUser: TeamUser }>
@@ -57,6 +58,11 @@ function* create(
     .catch(
       filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
         this.throw(402, error.message)
+      )
+    )
+    .catch(
+      filterError(ConflictError, (error: ConflictError) =>
+        this.throw(409, error.message)
       )
     );
 

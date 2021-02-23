@@ -1,4 +1,5 @@
 import uuid from "node-uuid";
+import { isEqual } from "lodash";
 
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
@@ -13,6 +14,7 @@ import ResourceNotFoundError from "../../errors/resource-not-found";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { TeamUserRole } from ".";
 import { moveDesign } from "../../test-helpers/collections";
+import ConflictError from "../../errors/conflict";
 
 const testDate = new Date(2012, 11, 25);
 
@@ -40,22 +42,27 @@ test("RawTeamUsersDAO.create", async (t: Test) => {
       updatedAt: testDate,
     });
 
-    const upserted = await RawTeamUsersDAO.create(trx, {
-      id: uuid.v4(),
-      userId: null,
-      userEmail: "foo@example.com",
-      teamId: team.id,
-      role: Role.EDITOR,
-      createdAt: testDate,
-      deletedAt: null,
-      updatedAt: testDate,
-    });
-
-    t.deepEqual(
-      upserted,
-      { ...invited, role: Role.EDITOR },
-      "creating with existing row updates that row"
-    );
+    try {
+      await RawTeamUsersDAO.create(trx, {
+        id: uuid.v4(),
+        userId: null,
+        userEmail: "foo@example.com",
+        teamId: team.id,
+        role: Role.EDITOR,
+        createdAt: testDate,
+        deletedAt: null,
+        updatedAt: testDate,
+      });
+      t.fail("should throw error on conflict");
+    } catch (err) {
+      t.true(
+        isEqual(
+          err,
+          new ConflictError("This user is already a member of the team")
+        ),
+        "throws ConflictError if user already exists"
+      );
+    }
 
     await TeamUsersDAO.deleteById(trx, invited.id);
 

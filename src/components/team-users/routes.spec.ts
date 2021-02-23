@@ -18,6 +18,7 @@ import { generateTeam } from "../../test-helpers/factories/team";
 import generatePlan from "../../test-helpers/factories/plan";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType, TeamUserRole } from "../../published-types";
+import ConflictError from "../../errors/conflict";
 
 const now = new Date();
 const tuDb1: TeamUserDb = {
@@ -160,6 +161,25 @@ test("POST /team-users: missingUser", async (t: Test) => {
   });
 
   t.equal(response.status, 201, "Creates a team user with no user yet");
+});
+
+test("POST /team-users: conflict", async (t: Test) => {
+  const { createStub } = setup();
+
+  createStub.rejects(
+    new ConflictError("This user is already a member of the team")
+  );
+
+  const [response] = await post("/team-users", {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "EDITOR",
+    },
+  });
+
+  t.equal(response.status, 409, "returns a 409 Conflict status");
 });
 
 test("POST /team-users: forbidden", async (t: Test) => {

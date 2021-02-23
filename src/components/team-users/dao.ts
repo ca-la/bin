@@ -12,6 +12,7 @@ import {
 } from "./types";
 import adapter, { rawAdapter } from "./adapter";
 import ResourceNotFoundError from "../../errors/resource-not-found";
+import ConflictError from "../../errors/conflict";
 
 const TABLE_NAME = "team_users";
 
@@ -32,6 +33,11 @@ export async function create(trx: Knex.Transaction, data: TeamUserDb) {
   });
 
   if (found) {
+    // We only want to revive deleted members, not update existing ones
+    if (found.deletedAt === null) {
+      throw new ConflictError("This user is already a member of the team");
+    }
+
     await trx(TABLE_NAME)
       .update({
         deleted_at: null,
