@@ -4,8 +4,8 @@ import {
   identity,
   QueryModifier,
 } from "../../services/cala-component/cala-dao";
-import { TeamDb, TeamDbRow } from "./types";
-import { rawAdapter } from "./adapter";
+import { TeamDb, TeamDbRow, Team, TeamRow } from "./types";
+import teamAdapter, { rawAdapter } from "./adapter";
 import { SubscriptionsDAO, isSubscriptionFree } from "../subscriptions";
 import { cancelSubscription } from "../../services/stripe/cancel-subscription";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -21,6 +21,11 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
     orderDirection: "DESC",
   }
 );
+
+const withRoleDao = buildDao<Team, TeamRow>("Team", TABLE_NAME, teamAdapter, {
+  orderColumn: "created_at",
+  orderDirection: "DESC",
+});
 
 async function findUnpaidTeams(
   ktx: Knex,
@@ -58,8 +63,9 @@ async function findByUser(
   filter: Partial<TeamDb> = {},
   modifier: QueryModifier = identity
 ) {
-  return standardDao.find(ktx, filter, (query: QueryBuilder) =>
+  return withRoleDao.find(ktx, filter, (query: QueryBuilder) =>
     modifier(query)
+      .select("team_users.role as role")
       .join("team_users", "team_users.team_id", "teams.id")
       .where({ "team_users.user_id": userId, "team_users.deleted_at": null })
   );

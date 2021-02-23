@@ -514,7 +514,7 @@ test("POST -> GET /teams end-to-end", async (t: Test) => {
   t.equal(getResponse[0].status, 200, "returns correct status code");
   t.deepEqual(
     getResponse[1],
-    [postResponse[1]],
+    [{ ...postResponse[1], role: "OWNER" }],
     "shows created team in list of teams"
   );
 

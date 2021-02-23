@@ -22,8 +22,8 @@ async function setup() {
   const { user } = await createUser();
   const { user: deletedTeamUser } = await createUser();
   const { user: designer } = await createUser();
-  const { team } = await generateTeam(user.id);
-  await db.transaction((trx: Knex.Transaction) =>
+  const { team, teamUser } = await generateTeam(user.id);
+  await db.transaction(async (trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       teamId: team.id,
@@ -44,7 +44,7 @@ async function setup() {
     type: "ACCEPT_SERVICE_BID",
   });
 
-  return { design, user, deletedTeamUser, team, bid, designer };
+  return { design, user, deletedTeamUser, team, bid, designer, teamUser };
 }
 
 test("TeamsDAO.findUnpaidTeams", async () => {
@@ -195,20 +195,23 @@ test("TeamsDAO.find", async () => {
 
 test("TeamsDAO.findByUser", async () => {
   test("returns only related teams", async (t: Test) => {
-    const { team, user, deletedTeamUser } = await setup();
+    const { team, user, deletedTeamUser, teamUser } = await setup();
     const trx = await db.transaction();
     try {
       const { user: anotherUser } = await createUser();
-      const { team: anotherTeam } = await generateTeam(anotherUser.id);
+      const {
+        team: anotherTeam,
+        teamUser: anotherTeamUser,
+      } = await generateTeam(anotherUser.id);
 
       t.deepEquals(
         await TeamsDAO.findByUser(trx, user.id),
-        [team],
+        [{ ...team, role: teamUser.role }],
         "Returns only initial team"
       );
       t.deepEquals(
         await TeamsDAO.findByUser(trx, anotherUser.id),
-        [anotherTeam],
+        [{ ...anotherTeam, role: anotherTeamUser.role }],
         "Returns only another team"
       );
 
