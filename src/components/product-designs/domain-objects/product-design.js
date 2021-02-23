@@ -3,7 +3,6 @@
 const { default: DataMapper } = require("../../../services/data-mapper");
 const formatDateString = require("../../../services/format-date-string");
 const { requireProperties } = require("../../../services/require-properties");
-const { approvalStepRowJsonSchema } = require("../../approval-steps/types");
 const ApprovalStepAdapter = require("../../approval-steps/adapter").default;
 
 const {
@@ -67,9 +66,7 @@ class ProductDesign {
     }
 
     if (row.approval_steps) {
-      this.approvalSteps = ApprovalStepAdapter.fromDbArray(
-        row.approval_steps.map(approvalStepRowJsonSchema.parse)
-      );
+      this.approvalSteps = ApprovalStepAdapter.fromDbArray(row.approval_steps);
     }
   }
 
