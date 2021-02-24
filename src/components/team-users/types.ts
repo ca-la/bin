@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-import User, { UserRow } from "../users/types";
+import User, { UserRow, userTestBlank } from "../users/types";
 import { Roles } from "../collaborators/types";
 
 export const teamUserDomain = "TeamUser" as "TeamUser";
@@ -158,3 +158,20 @@ export const teamUserUpdateSchema = z.union([
 ]);
 
 export type TeamUserUpdate = z.infer<typeof teamUserUpdateSchema>;
+
+export const teamUserDbTestBlank: BaseTeamUserDb = {
+  id: "team-user-1",
+  teamId: "team-1",
+  role: Role.VIEWER,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  label: null,
+};
+
+export const teamUserTestBlank: TeamUser = {
+  ...teamUserDbTestBlank,
+  userId: userTestBlank.id,
+  userEmail: null,
+  user: userTestBlank,
+};

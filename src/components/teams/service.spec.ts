@@ -4,7 +4,7 @@ import Knex from "knex";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
-import { Role } from "../team-users/types";
+import { Role, teamUserDbTestBlank } from "../team-users/types";
 
 import TeamsDAO from "./dao";
 import { TeamType, TeamDb } from "./types";
@@ -25,13 +25,17 @@ test("createTeamWithOwner", async (t: Test) => {
   const createTeamStub = sandbox().stub(TeamsDAO, "create").resolves(t1);
   const createTeamUserStub = sandbox()
     .stub(RawTeamUsersDAO, "create")
-    .resolves();
+    .resolves({ ...teamUserDbTestBlank, role: Role.OWNER });
 
   const created = await db.transaction((trx: Knex.Transaction) =>
     TeamsService.createTeamWithOwner(trx, "A team title", "a-user-id")
   );
 
-  t.deepEqual(created, t1, "returns the raw created team");
+  t.deepEqual(
+    created,
+    { ...t1, role: Role.OWNER },
+    "returns the created team with role"
+  );
   t.deepEqual(
     createTeamStub.args[0].slice(1),
     [

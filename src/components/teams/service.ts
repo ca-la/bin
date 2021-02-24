@@ -4,13 +4,13 @@ import Knex from "knex";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role } from "../team-users/types";
 import TeamsDAO from "./dao";
-import { TeamDb, TeamType } from "./types";
+import { Team, TeamType } from "./types";
 
 export async function createTeamWithOwner(
   trx: Knex.Transaction,
   title: string,
   ownerUserId: string
-): Promise<TeamDb> {
+): Promise<Team> {
   const created = await TeamsDAO.create(trx, {
     id: uuid.v4(),
     title,
@@ -18,7 +18,7 @@ export async function createTeamWithOwner(
     deletedAt: null,
     type: TeamType.DESIGNER,
   });
-  await RawTeamUsersDAO.create(trx, {
+  const createdUser = await RawTeamUsersDAO.create(trx, {
     teamId: created.id,
     userId: ownerUserId,
     userEmail: null,
@@ -30,5 +30,5 @@ export async function createTeamWithOwner(
     updatedAt: new Date(),
   });
 
-  return created;
+  return { ...created, role: createdUser.role };
 }

@@ -97,3 +97,18 @@ export const serializedUserRowSchema = userRowSchema.extend({
   last_accepted_designer_terms_at: nullableDateStringToNullableDate,
   last_accepted_partner_terms_at: nullableDateStringToNullableDate,
 });
+
+export const userTestBlank: User = {
+  birthday: null,
+  createdAt: new Date(),
+  email: "test@example.com",
+  id: "user-id",
+  isSmsPreregistration: false,
+  lastAcceptedDesignerTermsAt: null,
+  lastAcceptedPartnerTermsAt: null,
+  locale: "en-us",
+  name: "User",
+  phone: null,
+  referralCode: "",
+  role: "USER",
+};
