@@ -70,6 +70,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: team.id,
       userId: partner3.id,
       userEmail: null,

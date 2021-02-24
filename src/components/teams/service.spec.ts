@@ -54,6 +54,7 @@ test("createTeamWithOwner", async (t: Test) => {
         userEmail: null,
         id: "a-uuid",
         role: Role.OWNER,
+        label: null,
         createdAt: testDate,
         updatedAt: testDate,
         deletedAt: null,

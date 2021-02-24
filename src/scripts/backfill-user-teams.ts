@@ -43,6 +43,7 @@ async function backfillUserTeams() {
         userEmail: null,
         id: teamUserId,
         role: Role.OWNER,
+        label: null,
         createdAt: new Date(),
         deletedAt: null,
         updatedAt: new Date(),

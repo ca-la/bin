@@ -27,6 +27,7 @@ const tuDb1: TeamUserDb = {
   userId: "a-user-id",
   userEmail: null,
   role: Role.ADMIN,
+  label: null,
   createdAt: now,
   deletedAt: null,
   updatedAt: now,
@@ -574,7 +575,7 @@ test("PATCH /team-users/:id: invalid role", async (t: Test) => {
     },
   });
 
-  t.equal(response.status, 403, "Responds with forbidden status");
+  t.equal(response.status, 400, "Request does not match type");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
   t.equal(
     addStripeSeatStub.callCount,
@@ -583,7 +584,7 @@ test("PATCH /team-users/:id: invalid role", async (t: Test) => {
   );
 });
 
-test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
+test("PATCH /team-users/:id: invalid update body (unknown keys)", async (t: Test) => {
   const { updateStub, addStripeSeatStub } = setup();
   const [response] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
@@ -593,7 +594,7 @@ test("PATCH /team-users/:id: invalid update body", async (t: Test) => {
     },
   });
 
-  t.equal(response.status, 403, "Responds with forbidden status");
+  t.equal(response.status, 400, "Request does not match type");
   t.equal(updateStub.callCount, 0, "Does not update with an invalid role");
   t.equal(
     addStripeSeatStub.callCount,
@@ -733,6 +734,218 @@ test("PATCH /team-users/:id: CALA admin can transfer ownership", async (t: Test)
     "Calls the special transfer ownership method"
   );
 });
+
+interface TeamUsersPatchLabelTestCase {
+  title: string;
+  userRole: UserRole;
+  actorTeamUser: Partial<TeamUser> | null;
+  teamUserToUpdate?: Partial<TeamUser> | null;
+  body?: Record<string, any>;
+  responseStatus: number;
+}
+
+const teamUsersPatchLabelTestCases: TeamUsersPatchLabelTestCase[] = [
+  {
+    title:
+      "PATCH /team-users/:id: update label is forbidden for a team user with role VIEWER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.VIEWER },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update label is allowed for a team user with role VIEWER as CALA admin",
+    userRole: "ADMIN",
+    actorTeamUser: { role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update VIEWER label is allowed for a team user with role EDITOR",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.EDITOR },
+    teamUserToUpdate: { role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update EDITOR label is allowed for a team user with role EDITOR",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.EDITOR },
+    teamUserToUpdate: { role: TeamUserRole.EDITOR },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update ADMIN label is forbidden for a team user with role EDITOR",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.EDITOR },
+    teamUserToUpdate: { role: TeamUserRole.ADMIN },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update OWNER label is forbidden for a team user with role EDITOR",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.EDITOR },
+    teamUserToUpdate: { role: TeamUserRole.OWNER },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update VIEWER label is allowed for a team user with role ADMIN",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.ADMIN },
+    teamUserToUpdate: { role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update EDITOR label is allowed for a team user with role ADMIN",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.ADMIN },
+    teamUserToUpdate: { role: TeamUserRole.EDITOR },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update ADMIN label is allowed for a team user with role ADMIN",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.ADMIN },
+    teamUserToUpdate: { role: TeamUserRole.ADMIN },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update OWNER label is forbidden for a team user with role ADMIN",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.ADMIN },
+    teamUserToUpdate: { role: TeamUserRole.OWNER },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update VIEWER label is allowed for a team user with role OWNER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update EDITOR label is allowed for a team user with role OWNER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.EDITOR },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update ADMIN label is allowed for a team user with role OWNER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.ADMIN },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update label is allowed for a team user with role OWNER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.OWNER },
+    responseStatus: 200,
+  },
+  {
+    title: "PATCH /team-users/:id: label with null value is allowed",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.OWNER },
+    body: {
+      label: null,
+    },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: label with value and unknown key is forbidden",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.OWNER },
+    teamUserToUpdate: { role: TeamUserRole.OWNER },
+    body: {
+      label: "Tech Designer",
+      teamId: "a-team-id",
+    },
+    responseStatus: 400,
+  },
+];
+
+for (const testCase of teamUsersPatchLabelTestCases) {
+  test(testCase.title, async (t: Test) => {
+    const {
+      findActorTeamUserStub,
+      transferOwnershipStub,
+      updateStub,
+      findTeamUserByIdStub,
+      addStripeSeatStub,
+    } = setup({
+      role: testCase.userRole,
+    });
+
+    const actorTeamUser = {
+      ...tu1,
+      ...testCase.actorTeamUser,
+    };
+    findActorTeamUserStub.resolves(actorTeamUser);
+
+    const teamUserToUpdate = {
+      ...tu1,
+      ...(testCase.teamUserToUpdate || {}),
+    };
+    findTeamUserByIdStub.resolves(teamUserToUpdate);
+
+    const [response] = await patch(`/team-users/${tu1.id}`, {
+      headers: authHeader("a-session-id"),
+      body: testCase.body || {
+        label: "Designer",
+      },
+    });
+
+    t.equal(
+      response.status,
+      testCase.responseStatus,
+      "correct response status"
+    );
+
+    if (testCase.responseStatus >= 400) {
+      t.equal(
+        transferOwnershipStub.callCount,
+        0,
+        "doesn't call transfer ownership service"
+      );
+      t.equal(updateStub.callCount, 0, "does not call the team user update");
+    } else {
+      t.deepEqual(
+        updateStub.args[0].slice(1),
+        [
+          tu1.id,
+          {
+            label:
+              testCase.body?.label !== undefined
+                ? testCase.body.label
+                : "Designer",
+          },
+        ],
+        "calls team user update dao with correct args and updates label"
+      );
+    }
+
+    t.equal(
+      addStripeSeatStub.callCount,
+      0,
+      "Does not call stripe add seat function"
+    );
+  });
+}
 
 test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) => {
   const { findTeamUserByIdStub } = setup();
@@ -875,6 +1088,7 @@ test("/team-users end-to-end", async (t: Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: Role.VIEWER,
+      label: null,
       teamId: unusedTeam.id,
       userId: teamAdmin.user.id,
       userEmail: null,
@@ -893,6 +1107,7 @@ test("/team-users end-to-end", async (t: Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: Role.ADMIN,
+      label: null,
       teamId,
       userId: teamAdmin.user.id,
       userEmail: null,

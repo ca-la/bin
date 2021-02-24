@@ -112,6 +112,7 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: team.id,
       userId: teamViewerSession.userId,
       userEmail: null,

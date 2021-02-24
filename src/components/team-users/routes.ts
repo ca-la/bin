@@ -2,19 +2,20 @@ import db from "../../services/db";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import { requireQueryParam } from "../../middleware/require-query-param";
-import { typeGuard } from "../../middleware/type-guard";
+import { typeGuard, typeGuardFromSchema } from "../../middleware/type-guard";
 
 import filterError from "../../services/filter-error";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
+import { check } from "../../services/check";
 
 import {
   isUnsavedTeamUser,
   UnsavedTeamUser,
   Role as TeamUserRole,
-  isTeamUserRole,
   TeamUserUpdate,
-  isTeamUserUpdate,
+  teamUserUpdateSchema,
+  teamUserUpdateRoleSchema,
   TeamUser,
   teamUserDomain,
 } from "./types";
@@ -97,16 +98,11 @@ function* update(
   const { teamUserId } = this.params;
   const { body } = this.request;
 
-  if (!isTeamUserUpdate(body)) {
-    this.throw(403, "Update can only include role");
-  }
-  if (!isTeamUserRole(body.role)) {
-    this.throw(403, `Invalid team user role: ${body.role}`);
-  }
-
-  const isTryingToUpdateTeamOwner = teamUser.role === TeamUserRole.OWNER;
-  if (isTryingToUpdateTeamOwner) {
-    this.throw(403, `You cannot update team owner role`);
+  if (check(teamUserUpdateRoleSchema, body)) {
+    const isTryingToUpdateTeamOwner = teamUser.role === TeamUserRole.OWNER;
+    if (isTryingToUpdateTeamOwner) {
+      this.throw(403, `You cannot update team owner role`);
+    }
   }
 
   const before = yield TeamUsersDAO.findById(trx, teamUserId);
@@ -187,9 +183,10 @@ export default {
       patch: [
         requireAuth,
         useTransaction,
+        typeGuardFromSchema(teamUserUpdateSchema),
         requireTeamUserByTeamUserId,
         requireTeamRoles<{ teamUser: TeamUser }>(
-          Object.values(TeamUserRole),
+          [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           findTeamByTeamUser
         ),
         update,

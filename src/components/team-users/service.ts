@@ -9,6 +9,8 @@ import {
   TeamUserDb,
   TeamUserUpdate,
   UnsavedTeamUser,
+  teamUserUpdateRoleSchema,
+  teamUserUpdateLabelSchema,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import createTeamUserLock from "./create-team-user-lock";
@@ -19,6 +21,7 @@ import {
   addSeatCharge as addStripeSeatCharge,
   removeSeatCharge as removeStripeSeatCharge,
 } from "../../services/stripe/index";
+import { check } from "../../services/check";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -147,6 +150,7 @@ export async function createTeamUser(
     id: uuid.v4(),
     teamId,
     role,
+    label: null,
     createdAt: new Date(),
     deletedAt: null,
     updatedAt: new Date(),
@@ -182,38 +186,42 @@ export async function updateTeamUser(
     isAdmin?: boolean;
   }
 ): Promise<TeamUser> {
-  for (const keyToUpdate of Object.keys(patch) as (keyof TeamUserUpdate)[]) {
-    switch (keyToUpdate) {
-      case "role": {
-        const { role } = patch;
-        if (!allowedRolesMap[actorTeamRole].includes(role)) {
-          throw new UnauthorizedError(
-            "You cannot update a user with the specified role"
-          );
-        }
+  if (check(teamUserUpdateRoleSchema, patch)) {
+    const { role } = patch;
+    if (!allowedRolesMap[actorTeamRole].includes(role)) {
+      throw new UnauthorizedError(
+        "You cannot update a user with the specified role"
+      );
+    }
 
-        if (role !== TeamUserRole.VIEWER) {
-          await createTeamUserLock(trx, teamId);
-          await assertSeatAvailability(trx, teamId, isAdmin);
-        }
+    if (role !== TeamUserRole.VIEWER) {
+      await createTeamUserLock(trx, teamId);
+      await assertSeatAvailability(trx, teamId, isAdmin);
+    }
 
-        if (role === TeamUserRole.OWNER) {
-          await TeamUsersDAO.transferOwnership(trx, teamUserId);
-        } else {
-          await RawTeamUsersDAO.update(trx, teamUserId, { role });
-        }
+    if (role === TeamUserRole.OWNER) {
+      await TeamUsersDAO.transferOwnership(trx, teamUserId);
+    } else {
+      await RawTeamUsersDAO.update(trx, teamUserId, { role });
+    }
 
-        if (role !== TeamUserRole.VIEWER) {
-          if (before.role === TeamUserRole.VIEWER) {
-            await addStripeSeatCharge(trx, teamId);
-          }
-        } else {
-          if (before.role !== TeamUserRole.VIEWER) {
-            await removeStripeSeatCharge(trx, teamId);
-          }
-        }
+    if (role !== TeamUserRole.VIEWER) {
+      if (before.role === TeamUserRole.VIEWER) {
+        await addStripeSeatCharge(trx, teamId);
+      }
+    } else {
+      if (before.role !== TeamUserRole.VIEWER) {
+        await removeStripeSeatCharge(trx, teamId);
       }
     }
+  } else if (check(teamUserUpdateLabelSchema, patch)) {
+    if (!allowedRolesMap[actorTeamRole].includes(before.role)) {
+      throw new UnauthorizedError(
+        "You cannot update a user with the specified role"
+      );
+    }
+    const { label } = patch;
+    await RawTeamUsersDAO.update(trx, teamUserId, { label });
   }
 
   const updated = await TeamUsersDAO.findById(trx, teamUserId);

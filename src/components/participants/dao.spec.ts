@@ -86,6 +86,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      label: null,
       teamId: team.id,
       userId: teamViewer.id,
       userEmail: null,
@@ -98,6 +99,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      label: null,
       teamId: team.id,
       userId: null,
       userEmail: "non-user-team-user@example.com",
@@ -110,6 +112,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: team.id,
       userId: null,
       userEmail: "another@example.com",
@@ -122,6 +125,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: partnerTeam.id,
       userId: null,
       userEmail: "and-another@example.com",

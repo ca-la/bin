@@ -160,6 +160,7 @@ async function findSetup() {
       userId: user3.id,
       userEmail: null,
       role: TeamUserRole.VIEWER,
+      label: null,
       createdAt: new Date(),
       deletedAt: new Date(),
       updatedAt: new Date(),

@@ -30,6 +30,7 @@ async function setup() {
       userId: deletedTeamUser.id,
       userEmail: null,
       role: TeamUserRole.VIEWER,
+      label: "",
       createdAt: new Date(),
       deletedAt: new Date(),
       updatedAt: new Date(),

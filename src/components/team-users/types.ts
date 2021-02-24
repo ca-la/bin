@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 import User, { UserRow } from "../users/types";
 import { Roles } from "../collaborators/types";
 
@@ -36,6 +38,7 @@ export interface BaseTeamUserDb {
   id: string;
   teamId: string;
   role: Role;
+  label: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -45,6 +48,7 @@ interface BaseTeamUserDbRow {
   id: string;
   team_id: string;
   role: Role;
+  label: string | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
@@ -140,17 +144,17 @@ export function isTeamUserRole(candidate: any): candidate is Role {
   return Object.values(Role).includes(candidate);
 }
 
-export interface TeamUserUpdate {
-  role: Role;
-}
+export const teamUserUpdateRoleSchema = z.object({
+  role: z.nativeEnum(Role),
+});
 
-const allowedUpdateRows: (keyof TeamUserUpdate)[] = ["role"];
+export const teamUserUpdateLabelSchema = z.object({
+  label: z.string().nullable(),
+});
 
-export const isTeamUserUpdate = (data: any): data is TeamUserUpdate => {
-  return (
-    Object.keys(data).length === allowedUpdateRows.length &&
-    allowedUpdateRows.every(
-      (key: keyof TeamUserUpdate) => data[key] !== undefined
-    )
-  );
-};
+export const teamUserUpdateSchema = z.union([
+  teamUserUpdateRoleSchema.strict(),
+  teamUserUpdateLabelSchema.strict(),
+]);
+
+export type TeamUserUpdate = z.infer<typeof teamUserUpdateSchema>;

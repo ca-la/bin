@@ -362,6 +362,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.EDITOR,
+      label: null,
       teamId: team.id,
       userId: user2.id,
       userEmail: null,
@@ -372,6 +373,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: team.id,
       userId: user3.id,
       userEmail: null,
@@ -382,6 +384,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      label: null,
       teamId: team.id,
       userId: user4.id,
       userEmail: null,

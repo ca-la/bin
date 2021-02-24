@@ -27,6 +27,7 @@ const tuDb1: TeamUserDb = {
   userId: "a-user-id",
   userEmail: null,
   role: TeamUserRole.ADMIN,
+  label: null,
   createdAt: now,
   deletedAt: null,
   updatedAt: now,
