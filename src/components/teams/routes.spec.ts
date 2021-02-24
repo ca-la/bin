@@ -196,7 +196,7 @@ test("GET /teams", async (t: Test) => {
     headers: authHeader("a-session-id"),
   });
 
-  t.equal(response.status, 200, "responds successfully");
+  t.equal(response.status, 200, "allows fetching list by own userId");
   t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
 
   const [unauthorized] = await get("/teams?userId=not-me", {
@@ -224,11 +224,17 @@ test("GET /teams", async (t: Test) => {
 test("GET /teams as ADMIN", async (t: Test) => {
   setup({ role: "ADMIN" });
 
-  const [response, body] = await get("/teams?type=DESIGNER", {
+  const [response1, body1] = await get("/teams?type=DESIGNER", {
     headers: authHeader("a-session-id"),
   });
-  t.equal(response.status, 200, "responds successfully");
-  t.deepEqual(body, [JSON.parse(JSON.stringify(t1))]);
+  t.equal(response1.status, 200, "allows filtering by type");
+  t.deepEqual(body1, [JSON.parse(JSON.stringify(t1))]);
+
+  const [response2, body2] = await get("/teams?userId=a-user-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response2.status, 200, "allows filtering by user ID");
+  t.deepEqual(body2, [JSON.parse(JSON.stringify(t1))]);
 
   const [incorrectType] = await get("/teams?type=CACTUS", {
     headers: authHeader("a-session-id"),

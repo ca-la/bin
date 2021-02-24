@@ -81,7 +81,7 @@ function searchAndPageModifer(options: {
   type?: TeamType;
 }) {
   return (query: Knex.QueryBuilder) => {
-    query.whereNull("deleted_at");
+    query.whereNull("teams.deleted_at");
     query.offset(
       options.offset !== undefined ? parseInt(options.offset, 10) : 0
     );
@@ -117,22 +117,25 @@ function* findTeams(this: AuthedContext) {
     this.throw(400, `Invalid filter: ${filter}`);
   }
 
-  if (!userId) {
-    if (this.state.role === "ADMIN") {
-      const modifier = searchAndPageModifer({ limit, offset, search, type });
-      this.body =
-        filter === TeamFilter.UNPAID
-          ? yield TeamsDAO.findUnpaidTeams(db, modifier)
-          : yield TeamsDAO.find(db, {}, modifier);
+  const isAdmin = this.state.role === "ADMIN";
 
-      this.status = 200;
-      return;
+  if (!userId) {
+    if (!isAdmin) {
+      this.throw(400, `You must provide userId as a query parameter`);
     }
 
-    this.throw(400, `You must provide userId as a query parameter`);
+    const modifier = searchAndPageModifer({ limit, offset, search, type });
+
+    this.body =
+      filter === TeamFilter.UNPAID
+        ? yield TeamsDAO.findUnpaidTeams(db, modifier)
+        : yield TeamsDAO.find(db, {}, modifier);
+
+    this.status = 200;
+    return;
   }
 
-  if (this.state.userId !== userId) {
+  if (!isAdmin && this.state.userId !== userId) {
     this.throw(
       403,
       "User in query parameter does not match authenticated user"
