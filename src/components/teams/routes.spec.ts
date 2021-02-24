@@ -41,7 +41,7 @@ function setup({
     }),
     createWithOwnerStub: sandbox()
       .stub(TeamsService, "createTeamWithOwner")
-      .resolves(t1),
+      .resolves({ ...t1, role: TeamUserRole.OWNER }),
     findCreatedTeamUserStub: sandbox()
       .stub(TeamUsersDAO, "findById")
       .resolves(),
@@ -88,8 +88,8 @@ test("POST /teams", async (t: Test) => {
   t.equal(response.status, 201);
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify(t1)),
-    "returns the created team from the DAO"
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.OWNER })),
+    "returns the created team"
   );
   t.deepEqual(
     createWithOwnerStub.args[0].slice(1),
@@ -131,8 +131,8 @@ test("POST /teams creates subscription with free plan", async (t: Test) => {
   t.equal(response.status, 201);
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify(t1)),
-    "returns the created team from the DAO"
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.OWNER })),
+    "returns the created team"
   );
 
   t.equal(
@@ -172,8 +172,8 @@ test("POST /teams creates the team without subscription if plan is not free", as
   t.equal(response.status, 201);
   t.deepEqual(
     body,
-    JSON.parse(JSON.stringify(t1)),
-    "returns the created team from the DAO"
+    JSON.parse(JSON.stringify({ ...t1, role: TeamUserRole.OWNER })),
+    "returns the created team"
   );
 
   t.equal(

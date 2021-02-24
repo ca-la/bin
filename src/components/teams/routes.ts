@@ -68,10 +68,8 @@ function* createTeam(this: TrxContext<AuthedContext>) {
     created,
   });
 
-  const team = yield TeamsDAO.findById(trx, created.id);
-
   this.status = 201;
-  this.body = team;
+  this.body = created;
 }
 
 function searchAndPageModifer(options: {
