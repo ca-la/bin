@@ -1,7 +1,6 @@
 import Knex, { QueryBuilder } from "knex";
 import {
   buildDao,
-  identity,
   QueryModifier,
 } from "../../services/cala-component/cala-dao";
 import { TeamDb, TeamDbRow, Team, TeamRow } from "./types";
@@ -22,10 +21,20 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
   }
 );
 
-const withRoleDao = buildDao<Team, TeamRow>("Team", TABLE_NAME, teamAdapter, {
-  orderColumn: "created_at",
-  orderDirection: "DESC",
-});
+const withTeamUserMetaDao = buildDao<Team, TeamRow>(
+  "Team",
+  TABLE_NAME,
+  teamAdapter,
+  {
+    orderColumn: "created_at",
+    orderDirection: "DESC",
+    queryModifier: (query: Knex.QueryBuilder) =>
+      query
+        .select(["team_users.role as role", "team_users.id as team_user_id"])
+        .join("team_users", "team_users.team_id", "teams.id")
+        .where({ "team_users.deleted_at": null }),
+  }
+);
 
 async function findUnpaidTeams(
   ktx: Knex,
@@ -57,17 +66,9 @@ async function findUnpaidTeams(
   return rawAdapter.fromDbArray(rows);
 }
 
-async function findByUser(
-  ktx: Knex,
-  userId: string,
-  filter: Partial<TeamDb> = {},
-  modifier: QueryModifier = identity
-) {
-  return withRoleDao.find(ktx, filter, (query: QueryBuilder) =>
-    modifier(query)
-      .select("team_users.role as role")
-      .join("team_users", "team_users.team_id", "teams.id")
-      .where({ "team_users.user_id": userId, "team_users.deleted_at": null })
+async function findByUser(ktx: Knex, userId: string) {
+  return withTeamUserMetaDao.find(ktx, {}, (query: QueryBuilder) =>
+    query.where({ "team_users.user_id": userId })
   );
 }
 

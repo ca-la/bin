@@ -30,5 +30,5 @@ export async function createTeamWithOwner(
     updatedAt: new Date(),
   });
 
-  return { ...created, role: createdUser.role };
+  return { ...created, role: createdUser.role, teamUserId: createdUser.id };
 }

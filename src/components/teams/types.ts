@@ -27,11 +27,13 @@ export type TeamDbRow = z.infer<typeof teamDbRowSchema>;
 
 export const teamSchema = teamDbSchema.extend({
   role: z.nativeEnum(TeamUserRole),
+  teamUserId: z.string(),
 });
 export type Team = z.infer<typeof teamSchema>;
 
 export const teamRowSchema = teamDbRowSchema.extend({
   role: z.nativeEnum(TeamUserRole),
+  team_user_id: z.string(),
 });
 export type TeamRow = z.infer<typeof teamRowSchema>;
 

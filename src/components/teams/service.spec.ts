@@ -33,7 +33,7 @@ test("createTeamWithOwner", async (t: Test) => {
 
   t.deepEqual(
     created,
-    { ...t1, role: Role.OWNER },
+    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
     "returns the created team with role"
   );
   t.deepEqual(
