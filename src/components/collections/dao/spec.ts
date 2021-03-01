@@ -922,3 +922,35 @@ test("hasOwnership", async (t: Test) => {
     "is not an owner of a parent collection (even though owner of design)."
   );
 });
+
+test("count", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team: team1 } = await generateTeam(user.id);
+  const { team: team2 } = await generateTeam(user.id);
+  const { team: team3 } = await generateTeam(user.id);
+  await generateCollection({ teamId: team1.id });
+  await generateCollection({ teamId: team1.id });
+  const { collection } = await generateCollection({ teamId: team2.id });
+  await CollectionsDAO.deleteById(db, collection.id);
+
+  const countAll = await CollectionsDAO.count(db, {});
+  t.equal(countAll, 3, "count all collections");
+
+  const countByTeamId = await CollectionsDAO.count(db, { teamId: team2.id });
+  t.equal(countByTeamId, 1, "count by teamId");
+
+  const zeroResult = await CollectionsDAO.count(db, { teamId: team3.id });
+  t.equal(zeroResult, 0, "zeroResult");
+
+  const countNonDeleted = await CollectionsDAO.count(db, { deletedAt: null });
+  t.equal(countNonDeleted, 2, "countNonDeleted");
+
+  const countDeleted = await CollectionsDAO.count(
+    db,
+    {},
+    (q: Knex.QueryBuilder) => {
+      return q.andWhereRaw("deleted_at IS NOT NULL");
+    }
+  );
+  t.equal(countDeleted, 1, "countDeleted");
+});

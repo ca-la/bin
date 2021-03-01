@@ -34,6 +34,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -60,6 +61,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: plan1.id,
     });
@@ -119,6 +121,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -140,6 +143,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -161,6 +165,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -211,6 +216,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -233,6 +239,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
         canSubmit: true,
         canCheckOut: true,
         maximumSeatsPerTeam: null,
+        maximumCollections: null,
         includesFulfillment: true,
         upgradeToPlanId: null,
       });
@@ -267,6 +274,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -289,6 +297,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -311,6 +320,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -333,6 +343,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -373,6 +384,7 @@ test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });
@@ -394,6 +406,7 @@ test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     });

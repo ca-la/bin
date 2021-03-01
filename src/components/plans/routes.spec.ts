@@ -26,6 +26,7 @@ const planDataToCreate: Unsaved<PlanDb> = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
@@ -57,6 +58,7 @@ const firstPlan: PlanDb = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
@@ -79,6 +81,7 @@ const secretPlan: PlanDb = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
@@ -101,6 +104,7 @@ const littleBitPlan: PlanDb = {
   canSubmit: true,
   canCheckOut: true,
   maximumSeatsPerTeam: null,
+  maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
@@ -247,6 +251,7 @@ test("POST /plans valid for the admin", async (t: Test) => {
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
     },

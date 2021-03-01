@@ -30,6 +30,10 @@ import {
 } from "../../../services/get-permissions";
 import { Roles } from "../../collaborators/types";
 import { TeamUserRole } from "../../team-users";
+import {
+  identity,
+  QueryModifier,
+} from "../../../services/cala-component/cala-dao";
 
 export const TABLE_NAME = "collections";
 
@@ -61,11 +65,8 @@ export async function create(
   );
 }
 
-export async function deleteById(
-  trx: Knex.Transaction,
-  id: string
-): Promise<CollectionDb> {
-  const deleted = await trx
+export async function deleteById(ktx: Knex, id: string): Promise<CollectionDb> {
+  const deleted = await ktx
     .from(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update({ deleted_at: new Date() }, "*")
@@ -472,4 +473,18 @@ export async function hasOwnership(options: {
     (ownerRow: { created_by: string }): boolean =>
       ownerRow.created_by === userId
   );
+}
+
+export async function count(
+  ktx: Knex,
+  filter: Partial<CollectionDb> = {},
+  modifier: QueryModifier = identity
+): Promise<number> {
+  const namespacedFilter = partialDataAdapter.toDb(filter) || {};
+  const result = await ktx(TABLE_NAME)
+    .count("*")
+    .where(namespacedFilter)
+    .modify(modifier);
+
+  return Number(result[0].count);
 }

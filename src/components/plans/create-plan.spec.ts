@@ -18,6 +18,7 @@ const plan: MaybeUnsaved<PlanDb> = {
   isDefault: false,
   isPublic: false,
   maximumSeatsPerTeam: 0,
+  maximumCollections: null,
   monthlyCostCents: 0,
   ordering: null,
   perSeatCostPerBillingIntervalCents: 0,

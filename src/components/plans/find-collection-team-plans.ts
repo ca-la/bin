@@ -4,10 +4,10 @@ import { findCollectionTeamPlans } from "./dao";
 import { Plan } from "./types";
 
 export async function canCheckOutTeamCollection(
-  trx: Knex.Transaction,
+  ktx: Knex,
   collectionId: string
 ): Promise<boolean> {
-  const plans = await findCollectionTeamPlans(trx, collectionId);
+  const plans = await findCollectionTeamPlans(ktx, collectionId);
   return plans.some((plan: Plan) => plan.canCheckOut);
 }
 

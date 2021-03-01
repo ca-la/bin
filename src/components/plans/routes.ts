@@ -78,6 +78,7 @@ function* create(
     canCheckOut,
     canSubmit,
     maximumSeatsPerTeam,
+    maximumCollections,
     includesFulfillment,
     upgradeToPlanId,
   } = this.request.body;
@@ -112,6 +113,7 @@ function* create(
       canCheckOut,
       canSubmit,
       maximumSeatsPerTeam,
+      maximumCollections,
       includesFulfillment,
       upgradeToPlanId,
     },

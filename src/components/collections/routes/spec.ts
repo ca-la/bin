@@ -28,9 +28,11 @@ import * as ProductDesignsDAO from "../../product-designs/dao";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import * as TeamsService from "../../teams/service";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
   const body = {
     createdAt: new Date(),
     createdBy: user.id,
@@ -38,13 +40,10 @@ test("GET /collections/:id returns a created collection", async (t: tape.Test) =
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
-    teamId: null,
+    teamId: team.id,
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: false,
   });
 
   const [postResponse, postCollection] = await API.post("/collections", {
@@ -68,19 +67,18 @@ test("GET /collections/:id returns a created collection", async (t: tape.Test) =
 });
 
 test("POST /collections/ without a full object can create a collection", async (t: tape.Test) => {
-  const { session } = await createUser();
+  const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+
   const body = {
     createdAt: new Date(),
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
-    teamId: null,
+    teamId: team.id,
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: false,
   });
 
   const [postResponse, postCollection] = await API.post("/collections", {
@@ -128,11 +126,8 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     teamId: team.id,
     title: "Drop 001/The Early Years",
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: false,
   });
 
   const [postResponse, postCollection] = await API.post("/collections", {
@@ -177,8 +172,56 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
   );
 });
 
+test("POST /collections with an exceeded limit", async (t: tape.Test) => {
+  const { user, session } = await createUser();
+  const admin = await createUser({ role: "ADMIN" });
+  const { team } = await generateTeam(user.id);
+
+  const body = {
+    createdAt: new Date(),
+    description: "Initial commit",
+    id: uuid.v4(),
+    teamId: team.id,
+    title: "Drop 001/The Early Years",
+  };
+
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: true,
+    limit: 4,
+  });
+
+  const [postResponse, postBody] = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
+  });
+
+  t.equal(
+    postResponse.status,
+    402,
+    'POST with exceeded limit returns "402 Payment required" status'
+  );
+  t.deepEqual(postBody, {
+    actionText: "Upgrade team",
+    actionUrl: `/subscribe?upgradingTeamId=${team.id}`,
+    message:
+      "In order to create more than 4 collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.",
+    title: "Upgrade team",
+  });
+
+  const [adminResponse] = await API.post("/collections", {
+    headers: API.authHeader(admin.session.id),
+    body,
+  });
+  t.equal(
+    adminResponse.status,
+    201,
+    'Admin POST with exceeded limit returns "201 Created" status'
+  );
+});
+
 test("PATCH /collections/:collectionId allows updates to a collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
   const body = {
     createdAt: new Date(),
     createdBy: user.id,
@@ -186,13 +229,52 @@ test("PATCH /collections/:collectionId allows updates to a collection", async (t
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
+    teamId: team.id,
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
+
+  const postResponse = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
   });
+
+  const updateBody = {
+    createdAt: postResponse[1].createdAt,
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: postResponse[1].id,
+    title: "Droppin bombs",
+    teamId: "another-team",
+  };
+
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: true,
+    limit: 4,
+  });
+
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id),
+  });
+  t.deepEqual(
+    updateResponse[0].status,
+    402,
+    'PATCH with teamId and exceeded limit returns "402 Payment required" status'
+  );
+});
+
+test("PATCH /collections/:collectionId allows updates to a collection", async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+    teamId: team.id,
+  };
 
   const postResponse = await API.post("/collections", {
     headers: API.authHeader(session.id),
@@ -220,6 +302,8 @@ test("PATCH /collections/:collectionId allows updates to a collection", async (t
 
 test("PATCH /collections/:collectionId supports partial updates to a collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+
   const body = {
     createdAt: new Date(),
     createdBy: user.id,
@@ -227,13 +311,8 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
+    teamId: team.id,
   };
-  sandbox().stub(CollaboratorsDAO, "create").resolves({
-    collectionId: uuid.v4(),
-    id: uuid.v4(),
-    role: "EDIT",
-    userId: uuid.v4(),
-  });
 
   const postResponse = await API.post("/collections", {
     headers: API.authHeader(session.id),
@@ -453,7 +532,9 @@ test("GET /collections returns directly shared collections when called", async (
 
 test("DELETE /collections/:id", async (t: tape.Test) => {
   const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
   const { session: session2, user: user2 } = await createUser();
+  const { team: team2 } = await generateTeam(user2.id);
   const mine = {
     createdAt: new Date(),
     createdBy: user.id,
@@ -461,6 +542,7 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     description: "Initial commit",
     id: uuid.v4(),
     title: "Drop 001/The Early Years",
+    teamId: team.id,
   };
   const theirs = {
     createdAt: new Date(),
@@ -469,7 +551,11 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     description: "Cheesy",
     id: uuid.v4(),
     title: "Nacho collection",
+    teamId: team2.id,
   };
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: false,
+  });
 
   await API.post("/collections", {
     headers: API.authHeader(session.id),
@@ -479,6 +565,7 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     headers: API.authHeader(session2.id),
     body: theirs,
   });
+
   const designOne = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
@@ -549,6 +636,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
         canSubmit: true,
         canCheckOut: true,
         maximumSeatsPerTeam: null,
+        maximumCollections: null,
         includesFulfillment: true,
         upgradeToPlanId: null,
       })

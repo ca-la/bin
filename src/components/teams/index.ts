@@ -1,3 +1,4 @@
+export * from "./service";
 import { CalaComponent, CalaRouter } from "../../services/cala-component/types";
 
 import router from "./routes";

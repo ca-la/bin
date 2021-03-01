@@ -15,8 +15,8 @@ import requireAuth = require("../../../middleware/require-auth");
 import requireAdmin = require("../../../middleware/require-admin");
 import useTransaction from "../../../middleware/use-transaction";
 
+import { checkCollectionsLimit } from "../../teams";
 import * as CollectionsDAO from "../dao";
-import * as CollaboratorsDAO from "../../collaborators/dao";
 import TeamUsersDAO from "../../team-users/dao";
 import { isPartialCollection } from "../domain-object";
 import { Collection, CollectionDb } from "../types";
@@ -45,7 +45,7 @@ interface CreateCollectionRequest {
   description: string;
   id: string;
   title: string;
-  teamId?: string | null;
+  teamId: string;
 }
 
 function isCreateCollectionRequest(
@@ -53,16 +53,16 @@ function isCreateCollectionRequest(
 ): candidate is CreateCollectionRequest {
   const keyset = new Set(Object.keys(candidate));
 
-  return ["createdAt", "description", "id", "title"].every(
-    keyset.has.bind(keyset)
+  return (
+    ["createdAt", "description", "id", "title"].every(
+      keyset.has.bind(keyset)
+    ) && candidate.teamId
   );
 }
 
-function* createCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
+function* createCollection(this: AuthedContext): Iterator<any, any, any> {
   const { body } = this.request;
-  const { role, trx, userId } = this.state;
+  const { role, userId } = this.state;
 
   if (!isCreateCollectionRequest(body)) {
     this.throw(400, "Request does not match expected Collection type");
@@ -71,12 +71,26 @@ function* createCollection(
   const data: CollectionDb = {
     deletedAt: null,
     createdBy: userId,
-    teamId: body.teamId || null,
+    teamId: body.teamId,
     createdAt: new Date(body.createdAt),
     description: body.description,
     id: body.id,
     title: body.title,
   };
+
+  if (role !== "ADMIN") {
+    const checkResult = yield checkCollectionsLimit(db, body.teamId);
+    if (checkResult.isReached) {
+      this.status = 402;
+      this.body = {
+        title: "Upgrade team",
+        message: `In order to create more than ${checkResult.limit} collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.`,
+        actionText: "Upgrade team",
+        actionUrl: `/subscribe?upgradingTeamId=${body.teamId}`,
+      };
+      return;
+    }
+  }
 
   const collection = yield CollectionsDAO.create(data).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
@@ -84,23 +98,8 @@ function* createCollection(
     )
   );
 
-  if (!body.teamId) {
-    yield CollaboratorsDAO.create(
-      {
-        cancelledAt: null,
-        collectionId: collection.id,
-        designId: null,
-        invitationMessage: null,
-        role: "EDIT",
-        userEmail: null,
-        userId,
-        teamId: null,
-      },
-      trx
-    );
-  }
   const permissions = yield getCollectionPermissions(
-    trx,
+    db,
     collection,
     role,
     userId
@@ -210,35 +209,41 @@ function* updateCollection(
   const { body } = this.request;
   const { role, trx, userId } = this.state;
 
-  if (body && isPartialCollection(body)) {
-    const collection = yield CollectionsDAO.update(collectionId, body).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
-      )
-    );
-    const permissions = yield getCollectionPermissions(
-      trx,
-      collection,
-      role,
-      userId
-    );
-
-    this.body = { ...collection, permissions };
-    this.status = 200;
-  } else {
+  if (!body || !isPartialCollection(body)) {
     this.throw(400, "Request to update does not match Collection");
   }
+  if (body.teamId && role !== "ADMIN") {
+    const checkResult = yield checkCollectionsLimit(db, body.teamId);
+    if (checkResult.isReached) {
+      this.throw(
+        402,
+        `In order to create more than ${checkResult.limit} collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.`
+      );
+    }
+  }
+  const collection = yield CollectionsDAO.update(collectionId, body).catch(
+    filterError(InvalidDataError, (err: InvalidDataError) =>
+      this.throw(400, err)
+    )
+  );
+  const permissions = yield getCollectionPermissions(
+    trx,
+    collection,
+    role,
+    userId
+  );
+
+  this.body = { ...collection, permissions };
+  this.status = 200;
 }
 
 router.post(
   "/",
   requireAuth,
-  useTransaction,
   requireTeamRoles(
     [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
     async (context: AuthedContext<{ teamId: string | null }>) =>
-      context.request.body.teamId || null,
-    { allowNoTeam: true }
+      context.request.body.teamId
   ),
   createCollection
 );

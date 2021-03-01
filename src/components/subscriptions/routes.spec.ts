@@ -59,6 +59,7 @@ async function setup(
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
+      maximumCollections: null,
       includesFulfillment: true,
       upgradeToPlanId: null,
       ...planOptions,

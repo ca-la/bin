@@ -9,6 +9,9 @@ import { Role, teamUserDbTestBlank } from "../team-users/types";
 import TeamsDAO from "./dao";
 import { TeamType, TeamDb } from "./types";
 import * as TeamsService from "./service";
+import { SubscriptionWithPlan } from "../subscriptions/domain-object";
+import * as SubscriptionsDAO from "../subscriptions/dao";
+import * as CollectionsDAO from "../collections/dao";
 
 const testDate = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -66,4 +69,75 @@ test("createTeamWithOwner", async (t: Test) => {
     ],
     "creates the team owner"
   );
+});
+
+test("checkCollectionsLimit", async (t: Test) => {
+  interface PartialSubscription {
+    plan: Partial<SubscriptionWithPlan["plan"]>;
+  }
+  interface TestCase {
+    title: string;
+    subscriptions: PartialSubscription[];
+    collectionsCount: number;
+    result: TeamsService.CheckLimitResult;
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "no subscriptions",
+      subscriptions: [],
+      collectionsCount: 0,
+      result: { isReached: false },
+    },
+    {
+      title: "there's an unlimited plan",
+      subscriptions: [
+        { plan: { maximumCollections: 5 } },
+        { plan: { maximumCollections: null } },
+        { plan: { maximumCollections: 3 } },
+      ],
+      collectionsCount: 6,
+      result: { isReached: false },
+    },
+    {
+      title: "takes most allowing plan",
+      subscriptions: [
+        { plan: { maximumCollections: 5 } },
+        { plan: { maximumCollections: 3 } },
+      ],
+      collectionsCount: 4,
+      result: { isReached: false },
+    },
+    {
+      title: "limit exceeded",
+      subscriptions: [
+        { plan: { maximumCollections: 5 } },
+        { plan: { maximumCollections: 3 } },
+      ],
+      collectionsCount: 6,
+      result: { isReached: true, limit: 5 },
+    },
+    {
+      title: "limit reached",
+      subscriptions: [
+        { plan: { maximumCollections: 5 } },
+        { plan: { maximumCollections: 3 } },
+      ],
+      collectionsCount: 5,
+      result: { isReached: true, limit: 5 },
+    },
+  ];
+  const findForTeamWithPlansStub = sandbox().stub(
+    SubscriptionsDAO,
+    "findForTeamWithPlans"
+  );
+  const countStub = sandbox().stub(CollectionsDAO, "count");
+  for (const testCase of testCases) {
+    findForTeamWithPlansStub.resolves(testCase.subscriptions);
+    countStub.resolves(testCase.collectionsCount);
+    t.deepEqual(
+      await TeamsService.checkCollectionsLimit(db, "t1"),
+      testCase.result,
+      `${testCase.title}`
+    );
+  }
 });

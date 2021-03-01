@@ -90,10 +90,10 @@ export async function findFreeAndDefaultForTeams(
 }
 
 export function findCollectionTeamPlans(
-  trx: Knex.Transaction,
+  ktx: Knex,
   collectionId: string
 ): Promise<Plan[]> {
-  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
+  return dao.find(ktx, {}, (query: Knex.QueryBuilder) =>
     query
       .join("subscriptions", "plans.id", "subscriptions.plan_id")
       .join("collections", "subscriptions.team_id", "collections.team_id")
