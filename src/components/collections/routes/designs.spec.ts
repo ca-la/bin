@@ -48,8 +48,8 @@ function setupStubs() {
     createCollaboratorsStub: sandbox()
       .stub(CollaboratorsDAO, "createAll")
       .resolves([ownerCollaborator]),
-    deleteCollaboratorsStub: sandbox()
-      .stub(CollaboratorsDAO, "deleteByDesignsAndRole")
+    cancelCollaboratorsStub: sandbox()
+      .stub(CollaboratorsDAO, "cancelByDesignsAndRole")
       .resolves(),
     moveDesignStub: sandbox()
       .stub(CollectionDesignsDAO, "moveDesigns")
@@ -271,7 +271,7 @@ test("DELETE /collections/:id/designs/:id", async (t: Test) => {
     sessionStub,
     collaboratorStub,
     createCollaboratorStub,
-    deleteCollaboratorsStub,
+    cancelCollaboratorsStub,
   } = setupStubs();
   const ownerRequest = await API.del(
     `/collections/${collection.id}/designs/a-design-id`,
@@ -286,7 +286,7 @@ test("DELETE /collections/:id/designs/:id", async (t: Test) => {
   );
 
   t.deepEqual(
-    deleteCollaboratorsStub.args[0].slice(1),
+    cancelCollaboratorsStub.args[0].slice(1),
     [["a-design-id"], "OWNER"],
     "deletes existing owner collaborators"
   );

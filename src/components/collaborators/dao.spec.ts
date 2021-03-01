@@ -10,7 +10,7 @@ import DesignEventsDAO from "../design-events/dao";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 
 import createUser from "../../test-helpers/create-user";
-import { test, Test } from "../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createDesign from "../../services/create-design";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
@@ -186,7 +186,7 @@ test("CollaboratorsDAO.createAll", async (t: Test) => {
   }
 });
 
-test("CollaboratorsDAO.deleteByDesignsAndRole", async (t: Test) => {
+test("CollaboratorsDAO.cancelByDesignsAndRole", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: other } = await createUser({ withSession: false });
   const design = await createDesign({
@@ -222,11 +222,12 @@ test("CollaboratorsDAO.deleteByDesignsAndRole", async (t: Test) => {
       ],
       trx
     );
-    await CollaboratorsDAO.deleteByDesignsAndRole(trx, [design.id], "VIEW");
-
+    const clock = sandbox().useFakeTimers(new Date(2020, 0, 1));
+    await CollaboratorsDAO.cancelByDesignsAndRole(trx, [design.id], "VIEW");
+    clock.tick(1000);
     t.deepEqual(
-      [],
-      await CollaboratorsDAO.findAllByIds(trx, [created[0].id, created[1].id])
+      await CollaboratorsDAO.findAllByIds(trx, [created[0].id, created[1].id]),
+      []
     );
     t.equal(
       (await CollaboratorsDAO.findByDesign(design.id, trx)).length,

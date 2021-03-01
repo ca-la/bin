@@ -57,7 +57,7 @@ export function* deleteDesign(this: AuthedContext): Iterator<any, any, any> {
   const { userId } = this.state;
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: [designId], trx });
-    await CollaboratorsDAO.deleteByDesignsAndRole(trx, [designId], "OWNER");
+    await CollaboratorsDAO.cancelByDesignsAndRole(trx, [designId], "OWNER");
     await CollaboratorsDAO.create(
       {
         cancelledAt: null,
@@ -93,7 +93,7 @@ export function* deleteDesigns(this: AuthedContext): Iterator<any, any, any> {
 
   yield db.transaction(async (trx: Knex.Transaction) => {
     await removeDesigns({ collectionId, designIds: designIdList, trx });
-    await CollaboratorsDAO.deleteByDesignsAndRole(trx, designIdList, "OWNER");
+    await CollaboratorsDAO.cancelByDesignsAndRole(trx, designIdList, "OWNER");
     await CollaboratorsDAO.createAll(
       designIdList.map((designId: string) => ({
         cancelledAt: null,

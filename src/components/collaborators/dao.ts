@@ -693,16 +693,16 @@ export async function findByDesignAndTaskType(
   );
 }
 
-export async function deleteByDesignsAndRole(
+export async function cancelByDesignsAndRole(
   trx: Knex.Transaction,
   designIds: string[],
   role: CollaboratorRole
 ): Promise<void> {
   await trx(TABLE_NAME)
-    .del()
     .whereIn("design_id", designIds)
     .andWhere({
       role,
     })
+    .update({ cancelled_at: new Date() })
     .catch(rethrow);
 }
