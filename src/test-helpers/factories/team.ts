@@ -29,7 +29,7 @@ export async function generateTeam(
     const teamUser = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.OWNER,
-      label: "",
+      label: null,
       teamId: team.id,
       userId: adminUserId,
       userEmail: null,

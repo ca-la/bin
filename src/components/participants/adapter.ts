@@ -17,6 +17,7 @@ function encode(row: ParticipantRow): Participant {
     displayName: row.display_name,
     id: row.id,
     role: row.role,
+    label: row.label,
     userId: row.user_id,
     bidTaskTypes: row.bid_task_type_ids.map(
       (id: BidTaskTypeId) => taskTypesById[id].title
@@ -30,6 +31,7 @@ function decode(data: Participant): ParticipantRow {
     display_name: data.displayName,
     id: data.id,
     role: data.role,
+    label: data.label,
     user_id: data.userId,
     bid_task_type_ids: data.bidTaskTypes.reduce(
       (ids: BidTaskTypeId[], title: string) => {

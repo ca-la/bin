@@ -38,6 +38,7 @@ async function setup() {
   const user4 = await createUser("Cancelled Collection Collaborator");
   const user5 = await createUser("Cancelled Design Collaborator");
   const user6 = await createUser("Quality Control Partner", "PARTNER");
+  const user7 = await createUser("Team user and collaborator");
   const teamAdmin = await createUser("Team Admin");
   const teamViewer = await createUser("Team Viewer");
   const partnerTeamAdmin = await createUser("Partner Team Admin", "PARTNER");
@@ -86,7 +87,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
-      label: null,
+      label: "Tech Designer",
       teamId: team.id,
       userId: teamViewer.id,
       userEmail: null,
@@ -103,6 +104,19 @@ async function setup() {
       teamId: team.id,
       userId: null,
       userEmail: "non-user-team-user@example.com",
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    })
+  );
+  const teamUserCollaborator = await db.transaction((trx: Knex.Transaction) =>
+    RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.ADMIN,
+      label: "Team user label",
+      teamId: team.id,
+      userId: user7.id,
+      userEmail: null,
       createdAt: new Date(),
       deletedAt: null,
       updatedAt: new Date(),
@@ -262,6 +276,15 @@ async function setup() {
     teamId: null,
   });
 
+  const { collaborator: collaboratorTeamUser } = await generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: user7.id,
+  });
+
   return {
     collection,
     design,
@@ -278,6 +301,7 @@ async function setup() {
       teamCollaborator,
       nonUserCollaborator,
       partnerCollaborator,
+      collaboratorTeamUser,
     },
     teamUsers: {
       partnerTeam: partnerAdminTeamUser,
@@ -286,8 +310,9 @@ async function setup() {
       nonUser: teamUser3,
       deletedUser: deletedTeamUser,
       deletedPartnerUser: deletedPartnerTeamUser,
+      teamUserCollaborator,
     },
-    users: [user, user2, user3, user4, user5, user6],
+    users: [user, user2, user3, user4, user5, user6, user7],
   };
 }
 
@@ -295,90 +320,125 @@ test("ParticipantsDAO.findByDesign", async (t: Test) => {
   const state = await setup();
   const trx = await db.transaction();
 
+  const expectedParticipants = [
+    {
+      bidTaskTypes: [],
+      displayName: "Team user and collaborator",
+      id: state.teamUsers.teamUserCollaborator.id,
+      label: "Team user label",
+      role: "USER",
+      type: "teamUser",
+      userId: state.users[6].id,
+    },
+    {
+      type: MentionType.TEAM_USER,
+      id: state.teamUsers.admin.id,
+      displayName: "Team Admin",
+      role: "USER",
+      label: null,
+      userId: state.teamUsers.admin.userId,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.TEAM_USER,
+      id: state.teamUsers.viewer.id,
+      displayName: "Team Viewer",
+      role: "USER",
+      label: "Tech Designer",
+      userId: state.teamUsers.viewer.userId,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.TEAM_USER,
+      id: state.teamUsers.nonUser.id,
+      displayName: state.teamUsers.nonUser.userEmail,
+      role: null,
+      label: null,
+      userId: null,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.COLLABORATOR,
+      id: state.collaborators.designerCollaborator!.id,
+      displayName: "Designer",
+      role: "USER",
+      label: null,
+      userId: state.users[0].id,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.COLLABORATOR,
+      id: state.collaborators.designCollaborator.id,
+      displayName: "Design Collaborator",
+      role: "USER",
+      label: null,
+      userId: state.users[1].id,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.COLLABORATOR,
+      id: state.collaborators.collectionCollaborator.id,
+      displayName: "Collection Collaborator",
+      role: "USER",
+      label: null,
+      userId: state.users[2].id,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.COLLABORATOR,
+      id: state.collaborators.nonUserCollaborator.id,
+      displayName: state.collaborators.nonUserCollaborator.userEmail,
+      role: null,
+      label: null,
+      userId: null,
+      bidTaskTypes: [],
+    },
+    {
+      type: MentionType.TEAM_USER,
+      id: state.teamUsers.partnerTeam.id,
+      displayName: "Partner Team Admin",
+      role: "PARTNER",
+      label: null,
+      userId: state.teamUsers.partnerTeam.userId,
+      bidTaskTypes: ["Production", "Technical Design"],
+    },
+    {
+      type: MentionType.COLLABORATOR,
+      id: state.collaborators.partnerCollaborator.id,
+      displayName: "Quality Control Partner",
+      role: "PARTNER",
+      label: null,
+      userId: state.users[5].id,
+      bidTaskTypes: ["Quality Control"],
+    },
+    {
+      bidTaskTypes: [],
+      displayName: "Team user and collaborator",
+      id: state.collaborators.collaboratorTeamUser.id,
+      label: null,
+      role: "USER",
+      type: "collaborator",
+      userId: state.users[6].id,
+    },
+  ];
+
   try {
     const participants = await ParticipantsDAO.findByDesign(
       trx,
       state.design.id
     );
 
-    t.deepEquals(
-      participants,
-      [
-        {
-          type: MentionType.COLLABORATOR,
-          id: state.collaborators.designerCollaborator!.id,
-          displayName: "Designer",
-          role: "USER",
-          userId: state.users[0].id,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.COLLABORATOR,
-          id: state.collaborators.designCollaborator.id,
-          displayName: "Design Collaborator",
-          role: "USER",
-          userId: state.users[1].id,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.COLLABORATOR,
-          id: state.collaborators.collectionCollaborator.id,
-          displayName: "Collection Collaborator",
-          role: "USER",
-          userId: state.users[2].id,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.COLLABORATOR,
-          id: state.collaborators.nonUserCollaborator.id,
-          displayName: state.collaborators.nonUserCollaborator.userEmail,
-          role: null,
-          userId: null,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.TEAM_USER,
-          id: state.teamUsers.partnerTeam.id,
-          displayName: "Partner Team Admin",
-          role: "PARTNER",
-          userId: state.teamUsers.partnerTeam.userId,
-          bidTaskTypes: ["Production", "Technical Design"],
-        },
-        {
-          type: MentionType.COLLABORATOR,
-          id: state.collaborators.partnerCollaborator.id,
-          displayName: "Quality Control Partner",
-          role: "PARTNER",
-          userId: state.users[5].id,
-          bidTaskTypes: ["Quality Control"],
-        },
-        {
-          type: MentionType.TEAM_USER,
-          id: state.teamUsers.admin.id,
-          displayName: "Team Admin",
-          role: "USER",
-          userId: state.teamUsers.admin.userId,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.TEAM_USER,
-          id: state.teamUsers.viewer.id,
-          displayName: "Team Viewer",
-          role: "USER",
-          userId: state.teamUsers.viewer.userId,
-          bidTaskTypes: [],
-        },
-        {
-          type: MentionType.TEAM_USER,
-          id: state.teamUsers.nonUser.id,
-          displayName: state.teamUsers.nonUser.userEmail,
-          role: null,
-          userId: null,
-          bidTaskTypes: [],
-        },
-      ],
-      "returns all non-cancelled design and collection collaborators and team users"
-    );
+    for (let index = 0; index < participants.length; index += 1) {
+      t.deepEquals(
+        participants[index],
+        expectedParticipants[index],
+        `${index + 1}/${participants.length} (type: ${
+          participants[index].type
+        })  ${
+          participants[index].label || participants[index].displayName
+        } participant matches`
+      );
+    }
   } finally {
     await trx.rollback();
   }

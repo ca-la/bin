@@ -40,6 +40,7 @@ export async function findByDesign(
     .select([
       ktx.raw("? AS type", [MentionType.TEAM_USER]),
       "team_users.id AS id",
+      "team_users.label AS label",
       ktx.raw(
         `
 COALESCE(
@@ -95,6 +96,7 @@ COALESCE(
       ktx.raw("to_json(array(?)) AS bid_task_type_ids", [
         bidTaskTypeSubquery(ktx, designId),
       ]),
+      "team_users.label AS label",
     ])
     .leftJoin("team_users", "team_users.team_id", "collaborators.team_id")
     .leftJoin(
@@ -130,7 +132,7 @@ team_users.deleted_at IS NULL
     ]);
 
   return dataAdapter.fromDbArray([
-    ...throughCollaborators,
     ...throughCollectionTeam,
+    ...throughCollaborators,
   ]);
 }

@@ -8,6 +8,7 @@ export const participantSchema = z.object({
   id: z.string(),
   displayName: z.string(),
   role: userRoleSchema.nullable(),
+  label: z.string().nullable(),
   bidTaskTypes: z.array(z.string()),
   userId: z.string().nullable(),
 });
@@ -18,6 +19,7 @@ export const participantRowSchema = z.object({
   id: z.string(),
   display_name: z.string(),
   role: userRoleSchema.nullable(),
+  label: z.string().nullable(),
   bid_task_type_ids: z.array(bidTaskTypeIdSchema),
   user_id: z.string().nullable(),
 });

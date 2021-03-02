@@ -28,6 +28,7 @@ const collaboratorParticipant: Participant = {
   id: "a-collaborator-id",
   displayName: "A name",
   role: "USER",
+  label: null,
   userId: null,
   bidTaskTypes: [],
 };
