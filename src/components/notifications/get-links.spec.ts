@@ -1,6 +1,7 @@
 import { test, Test } from "../../test-helpers/fresh";
 import getLinks, { LinkType } from "./get-links";
 import { STUDIO_HOST } from "../../config";
+import { ComponentType } from "../components/domain-object";
 
 test("getLinks", async () => {
   test("Subscribe with collection ID", async (t: Test) => {
@@ -55,5 +56,42 @@ test("getLinks", async () => {
       "Deep link matches"
     );
     t.true(htmlLink.includes("Subscribe"), "HTML link contains title");
+  });
+
+  test("Design annotation link", async (t: Test) => {
+    const { deepLink, htmlLink } = getLinks({
+      type: LinkType.DesignAnnotation,
+      annotationId: "8b4344b0-3746-4e28-9060-0dedc4881f6a",
+      canvasId: "38eb438c-a4d4-438d-820f-1c8c5c5e24ec",
+      componentType: ComponentType.Sketch,
+      design: {
+        id: "a-design-id",
+        title: "Test design",
+      },
+    });
+
+    t.equal(
+      deepLink,
+      `${STUDIO_HOST}/designs/a-design-id?canvasId=38eb438c-a4d4-438d-820f-1c8c5c5e24ec&annotationId=8b4344b0-3746-4e28-9060-0dedc4881f6a`,
+      "Deep link matches"
+    );
+    t.true(htmlLink.includes("Test design"), "HTML link contains title");
+  });
+
+  test("Design link", async (t: Test) => {
+    const { deepLink, htmlLink } = getLinks({
+      type: LinkType.Design,
+      design: {
+        id: "a-design-id",
+        title: "Test design",
+      },
+    });
+
+    t.equal(
+      deepLink,
+      `${STUDIO_HOST}/designs/a-design-id`,
+      "Deep link matches"
+    );
+    t.true(htmlLink.includes("Test design"), "HTML link contains title");
   });
 });

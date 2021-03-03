@@ -103,7 +103,7 @@ export default function getLinks(linkBase: LinkBase): Links {
           ? "tab=materials&"
           : "";
       // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/designs?${tab}previewDesignId=${design.id}&canvasId=${canvasId}&annotationId=${annotationId}`;
+      const deepLink = `${STUDIO_HOST}/designs/${design.id}?${tab}canvasId=${canvasId}&annotationId=${annotationId}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -134,7 +134,7 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.Design: {
       const { design } = linkBase;
-      const deepLink = `${STUDIO_HOST}/designs?previewDesignId=${design.id}`;
+      const deepLink = `${STUDIO_HOST}/designs/${design.id}`;
       const title = normalizeTitle(design);
       return {
         deepLink,
