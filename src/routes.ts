@@ -38,7 +38,7 @@ import paymentMethodRoutes from "./components/payment-methods/routes";
 import planRoutes from "./components/plans/routes";
 import pricingCostInputs from "./components/pricing-cost-inputs/routes";
 import processRoutes from "./components/processes/routes";
-import productDesignRoutes = require("./components/product-designs/routes");
+import { routes as productDesignRoutes } from "./components/product-designs/routes";
 import productDesignVariantRoutes from "./components/product-design-variants/routes";
 import promoCodeRoutes from "./components/promo-codes/routes";
 import salesReportsRoutes from "./components/sales-reports/routes";

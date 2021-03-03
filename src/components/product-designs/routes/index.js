@@ -348,4 +348,5 @@ router.post(
   createFromTemplate
 );
 
-module.exports = router.routes();
+module.exports.routes = router.routes();
+module.exports.attachResources = attachResources;

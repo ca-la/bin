@@ -86,18 +86,22 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
 
   t.equal(response.status, 201);
   t.deepEqual(
-    omit(body, "createdAt", "id"),
+    omit(body, "createdAt", "id", "permissions", "owner.createdAt"),
     omit(
       {
         ...design,
         userId: user.id,
+        owner: user,
       },
       "createdAt",
-      "id"
+      "id",
+      "owner.createdAt"
     )
   );
 
   t.equal(creationSpy.callCount, 1);
+  t.equal(body.hasOwnProperty("permissions"), true, "permissions are attached");
+  t.equal(body.hasOwnProperty("owner"), true, "owner is attached");
   t.deepEqual(creationSpy.args[0][1], {
     isPhidias: false,
     newCreatorId: user.id,
@@ -148,23 +152,27 @@ test("POST /product-designs/templates/:templateDesignId?isPhidias=true returns a
 
   t.equal(response.status, 201);
   t.deepEqual(
-    omit(body, "createdAt", "id"),
+    omit(body, "createdAt", "id", "permissions", "owner.createdAt"),
     omit(
       {
         ...design,
         userId: user.id,
+        owner: user,
       },
       "createdAt",
-      "id"
+      "id",
+      "owner.createdAt"
     )
   );
+  t.equal(body.hasOwnProperty("permissions"), true, "permissions are attached");
+  t.equal(body.hasOwnProperty("owner"), true, "owner is attached");
 
   const resultRoot = await findRootNodesByDesign(body.id);
   t.equal(resultRoot.length, 1);
   t.notEqual(resultRoot[0].id, rootNode.id);
   t.notEqual(resultRoot[0].createdAt, rootNode.createdAt);
   t.deepEqual(
-    omit(resultRoot[0], "id", "createdAt"),
+    omit(resultRoot[0], "id", "createdAt", "permissions", "owner"),
     omit({ ...rootNode, createdBy: user.id }, "id", "createdAt"),
     "Returns a duplicated version of the root node"
   );

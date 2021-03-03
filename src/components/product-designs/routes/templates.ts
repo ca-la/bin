@@ -1,11 +1,13 @@
 import createFromDesignTemplate from "../../templates/services/create-from-design-template";
 import filterError = require("../../../services/filter-error");
 import ResourceNotFoundError from "../../../errors/resource-not-found";
+import { getDesignPermissions } from "../../../services/get-permissions";
+import { attachResources } from "./index";
 
 export function* createFromTemplate(
   this: TrxContext<AuthedContext>
 ): Iterator<any, any, any> {
-  const { userId, trx } = this.state;
+  const { userId, role, trx } = this.state;
   const { isPhidias, collectionId } = this.query;
   const { templateDesignId } = this.params;
   const templateDesign = yield createFromDesignTemplate(trx, {
@@ -19,6 +21,18 @@ export function* createFromTemplate(
     )
   );
 
-  this.body = templateDesign;
+  const designPermissions = yield getDesignPermissions({
+    designId: templateDesign.id,
+    sessionRole: role,
+    sessionUserId: userId,
+  });
+
+  const design = yield attachResources(
+    templateDesign,
+    userId,
+    designPermissions
+  );
+
+  this.body = design;
   this.status = 201;
 }
