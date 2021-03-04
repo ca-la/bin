@@ -52,6 +52,7 @@ import templateCategoryComponent from "./components/templates/categories";
 import timelineRoutes from "./components/timeline/routes";
 import userRoutes from "./components/users/routes";
 import userOnboardingRoutes from "./components/user-onboardings/routes";
+import userPageOnboardingRoutes from "./components/user-page-onboardings/routes";
 
 const router = new Router({
   prefix: "/:version(v1)?",
@@ -122,6 +123,7 @@ router.use("/templates/designs", templateDesignRoutes);
 router.use("/timelines", timelineRoutes);
 router.use("/users", userRoutes);
 router.use("/user-onboardings", userOnboardingRoutes);
+router.use("/user-page-onboardings", userPageOnboardingRoutes);
 
 if (approvalStepComponent.router) {
   plugComponentRouter(router, approvalStepComponent.router);
