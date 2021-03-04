@@ -60,16 +60,17 @@ const ADMIN_ALLOWED_DESIGN_PARAMS = [
   "showPricingBreakdown",
 ];
 
-async function attachDesignOwner(design) {
-  const owner = await UsersDAO.findById(design.userId);
+async function attachDesignOwner(design, trx) {
+  const owner = await UsersDAO.findById(design.userId, trx);
   design.setOwner(owner);
   return design;
 }
 
-async function attachRole(requestorId, design) {
+async function attachRole(requestorId, design, trx) {
   const requestorAsCollaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
-    requestorId
+    requestorId,
+    trx
   );
 
   if (!requestorAsCollaborator) {
@@ -80,12 +81,12 @@ async function attachRole(requestorId, design) {
   return design;
 }
 
-async function attachResources(design, requestorId, permissions) {
+async function attachResources({ trx, design, requestorId, permissions }) {
   requireValues({ design, permissions });
 
   let attached = design;
-  attached = await attachDesignOwner(attached);
-  attached = await attachRole(requestorId, attached);
+  attached = await attachDesignOwner(attached, trx);
+  attached = await attachRole(requestorId, attached, trx);
   attached.setPermissions(permissions);
   return attached;
 }
@@ -226,7 +227,7 @@ function* getAllDesigns() {
       sessionUserId: userId,
     });
     designsWithPermissions.push(
-      yield attachResources(design, userId, permissions)
+      yield attachResources({ design, requestorId: userId, permissions })
     );
   }
 
@@ -257,7 +258,11 @@ function* getDesign() {
         })
       : this.state.design;
 
-  const hydratedDesign = yield attachResources(design, userId, permissions);
+  const hydratedDesign = yield attachResources({
+    design,
+    requestorId: userId,
+    permissions,
+  });
   this.body = hydratedDesign;
   this.status = 200;
 }
@@ -282,7 +287,11 @@ function* create() {
     sessionUserId: userId,
   });
 
-  design = yield attachResources(design, userId, designPermissions);
+  design = yield attachResources({
+    design,
+    requestorId: userId,
+    permissions: designPermissions,
+  });
 
   this.body = design;
   this.status = 201;
@@ -301,7 +310,11 @@ function* updateDesign() {
   let updated = yield ProductDesignsDAO.update(designId, data).catch(
     filterError(InvalidDataError, (err) => this.throw(400, err))
   );
-  updated = yield attachResources(updated, userId, permissions);
+  updated = yield attachResources({
+    design: updated,
+    requestorId: userId,
+    permissions,
+  });
 
   this.body = updated;
   this.status = 200;

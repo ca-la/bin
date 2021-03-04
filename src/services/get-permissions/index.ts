@@ -168,7 +168,16 @@ export async function getDesignPermissions(options: {
   designId: string;
   sessionRole: string;
   sessionUserId: string;
+  trx?: Knex.Transaction;
 }): Promise<Permissions> {
+  if (options.trx) {
+    const designPermissionsAndRole = await getDesignPermissionsAndRole(
+      options.trx,
+      options
+    );
+    return { ...designPermissionsAndRole.permissions };
+  }
+
   return db.transaction(async (trx: Knex.Transaction) => {
     const designPermissionsAndRole = await getDesignPermissionsAndRole(
       trx,

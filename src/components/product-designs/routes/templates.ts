@@ -22,16 +22,18 @@ export function* createFromTemplate(
   );
 
   const designPermissions = yield getDesignPermissions({
+    trx,
     designId: templateDesign.id,
     sessionRole: role,
     sessionUserId: userId,
   });
 
-  const design = yield attachResources(
-    templateDesign,
-    userId,
-    designPermissions
-  );
+  const design = yield attachResources({
+    trx,
+    design: templateDesign,
+    requestorId: userId,
+    permissions: designPermissions,
+  });
 
   this.body = design;
   this.status = 201;
