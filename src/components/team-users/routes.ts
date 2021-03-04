@@ -47,10 +47,9 @@ function* create(
   >
 ) {
   const { body } = this.request;
-  const { trx, actorTeamRole, userId: actorUserId, role } = this.state;
+  const { trx, actorTeamRole, userId: actorUserId } = this.state;
 
-  const isAdmin = role === "ADMIN";
-  const created = yield createTeamUser(trx, actorTeamRole, body, isAdmin)
+  const created = yield createTeamUser(trx, actorTeamRole, body)
     .catch(
       filterError(UnauthorizedError, (error: UnauthorizedError) => {
         this.throw(403, error.message);
@@ -112,7 +111,6 @@ function* update(
     teamUserId,
     actorTeamRole,
     patch: body,
-    isAdmin: this.state.role === "ADMIN",
   }).catch(
     filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
       this.throw(402, error.message)

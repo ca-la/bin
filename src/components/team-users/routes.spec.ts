@@ -75,6 +75,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     areThereAvailableSeatsInTeamPlanStub: sandbox()
       .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
       .resolves(true),
+    isAvailableSeatLimitExceeded: sandbox()
+      .stub(FindTeamPlans, "isAvailableSeatLimitExceededInTeamPlan")
+      .resolves(false),
     addStripeSeatStub: sandbox()
       .stub(StripeService, "addSeatCharge")
       .resolves(),
@@ -254,49 +257,6 @@ test("POST /team-users: payment required when not enought seats in plan", async 
   t.deepEqual(
     body.message,
     "Your plan does not allow to add more team users, please upgrade"
-  );
-});
-
-test("POST /team-users: calls areThereAvailableSeatsInTeamPlan with isAdmin for CALA admin", async (t: Test) => {
-  const { areThereAvailableSeatsInTeamPlanStub, sessionsStub } = setup();
-
-  sessionsStub.resolves({
-    role: "USER",
-    userId: "a-user-id",
-  });
-  await post("/team-users", {
-    headers: authHeader("a-session-id"),
-    body: {
-      teamId: "a-team-id",
-      userEmail: "teammate@example.com",
-      role: "ADMIN",
-    },
-  });
-
-  t.deepEqual(
-    areThereAvailableSeatsInTeamPlanStub.args[0][3],
-    false,
-    "called with isAdmin false for request from regular user"
-  );
-
-  sessionsStub.resolves({
-    role: "ADMIN",
-    userId: "a-user-id",
-  });
-
-  await post("/team-users", {
-    headers: authHeader("a-session-id"),
-    body: {
-      teamId: "a-team-id",
-      userEmail: "teammate@example.com",
-      role: "ADMIN",
-    },
-  });
-
-  t.deepEqual(
-    areThereAvailableSeatsInTeamPlanStub.args[1][3],
-    true,
-    "called with isAdmin true for request from admin user"
   );
 });
 
@@ -498,6 +458,175 @@ test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
     removeStripeSeatStub.callCount,
     0,
     "does not call stripe remove seat function when changing between non-viewer roles"
+  );
+});
+
+test("PATCH /team-users/:id: invalid role change from paid (editor) to paid (admin) with exceded plan the limit", async (t: Test) => {
+  const {
+    updateStub,
+    findTeamUserByIdStub,
+    addStripeSeatStub,
+    removeStripeSeatStub,
+    isAvailableSeatLimitExceeded,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.EDITOR,
+  });
+  isAvailableSeatLimitExceeded.resolves(true);
+
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.ADMIN,
+    },
+  });
+
+  t.equal(response.status, 402, "Responds with payment required");
+  t.equal(updateStub.callCount, 0, "doesn't call update");
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "does not call stripe add seat function because of the assert"
+  );
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "does not call stripe remove seat function because of the assert"
+  );
+});
+
+test("PATCH /team-users/:id: role change from paid (editor) to paid (admin)", async (t: Test) => {
+  const {
+    updateStub,
+    findTeamUserByIdStub,
+    addStripeSeatStub,
+    removeStripeSeatStub,
+    isAvailableSeatLimitExceeded,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.EDITOR,
+  });
+  isAvailableSeatLimitExceeded.resolves(false);
+
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.ADMIN,
+    },
+  });
+
+  t.equal(response.status, 200, "Responds with success");
+  t.deepEqual(
+    updateStub.args[0].slice(1),
+    [tu1.id, { role: TeamUserRole.ADMIN }],
+    "Updates user with new role"
+  );
+  t.deepEqual(
+    findTeamUserByIdStub.args[0][1],
+    tu1.id,
+    "Finds updated team user by id"
+  );
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "does not call stripe add seat function when changing between non-viewer roles"
+  );
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "does not call stripe remove seat function when changing between non-viewer roles"
+  );
+});
+
+test("PATCH /team-users/:id: role change from paid (editor) to paid (admin) don't check for seats availability", async (t: Test) => {
+  const {
+    findTeamUserByIdStub,
+    areThereAvailableSeatsInTeamPlanStub,
+    isAvailableSeatLimitExceeded,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.EDITOR,
+  });
+
+  await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.ADMIN,
+    },
+  });
+
+  t.equal(
+    areThereAvailableSeatsInTeamPlanStub.callCount,
+    0,
+    "don't check seats availability"
+  );
+  t.equal(
+    isAvailableSeatLimitExceeded.callCount,
+    1,
+    "check limit exceeding as new role is not free"
+  );
+});
+
+test("PATCH /team-users/:id: role change from paid (editor) to free (viewer) don't check for seats availability", async (t: Test) => {
+  const {
+    findTeamUserByIdStub,
+    areThereAvailableSeatsInTeamPlanStub,
+    isAvailableSeatLimitExceeded,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.EDITOR,
+  });
+
+  await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.VIEWER,
+    },
+  });
+
+  t.equal(
+    areThereAvailableSeatsInTeamPlanStub.callCount,
+    0,
+    "don't check seats availability"
+  );
+  t.equal(
+    isAvailableSeatLimitExceeded.callCount,
+    0,
+    "don't check limit exceeding as new role is not free"
+  );
+});
+
+test("PATCH /team-users/:id: role change from free (viewer) to paid (admin) check for seats availability", async (t: Test) => {
+  const {
+    findTeamUserByIdStub,
+    areThereAvailableSeatsInTeamPlanStub,
+    isAvailableSeatLimitExceeded,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: Role.VIEWER,
+  });
+
+  await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: TeamUserRole.ADMIN,
+    },
+  });
+
+  t.equal(
+    areThereAvailableSeatsInTeamPlanStub.callCount,
+    1,
+    "check seats availability"
+  );
+  t.equal(
+    isAvailableSeatLimitExceeded.callCount,
+    0,
+    "don't check limit exceeding as we check for availability"
   );
 });
 

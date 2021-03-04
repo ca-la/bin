@@ -11,12 +11,16 @@ import {
   UnsavedTeamUser,
   teamUserUpdateRoleSchema,
   teamUserUpdateLabelSchema,
+  FREE_TEAM_USER_ROLES,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
-import { areThereAvailableSeatsInTeamPlan } from "../plans/find-team-plans";
+import {
+  areThereAvailableSeatsInTeamPlan,
+  isAvailableSeatLimitExceededInTeamPlan,
+} from "../plans/find-team-plans";
 import {
   addSeatCharge as addStripeSeatCharge,
   removeSeatCharge as removeStripeSeatCharge,
@@ -105,17 +109,15 @@ export function requireTeamRoles<StateT>(
   };
 }
 
-async function assertSeatAvailability(
+async function assertSeatLimitNotReached(
   trx: Knex.Transaction,
-  teamId: string,
-  isAdmin?: boolean
+  teamId: string
 ) {
   const nonViewerCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
   const areThereSeatsInTeamPlan = await areThereAvailableSeatsInTeamPlan(
     trx,
     teamId,
-    nonViewerCount,
-    isAdmin
+    nonViewerCount
   );
   if (!areThereSeatsInTeamPlan) {
     throw new InsufficientPlanError(
@@ -124,11 +126,27 @@ async function assertSeatAvailability(
   }
 }
 
+async function assertSeatLimitNotExceeded(
+  trx: Knex.Transaction,
+  teamId: string
+) {
+  const nonViewerCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
+  const isSeatLimitExceeded = await isAvailableSeatLimitExceededInTeamPlan(
+    trx,
+    teamId,
+    nonViewerCount
+  );
+  if (isSeatLimitExceeded) {
+    throw new InsufficientPlanError(
+      "Your plan does not allow to work with this amount of paid team users, please upgrade"
+    );
+  }
+}
+
 export async function createTeamUser(
   trx: Knex.Transaction,
   actorTeamRole: TeamUserRole,
-  unsavedTeamUser: UnsavedTeamUser,
-  isAdmin?: boolean
+  unsavedTeamUser: UnsavedTeamUser
 ) {
   const { role, teamId, userEmail } = unsavedTeamUser;
   if (!allowedRolesMap[actorTeamRole].includes(role)) {
@@ -139,8 +157,9 @@ export async function createTeamUser(
 
   await createTeamUserLock(trx, teamId);
 
-  if (role !== TeamUserRole.VIEWER) {
-    await assertSeatAvailability(trx, teamId, isAdmin);
+  const isRoleFree = FREE_TEAM_USER_ROLES.includes(role);
+  if (!isRoleFree) {
+    await assertSeatLimitNotReached(trx, teamId);
   }
 
   const user = await findUserByEmail(userEmail, trx);
@@ -176,14 +195,12 @@ export async function updateTeamUser(
     teamUserId,
     actorTeamRole,
     patch,
-    isAdmin,
   }: {
     before: TeamUser;
     teamId: string;
     teamUserId: string;
     actorTeamRole: TeamUserRole;
     patch: TeamUserUpdate;
-    isAdmin?: boolean;
   }
 ): Promise<TeamUser> {
   if (check(teamUserUpdateRoleSchema, patch)) {
@@ -194,9 +211,17 @@ export async function updateTeamUser(
       );
     }
 
-    if (role !== TeamUserRole.VIEWER) {
+    const isNewRoleFree = FREE_TEAM_USER_ROLES.includes(role);
+
+    if (!isNewRoleFree) {
       await createTeamUserLock(trx, teamId);
-      await assertSeatAvailability(trx, teamId, isAdmin);
+    }
+
+    const isPreviousRoleFree = FREE_TEAM_USER_ROLES.includes(before.role);
+    if (isPreviousRoleFree && !isNewRoleFree) {
+      await assertSeatLimitNotReached(trx, teamId);
+    } else if (!isNewRoleFree) {
+      await assertSeatLimitNotExceeded(trx, teamId);
     }
 
     if (role === TeamUserRole.OWNER) {
@@ -205,12 +230,12 @@ export async function updateTeamUser(
       await RawTeamUsersDAO.update(trx, teamUserId, { role });
     }
 
-    if (role !== TeamUserRole.VIEWER) {
-      if (before.role === TeamUserRole.VIEWER) {
+    if (!isNewRoleFree) {
+      if (isPreviousRoleFree) {
         await addStripeSeatCharge(trx, teamId);
       }
     } else {
-      if (before.role !== TeamUserRole.VIEWER) {
+      if (!isPreviousRoleFree) {
         await removeStripeSeatCharge(trx, teamId);
       }
     }

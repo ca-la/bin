@@ -2,6 +2,7 @@ import uuid from "node-uuid";
 
 import {
   areThereAvailableSeatsInTeamPlan,
+  isAvailableSeatLimitExceededInTeamPlan,
   attachTeamOptionData,
 } from "./find-team-plans";
 import { test, Test } from "../../test-helpers/fresh";
@@ -157,12 +158,20 @@ test("areThereAvailableSeatsInTeamPlan for plans with limited seat caps", async 
   }
 });
 
-test("areThereAvailableSeatsInTeamPlan allows to add new team user for CALA admin if there is no plans associated with the team", async (t: Test) => {
+test("isAvailableSeatLimitExceededInTeamPlan for plans with unlimited seat caps", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    const isAdmin = true;
-    const teamWithoutSubscription = await TeamsDAO.create(trx, {
+    const limitedPlan1 = await generatePlan(trx, {
+      title: "Team Plan",
+      maximumSeatsPerTeam: null,
+    });
+    const limitedPlan2 = await generatePlan(trx, {
+      title: "Team Plan",
+      maximumSeatsPerTeam: 5,
+    });
+
+    const team = await TeamsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
       id: uuid.v4(),
@@ -170,28 +179,151 @@ test("areThereAvailableSeatsInTeamPlan allows to add new team user for CALA admi
       type: TeamType.DESIGNER,
     });
 
-    const canAddTeamMemberAsAdmin = await areThereAvailableSeatsInTeamPlan(
-      trx,
-      teamWithoutSubscription.id,
-      15,
-      isAdmin
-    );
-    t.equal(
-      canAddTeamMemberAsAdmin,
-      true,
-      "Plan with 16 seat caps allows to add team user for CALA admin"
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: limitedPlan1.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
     );
 
-    const canAddTeamMemberAsRegularUser = await areThereAvailableSeatsInTeamPlan(
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: limitedPlan2.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const validUpdateTeamMember15 = await isAvailableSeatLimitExceededInTeamPlan(
       trx,
-      teamWithoutSubscription.id,
-      15,
-      false
+      team.id,
+      15
     );
     t.equal(
-      canAddTeamMemberAsRegularUser,
+      validUpdateTeamMember15,
       false,
-      "Plan with 16 seat caps allows to add team user for CALA admin"
+      "we are not exceeding because one of the plans has unlimited seat caps"
+    );
+
+    const validUpdateTeamMember4 = await isAvailableSeatLimitExceededInTeamPlan(
+      trx,
+      team.id,
+      4
+    );
+    t.equal(
+      validUpdateTeamMember4,
+      false,
+      "we are not exceeding because one of the plans has unlimited seat caps"
+    );
+
+    const validUpdateTeamMember2 = await isAvailableSeatLimitExceededInTeamPlan(
+      trx,
+      team.id,
+      2
+    );
+    t.equal(
+      validUpdateTeamMember2,
+      false,
+      "we are not exceeding because one of the plans has unlimited seat caps"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("isAvailableSeatLimitExceededInTeamPlan for plans with limited seat caps", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const limitedPlan1 = await generatePlan(trx, {
+      title: "Team Plan",
+      maximumSeatsPerTeam: 2,
+    });
+    const limitedPlan2 = await generatePlan(trx, {
+      title: "Team Plan",
+      maximumSeatsPerTeam: 5,
+    });
+
+    const team = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "A team",
+      type: TeamType.DESIGNER,
+    });
+
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: limitedPlan1.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: limitedPlan2.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const exceededUpdateTeamMember15 = await isAvailableSeatLimitExceededInTeamPlan(
+      trx,
+      team.id,
+      15
+    );
+    t.equal(
+      exceededUpdateTeamMember15,
+      true,
+      "we are exceeding the plan limit with maximumSeatsPerTeam 5"
+    );
+
+    const exceededUpdateTeamMember4 = await isAvailableSeatLimitExceededInTeamPlan(
+      trx,
+      team.id,
+      4
+    );
+    t.equal(
+      exceededUpdateTeamMember4,
+      false,
+      "we are not exceeding as we have plan with maximumSeatsPerTeam 5"
+    );
+
+    const validUpdateTeamMember2 = await isAvailableSeatLimitExceededInTeamPlan(
+      trx,
+      team.id,
+      2
+    );
+    t.equal(
+      validUpdateTeamMember2,
+      false,
+      "we are not exceeding as we have plan with with maximumSeatsPerTeam 5"
     );
   } finally {
     await trx.rollback();

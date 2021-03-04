@@ -9,6 +9,7 @@ import {
   TeamUser,
   TeamUserRow,
   Role as TeamUserRole,
+  FREE_TEAM_USER_ROLES,
 } from "./types";
 import adapter, { rawAdapter } from "./adapter";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -188,8 +189,6 @@ async function findByUserAndCollection(
 }
 
 async function countBilledUsers(ktx: Knex, teamId: string): Promise<number> {
-  const FREE_TEAM_USER_ROLES: TeamUserRole[] = [TeamUserRole.VIEWER];
-
   return dao.count(ktx, { teamId }, (query: Knex.QueryBuilder) =>
     query.whereNotIn("role", FREE_TEAM_USER_ROLES)
   );

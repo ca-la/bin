@@ -34,6 +34,8 @@ export const PARTNER_TEAM_BID_EDITORS: Role[] = [
   Role.EDITOR,
 ];
 
+export const FREE_TEAM_USER_ROLES: Role[] = [Role.VIEWER];
+
 export interface BaseTeamUserDb {
   id: string;
   teamId: string;
