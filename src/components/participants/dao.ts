@@ -132,7 +132,7 @@ team_users.deleted_at IS NULL
     ]);
 
   return dataAdapter.fromDbArray([
-    ...throughCollectionTeam,
     ...throughCollaborators,
+    ...throughCollectionTeam,
   ]);
 }
