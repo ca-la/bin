@@ -28,6 +28,10 @@ import { logServerError } from "../../services/logger";
 import { validatePassword } from "./services/validate-password";
 import { createTeamWithOwner } from "../teams/service";
 import { check } from "../../services/check";
+import {
+  redeemReferralCode,
+  InvalidReferralCodeError,
+} from "../../components/referral-redemptions/service";
 
 const router = new Router();
 
@@ -144,7 +148,7 @@ async function createWithoutTeam(
  * POST /users
  */
 function* createUser(this: PublicContext): Iterator<any, any, any> {
-  const { cohort, initialDesigns, promoCode } = this.query;
+  const { cohort, initialDesigns, promoCode, referralCode } = this.query;
   const { body } = this.request;
 
   if (!check(createRequestSchema, body)) {
@@ -154,19 +158,32 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
     );
   }
 
-  const user = yield db.transaction((trx: Knex.Transaction) => {
-    if (check(createWithTeamBodySchema, body)) {
-      return createWithTeam(trx, body).catch(
-        filterError(InvalidDataError, (err: InvalidDataError) =>
-          this.throw(400, err)
-        )
-      );
-    }
-    return createWithoutTeam(trx, body).catch(
+  const user = yield db.transaction(async (trx: Knex.Transaction) => {
+    const newUser = await (check<CreateWithTeamBody>(
+      createWithTeamBodySchema,
+      body
+    )
+      ? createWithTeam(trx, body)
+      : createWithoutTeam(trx, body)
+    ).catch(
       filterError(InvalidDataError, (err: InvalidDataError) =>
         this.throw(400, err)
       )
     );
+
+    if (referralCode) {
+      await redeemReferralCode({
+        trx,
+        referredUserId: newUser.id,
+        referralCode,
+      }).catch(
+        filterError(InvalidReferralCodeError, (err: InvalidReferralCodeError) =>
+          this.throw(400, err.message)
+        )
+      );
+    }
+
+    return newUser;
   });
 
   let targetCohort = null;

@@ -20,6 +20,7 @@ import { baseUser } from "./domain-object";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
 import * as TeamsService from "../teams/service";
 import * as SubscriptionService from "../subscriptions/create";
+import * as ReferralRedemptionsService from "../../components/referral-redemptions/service";
 
 const createBody = {
   email: "user@example.com",
@@ -506,6 +507,45 @@ test("POST /users?promoCode=X applies a code at registration", async (t: Test) =
 
   t.equal(response.status, 201, "status=201");
   t.equal(await CreditsDAO.getCreditAmount(newUser.id), 1239);
+});
+
+test("POST /users?referralCode=X applies a code at registration", async (t: Test) => {
+  stubUserDependencies();
+  const redeemStub = sandbox()
+    .stub(ReferralRedemptionsService, "redeemReferralCode")
+    .resolves();
+
+  const { user: referringUser } = await createUser({ withSession: false });
+
+  const [response, newUser] = await post(
+    `/users?referralCode=${referringUser.referralCode}`,
+    {
+      body: createBody,
+    }
+  );
+
+  t.equal(response.status, 201, "status=201");
+  t.equal(redeemStub.callCount, 1);
+  t.equal(
+    redeemStub.firstCall.args[0].referralCode,
+    referringUser.referralCode
+  );
+  t.equal(redeemStub.firstCall.args[0].referredUserId, newUser.id);
+});
+
+test("POST /users with an invalid referral code does not complete registration", async (t: Test) => {
+  stubUserDependencies();
+  const redeemStub = sandbox()
+    .stub(ReferralRedemptionsService, "redeemReferralCode")
+    .rejects(new ReferralRedemptionsService.InvalidReferralCodeError("no"));
+
+  const [response, body] = await post(`/users?referralCode=veryfakecode`, {
+    body: createBody,
+  });
+
+  t.equal(response.status, 400, "status=400");
+  t.equal(body.message, "no");
+  t.equal(redeemStub.callCount, 1);
 });
 
 test("GET /users?search with malformed RegExp throws 400", async (t: Test) => {

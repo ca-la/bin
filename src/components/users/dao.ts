@@ -235,10 +235,16 @@ export async function findByEmailWithPasswordHash(
   );
 }
 
-export async function findByReferralCode(referralCode: string): Promise<User> {
+export async function findByReferralCode(
+  referralCode: string
+): Promise<User | null> {
   const user = await db("users")
     .whereRaw("lower(referral_code) = ?", referralCode.toLowerCase())
     .then((users: UserRow[]) => first<UserRow>(users));
+
+  if (!user) {
+    return null;
+  }
 
   return validate<UserRow, User>(TABLE_NAME, isUserRow, dataAdapter, user);
 }
