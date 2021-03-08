@@ -11,6 +11,7 @@ import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generatePricingCostInput from "../../test-helpers/factories/pricing-cost-input";
 import db from "./../../services/db";
 import createDesign from "../../services/create-design";
+import { Process } from "../../domain-objects/pricing";
 
 test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => {
   await generatePricingValues();
@@ -240,6 +241,59 @@ test("findByDesignId can filter expired cost inputs", async (t: Test) => {
     { ...ci2, processes: [] },
     { ...ci1, processes: [] },
   ]);
+});
+
+test("findLatestForEachDesignId", async (t: Test) => {
+  await generatePricingValues();
+  const { user: u1 } = await createUser({ withSession: false });
+  const design1 = await createDesign({
+    productType: "PANTALOONES",
+    title: "I ripped my Pants",
+    userId: u1.id,
+  });
+  const design2 = await createDesign({
+    productType: "HOODIE",
+    title: "Hoodie",
+    userId: u1.id,
+  });
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  const processes: Process[] = [
+    {
+      name: "WASH",
+      complexity: "SIMPLE",
+    },
+    {
+      name: "EMBROIDERY",
+      complexity: "SMALL",
+    },
+  ];
+  const { pricingCostInput: ci11 } = await generatePricingCostInput({
+    designId: design1.id,
+    expiresAt: nextWeek,
+  });
+  await generatePricingCostInput({
+    designId: design1.id,
+    expiresAt: new Date("2019-04-20"),
+  });
+  await generatePricingCostInput({
+    designId: design2.id,
+    expiresAt: nextWeek,
+  });
+  const { pricingCostInput: ci22 } = await generatePricingCostInput({
+    designId: design2.id,
+    expiresAt: nextWeek,
+    processes,
+  });
+
+  const result = await PricingCostInputsDAO.findLatestForEachDesignId(db, [
+    design1.id,
+    design2.id,
+  ]);
+  t.deepEqual(result, {
+    [design1.id]: { ...ci11, processes: [] },
+    [design2.id]: { ...ci22, processes },
+  });
 });
 
 test("expireCostInputs can expire rows with the associated designs", async (t: Test) => {

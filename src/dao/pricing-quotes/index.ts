@@ -102,17 +102,12 @@ const normalizedPricingQuoteAdapter = new DataAdapter<
 
 export async function create(
   quote: Uninserted<PricingQuoteRow>,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<NormalizedPricingQuote> {
   const TABLE_NAME = "pricing_quotes";
-  const created = await db(TABLE_NAME)
+  const created = await ktx(TABLE_NAME)
     .insert(omit(quote, ["processes"]))
     .returning("*")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((rows: PricingQuoteRow[]) => first(rows));
 
   if (created && isPricingQuoteRow(created)) {
@@ -235,21 +230,14 @@ export async function findLatestValuesForRequest(
 
 export async function createPricingProcesses(
   processRows: Uninserted<PricingProcessQuoteRow>[],
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<PricingProcess[]> {
   const TABLE_NAME = "pricing_quote_processes";
   return Promise.all(
     processRows.map(
       async (
         processRow: Uninserted<PricingProcessQuoteRow>
-      ): Promise<PricingProcess> =>
-        db(TABLE_NAME)
-          .insert(processRow)
-          .modify((query: Knex.QueryBuilder) => {
-            if (trx) {
-              query.transacting(trx);
-            }
-          })
+      ): Promise<PricingProcess> => ktx(TABLE_NAME).insert(processRow)
     )
   );
 }
