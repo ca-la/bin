@@ -12,7 +12,23 @@ run() {
   source bin/lib/loadenv
   loadenv_local
 
-  npx nodemon -e '[t|j]s'  -w ./src --exec 'ts-node' ./src
+  nodemon_opts=""
+
+  while getopts "i" opt; do
+    case $opt in
+      i)
+        nodemon_opts="--inspect"
+        ;;
+      *)
+        echo 'Usage: bin/dev [-i]'
+        echo 'Options:'
+        echo ' -i Enable inspector'
+        exit 1
+        ;;
+      esac
+  done
+
+  npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' ./src
 }
 
 run "$@"
