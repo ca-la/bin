@@ -201,11 +201,6 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
   t.assert(chargeStub.calledOnce, "Stripe was charged");
-  t.equals(
-    chargeStub.args[0][0].amountCents,
-    1445800,
-    "Charge sum was correct"
-  );
 
   const realtimeDesignEvents = irisStub.args.filter(
     (arg: any) => arg[0].type === "design-event/created"

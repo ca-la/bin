@@ -24,18 +24,16 @@ import {
   UncomittedCostInput,
 } from "../../components/pricing-cost-inputs/types";
 import DesignEventsDAO from "../../components/design-events/dao";
+import PricingCostInputs from "../../components/pricing-cost-inputs/domain-object";
 import DataAdapter from "../data-adapter";
 import addMargin from "../add-margin";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
-import { ApprovalStepType } from "../../components/approval-steps/types";
+import ApprovalStep, {
+  ApprovalStepType,
+} from "../../components/approval-steps/types";
 import { templateDesignEvent } from "../../components/design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
 import ResourceNotFoundError from "../../errors/resource-not-found";
-import {
-  buildQuoteValuesPool,
-  getQuoteValuesFromPool,
-  QuoteValuesPool,
-} from "./quote-values";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -58,28 +56,6 @@ export async function generateUnsavedQuoteWithoutVersions(
   const quoteValues = await findLatestValuesForRequest(costInput, units);
 
   return calculateQuote(costInput, units, quoteValues);
-}
-
-export async function generatePricingQuoteFromPool(
-  ktx: Knex,
-  costInput: PricingCostInput,
-  pool: QuoteValuesPool,
-  units: number
-): Promise<PricingQuote> {
-  const quoteValues = getQuoteValuesFromPool(costInput, pool, units);
-
-  const pricingQuoteInputId = await getQuoteInput(quoteValues);
-  const { quote, processes } = calculateQuoteAndProcesses(
-    costInput,
-    units,
-    quoteValues,
-    pricingQuoteInputId
-  );
-  const createdQuote = await create(quote, ktx);
-
-  await createPricingProcesses(processes, ktx);
-
-  return Object.assign(createdQuote, { processes: quoteValues.processes });
 }
 
 export default async function generatePricingQuote(
@@ -317,35 +293,32 @@ export async function generateFromPayloadAndUser(
   trx: Knex.Transaction
 ): Promise<PricingQuote[]> {
   const quotes = [];
-  const designIds = quotePayloads.map((qp: CreateQuotePayload) => qp.designId);
-  const costInputsByDesignId = await PricingCostInputsDAO.findLatestForEachDesignId(
-    trx,
-    designIds
-  );
-  const pool = await buildQuoteValuesPool(
-    trx,
-    quotePayloads,
-    costInputsByDesignId
-  );
-
   for (const payload of quotePayloads) {
     const { designId, units } = payload;
+
     const unitsNumber = Number(units);
 
-    const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
-      designId,
-      type: ApprovalStepType.CHECKOUT,
-    });
+    const steps = await ApprovalStepsDAO.findByDesign(trx, designId);
+    const checkoutStep = steps.find(
+      (step: ApprovalStep) => step.type === ApprovalStepType.CHECKOUT
+    );
+
     if (!checkoutStep) {
       throw new Error("Could not find checkout step for collection submission");
     }
 
-    const latestInput = costInputsByDesignId[designId];
-    if (!latestInput) {
-      throw new Error(
-        `No costing inputs associated with the design #${designId}`
-      );
+    const costInputs: PricingCostInputs[] = await PricingCostInputsDAO.findByDesignId(
+      {
+        designId,
+        trx,
+      }
+    );
+
+    if (costInputs.length === 0) {
+      throw new Error("No costing inputs associated with design ID");
     }
+
+    const latestInput = costInputs[0];
 
     if (unitsNumber < latestInput.minimumOrderQuantity) {
       throw new InvalidDataError(
@@ -353,12 +326,7 @@ export async function generateFromPayloadAndUser(
       );
     }
 
-    const quote = await generatePricingQuoteFromPool(
-      trx,
-      latestInput,
-      pool,
-      unitsNumber
-    );
+    const quote = await generatePricingQuote(latestInput, unitsNumber, trx);
     quotes.push(quote);
 
     await DesignEventsDAO.create(trx, {
