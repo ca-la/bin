@@ -33,6 +33,26 @@ const collaboratorParticipant: Participant = {
   bidTaskTypes: [],
 };
 
+const collaboratorParticipant2: Participant = {
+  type: MentionType.COLLABORATOR,
+  id: "a-collaborator-id",
+  displayName: "A name",
+  role: "USER",
+  label: null,
+  userId: "a-user-id",
+  bidTaskTypes: [],
+};
+
+const teamUserParticipant: Participant = {
+  type: MentionType.TEAM_USER,
+  id: "a-collaborator-id",
+  displayName: "A team user name",
+  role: "USER",
+  label: "Team User label",
+  userId: "a-user-id",
+  bidTaskTypes: [],
+};
+
 test("GET /participants?designId", async (t: Test) => {
   const sessionStub = sandbox()
     .stub(SessionsDAO, "findById")
@@ -44,7 +64,11 @@ test("GET /participants?designId", async (t: Test) => {
   sandbox().stub(ProductDesignsDAO, "findById").resolves({});
   sandbox()
     .stub(ParticipantsDAO, "findByDesign")
-    .resolves([collaboratorParticipant]);
+    .resolves([
+      collaboratorParticipant,
+      collaboratorParticipant2,
+      teamUserParticipant,
+    ]);
 
   const [response, body] = await get("/participants?designId=a-design-id", {
     headers: authHeader("a-session-id"),
@@ -53,7 +77,11 @@ test("GET /participants?designId", async (t: Test) => {
   t.equal(response.status, 200, "valid request / returns successfully");
   t.deepEqual(
     body,
-    [collaboratorParticipant],
+    [
+      collaboratorParticipant,
+      { ...collaboratorParticipant2, label: teamUserParticipant.label },
+      teamUserParticipant,
+    ],
     "valid request / returns DAO output"
   );
 

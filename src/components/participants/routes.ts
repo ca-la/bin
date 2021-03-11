@@ -1,6 +1,7 @@
 import db from "../../services/db";
 import requireAuth = require("../../middleware/require-auth");
 import * as ParticipantsDAO from "./dao";
+import syncTeamUsersLabelWithCollaborators from "./sync-team-users-label-with-collaborators";
 import { canAccessDesignInQuery } from "../../middleware/can-access-design";
 
 function* getParticipants(
@@ -8,7 +9,9 @@ function* getParticipants(
 ) {
   const { designId } = this.query;
 
-  this.body = yield ParticipantsDAO.findByDesign(db, designId);
+  const participants = yield ParticipantsDAO.findByDesign(db, designId);
+
+  this.body = syncTeamUsersLabelWithCollaborators(participants);
   this.status = 200;
 }
 
