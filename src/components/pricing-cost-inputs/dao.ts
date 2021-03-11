@@ -168,6 +168,36 @@ export async function findByDesignId(options: {
   return validateEvery(TABLE_NAME, isPricingCostInputRow, dataAdapter, inputs);
 }
 
+export async function findLatestForEachDesignId(
+  ktx: Knex,
+  designIds: string[]
+): Promise<Record<string, PricingCostInput>> {
+  const withoutProcesses: WithoutProcesses[] = await ktx(TABLE_NAME)
+    .distinctOn("design_id")
+    .whereIn("design_id", designIds)
+    .andWhereRaw("(expires_at IS null OR expires_at > now())")
+    .orderBy(["design_id", { column: "created_at", order: "DESC" }]);
+
+  const inputs: PricingCostInputRow[] = [];
+  for (const costInput of withoutProcesses) {
+    const input = await attachProcesses(costInput);
+    inputs.push(input);
+  }
+
+  const validated = validateEvery(
+    TABLE_NAME,
+    isPricingCostInputRow,
+    dataAdapter,
+    inputs
+  );
+  const byDesignId: Record<string, PricingCostInput> = {};
+  for (const pricingCostInput of validated) {
+    byDesignId[pricingCostInput.designId] = pricingCostInput;
+  }
+
+  return byDesignId;
+}
+
 /**
  * Sets the expiration date for all cost inputs with the given design ids.
  */

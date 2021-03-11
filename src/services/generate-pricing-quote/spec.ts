@@ -21,6 +21,7 @@ import { PricingCostInput } from "../../components/pricing-cost-inputs/types";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import { ApprovalStepType } from "../../published-types";
 import InvalidDataError from "../../errors/invalid-data";
+import * as QuoteValuesService from "../../services/generate-pricing-quote/quote-values";
 
 const quoteRequestOne: PricingCostInput = {
   createdAt: new Date(),
@@ -583,21 +584,28 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
 });
 
 test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {
+  const designId = "a-design-id";
+  sandbox().stub(ApprovalStepsDAO, "findOne").resolves({
+    id: "a-checkout-step-id",
+    type: ApprovalStepType.CHECKOUT,
+  });
   sandbox()
-    .stub(ApprovalStepsDAO, "findByDesign")
-    .resolves([
-      {
-        id: "a-checkout-step-id",
-        type: ApprovalStepType.CHECKOUT,
-      },
-    ]);
-  sandbox()
-    .stub(PricingCostInputsDAO, "findByDesignId")
-    .resolves([
-      {
+    .stub(PricingCostInputsDAO, "findLatestForEachDesignId")
+    .resolves({
+      [designId]: {
         minimumOrderQuantity: 100,
+        processes: [],
       },
-    ]);
+    });
+  sandbox().stub(QuoteValuesService, "buildQuoteValuesPool").resolves({
+    constants: [],
+    materials: [],
+    productTypes: [],
+    processes: [],
+    processTimelines: [],
+    margins: [],
+    careLabels: [],
+  });
   const createStub = sandbox().stub(PricingQuotesDAO, "create").resolves({});
 
   const trx = await db.transaction();
@@ -606,7 +614,7 @@ test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {
     await generateFromPayloadAndUser(
       [
         {
-          designId: "a-design-id",
+          designId,
           units: 10,
         },
       ],

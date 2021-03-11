@@ -155,7 +155,6 @@ export default async function payInvoiceWithNewPaymentMethod(
     timeLog("payInvoiceWithNewPaymentMethod", "designNames");
     const collectionName = collection.title || "Untitled";
     const totalCents = getQuoteTotal(quotes);
-
     const invoice = await createInvoice(
       designNames,
       collectionName,
