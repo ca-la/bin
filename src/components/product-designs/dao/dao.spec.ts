@@ -1805,6 +1805,45 @@ test("findPaidDesigns", async (t: Test) => {
   t.equal(limitOffset[0].id, design1.id, "Offsets results");
 });
 
+test("findPaidDesigns allows filtering by product type", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design0 = await generateDesign({ userId: user.id });
+  const design1 = await generateDesign({ userId: user.id });
+
+  const { quote: quote0 } = await generateBid({
+    designId: design0.id,
+    userId: user.id,
+  });
+  const { quote: quote1 } = await generateBid({
+    designId: design1.id,
+    userId: user.id,
+  });
+
+  await generateDesignEvent({
+    createdAt: new Date("2019-04-20"),
+    quoteId: quote0.id,
+    type: "COMMIT_QUOTE",
+  });
+
+  await generateDesignEvent({
+    createdAt: new Date("2019-04-19"),
+    quoteId: quote1.id,
+    type: "COMMIT_QUOTE",
+  });
+
+  const paid = await db.transaction((trx: Knex.Transaction) =>
+    findPaidDesigns(trx, { productType: "TEESHIRT" })
+  );
+
+  t.equal(paid.length, 2, "Returns paid designs");
+
+  const empty = await db.transaction((trx: Knex.Transaction) =>
+    findPaidDesigns(trx, { productType: "DRESS" })
+  );
+
+  t.equal(empty.length, 0, "Does not find non-matching products");
+});
+
 test("findMinimalByIds", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design0 = await generateDesign({

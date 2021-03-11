@@ -21,6 +21,7 @@ import {
   ProductDesignRowWithMeta,
   withMetaDataAdapter,
 } from "../domain-objects/with-meta";
+import { ProductType } from "../../../domain-objects/pricing";
 import { Role } from "../../users/types";
 import attachBidId from "./attach-bid-id";
 import {
@@ -563,6 +564,7 @@ export async function findPaidDesigns(
   options?: {
     offset?: number;
     limit?: number;
+    productType?: ProductType;
   }
 ): Promise<ProductDesign[]> {
   const rows = await queryWithCollectionMeta(trx)
@@ -580,7 +582,14 @@ export async function findPaidDesigns(
     )
     .groupBy(["product_designs.id", "events.created_at"])
     .orderBy("events.created_at", "desc")
-    .modify(limitOrOffset(options?.limit, options?.offset));
+    .modify(limitOrOffset(options?.limit, options?.offset))
+    .modify((query: Knex.QueryBuilder) => {
+      if (options?.productType) {
+        query.andWhere({
+          "pricing_quotes.product_type": options.productType,
+        });
+      }
+    });
 
   const hydrated = rows.map((row: ProductDesignRow) => new ProductDesign(row));
 

@@ -31,7 +31,7 @@ test("GET /product-designs?paid=true lists paid designs", async (t: Test) => {
   });
 
   const [response2, body2] = await get(
-    `/product-designs?paid=true&limit=5&offset=2`,
+    `/product-designs?paid=true&limit=5&offset=2&productType=TEESHIRT`,
     {
       headers: authHeader("a-session-id"),
     }
@@ -45,5 +45,6 @@ test("GET /product-designs?paid=true lists paid designs", async (t: Test) => {
   t.deepEqual(findStub.lastCall.args[1], {
     limit: 5,
     offset: 2,
+    productType: "TEESHIRT",
   });
 });
