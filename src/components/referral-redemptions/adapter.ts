@@ -9,11 +9,13 @@ export default buildAdapter<ReferralRedemption, ReferralRedemptionRow>({
     createdAt: row.created_at,
     referringUserId: row.referring_user_id,
     referredUserId: row.referred_user_id,
+    referringUserCheckoutCreditId: row.referring_user_checkout_credit_id,
   }),
   decodeTransformer: (data: ReferralRedemption): ReferralRedemptionRow => ({
     id: data.id,
     created_at: data.createdAt,
     referring_user_id: data.referringUserId,
     referred_user_id: data.referredUserId,
+    referring_user_checkout_credit_id: data.referringUserCheckoutCreditId,
   }),
 });

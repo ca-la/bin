@@ -14,11 +14,11 @@ interface CreditOptions {
 }
 
 interface Row {
-  created_at: string;
+  created_at: Date;
   created_by: string;
   credit_delta_cents: number;
   description: string;
-  expires_at: string | null;
+  expires_at: Date | null;
   id: string;
   given_to: string;
 }
@@ -38,12 +38,12 @@ function validateAmount(amountCents: number): void {
 export async function addCredit(
   options: AddCreditOptions,
   trx?: Knex.Transaction
-): Promise<void> {
+): Promise<string> {
   const { amountCents } = options;
 
   validateAmount(amountCents);
 
-  await db(TABLE_NAME)
+  const transaction = await db<Row>(TABLE_NAME)
     .insert(
       {
         created_at: new Date(),
@@ -61,6 +61,8 @@ export async function addCredit(
         query.transacting(trx);
       }
     });
+
+  return transaction[0].id;
 }
 
 export async function removeCredit(

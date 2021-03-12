@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o noglob
+
+# Grants referral credits to those who've referred someone who's now checked out
+# Usage: bin/grant_referral_credits <local|built>
+
+run() {
+  source bin/lib/loadenv
+
+  host=${1:-""}
+
+  case "$host" in
+    local)
+      loadenv_local
+      npx ts-node src/workers/grant-referral-credits/index.ts
+      ;;
+    built)
+      node dist/workers/grant-referral-credits/index.js
+      ;;
+    *)
+      echo 'Usage: bin/grant_referral_credits <local|built>'
+      exit 1
+      ;;
+  esac
+}
+
+run "$@"

@@ -36,5 +36,6 @@ export async function redeemReferralCode({
     createdAt: new Date(),
     referredUserId,
     referringUserId: referringUser.id,
+    referringUserCheckoutCreditId: null,
   });
 }

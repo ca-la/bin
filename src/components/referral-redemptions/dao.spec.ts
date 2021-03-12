@@ -15,6 +15,7 @@ test("ReferralRedemption DAO supports creation/retrieval", async (t: tape.Test) 
     createdAt: new Date(),
     referringUserId: referrer.id,
     referredUserId: referred.id,
+    referringUserCheckoutCreditId: null,
   };
 
   const trx = await db.transaction();
