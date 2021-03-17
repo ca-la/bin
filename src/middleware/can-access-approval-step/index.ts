@@ -7,7 +7,7 @@ import { findDesignByApprovalStepId } from "../../components/product-designs/dao
  */
 export function* canAccessApprovalStepInParam(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: any
 ): any {
   const { role, userId } = this.state;
   const { approvalStepId } = this.params;

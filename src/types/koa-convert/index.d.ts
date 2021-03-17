@@ -1,17 +1,24 @@
 declare module "koa-convert" {
-  import Application, { Middleware } from "koa";
+  import Koa from "koa";
 
-  type KoaMiddleware = (
-    context: Application.Context,
-    next: () => Promise<any>
-  ) => Generator;
+  export type V1Middleware<C extends Koa.Context = any> = (
+    this: C,
+    next: () => V1Middleware<C>
+  ) => Iterator<any>;
 
-  function convert(mw: KoaMiddleware): Middleware;
+  export type V2Middleware<C extends Koa.Context = any> = (
+    ctx: C,
+    next: any
+  ) => Promise<any>;
+
+  function convert<C extends Koa.Context>(mw: V1Middleware<C>): V2Middleware<C>;
 
   namespace convert {
-    function compose(mw: KoaMiddleware | KoaMiddleware[]): Middleware;
-    function back(mw: Middleware): KoaMiddleware;
+    function compose<C extends Koa.Context>(
+      mw: V1Middleware<C> | V1Middleware<C>[]
+    ): V1Middleware<C>;
+    function back<C extends Koa.Context>(mw: V2Middleware<C>): V1Middleware<C>;
   }
 
-  export = convert;
+  export default convert;
 }

@@ -1,4 +1,4 @@
-import { Middleware } from "koa-router";
+import { V1Middleware } from "koa-convert";
 import { Transaction } from "knex";
 import { difference, omit, pick } from "lodash";
 import { CalaRouter, CalaRoutes, CalaDao } from "./types";
@@ -34,7 +34,7 @@ interface RouterOptions<Model> {
   routeOptions?: Partial<
     {
       [key in StandardRoute]: {
-        middleware: Middleware[];
+        middleware: V1Middleware[];
       } & SpecificOptions<Model>[key];
     }
   >;

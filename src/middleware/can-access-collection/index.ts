@@ -28,7 +28,7 @@ export function* attachCollectionAndPermissions(
 
 export function* canAccessCollectionInParam(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: () => any
 ): Iterator<any, any, any> {
   const { collectionId } = this.params;
   yield attachCollectionAndPermissions.call(this, collectionId);
@@ -45,7 +45,7 @@ export function* canAccessCollectionInParam(
 
 export function* canAccessCollectionInRequestBody(
   this: AuthedContext<{ collectionId: string }, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: () => any
 ): Iterator<any, any, any> {
   const { collectionId } = this.request.body;
   yield attachCollectionAndPermissions.call(this, collectionId);
@@ -62,7 +62,7 @@ export function* canAccessCollectionInRequestBody(
 
 export function* canDeleteCollection(
   this: AuthedContext<{}, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { permissions } = this.state;
   if (!permissions) {
@@ -84,8 +84,8 @@ export const canMoveCollectionDesigns = canDeleteCollection;
 
 export function* canEditCollection(
   this: AuthedContext<{}, PermissionsKoaState>,
-  next: () => Promise<any>
-): any {
+  next: () => any
+): Iterator<any> {
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(
@@ -106,7 +106,7 @@ export function* canSubmitCollection(
   this: TrxContext<
     AuthedContext<{}, PermissionsKoaState & CollectionsKoaState>
   >,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { permissions, collection, trx, role } = this.state;
 
@@ -150,7 +150,7 @@ export function* canCheckOutCollection(
   this: TrxContext<
     AuthedContext<{}, PermissionsKoaState & CollectionsKoaState>
   >,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { permissions, collection, trx, role } = this.state;
 

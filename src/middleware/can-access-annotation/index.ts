@@ -7,7 +7,7 @@ import { findDesignByAnnotationId } from "../../components/product-designs/dao/d
  */
 export function* canAccessAnnotationInParams(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { role, userId } = this.state;
   const { annotationId } = this.params;

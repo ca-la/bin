@@ -69,7 +69,7 @@ export function requireDesignIdBy<ContextBodyType, StateType = {}>(
 ): any {
   return function* (
     this: AuthedContext<ContextBodyType, StateType & { designId: string }>,
-    next: () => Promise<any>
+    next: () => any
   ): Generator<unknown, void, string> {
     const designId: string = yield designIdFetcher
       .call(this)
@@ -84,7 +84,7 @@ export function requireDesignIdBy<ContextBodyType, StateType = {}>(
 
 export function* canAccessDesignsInQuery(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { designIds } = this.query;
   if (!designIds) {
@@ -105,7 +105,7 @@ export function* canAccessDesignsInQuery(
 
 export function* canAccessDesignInState(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   this.state.design = yield findById(this.state.designId);
 
@@ -137,10 +137,7 @@ export const canAccessDesignInQuery = compose([
   canAccessDesignInState,
 ]);
 
-export function* canCommentOnDesign(
-  this: Koa.Context,
-  next: () => Promise<any>
-): any {
+export function* canCommentOnDesign(this: Koa.Context, next: () => any): any {
   if (!this.state.permissions) {
     throw new Error("canCommentOnDesign must be chained from canAccessDesign");
   }
@@ -152,10 +149,7 @@ export function* canCommentOnDesign(
   yield next;
 }
 
-export function* canDeleteDesign(
-  this: Koa.Context,
-  next: () => Promise<any>
-): any {
+export function* canDeleteDesign(this: Koa.Context, next: () => any): any {
   if (!this.state.permissions) {
     throw new Error("canDeleteDesign must be chained from canAccessDesign");
   }
@@ -167,10 +161,7 @@ export function* canDeleteDesign(
   yield next;
 }
 
-export function* canDeleteDesigns(
-  this: Koa.Context,
-  next: () => Promise<any>
-): any {
+export function* canDeleteDesigns(this: Koa.Context, next: () => any): any {
   if (!this.state.permissions) {
     throw new Error("canDeleteDesigns must be chained from canAccessDesigns");
   }
@@ -182,10 +173,7 @@ export function* canDeleteDesigns(
   yield next;
 }
 
-export function* canEditDesign(
-  this: Koa.Context,
-  next: () => Promise<any>
-): any {
+export function* canEditDesign(this: Koa.Context, next: () => any): any {
   if (!this.state.permissions) {
     throw new Error("canEditDesign must be chained from canAccessDesign");
   }

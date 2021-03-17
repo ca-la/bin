@@ -183,7 +183,7 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
 
 function* checkUpdateRights(
   this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
-  next: () => Promise<any>
+  next: any
 ) {
   if (this.request.body.hasOwnProperty("type")) {
     return yield requireAdmin.call(this, next);

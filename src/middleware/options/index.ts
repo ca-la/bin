@@ -1,6 +1,6 @@
-"use strict";
+import Koa from "koa";
 
-function* options(next) {
+export default function* options(this: Koa.Context, next: any): Iterator<any> {
   if (this.method !== "OPTIONS") {
     return yield next;
   }
@@ -9,5 +9,3 @@ function* options(next) {
   this.body = null;
   return yield next;
 }
-
-module.exports = options;

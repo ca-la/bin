@@ -268,6 +268,56 @@ test("POST /shipment-trackings", async (t: Test) => {
   t.equal(stubs.notificationsSendStub.callCount, 1, "creates a notification");
 });
 
+test("POST /shipment-trackings with no collaborator", async (t: Test) => {
+  const now = new Date();
+  sandbox().useFakeTimers(now);
+  const stubs = setup();
+  stubs.findCollaboratorStub.resolves(null);
+
+  const tracking: Unsaved<ShipmentTracking> = {
+    courier: "usps",
+    trackingId: "a-tracking-id",
+    description: null,
+    approvalStepId: "an-approval-step-id",
+    deliveryDate: now,
+    expectedDelivery: now,
+  };
+
+  stubs.createStub.callsFake(
+    async (_: Knex.Transaction, data: Unsaved<ShipmentTracking>) => ({
+      ...data,
+      id: "a-shipment-tracking-id",
+      createdAt: now,
+    })
+  );
+
+  stubs.aftershipTrackingStub.resolves({
+    tracking: {
+      tracking_number: "a-shipment-tracking-id",
+      id: "an-aftership-tracking-id",
+      tag: "Delivered",
+      expected_delivery: now.toISOString(),
+      shipment_delivery_date: now.toISOString(),
+      checkpoints: [
+        {
+          created_at: "2012-12-22T00:00:00Z",
+          slug: "usps",
+          tag: "Delivered",
+          subtag: "Delivered_001",
+          checkpoint_time: "2012-12-23T00:00",
+        },
+      ],
+    },
+  });
+
+  const [response] = await post("/shipment-trackings", {
+    body: tracking,
+    headers: authHeader("a session token"),
+  });
+
+  t.equal(response.status, 201, "succesful creation");
+});
+
 test("POST /shipment-trackings/updates", async (t: Test) => {
   sandbox()
     .stub(AftershipService, "parseWebhookData")

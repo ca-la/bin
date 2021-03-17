@@ -3,10 +3,10 @@ import { check } from "../../services/check";
 
 export function typeGuard<T>(
   guardFn: (data: any) => data is T
-): (this: AuthedContext, next: () => Promise<any>) => Iterator<any, any, any> {
+): (this: AuthedContext, next: any) => Iterator<any, any, any> {
   function* middleware(
     this: AuthedContext,
-    next: () => Promise<any>
+    next: any
   ): Iterator<any, any, any> {
     const { body } = this.request;
 
@@ -22,10 +22,10 @@ export function typeGuard<T>(
 
 export function typeGuardFromSchema<BodyType>(
   schema: ZodSchema<BodyType>
-): (this: AuthedContext, next: () => Promise<any>) => Iterator<any, any, any> {
+): (this: AuthedContext, next: any) => Iterator<any, any, any> {
   function* middleware(
     this: AuthedContext,
-    next: () => Promise<any>
+    next: any
   ): Iterator<any, any, any> {
     const { body } = this.request;
 

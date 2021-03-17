@@ -12,8 +12,9 @@ import {
 } from "../../services/commerce";
 
 import { canAccessDesignInParam } from "../../middleware/can-access-design";
+import { V2Middleware } from "koa-convert";
 
-const proxy = Proxy({
+const proxy = (Proxy({
   host: COMMERCE_HOST,
   map(path: string) {
     return path.replace(/^\/commerce/, "/api");
@@ -22,11 +23,11 @@ const proxy = Proxy({
     opts.headers["Authorization"] = `Token ${COMMERCE_TOKEN}`;
     return opts;
   },
-});
+}) as unknown) as V2Middleware;
 
 const legacyProxy = function* (
   this: AuthedContext,
-  next: () => Promise<any>
+  next: any
 ): Iterator<any, any, any> {
   yield proxy(this, next);
 };

@@ -87,7 +87,7 @@ export function* attachCollaboratorAndPermissions(
 
 export function* canAccessViaQueryParameters(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: any
 ): Iterator<any, any, any> {
   const { collectionId, designId, designIds } = this.query;
   const { role, userId } = this.state;
@@ -132,7 +132,7 @@ export function* canAccessViaQueryParameters(
 
 export function* canAccessViaDesignOrCollectionInRequestBody(
   this: AuthedContext<CollaboratorRequest, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: any
 ): Iterator<any, any, any> {
   if (!isCollaboratorRequest(this.request.body)) {
     this.throw(
@@ -168,7 +168,7 @@ export function* canAccessViaDesignOrCollectionInRequestBody(
 
 export function* canAccessCollaboratorInParam(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: any
 ): Iterator<any, any, any> {
   const { collaboratorId } = this.params;
   yield attachCollaboratorAndPermissions.call(this, collaboratorId);
@@ -183,10 +183,7 @@ export function* canAccessCollaboratorInParam(
   yield next;
 }
 
-export function* canEditCollaborators(
-  this: Koa.Context,
-  next: () => Promise<any>
-): any {
+export function* canEditCollaborators(this: Koa.Context, next: any): any {
   const { permissions } = this.state;
   if (!permissions) {
     throw new Error(

@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import uuid from "node-uuid";
 import db from "../../services/db";
+import convert from "koa-convert";
 
 import * as PartnerPayoutAccounts from "../../dao/partner-payout-accounts";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
@@ -44,29 +45,25 @@ function* postCreateLoginLink(this: AuthedContext) {
   this.status = 201;
 }
 
-function* createAccount(this: AuthedContext) {
-  const { stripeAuthorizationCode } = this.request.body as any;
-  this.assert(
-    stripeAuthorizationCode,
-    400,
-    "Missing Stripe authorization code"
-  );
+async function createAccount(ctx: AuthedContext) {
+  const { stripeAuthorizationCode } = ctx.request.body as any;
+  ctx.assert(stripeAuthorizationCode, 400, "Missing Stripe authorization code");
 
-  const connectAccount = yield createConnectAccount(stripeAuthorizationCode);
+  const connectAccount = await createConnectAccount(stripeAuthorizationCode);
 
-  const account = yield PartnerPayoutAccounts.create({
+  const account = await PartnerPayoutAccounts.create({
     id: uuid.v4(),
     createdAt: new Date(),
     deletedAt: null,
-    userId: this.state.userId,
+    userId: ctx.state.userId,
     stripeAccessToken: connectAccount.access_token,
     stripeRefreshToken: connectAccount.refresh_token,
     stripePublishableKey: connectAccount.stripe_publishable_key,
     stripeUserId: connectAccount.stripe_user_id,
   });
 
-  this.body = account;
-  this.status = 200;
+  ctx.body = account;
+  ctx.status = 200;
 }
 
 function* getPayoutBalances(this: AuthedContext) {
@@ -80,7 +77,7 @@ function* getPayoutBalances(this: AuthedContext) {
 
 router.get("/", requireAuth, getAccounts);
 router.post("/:accountId/login-link", requireAuth, postCreateLoginLink);
-router.post("/", requireAuth, createAccount);
+router.post("/", requireAuth, convert.back(createAccount));
 router.get("/balances", requireAuth, requireAdmin, getPayoutBalances);
 
 export = router.routes();

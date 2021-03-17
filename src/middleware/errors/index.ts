@@ -1,11 +1,11 @@
-"use strict";
+import Koa from "koa";
 
-const { logServerError, logClientError } = require("../../services/logger");
+import Logger = require("../../services/logger");
 
 // Handle non-500 controller errors gracefully. Instead of outputting to
 // stdout/stderr, just return them in a JSON response body.
 
-function* errors(next) {
+export default function* errors(this: Koa.Context, next: any) {
   try {
     yield next;
 
@@ -20,9 +20,9 @@ function* errors(next) {
     }
 
     if (this.status >= 500) {
-      logServerError(err.stack);
+      Logger.logServerError(err.stack);
     } else {
-      logClientError(err.stack);
+      Logger.logClientError(err.stack);
       this.body = { message: err.message, errors: err.errors };
     }
   }
@@ -36,5 +36,3 @@ function* errors(next) {
     };
   }
 }
-
-module.exports = errors;

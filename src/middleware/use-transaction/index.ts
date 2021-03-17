@@ -4,7 +4,7 @@ import db from "../../services/db";
 
 export default function* useTransaction(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: any
 ): Iterator<any, any, any> {
   if (this.state.trx) {
     this.throw("Transaction already created");

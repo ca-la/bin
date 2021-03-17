@@ -31,7 +31,7 @@ async function getCanvases(
 
 export function* canViewComponentInQueryParam(
   this: AuthedContext<{}, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: any
 ): any {
   const { componentId } = this.query;
 
@@ -60,7 +60,7 @@ export function* canViewComponentInQueryParam(
 
 export function* canEditComponentsInBody(
   this: AuthedContext<ComponentRelationship, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: any
 ): any {
   const { sourceComponentId, targetComponentId } = this.request.body;
   const { sourceCanvas, targetCanvas } = yield getCanvases(
@@ -87,7 +87,7 @@ export function* canEditComponentsInBody(
 
 export function* canEditComponentsInRelationshipParam(
   this: AuthedContext<ComponentRelationship, PermissionsKoaState>,
-  next: () => Promise<any>
+  next: any
 ): any {
   const { relationshipId } = this.params;
   const relationship = yield RelationshipsDAO.findById(relationshipId);

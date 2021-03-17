@@ -7,7 +7,7 @@ import { findDesignByTaskId } from "../../components/product-designs/dao/dao";
  */
 export function* canAccessTaskInParams(
   this: Koa.Context,
-  next: () => Promise<any>
+  next: () => any
 ): any {
   const { role, userId } = this.state;
   const { taskId } = this.params;

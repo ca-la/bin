@@ -1,5 +1,6 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import convert from "koa-convert";
 
 import Logger from "../../services/logger";
 import requireAuth = require("../../middleware/require-auth");
@@ -56,13 +57,13 @@ function* listByApprovalStepId(this: AuthedContext) {
   this.status = 200;
 }
 
-function* create(
-  this: TrxContext<
+async function create(
+  ctx: TrxContext<
     AuthedContext<Unsaved<ShipmentTracking>, { designId: string }>
   >
 ) {
-  const { trx } = this.state;
-  const { body } = this.request;
+  const { trx } = ctx.state;
+  const { body } = ctx.request;
 
   if (
     !hasProperties(
@@ -73,49 +74,56 @@ function* create(
       "approvalStepId"
     )
   ) {
-    this.throw(400, "Request body does not match model");
+    ctx.throw(400, "Request body does not match model");
   }
-  const design = yield ProductDesignsDAO.findById(this.state.designId);
+  const design = await ProductDesignsDAO.findById(ctx.state.designId);
 
-  const created: ShipmentTracking = yield ShipmentTrackingsDAO.create(trx, {
+  if (!design) {
+    throw new Error(`Missing design ${ctx.state.designId}`);
+  }
+
+  const created: ShipmentTracking = await ShipmentTrackingsDAO.create(trx, {
     ...body,
     id: uuid.v4(),
     createdAt: new Date(),
   });
 
-  const collaborator = yield CollaboratorsDAO.findByDesignAndUser(
+  const collaborator = await CollaboratorsDAO.findByDesignAndUser(
     design.id,
     design.userId
   );
 
-  yield notifications[NotificationType.SHIPMENT_TRACKING_CREATE].send(
-    trx,
-    this.state.userId,
-    {
-      recipientUserId: design.userId,
-      recipientCollaboratorId: collaborator.id,
-      recipientTeamUserId: null,
-    },
-    {
-      designId: design.id,
-      collectionId: design.collectionIds[0] || null,
-      shipmentTrackingId: created.id,
-      approvalStepId: created.approvalStepId,
-    }
-  );
-  yield DesignEventsDAO.create(trx, {
+  if (collaborator) {
+    await notifications[NotificationType.SHIPMENT_TRACKING_CREATE].send(
+      trx,
+      ctx.state.userId,
+      {
+        recipientUserId: design.userId,
+        recipientCollaboratorId: collaborator.id,
+        recipientTeamUserId: null,
+      },
+      {
+        designId: design.id,
+        collectionId: design.collectionIds[0] || null,
+        shipmentTrackingId: created.id,
+        approvalStepId: created.approvalStepId,
+      }
+    );
+  }
+
+  await DesignEventsDAO.create(trx, {
     ...templateDesignEvent,
     id: uuid.v4(),
     designId: design.id,
     approvalStepId: created.approvalStepId,
     createdAt: new Date(),
-    actorId: this.state.userId,
+    actorId: ctx.state.userId,
     shipmentTrackingId: created.id,
     type: "TRACKING_CREATION",
   });
 
-  this.status = 201;
-  this.body = yield attachMeta(trx, created);
+  ctx.status = 201;
+  ctx.body = await attachMeta(trx, created);
 }
 
 function* getCouriers(this: AuthedContext) {
@@ -183,7 +191,7 @@ const router: CalaRouter = {
           return getDesignIdFromStep(this.request.body.approvalStepId);
         }),
         canAccessDesignInState,
-        create,
+        convert.back(create),
       ],
     },
     "/couriers": {

@@ -1,5 +1,5 @@
 declare module "koa-router" {
-  import Koa from "koa";
+  import { V1Middleware } from "koa-convert";
 
   namespace Router {
     export interface RouterOptions {
@@ -8,8 +8,6 @@ declare module "koa-router" {
        */
       prefix?: string;
     }
-
-    type Middleware = (next: () => Promise<any>) => any;
   }
 
   class Router {
@@ -24,32 +22,32 @@ declare module "koa-router" {
 
     public get(
       path: string | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     public patch(
       path: string | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     public post(
       path: string | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     public put(
       path: string | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     public del(
       path: string | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     public use(
       path: string | string[] | RegExp,
-      ...middleware: Router.Middleware[]
+      ...middleware: V1Middleware<any>[]
     ): Router;
     /**
      * Returns router middleware which dispatches a route matching the request.
      */
-    public routes(): Router.Middleware;
+    public routes(): V1Middleware<any>;
   }
 
   export = Router;

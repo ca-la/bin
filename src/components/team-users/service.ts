@@ -45,7 +45,7 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
 
 export function* requireTeamUserByTeamUserId(
   this: AuthedContext<any, { teamUser: TeamUser }>,
-  next: () => Promise<any>
+  next: () => any
 ): Generator<any, any, any> {
   const teamUser = yield TeamUsersDAO.findById(db, this.params.teamUserId);
 
@@ -74,7 +74,7 @@ export function requireTeamRoles<StateT>(
 ) {
   return function* (
     this: AuthedContext<any, { actorTeamRole?: TeamUserRole } & StateT>,
-    next: () => Promise<any>
+    next: () => any
   ) {
     const { userId } = this.state;
 

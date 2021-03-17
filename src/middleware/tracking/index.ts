@@ -11,7 +11,7 @@ export interface TrackingEvent {
   payload: Record<string, any>;
 }
 
-export function* track(this: PublicContext, next: () => Promise<any>) {
+export function* track(this: PublicContext, next: any) {
   this.state.trackingId = uuid.v4();
   this.state.tracking = [];
 

@@ -26,7 +26,10 @@ export type Customer = z.infer<typeof customerSchema>;
 
 export const connectAccountSchema = z
   .object({
-    id: z.string(),
+    access_token: z.string(),
+    refresh_token: z.string(),
+    stripe_publishable_key: z.string(),
+    stripe_user_id: z.string(),
   })
   .passthrough();
 

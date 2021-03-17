@@ -391,7 +391,7 @@ function getDesignIdFromStep<State = {}>(
 
 function* injectSubmission(
   this: SubmissionStateContext,
-  next: () => Promise<any>
+  next: () => any
 ): Generator<any, any, any> {
   const { submissionId } = this.params;
 

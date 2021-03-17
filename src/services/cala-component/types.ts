@@ -1,5 +1,5 @@
 import Knex, { Transaction, QueryBuilder } from "knex";
-import { Middleware } from "koa-router";
+import { V1Middleware } from "koa-convert";
 import DataAdapter from "../data-adapter";
 import {
   NotificationsLayer,
@@ -7,7 +7,7 @@ import {
 } from "./cala-notifications";
 
 export type HTTPMethod = "get" | "put" | "patch" | "post" | "delete";
-export type CalaUrlRoutes = Partial<Record<HTTPMethod, Middleware[]>>;
+export type CalaUrlRoutes = Partial<Record<HTTPMethod, V1Middleware[]>>;
 
 export interface CalaRoutes {
   [url: string]: CalaUrlRoutes;
