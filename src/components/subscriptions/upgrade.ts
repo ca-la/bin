@@ -9,6 +9,7 @@ import InvalidDataError from "../../errors/invalid-data";
 import upgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
 import { createSubscription } from "./create";
 import createPaymentMethod from "../payment-methods/create-payment-method";
+import { logServerError } from "../../services/logger";
 
 interface UpgradeTeamOptions {
   planId: string;
@@ -23,8 +24,11 @@ export async function upgradeTeamSubscription(
 ): Promise<Subscription> {
   const newPlan = await PlansDAO.findById(trx, planId);
   if (!newPlan) {
+    logServerError(
+      `Plan on which we want to upgrade to is not found with id: ${planId} | team id: ${teamId} | userId: ${userId}`
+    );
     throw new InvalidDataError(
-      `Plan on which we want to upgrade to is not found with id: ${planId}`
+      `Plan on which we want to upgrade to is not found`
     );
   }
 
@@ -67,8 +71,11 @@ export async function upgradeTeamSubscription(
 
   const isUpgradeFromPaidPlanToFree = !isPreviusPlanFree && isPlanFree;
   if (isUpgradeFromPaidPlanToFree) {
+    logServerError(
+      `Downgrade from paid plan (id ${previousPlan.id}) to a free plan (id ${newPlan.id}) is not supported. Subscription id: ${subscription.id}`
+    );
     throw new InvalidDataError(
-      `Downgrade from paid plan to a free plan (id ${newPlan.id}) is not supported.`
+      `Please contact support@ca.la to downgrade from a paid to a free plan`
     );
   }
 

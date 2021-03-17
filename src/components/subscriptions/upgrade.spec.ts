@@ -10,6 +10,7 @@ import { upgradeTeamSubscription } from "./upgrade";
 import * as CreateSubscriptionFlow from "./create";
 import * as CreatePaymentMethod from "../payment-methods/create-payment-method";
 import * as UpgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
+import Logger from "../../services/logger";
 import InvalidDataError from "../../errors/invalid-data";
 
 const mockedPlan = {
@@ -76,6 +77,7 @@ async function setup() {
     .resolves({
       id: "a-stripe-subscription-id",
     });
+  const loggerStub = sandbox().stub(Logger, "logServerError");
   return {
     trxStub,
     findPlanStub,
@@ -86,6 +88,7 @@ async function setup() {
     createCalaSubscriptionStub,
     countBilledUsersTeamUsersStub,
     createSubscriptionFlowStub,
+    loggerStub,
   };
 }
 
@@ -97,6 +100,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
+    loggerStub,
   } = await setup();
   findPlanStub.onFirstCall().resolves();
 
@@ -112,8 +116,13 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     t.equal(err instanceof InvalidDataError, true);
     t.equal(
       err.message,
-      "Plan on which we want to upgrade to is not found with id: a-plan-id",
-      "throws correct error message when plan is not found"
+      "Plan on which we want to upgrade to is not found",
+      "throws correct client error message when plan is not found"
+    );
+    t.equal(
+      loggerStub.args[0][0],
+      "Plan on which we want to upgrade to is not found with id: a-plan-id | team id: a-team-id | userId: a-user-id",
+      "log correct server error message when plan is not found"
     );
   }
 
@@ -148,6 +157,7 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     createSubscriptionFlowStub,
     createCalaSubscriptionStub,
     upgradeStripeSubscriptionStub,
+    loggerStub,
   } = await setup();
   // retrieve new plan
   findPlanStub.onFirstCall().resolves({
@@ -158,6 +168,7 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
   // retrieve current plan
   findPlanStub.onSecondCall().resolves({
     ...mockedPlan,
+    id: "an-old-plan-id",
     baseCostPerBillingIntervalCents: 2000,
     perSeatCostPerBillingIntervalCents: 200,
   });
@@ -174,8 +185,13 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     t.equal(err instanceof InvalidDataError, true);
     t.equal(
       err.message,
-      "Downgrade from paid plan to a free plan (id a-plan-id) is not supported.",
-      "throws correct error message when team's subscription doesn't have a stripe id"
+      "Please contact support@ca.la to downgrade from a paid to a free plan",
+      "throws correct client error message when team's subscription doesn't have a stripe id"
+    );
+    t.equal(
+      loggerStub.args[0][0],
+      "Downgrade from paid plan (id an-old-plan-id) to a free plan (id a-plan-id) is not supported. Subscription id: a-subscription-id",
+      "log correct server error message when team's subscription doesn't have a stripe id)"
     );
   }
 
