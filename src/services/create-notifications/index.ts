@@ -23,7 +23,7 @@ import Collaborator, {
   CollaboratorWithUser,
 } from "../../components/collaborators/types";
 
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import * as SlackService from "../../services/slack";
 
 import {

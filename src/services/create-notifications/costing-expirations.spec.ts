@@ -9,7 +9,7 @@ import {
 } from "./costing-expirations";
 import createUser = require("../../test-helpers/create-user");
 import generateCollection from "../../test-helpers/factories/collection";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import pick = require("lodash/pick");
 import { NotificationType } from "../../components/notifications/domain-object";
 

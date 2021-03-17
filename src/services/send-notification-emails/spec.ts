@@ -7,7 +7,7 @@ import db from "../db";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as NotificationsDAO from "../../components/notifications/dao";
 import createUser from "../../test-helpers/create-user";
-import EmailService from "../email";
+import * as EmailService from "../email";
 import { sendNotificationEmails } from "./index";
 import generateNotification from "../../test-helpers/factories/notification";
 import { NotificationType } from "../../components/notifications/domain-object";

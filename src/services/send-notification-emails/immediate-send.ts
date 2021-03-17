@@ -1,6 +1,6 @@
 import { FullNotification } from "../../components/notifications/domain-object";
 import User from "../../components/users/domain-object";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import { createNotificationMessage } from "../../components/notifications/notification-messages";
 
 export default async function sendNotification(

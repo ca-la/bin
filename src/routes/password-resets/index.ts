@@ -1,9 +1,10 @@
 import Router from "koa-router";
 
 import SessionsDAO from "../../dao/sessions";
+import Session from "../../domain-objects/session";
 import * as UsersDAO from "../../components/users/dao";
-import passwordReset from "../../emails/password-reset";
-import { sendSynchronouslyDeprecated } from "../../services/email";
+import { enqueueSend } from "../../services/email";
+import { STUDIO_HOST } from "../../config";
 
 const router = new Router();
 
@@ -26,18 +27,17 @@ function* sendReset(
   const user = yield UsersDAO.findByEmail(email);
   this.assert(user, 400, "User not found");
 
-  const session = yield SessionsDAO.createForUser(user);
+  const session: Session = yield SessionsDAO.createForUser(user);
 
-  const emailTemplate = passwordReset({
-    sessionId: session.id,
-    name: user.name,
+  const resetUrl = `${STUDIO_HOST}/password-reset?sessionId=${session.id}`;
+
+  yield enqueueSend({
+    to: user.email,
+    params: {
+      resetUrl,
+    },
+    templateName: "password_reset",
   });
-
-  yield sendSynchronouslyDeprecated(
-    user.email,
-    "CALA Password Reset",
-    emailTemplate
-  );
 
   this.status = 204;
 }

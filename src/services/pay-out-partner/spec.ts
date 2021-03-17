@@ -2,7 +2,7 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import createUser = require("../../test-helpers/create-user");
-import EmailService = require("../email");
+import * as EmailService from "../email";
 import generateCollection from "../../test-helpers/factories/collection";
 import PartnerPayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import * as PartnerPayoutLogsDAO from "../../components/partner-payouts/dao";

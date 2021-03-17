@@ -21,7 +21,7 @@ import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as ApprovalStepCommentDAO from "../../components/approval-step-comments/dao";
 import DesignsDAO from "../../components/product-designs/dao";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateCollection from "../../test-helpers/factories/collection";

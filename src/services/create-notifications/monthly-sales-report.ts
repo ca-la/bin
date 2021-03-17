@@ -3,7 +3,7 @@ import { formatCentsToDollars } from "@cala/ts-lib";
 
 import MonthlySalesReport from "../../components/sales-reports/domain-object";
 import { findById as findUser } from "../../components/users/dao";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import { STUDIO_HOST } from "../../config";
 import {
   NotificationMessage,

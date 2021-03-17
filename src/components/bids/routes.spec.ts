@@ -21,7 +21,7 @@ import * as PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import createDesign from "../../services/create-design";
 import * as Stripe from "../../services/stripe";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import { deleteById } from "../../test-helpers/designs";
 import Knex from "knex";
 import { checkout } from "../../test-helpers/checkout-collection";

@@ -3,7 +3,7 @@ import { chunk, groupBy } from "lodash";
 
 import db from "../../services/db";
 import Logger from "../../services/logger";
-import EmailService from "../../services/email";
+import * as EmailService from "../../services/email";
 import * as NotificationsDAO from "../../components/notifications/dao";
 import * as UsersDAO from "../../components/users/dao";
 import filterError = require("../../services/filter-error");
