@@ -85,3 +85,5 @@ export const AFTERSHIP_API_KEY: string;
 
 export const COMMERCE_HOST: string;
 export const COMMERCE_TOKEN: string;
+
+export const REFERRAL_CODE_SALT: string;

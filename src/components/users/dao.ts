@@ -17,7 +17,6 @@ import db from "../../services/db";
 import first from "../../services/first";
 import InvalidDataError = require("../../errors/invalid-data");
 import normalizeEmail = require("../../services/normalize-email");
-import UnassignedReferralCodesDAO = require("../../dao/unassigned-referral-codes");
 import filterError = require("../../services/filter-error");
 import { hash } from "../../services/hash";
 import {
@@ -68,8 +67,6 @@ export async function create(
 
   const validatedPhone = phone ? validateAndFormatPhoneNumber(phone) : null;
 
-  const referralCode =
-    data.referralCode || (await UnassignedReferralCodesDAO.get());
   const passwordHash = password && (await hash(password));
   const rowData = DANGEROUS_PASSWORD_HASH_DATA_ADAPTER.forInsertion({
     ...baseUser,
@@ -78,7 +75,6 @@ export async function create(
     email: email ? normalizeEmail(email) : null,
     passwordHash,
     phone: validatedPhone,
-    referralCode,
   });
 
   const connection = options.trx || db;

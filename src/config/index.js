@@ -159,6 +159,8 @@ const config = {
 
   COMMERCE_HOST: process.env.COMMERCE_HOST,
   COMMERCE_TOKEN: process.env.COMMERCE_TOKEN,
+
+  REFERRAL_CODE_SALT: process.env.REFERRAL_CODE_SALT,
 };
 
 Object.keys(config).forEach((key) => {
