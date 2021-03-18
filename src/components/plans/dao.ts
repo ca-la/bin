@@ -24,7 +24,7 @@ function withStripePriceIds(query: Knex.QueryBuilder) {
     .groupBy(["plans.id"]);
 }
 
-const rawDao = buildDao("plans", "plans", rawDataAdapter, {
+export const rawDao = buildDao("plans", "plans", rawDataAdapter, {
   orderColumn: "ordering",
 });
 

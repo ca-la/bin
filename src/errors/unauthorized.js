@@ -12,6 +12,7 @@ class UnauthorizedError extends Error {
     this.code = code;
     this.message = message;
     this.name = "UnauthorizedError";
+    Object.setPrototypeOf(this, UnauthorizedError.prototype);
   }
 }
 

@@ -1,4 +1,5 @@
 import Router from "koa-router";
+import { ParameterizedContext } from "koa";
 
 import filterError = require("../../../services/filter-error");
 import InvalidDataError from "../../../errors/invalid-data";
@@ -9,13 +10,17 @@ import {
   canEditCollection,
   canMoveCollectionDesigns,
   canSubmitCollection,
+  canCheckOutCollection,
 } from "../../../middleware/can-access-collection";
 import canAccessUserResource = require("../../../middleware/can-access-user-resource");
 import requireAuth = require("../../../middleware/require-auth");
 import requireAdmin = require("../../../middleware/require-admin");
 import useTransaction from "../../../middleware/use-transaction";
 
-import { checkCollectionsLimit } from "../../teams";
+import {
+  checkCollectionsLimit,
+  generateUpgradeBodyDueToCollectionsLimit,
+} from "../../teams";
 import * as CollectionsDAO from "../dao";
 import TeamUsersDAO from "../../team-users/dao";
 import { isPartialCollection } from "../domain-object";
@@ -82,12 +87,11 @@ function* createCollection(this: AuthedContext): Iterator<any, any, any> {
     const checkResult = yield checkCollectionsLimit(db, body.teamId);
     if (checkResult.isReached) {
       this.status = 402;
-      this.body = {
-        title: "Upgrade team",
-        message: `In order to create more than ${checkResult.limit} collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.`,
-        actionText: "Upgrade team",
-        actionUrl: `/subscribe?upgradingTeamId=${body.teamId}`,
-      };
+      this.body = yield generateUpgradeBodyDueToCollectionsLimit(
+        db,
+        body.teamId,
+        checkResult.limit
+      );
       return;
     }
   }
@@ -215,10 +219,13 @@ function* updateCollection(
   if (body.teamId && role !== "ADMIN") {
     const checkResult = yield checkCollectionsLimit(db, body.teamId);
     if (checkResult.isReached) {
-      this.throw(
-        402,
-        `In order to create more than ${checkResult.limit} collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.`
+      this.status = 402;
+      this.body = yield generateUpgradeBodyDueToCollectionsLimit(
+        db,
+        body.teamId,
+        checkResult.limit
       );
+      return;
     }
   }
   const collection = yield CollectionsDAO.update(collectionId, body).catch(
@@ -235,6 +242,10 @@ function* updateCollection(
 
   this.body = { ...collection, permissions };
   this.status = 200;
+}
+
+function* okResponse(this: ParameterizedContext): Iterator<any, any, any> {
+  this.status = 204;
 }
 
 router.post(
@@ -270,6 +281,24 @@ router.patch(
   canEditCollection,
   useTransaction,
   updateCollection
+);
+
+router.get(
+  "/:collectionId/can-submit",
+  requireAuth,
+  useTransaction,
+  canAccessCollectionInParam,
+  canSubmitCollection,
+  okResponse
+);
+
+router.get(
+  "/:collectionId/can-check-out",
+  requireAuth,
+  useTransaction,
+  canAccessCollectionInParam,
+  canCheckOutCollection,
+  okResponse
 );
 
 router.post(

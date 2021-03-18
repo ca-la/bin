@@ -3,5 +3,6 @@ export default class ConflictError extends Error {
     super(message);
     this.message = message;
     this.name = "ConflictError";
+    Object.setPrototypeOf(this, ConflictError.prototype);
   }
 }

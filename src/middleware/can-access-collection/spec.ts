@@ -2,6 +2,7 @@ import Koa from "koa";
 import convert from "koa-convert";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
 
+import * as TeamsService from "../../components/teams/service";
 import * as FindCollectionTeamPlans from "../../components/plans/find-collection-team-plans";
 import { canSubmitCollection, canCheckOutCollection } from ".";
 import * as RequireUserSubscription from "../require-user-subscription";
@@ -107,42 +108,40 @@ test("collection middleware throws a 403 without correct permissions", async (t:
   t.equal(nextStub.callCount, 0);
 });
 
-test("canSubmitCollection throws a 402 without a team plan", async (t: Test) => {
+test("canSubmitCollection returns a 402 without a team plan", async (t: Test) => {
   sandbox()
     .stub(FindCollectionTeamPlans, "canSubmitTeamCollection")
     .resolves(false);
+  const body = { message: "can't submit" };
+  sandbox()
+    .stub(TeamsService, "generateUpgradeBodyDueToSubmitAttempt")
+    .resolves(body);
   const nextStub = sandbox().stub().resolves();
 
-  try {
-    await canSubmitPromise(TEAM_CONTEXT, nextStub);
-    throw new Error("Shouldn't get here");
-  } catch (err) {
-    t.equal(err.status, 402);
-    t.equal(
-      err.message,
-      "Your plan does not include the ability to submit, please upgrade"
-    );
-  }
+  const teamContext = { ...TEAM_CONTEXT };
+  await canSubmitPromise(teamContext, nextStub);
+
+  t.equal(teamContext.status, 402);
+  t.deepEqual(teamContext.body, body);
 
   t.equal(nextStub.callCount, 0);
 });
 
-test("canCheckOutCollection throws a 402 without a team plan", async (t: Test) => {
+test("canCheckOutCollection returns 402 without a team plan", async (t: Test) => {
   sandbox()
     .stub(FindCollectionTeamPlans, "canCheckOutTeamCollection")
     .resolves(false);
+  const body = { message: "can't checkout" };
+  sandbox()
+    .stub(TeamsService, "generateUpgradeBodyDueToCheckoutAttempt")
+    .resolves(body);
   const nextStub = sandbox().stub().resolves();
 
-  try {
-    await canCheckOutPromise(TEAM_CONTEXT, nextStub);
-    throw new Error("Shouldn't get here");
-  } catch (err) {
-    t.equal(err.status, 402);
-    t.equal(
-      err.message,
-      "Your plan does not include the ability to check out, please upgrade"
-    );
-  }
+  const teamContext = { ...TEAM_CONTEXT };
+  await canCheckOutPromise(teamContext, nextStub);
+
+  t.equal(teamContext.status, 402);
+  t.deepEqual(teamContext.body, body);
 
   t.equal(nextStub.callCount, 0);
 });

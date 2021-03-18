@@ -3,8 +3,8 @@ import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import { typeGuard, typeGuardFromSchema } from "../../middleware/type-guard";
+import { generateUpgradeBodyDueToUsersLimit } from "../teams";
 
-import filterError from "../../services/filter-error";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
 import { check } from "../../services/check";
@@ -49,33 +49,36 @@ function* create(
   const { body } = this.request;
   const { trx, actorTeamRole, userId: actorUserId } = this.state;
 
-  const created = yield createTeamUser(trx, actorTeamRole, body)
-    .catch(
-      filterError(UnauthorizedError, (error: UnauthorizedError) => {
-        this.throw(403, error.message);
-      })
-    )
-    .catch(
-      filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
-        this.throw(402, error.message)
-      )
-    )
-    .catch(
-      filterError(ConflictError, (error: ConflictError) =>
-        this.throw(409, error.message)
-      )
-    );
+  try {
+    const created = yield createTeamUser(trx, actorTeamRole, body);
+    yield emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
+      type: "route.created",
+      domain: teamUserDomain,
+      actorId: actorUserId,
+      trx,
+      created,
+    });
 
-  yield emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
-    type: "route.created",
-    domain: teamUserDomain,
-    actorId: actorUserId,
-    trx,
-    created,
-  });
-
-  this.body = created;
-  this.status = 201;
+    this.body = created;
+    this.status = 201;
+  } catch (error) {
+    if (error instanceof InsufficientPlanError) {
+      this.status = 402;
+      this.body = yield generateUpgradeBodyDueToUsersLimit(
+        trx,
+        body.teamId,
+        body.role
+      );
+      return;
+    }
+    if (error instanceof UnauthorizedError) {
+      this.throw(403, error.message);
+    }
+    if (error instanceof ConflictError) {
+      this.throw(409, error.message);
+    }
+    throw error;
+  }
 }
 
 function* getList(this: AuthedContext) {
@@ -105,29 +108,41 @@ function* update(
   }
 
   const before = yield TeamUsersDAO.findById(trx, teamUserId);
-  const updated = yield updateTeamUser(trx, {
-    before,
-    teamId: before.teamId,
-    teamUserId,
-    actorTeamRole,
-    patch: body,
-  }).catch(
-    filterError(InsufficientPlanError, (error: InsufficientPlanError) =>
-      this.throw(402, error.message)
-    )
-  );
+  try {
+    const updated = yield updateTeamUser(trx, {
+      before,
+      teamId: before.teamId,
+      teamUserId,
+      actorTeamRole,
+      patch: body,
+    });
 
-  yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
-    type: "route.updated",
-    domain: teamUserDomain,
-    actorId: actorUserId,
-    trx,
-    before,
-    updated,
-  });
+    yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
+      type: "route.updated",
+      domain: teamUserDomain,
+      actorId: actorUserId,
+      trx,
+      before,
+      updated,
+    });
 
-  this.body = updated;
-  this.status = 200;
+    this.body = updated;
+    this.status = 200;
+  } catch (error) {
+    if (error instanceof InsufficientPlanError) {
+      this.status = 402;
+      const role = check(teamUserUpdateRoleSchema, body)
+        ? body.role
+        : before.role;
+      this.body = yield generateUpgradeBodyDueToUsersLimit(
+        trx,
+        before.teamId,
+        role
+      );
+      return;
+    }
+    throw error;
+  }
 }
 
 function* deleteTeamUser(

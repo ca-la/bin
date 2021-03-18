@@ -2,6 +2,7 @@ import Koa from "koa";
 import Knex from "knex";
 
 import CollectionsDAO = require("../../components/collections/dao");
+import * as TeamsService from "../../components/teams/service";
 import {
   canSubmitTeamCollection,
   canCheckOutTeamCollection,
@@ -134,11 +135,14 @@ export function* canSubmitCollection(
 
   if (collection.teamId) {
     const canSubmit = yield canSubmitTeamCollection(trx, collection.id);
-    this.assert(
-      canSubmit,
-      402,
-      "Your plan does not include the ability to submit, please upgrade"
-    );
+    if (!canSubmit) {
+      this.status = 402;
+      this.body = yield TeamsService.generateUpgradeBodyDueToSubmitAttempt(
+        trx,
+        collection.teamId
+      );
+      return;
+    }
   } else {
     yield requireUserSubscription.call(this, next);
   }
@@ -178,11 +182,14 @@ export function* canCheckOutCollection(
 
   if (collection.teamId) {
     const canCheckOut = yield canCheckOutTeamCollection(trx, collection.id);
-    this.assert(
-      canCheckOut,
-      402,
-      "Your plan does not include the ability to check out, please upgrade"
-    );
+    if (!canCheckOut) {
+      this.status = 402;
+      this.body = yield TeamsService.generateUpgradeBodyDueToCheckoutAttempt(
+        trx,
+        collection.teamId
+      );
+      return;
+    }
   } else {
     yield requireUserSubscription.call(this, next);
   }

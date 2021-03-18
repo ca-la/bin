@@ -256,7 +256,7 @@ test("POST /team-users: payment required when not enought seats in plan", async 
 
   t.deepEqual(
     body.message,
-    "Your plan does not allow to add more team users, please upgrade"
+    "In order to add additional ADMIN seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more."
   );
 });
 

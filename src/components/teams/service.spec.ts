@@ -7,6 +7,8 @@ import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role, teamUserDbTestBlank } from "../team-users/types";
 
 import TeamsDAO from "./dao";
+import { rawDao as PlansRawDAO } from "../plans/dao";
+import { PlanDb } from "../plans/types";
 import { TeamType, TeamDb } from "./types";
 import * as TeamsService from "./service";
 import { SubscriptionWithPlan } from "../subscriptions/domain-object";
@@ -138,6 +140,207 @@ test("checkCollectionsLimit", async (t: Test) => {
       await TeamsService.checkCollectionsLimit(db, "t1"),
       testCase.result,
       `${testCase.title}`
+    );
+  }
+});
+
+test("generateUpgradeBody", async (t: Test) => {
+  t.deepEqual(
+    TeamsService.generateUpgradeBody("t1", "Upgrade message", {
+      actionText: "Go upgrade",
+    }),
+    {
+      title: "Upgrade team",
+      message: "Upgrade message",
+      actionText: "Go upgrade",
+      actionUrl: `/subscribe?upgradingTeamId=t1`,
+    }
+  );
+  t.deepEqual(
+    TeamsService.generateUpgradeBody("t1", "Upgrade message", {
+      upgradePlan: { id: "p1" } as PlanDb,
+    }),
+    {
+      title: "Upgrade team",
+      message: "Upgrade message",
+      actionText: "Upgrade team",
+      actionUrl: `/subscribe?upgradingTeamId=t1&planId=p1`,
+    }
+  );
+});
+
+test("generateUpgradeBodyDueToCollectionsLimit", async (t: Test) => {
+  interface TestCase {
+    title: string;
+    findPlanResult: Partial<PlanDb> | null;
+    generateUpgradeBodyArgs: [string, { upgradePlan?: Partial<PlanDb> }];
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "found plan",
+      findPlanResult: { id: "plan-id", title: "Cool Plan" },
+      generateUpgradeBodyArgs: [
+        "In order to create more than 3 collections, you must first upgrade your team to Cool Plan. Upgrading includes unlimited collections, collection costing, and more.",
+        {
+          upgradePlan: { id: "plan-id", title: "Cool Plan" },
+        },
+      ],
+    },
+    {
+      title: "found plan",
+      findPlanResult: null,
+      generateUpgradeBodyArgs: [
+        "In order to create more than 3 collections, you must first upgrade your team.",
+        {},
+      ],
+    },
+  ];
+  const findPlanStub = sandbox().stub(PlansRawDAO, "findOne");
+
+  const generateBodyStub = sandbox().stub(TeamsService, "generateUpgradeBody");
+
+  for (const testCase of testCases) {
+    findPlanStub.resolves(testCase.findPlanResult);
+    generateBodyStub.resetHistory();
+    await TeamsService.generateUpgradeBodyDueToCollectionsLimit(db, "t1", 3);
+
+    t.deepEqual(
+      generateBodyStub.args[0].slice(1),
+      testCase.generateUpgradeBodyArgs,
+      testCase.title
+    );
+  }
+});
+
+test("generateUpgradeBodyDueToUsersLimit", async (t: Test) => {
+  interface TestCase {
+    title: string;
+    findPlanResult: Partial<PlanDb> | null;
+    generateUpgradeBodyArgs: [string, { upgradePlan?: Partial<PlanDb> }];
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "found plan",
+      findPlanResult: { id: "plan-id", title: "Cool Plan" },
+      generateUpgradeBodyArgs: [
+        "In order to add additional EDITOR seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
+        {
+          upgradePlan: { id: "plan-id", title: "Cool Plan" },
+        },
+      ],
+    },
+    {
+      title: "found plan",
+      findPlanResult: null,
+      generateUpgradeBodyArgs: [
+        "In order to add additional EDITOR seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
+        {},
+      ],
+    },
+  ];
+  const findPlanStub = sandbox().stub(PlansRawDAO, "findOne");
+
+  const generateBodyStub = sandbox().stub(TeamsService, "generateUpgradeBody");
+
+  for (const testCase of testCases) {
+    findPlanStub.resolves(testCase.findPlanResult);
+    generateBodyStub.resetHistory();
+    await TeamsService.generateUpgradeBodyDueToUsersLimit(
+      db,
+      "t1",
+      Role.EDITOR
+    );
+
+    t.deepEqual(
+      generateBodyStub.args[0].slice(1),
+      testCase.generateUpgradeBodyArgs,
+      testCase.title
+    );
+  }
+});
+
+test("generateUpgradeBodyDueToSubmitAttempt", async (t: Test) => {
+  interface TestCase {
+    title: string;
+    findPlanResult: Partial<PlanDb> | null;
+    generateUpgradeBodyArgs: [string, { upgradePlan?: Partial<PlanDb> }];
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "found plan",
+      findPlanResult: { id: "plan-id", title: "Cool Plan" },
+      generateUpgradeBodyArgs: [
+        "In order to submit the collection, you must first upgrade your team to Cool Plan.",
+        {
+          upgradePlan: { id: "plan-id", title: "Cool Plan" },
+        },
+      ],
+    },
+    {
+      title: "found plan",
+      findPlanResult: null,
+      generateUpgradeBodyArgs: [
+        "In order to submit the collection, you must first upgrade your team.",
+        {},
+      ],
+    },
+  ];
+  const findPlanStub = sandbox().stub(PlansRawDAO, "findOne");
+
+  const generateBodyStub = sandbox().stub(TeamsService, "generateUpgradeBody");
+
+  for (const testCase of testCases) {
+    findPlanStub.resolves(testCase.findPlanResult);
+    generateBodyStub.resetHistory();
+    await TeamsService.generateUpgradeBodyDueToSubmitAttempt(db, "t1");
+
+    t.deepEqual(
+      generateBodyStub.args[0].slice(1),
+      testCase.generateUpgradeBodyArgs,
+      testCase.title
+    );
+  }
+});
+
+test("generateUpgradeBodyDueToCheckoutAttempt", async (t: Test) => {
+  interface TestCase {
+    title: string;
+    findPlanResult: Partial<PlanDb> | null;
+    generateUpgradeBodyArgs: [string, { upgradePlan?: Partial<PlanDb> }];
+  }
+  const testCases: TestCase[] = [
+    {
+      title: "found plan",
+      findPlanResult: { id: "plan-id", title: "Cool Plan" },
+      generateUpgradeBodyArgs: [
+        "In order to check out the collection, you must first upgrade your team to Cool Plan.",
+        {
+          upgradePlan: { id: "plan-id", title: "Cool Plan" },
+        },
+      ],
+    },
+    {
+      title: "found plan",
+      findPlanResult: null,
+      generateUpgradeBodyArgs: [
+        "In order to check out the collection, you must first upgrade your team.",
+        {},
+      ],
+    },
+  ];
+  const findPlanStub = sandbox().stub(PlansRawDAO, "findOne");
+
+  const generateBodyStub = sandbox().stub(TeamsService, "generateUpgradeBody");
+
+  for (const testCase of testCases) {
+    findPlanStub.resolves(testCase.findPlanResult);
+    generateBodyStub.resetHistory();
+    await TeamsService.generateUpgradeBodyDueToCheckoutAttempt(db, "t1");
+
+    t.deepEqual(
+      generateBodyStub.args[0].slice(1),
+      testCase.generateUpgradeBodyArgs,
+      testCase.title
     );
   }
 });

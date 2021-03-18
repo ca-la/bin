@@ -204,7 +204,7 @@ test("POST /collections with an exceeded limit", async (t: tape.Test) => {
     actionText: "Upgrade team",
     actionUrl: `/subscribe?upgradingTeamId=${team.id}`,
     message:
-      "In order to create more than 4 collections, you must first upgrade your team to Professional. Upgrading includes unlimited collections, collection costing, and more.",
+      "In order to create more than 4 collections, you must first upgrade your team.",
     title: "Upgrade team",
   });
 

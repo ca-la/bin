@@ -3,5 +3,6 @@ export default class InsufficientPlanError extends Error {
     super(message);
     this.message = message;
     this.name = "InsufficientPlanError";
+    Object.setPrototypeOf(this, InsufficientPlanError.prototype);
   }
 }
