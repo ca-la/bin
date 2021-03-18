@@ -223,7 +223,7 @@ test("generateUpgradeBodyDueToUsersLimit", async (t: Test) => {
       title: "found plan",
       findPlanResult: { id: "plan-id", title: "Cool Plan" },
       generateUpgradeBodyArgs: [
-        "In order to add additional EDITOR seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
+        "In order to add additional editor seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
         {
           upgradePlan: { id: "plan-id", title: "Cool Plan" },
         },
@@ -233,7 +233,7 @@ test("generateUpgradeBodyDueToUsersLimit", async (t: Test) => {
       title: "found plan",
       findPlanResult: null,
       generateUpgradeBodyArgs: [
-        "In order to add additional EDITOR seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
+        "In order to add additional editor seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.",
         {},
       ],
     },

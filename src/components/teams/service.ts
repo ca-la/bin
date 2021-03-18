@@ -149,7 +149,7 @@ export async function generateUpgradeBodyDueToUsersLimit(
   });
   return Teams.generateUpgradeBody(
     teamId,
-    `In order to add additional ${role} seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.`,
+    `In order to add additional ${role.toLowerCase()} seats, you must first upgrade your team. Upgrading includes unlimited collections, collection costing, and more.`,
     upgradePlan ? { upgradePlan } : {}
   );
 }
