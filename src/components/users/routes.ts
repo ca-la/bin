@@ -32,6 +32,7 @@ import {
   redeemReferralCode,
   InvalidReferralCodeError,
 } from "../../components/referral-redemptions/service";
+import { generateReferralCode } from "../referral-codes/service";
 
 const router = new Router();
 
@@ -78,13 +79,15 @@ async function createWithTeam(
     );
   }
 
+  const referralCode = await generateReferralCode();
+
   const user = await UsersDAO.create(
     {
       name,
       password,
       email,
       lastAcceptedDesignerTermsAt: new Date(),
-      referralCode: "n/a",
+      referralCode,
       role: ROLES.USER,
     },
     { requirePassword: true, trx }
@@ -117,6 +120,8 @@ async function createWithoutTeam(
     );
   }
 
+  const referralCode = await generateReferralCode();
+
   const user = await UsersDAO.create(
     {
       name: null,
@@ -125,7 +130,7 @@ async function createWithoutTeam(
       lastAcceptedDesignerTermsAt: lastAcceptedDesignerTermsAt
         ? new Date(lastAcceptedDesignerTermsAt)
         : null,
-      referralCode: "n/a",
+      referralCode,
       role: ROLES.USER,
     },
     { requirePassword: false, trx }
@@ -211,7 +216,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
       cohort: targetCohort && targetCohort.slug,
       email: user.email,
       name: user.name || "",
-      referralCode: "n/a",
+      referralCode: user.referralCode,
     });
   } catch (err) {
     // Not rethrowing since this shouldn't be fatal... but if we ever see this

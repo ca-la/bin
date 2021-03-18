@@ -3,24 +3,25 @@ import uuid from "node-uuid";
 import * as attachSource from "../../services/stripe/attach-source";
 import * as CohortsDAO from "../../components/cohorts/dao";
 import * as CohortUsersDAO from "../../components/cohorts/users/dao";
-import Config from "../../config";
 import * as createStripeSubscription from "../../services/stripe/create-subscription";
 import * as CreditsDAO from "../../components/credits/dao";
 import * as DuplicationService from "../../services/duplicate";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
-import TeamUsersDAO from "../../components/team-users/dao";
-import SessionsDAO from "../../dao/sessions";
+import * as ReferralRedemptionsService from "../../components/referral-redemptions/service";
+import * as ReferralCodeService from "../../components/referral-codes/service";
+import * as SubscriptionService from "../subscriptions/create";
+import * as TeamsService from "../teams/service";
 import * as UsersDAO from "./dao";
+import Config from "../../config";
 import createUser from "../../test-helpers/create-user";
 import InvalidDataError from "../../errors/invalid-data";
 import MailChimp = require("../../services/mailchimp");
+import SessionsDAO from "../../dao/sessions";
 import Stripe = require("../../services/stripe");
+import TeamUsersDAO from "../../components/team-users/dao";
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
 import { baseUser } from "./domain-object";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
-import * as TeamsService from "../teams/service";
-import * as SubscriptionService from "../subscriptions/create";
-import * as ReferralRedemptionsService from "../../components/referral-redemptions/service";
 
 const createBody = {
   email: "user@example.com",
@@ -52,6 +53,9 @@ function stubUserDependencies() {
     .resolves({
       id: "a-session-id",
     });
+  sandbox()
+    .stub(ReferralCodeService, "generateReferralCode")
+    .resolves("FOOBAR");
 
   return {
     duplicationStub,
@@ -476,7 +480,7 @@ test("POST /users?cohort allows registration + adding a cohort user", async (t: 
       cohort: "moma-demo-june-2020",
       email: newUser.email,
       name: "",
-      referralCode: "n/a",
+      referralCode: "FOOBAR",
     },
     "Expect the correct tags for Mailchimp subscription"
   );
@@ -602,7 +606,7 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
           cohort: null,
           email: body.email,
           name: "",
-          referralCode: "n/a",
+          referralCode: "FOOBAR",
         },
       ],
     ],
