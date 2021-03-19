@@ -1,12 +1,10 @@
 import { fetch } from "../fetch";
-import { IMGIX_API_KEY } from "../../config";
+import { IMGIX_PURGE_API_KEY } from "../../config";
 import { logServerError } from "../logger";
 
-const API_BASE = "https://api.imgix.com/v2";
+const API_BASE = "https://api.imgix.com/api/v1";
 
 type Method = "POST" | "PUT" | "GET" | "PATCH" | "DELETE";
-
-const IMGIX_CREDENTIALS = Buffer.from(`${IMGIX_API_KEY}:`).toString("base64");
 
 async function makeRequest(
   method: Method,
@@ -16,8 +14,9 @@ async function makeRequest(
   const response = await fetch(`${API_BASE}${path}`, {
     method,
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${IMGIX_CREDENTIALS}`,
+      Accept: "application/vnd.api+json",
+      "Content-Type": "application/vnd.api+json",
+      Authorization: `Bearer ${IMGIX_PURGE_API_KEY}`,
     },
     body: payload ? JSON.stringify(payload) : undefined,
   });
@@ -43,7 +42,12 @@ async function makeRequest(
 }
 
 export async function purgeImage(imageUrl: string): Promise<void> {
-  await makeRequest("POST", "/image/purger", {
-    url: imageUrl,
+  await makeRequest("POST", "/purge", {
+    data: {
+      attributes: {
+        url: imageUrl,
+      },
+      type: "purges",
+    },
   });
 }

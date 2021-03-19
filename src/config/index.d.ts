@@ -80,6 +80,7 @@ export const AWS_S3_AVATAR_BUCKET_NAME: string;
 export const AWS_S3_AVATAR_BUCKET_REGION: string;
 export const AVATAR_BASE_URL: string;
 export const IMGIX_API_KEY: string;
+export const IMGIX_PURGE_API_KEY: string;
 
 export const AFTERSHIP_API_KEY: string;
 

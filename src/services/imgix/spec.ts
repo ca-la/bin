@@ -17,8 +17,19 @@ test("purgeImage makes purge request", async (t: Test) => {
 
   t.deepEqual(
     fetchStub.firstCall.args[0],
-    "https://api.imgix.com/v2/image/purger"
+    "https://api.imgix.com/api/v1/purge"
   );
   const body = JSON.parse(fetchStub.firstCall.args[1].body);
-  t.equal(body.url, "https://example.com");
+  t.deepEqual(
+    body,
+    {
+      data: {
+        attributes: {
+          url: "https://example.com",
+        },
+        type: "purges",
+      },
+    },
+    "request body is correct"
+  );
 });
