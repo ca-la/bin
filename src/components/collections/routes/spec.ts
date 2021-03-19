@@ -9,8 +9,8 @@ import createUser from "../../../test-helpers/create-user";
 import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
 import * as PaymentMethodsDAO from "../../payment-methods/dao";
-import * as PlansDAO from "../../plans/dao";
 import { BillingInterval } from "../../plans/types";
+import generatePlan from "../../../test-helpers/factories/plan";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";
@@ -619,7 +619,7 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
 
   const plan = await db.transaction(
     async (trx: Knex.Transaction) =>
-      await PlansDAO.create(trx, {
+      await generatePlan(trx, {
         id: uuid.v4(),
         billingInterval: BillingInterval.MONTHLY,
         monthlyCostCents: 4567,

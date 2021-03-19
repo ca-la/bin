@@ -4,7 +4,6 @@ import Knex from "knex";
 import * as attachPlan from "./attach-plan";
 import * as attachSource from "../../services/stripe/attach-source";
 import * as createStripeSubscription from "../../services/stripe/create-subscription";
-import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
@@ -15,6 +14,7 @@ import User, { Role } from "../users/domain-object";
 import { authHeader, get, patch, post } from "../../test-helpers/http";
 import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
+import generatePlan from "../../test-helpers/factories/plan";
 
 interface SetupOptions {
   planOptions?: Partial<Uninserted<Plan>>;
@@ -42,7 +42,7 @@ async function setup(
   const { session, user } = await createUser();
 
   const plan = await db.transaction((trx: Knex.Transaction) =>
-    PlansDAO.create(trx, {
+    generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,

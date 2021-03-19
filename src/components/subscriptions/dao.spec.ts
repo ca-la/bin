@@ -9,7 +9,6 @@ import generatePlan from "../../test-helpers/factories/plan";
 import TeamUsersDAO from "../team-users/dao";
 import db from "../../services/db";
 import * as SubscriptionsDAO from "./dao";
-import * as PlansDAO from "../plans/dao";
 import { BillingInterval } from "../plans/types";
 import PaymentMethodsDAO from "../payment-methods/dao";
 
@@ -23,7 +22,7 @@ test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) =>
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await PlansDAO.create(trx, {
+    const plan = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -69,7 +68,7 @@ test("SubscriptionsDAO supports waiving payment on a new subscription", async (t
   const { user } = await createUser({ withSession: false });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await PlansDAO.create(trx, {
+    const plan = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -122,7 +121,7 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await PlansDAO.create(trx, {
+    const plan = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -263,7 +262,7 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
   });
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await PlansDAO.create(trx, {
+    const plan = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -316,7 +315,7 @@ test("findForTeamWithPlans", async (t: tape.Test) => {
   const { team } = await generateTeam(user.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await PlansDAO.create(trx, {
+    const plan = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -366,10 +365,7 @@ test("findForTeamWithPlans", async (t: tape.Test) => {
     t.deepEqual(subscriptions, [
       {
         ...subscription,
-        plan: {
-          ...plan,
-          stripePrices: [],
-        },
+        plan,
       },
     ]);
   });

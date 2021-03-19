@@ -3,7 +3,6 @@ import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 
-import * as PlanStripePricesDAO from "../plan-stripe-price/dao";
 import TeamsDAO from "../teams/dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as PlansDAO from "./dao";
@@ -18,34 +17,36 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    const plan1 = await PlansDAO.create(trx, {
-      billingInterval: BillingInterval.MONTHLY,
-      monthlyCostCents: 1234,
-      revenueShareBasisPoints: 1200,
-      costOfGoodsShareBasisPoints: 0,
-      stripePlanId: "plan_123",
-      title: "A little Bit",
-      isDefault: false,
-      isPublic: false,
-      ordering: null,
-      description: null,
-      baseCostPerBillingIntervalCents: 1234,
-      perSeatCostPerBillingIntervalCents: 0,
-      canSubmit: true,
-      canCheckOut: true,
-      maximumSeatsPerTeam: null,
-      maximumCollections: null,
-      includesFulfillment: true,
-      upgradeToPlanId: null,
-    });
+    const plan1 = await generatePlan(
+      trx,
+      {
+        billingInterval: BillingInterval.MONTHLY,
+        monthlyCostCents: 1234,
+        revenueShareBasisPoints: 1200,
+        stripePlanId: "plan_123",
+        title: "A little Bit",
+        isDefault: false,
+        isPublic: false,
+        ordering: null,
+        description: null,
+        baseCostPerBillingIntervalCents: 1234,
+        perSeatCostPerBillingIntervalCents: 0,
+        canSubmit: true,
+        canCheckOut: true,
+        maximumSeatsPerTeam: null,
+        maximumCollections: null,
+        includesFulfillment: true,
+        upgradeToPlanId: null,
+      },
+      [
+        {
+          stripePriceId: "a-stripe-price-id",
+          type: PlanStripePriceType.BASE_COST,
+        },
+      ]
+    );
 
-    await PlanStripePricesDAO.create(trx, {
-      planId: plan1.id,
-      stripePriceId: "a-stripe-price-id",
-      type: PlanStripePriceType.BASE_COST,
-    });
-
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
       revenueShareBasisPoints: 5000,
@@ -58,6 +59,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
       description: null,
       baseCostPerBillingIntervalCents: 4567,
       perSeatCostPerBillingIntervalCents: 0,
+      fulfillmentFeesShareBasisPoints: 1000,
       canSubmit: true,
       canCheckOut: true,
       maximumSeatsPerTeam: null,
@@ -95,6 +97,7 @@ test("PlansDAO supports creation and retrieval", async (t: Test) => {
     t.equal(sorted[1].baseCostPerBillingIntervalCents, 4567);
     t.equal(sorted[1].revenueShareBasisPoints, 5000);
     t.equal(sorted[1].upgradeToPlanId, plan1.id);
+    t.equal(sorted[1].fulfillmentFeesShareBasisPoints, 1000);
   } finally {
     await trx.rollback();
   }
@@ -104,7 +107,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -126,7 +129,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -148,7 +151,7 @@ test("PlansDAO.findPublic lists public plans", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -199,7 +202,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -222,7 +225,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
     });
 
     try {
-      await PlansDAO.create(trx, {
+      await generatePlan(trx, {
         id: uuid.v4(),
         billingInterval: BillingInterval.MONTHLY,
         monthlyCostCents: 4567,
@@ -243,6 +246,7 @@ test("PlansDAO prevents creating multiple default plans", async (t: Test) => {
         includesFulfillment: true,
         upgradeToPlanId: null,
       });
+
       throw new Error("Shouldn't get here");
     } catch (err) {
       t.equal(err.message, "Only one default plan can exist");
@@ -257,7 +261,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
 
   try {
     sandbox().useFakeTimers(new Date(2016, 2, 1));
-    const private3 = await PlansDAO.create(trx, {
+    const private3 = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -280,7 +284,8 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
     });
 
     sandbox().useFakeTimers(new Date(2017, 2, 1));
-    const publicOrder2 = await PlansDAO.create(trx, {
+
+    const publicOrder2 = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -303,7 +308,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
     });
 
     sandbox().useFakeTimers(new Date(2018, 2, 1));
-    const publicOrder1 = await PlansDAO.create(trx, {
+    const publicOrder1 = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -326,7 +331,7 @@ test("PlansDAO findAll retrive plans in correct order", async (t: Test) => {
     });
 
     sandbox().useFakeTimers(new Date(2019, 2, 1));
-    const private4 = await PlansDAO.create(trx, {
+    const private4 = await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,
@@ -367,7 +372,7 @@ test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
 
   const freeDefaultPlanId = uuid.v4();
   try {
-    const freeDefaultPlan = await PlansDAO.create(trx, {
+    const freeDefaultPlan = await generatePlan(trx, {
       id: freeDefaultPlanId,
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
@@ -389,7 +394,7 @@ test("PlansDAO.findFreeDefault returns free default plan", async (t: Test) => {
       upgradeToPlanId: null,
     });
 
-    await PlansDAO.create(trx, {
+    await generatePlan(trx, {
       id: uuid.v4(),
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 4567,

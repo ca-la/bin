@@ -6,6 +6,7 @@ import TeamUsersDAO from "../team-users/dao";
 import { PlanDb, BillingInterval } from "./types";
 import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test, sandbox } from "../../test-helpers/fresh";
+import { generatePlanWithoutDB } from "../../test-helpers/factories/plan";
 import { Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 
@@ -21,6 +22,7 @@ const planDataToCreate: Unsaved<PlanDb> = {
   description: "Everything you need to launch a multi-million dollar brand.",
   revenueShareBasisPoints: 4000,
   costOfGoodsShareBasisPoints: 0,
+  fulfillmentFeesShareBasisPoints: 0,
   baseCostPerBillingIntervalCents: 60_000_00,
   perSeatCostPerBillingIntervalCents: 0,
   canSubmit: true,
@@ -30,6 +32,7 @@ const planDataToCreate: Unsaved<PlanDb> = {
   includesFulfillment: true,
   upgradeToPlanId: null,
 };
+
 const createdPlan: PlanDb = {
   ...planDataToCreate,
   id: "a-plan-id",
@@ -40,7 +43,7 @@ const createdPlan: PlanDb = {
   ordering: null,
 };
 
-const firstPlan: PlanDb = {
+const firstPlan: PlanDb = generatePlanWithoutDB({
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
@@ -61,9 +64,9 @@ const firstPlan: PlanDb = {
   maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
-};
+});
 
-const secretPlan: PlanDb = {
+const secretPlan: PlanDb = generatePlanWithoutDB({
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
@@ -84,9 +87,9 @@ const secretPlan: PlanDb = {
   maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
-};
+});
 
-const littleBitPlan: PlanDb = {
+const littleBitPlan: PlanDb = generatePlanWithoutDB({
   id: uuid.v4(),
   createdAt: now,
   billingInterval: BillingInterval.MONTHLY,
@@ -107,7 +110,7 @@ const littleBitPlan: PlanDb = {
   maximumCollections: null,
   includesFulfillment: true,
   upgradeToPlanId: null,
-};
+});
 
 function setup({ role = "USER" }: { role?: UserRole } = {}) {
   sandbox().useFakeTimers(now);
@@ -246,6 +249,7 @@ test("POST /plans valid for the admin", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      fulfillmentFeesShareBasisPoints: 0,
       baseCostPerBillingIntervalCents: 60_000_00,
       perSeatCostPerBillingIntervalCents: 0,
       canSubmit: true,
@@ -286,6 +290,7 @@ test("POST /plans invalid for regular user", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      fulfillmentFeesShareBasisPoints: 0,
       baseCostPerBillingIntervalCents: 1234,
     },
   });
@@ -311,6 +316,7 @@ test("POST /plans invalid for unauthenticated user", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      fulfillmentFeesShareBasisPoints: 0,
       baseCostPerBillingIntervalCents: 1234,
     },
   });
@@ -334,6 +340,7 @@ test("POST /plans invalid without required fields", async (t: Test) => {
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      fulfillmentFeesShareBasisPoints: 0,
     },
   });
 
@@ -370,6 +377,7 @@ test("POST /plans creates only private plan even if we ask for public", async (t
       ordering: 4,
       revenueShareBasisPoints: 4000,
       costOfGoodsShareBasisPoints: 0,
+      fulfillmentFeesShareBasisPoints: 0,
       baseCostPerBillingIntervalCents: 1234,
     },
   });
@@ -390,6 +398,7 @@ test("POST /plans valid for MONTHLY and ANNUALLY billing interval and invalid fo
     ordering: null,
     revenueShareBasisPoints: 4000,
     costOfGoodsShareBasisPoints: 0,
+    fulfillmentFeesShareBasisPoints: 0,
     baseCostPerBillingIntervalCents: 1234,
   };
 

@@ -17,6 +17,7 @@ export const planDbSchema = z.object({
   monthlyCostCents: z.number(), // bigint
   revenueShareBasisPoints: z.number(),
   costOfGoodsShareBasisPoints: z.number(),
+  fulfillmentFeesShareBasisPoints: z.number(),
   stripePlanId: z.string(),
   title: z.string(),
   isDefault: z.boolean(),
@@ -41,6 +42,7 @@ export const planDbRowSchema = z.object({
   monthly_cost_cents: z.string(), // bigint
   revenue_share_basis_points: z.number(),
   cost_of_goods_share_basis_points: z.number(),
+  fulfillment_fees_share_basis_points: z.number(),
   stripe_plan_id: z.string(),
   title: z.string(),
   is_default: z.boolean(),
@@ -79,6 +81,7 @@ export const createPlanRequestSchema = z.object({
   billingInterval: billingIntervalSchema,
   revenueShareBasisPoints: z.number(),
   costOfGoodsShareBasisPoints: z.number(),
+  fulfillmentFeesShareBasisPoints: z.number(),
   stripePlanId: z.string(),
   title: z.string(),
   isDefault: z.boolean(),

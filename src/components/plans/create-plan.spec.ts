@@ -13,6 +13,7 @@ const plan: MaybeUnsaved<PlanDb> = {
   canCheckOut: true,
   canSubmit: true,
   costOfGoodsShareBasisPoints: 0,
+  fulfillmentFeesShareBasisPoints: 0,
   description: null,
   includesFulfillment: true,
   isDefault: false,
