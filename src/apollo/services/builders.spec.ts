@@ -6,6 +6,7 @@ import {
   buildGraphQLSortType,
   buildGraphQLFilterType,
   buildFindEndpoint,
+  FindResult,
 } from "./builders";
 import { GraphQLType } from "../published-types";
 import { CalaDao } from "../../services/cala-component/types";
@@ -13,6 +14,10 @@ import { GraphQLContextBase } from "../types";
 
 test("schemaToGraphQLType", async (t: Test) => {
   const schema = z.object({
+    id: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    deletedAt: z.string(),
     a1: z.string(),
     a2: z.string().nullable(),
     ref1: z.object({}),
@@ -20,22 +25,27 @@ test("schemaToGraphQLType", async (t: Test) => {
   });
 
   const type = schemaToGraphQLType("T1", schema, {
-    ref1: {
-      name: "Design",
-      type: "type",
-      body: {},
-    },
-    ref2: {
-      name: "Image",
-      type: "type",
-      body: {},
+    type: "input",
+    isUninserted: true,
+    depTypes: {
+      ref1: {
+        name: "Design",
+        type: "type",
+        body: {},
+      },
+      ref2: {
+        name: "Image",
+        type: "type",
+        body: {},
+      },
     },
   });
 
   t.deepEqual(type, {
     name: "T1",
-    type: "type",
+    type: "input",
     body: {
+      id: "String",
       a1: "String!",
       a2: "String",
       ref1: "Design!",
@@ -111,7 +121,7 @@ test("buildFindEndpoint", async (t: Test) => {
       sort?: Record<keyof Model, number | null>;
       filter: Partial<Model>;
     },
-    context: GraphQLContextBase
+    context: GraphQLContextBase<FindResult<Model>>
   ) => {
     return context;
   };

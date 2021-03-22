@@ -25,6 +25,9 @@ function extractResolvers() {
             args,
             initialContext
           );
+          if (processedContext.earlyResult !== null) {
+            return processedContext.earlyResult;
+          }
           const resolver = endpoint.resolver as (
             parent: any,
             args: any,
@@ -89,7 +92,7 @@ export const apolloServer = new ApolloServer({
         return {
           didEncounterErrors: async (
             requestContext: GraphQLRequestContextDidEncounterErrors<
-              GraphQLContextBase
+              GraphQLContextBase<null>
             >
           ) => {
             requestContext.errors.forEach((error: GraphQLError) => {
@@ -99,7 +102,7 @@ export const apolloServer = new ApolloServer({
           },
           willSendResponse: async (
             requestContext: GraphQLRequestContextWillSendResponse<
-              GraphQLContextBase
+              GraphQLContextBase<null>
             >
           ) => {
             if (!requestContext.context.trx.isCompleted()) {

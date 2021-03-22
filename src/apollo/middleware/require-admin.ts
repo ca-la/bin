@@ -1,9 +1,9 @@
 import { GraphQLContextAuthenticated } from "./require-auth";
 
-export async function requireAdmin<Args>(
+export async function requireAdmin<Args, Result>(
   _: Args,
-  context: GraphQLContextAuthenticated
-): Promise<GraphQLContextAuthenticated> {
+  context: GraphQLContextAuthenticated<Result>
+): Promise<GraphQLContextAuthenticated<Result>> {
   const { session } = context;
 
   if (session.role !== "ADMIN") {

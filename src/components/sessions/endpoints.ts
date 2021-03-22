@@ -10,7 +10,11 @@ interface LoginArgs {
   role: string;
 }
 
-const login: GraphQLEndpoint<LoginArgs, Session, GraphQLContextBase> = {
+const login: GraphQLEndpoint<
+  LoginArgs,
+  Session,
+  GraphQLContextBase<Session>
+> = {
   endpointType: "MUTATION",
   name: "login",
   types: [GraphQLTypes.Session],

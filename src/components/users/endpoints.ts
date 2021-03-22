@@ -13,15 +13,20 @@ interface UserArgs {
   id: string;
 }
 
-const user: GraphQLEndpoint<UserArgs, User, GraphQLContextAuthenticated> = {
+const user: GraphQLEndpoint<
+  UserArgs,
+  User,
+  GraphQLContextAuthenticated<User>
+> = {
   endpointType: "QUERY",
   types: [GraphQLTypes.Role, GraphQLTypes.User],
   name: "user",
   signature: "(id: String!): User!",
   middleware: composeMiddleware<
     UserArgs,
-    GraphQLContextAuthenticated,
-    GraphQLContextAuthenticated
+    User,
+    GraphQLContextAuthenticated<User>,
+    GraphQLContextAuthenticated<User>
   >(requireAuth, requireAdmin),
   resolver: async (_: any, args: UserArgs) => {
     const { id } = args;

@@ -80,44 +80,50 @@ export function buildTypes(sortedTypes: GraphQLType[]) {
 
 function composeMiddleware<
   Args,
-  C1 extends GraphQLContextBase,
-  C2 extends GraphQLContextBase
+  Result,
+  C1 extends GraphQLContextBase<Result>,
+  C2 extends GraphQLContextBase<Result>
 >(
-  m1: MiddlewareComponent<Args, GraphQLContextBase, C1>,
-  m2: MiddlewareComponent<Args, C1, C2>
-): Middleware<Args, C2>;
+  m1: MiddlewareComponent<Args, GraphQLContextBase<Result>, C1, Result>,
+  m2: MiddlewareComponent<Args, C1, C2, Result>
+): Middleware<Args, C2, Result>;
 
 function composeMiddleware<
   Args,
-  C1 extends GraphQLContextBase,
-  C2 extends GraphQLContextBase,
-  C3 extends GraphQLContextBase
+  Result,
+  C1 extends GraphQLContextBase<Result>,
+  C2 extends GraphQLContextBase<Result>,
+  C3 extends GraphQLContextBase<Result>
 >(
-  m1: MiddlewareComponent<Args, GraphQLContextBase, C1>,
-  m2: MiddlewareComponent<Args, C1, C2>,
-  m3: MiddlewareComponent<Args, C2, C3>
-): Middleware<Args, C3>;
+  m1: MiddlewareComponent<Args, GraphQLContextBase<Result>, C1, Result>,
+  m2: MiddlewareComponent<Args, C1, C2, Result>,
+  m3: MiddlewareComponent<Args, C2, C3, Result>
+): Middleware<Args, C3, Result>;
 
 function composeMiddleware<
   Args,
-  C1 extends GraphQLContextBase,
-  C2 extends GraphQLContextBase,
-  C3 extends GraphQLContextBase,
-  C4 extends GraphQLContextBase
+  Result,
+  C1 extends GraphQLContextBase<Result>,
+  C2 extends GraphQLContextBase<Result>,
+  C3 extends GraphQLContextBase<Result>,
+  C4 extends GraphQLContextBase<Result>
 >(
-  m1: MiddlewareComponent<Args, GraphQLContextBase, C1>,
-  m2: MiddlewareComponent<Args, C1, C2>,
-  m3: MiddlewareComponent<Args, C2, C3>,
-  m4: MiddlewareComponent<Args, C3, C4>
-): Middleware<Args, C4>;
+  m1: MiddlewareComponent<Args, GraphQLContextBase<Result>, C1, Result>,
+  m2: MiddlewareComponent<Args, C1, C2, Result>,
+  m3: MiddlewareComponent<Args, C2, C3, Result>,
+  m4: MiddlewareComponent<Args, C3, C4, Result>
+): Middleware<Args, C4, Result>;
 
-function composeMiddleware(...middlewareList: any[]) {
-  return async (args: any, context: GraphQLContextBase) => {
-    let result: any = context;
+function composeMiddleware<Result>(...middlewareList: any[]) {
+  return async (args: any, context: GraphQLContextBase<Result>) => {
+    let currentContext: any = context;
     for (const middleware of middlewareList) {
-      result = await middleware(args, result);
+      currentContext = await middleware(args, currentContext);
+      if (currentContext.earlyResult !== null) {
+        return currentContext;
+      }
     }
-    return result;
+    return currentContext;
   };
 }
 

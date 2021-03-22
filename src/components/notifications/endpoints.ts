@@ -2,6 +2,7 @@ import {
   GraphQLEndpoint,
   GraphQLContextAuthenticated,
   requireAuth,
+  Middleware,
 } from "../../apollo";
 import {
   NotificationFilter,
@@ -19,10 +20,12 @@ interface GetNotificationsArgs {
   filter: NotificationFilter;
 }
 
+type GetNotificationsResult = NotificationMessageForGraphQL[];
+
 const notificationMessages: GraphQLEndpoint<
   GetNotificationsArgs,
-  NotificationMessageForGraphQL[],
-  GraphQLContextAuthenticated
+  GetNotificationsResult,
+  GraphQLContextAuthenticated<GetNotificationsResult>
 > = {
   endpointType: "QUERY",
   types: [
@@ -37,11 +40,15 @@ const notificationMessages: GraphQLEndpoint<
   name: "notificationMessages",
   signature:
     "(limit: Int = 20, offset: Int = 20, filter: NotificationFilter): [NotificationMessage]",
-  middleware: requireAuth,
+  middleware: requireAuth as Middleware<
+    GetNotificationsArgs,
+    GraphQLContextAuthenticated<GetNotificationsResult>,
+    GetNotificationsResult
+  >,
   resolver: async (
     _: unknown,
     args: GetNotificationsArgs,
-    context: GraphQLContextAuthenticated
+    context: GraphQLContextAuthenticated<GetNotificationsResult>
   ) => {
     const { limit, offset, filter } = args;
     const { trx, session } = context;
@@ -74,7 +81,7 @@ interface ArchiveNotificationsArgs {
 const archiveNotifications: GraphQLEndpoint<
   ArchiveNotificationsArgs,
   number,
-  GraphQLContextAuthenticated
+  GraphQLContextAuthenticated<number>
 > = {
   endpointType: "MUTATION",
   name: "archiveNotifications",
@@ -83,7 +90,7 @@ const archiveNotifications: GraphQLEndpoint<
   resolver: async (
     _: any,
     args: ArchiveNotificationsArgs,
-    context: GraphQLContextAuthenticated
+    context: GraphQLContextAuthenticated<number>
   ) => {
     const { id, inboxOnly } = args;
     const {
@@ -110,7 +117,7 @@ interface UpdateNotificationArgs {
 const updateNotificaion: GraphQLEndpoint<
   UpdateNotificationArgs,
   NotificationMessageForGraphQL,
-  GraphQLContextAuthenticated
+  GraphQLContextAuthenticated<NotificationMessageForGraphQL>
 > = {
   endpointType: "MUTATION",
   name: "updateNotification",
@@ -119,7 +126,7 @@ const updateNotificaion: GraphQLEndpoint<
   resolver: async (
     _: unknown,
     args: UpdateNotificationArgs,
-    context: GraphQLContextAuthenticated
+    context: GraphQLContextAuthenticated<NotificationMessageForGraphQL>
   ) => {
     const { id, archivedAt } = args;
     const {

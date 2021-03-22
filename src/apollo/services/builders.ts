@@ -1,3 +1,4 @@
+import uuid from "node-uuid";
 import { intersection, forEach } from "lodash";
 import { GraphQLResolveInfo } from "graphql";
 import { CalaDao } from "../../services/cala-component/types";
@@ -12,28 +13,50 @@ import { isNullable } from "../../services/zod-helpers";
 export function schemaToGraphQLType(
   name: string,
   schema: ZodObject<any>,
-  depTypes?: Record<any, GraphQLType>
+  {
+    depTypes,
+    type = "type",
+    isUninserted = false,
+  }: {
+    depTypes?: Record<any, GraphQLType>;
+    type?: "type" | "input";
+    isUninserted?: boolean;
+  } = {}
 ): GraphQLType {
-  const body: GraphQLTypeBody = {};
-  const shape = schema.shape;
+  const body: GraphQLTypeBody = isUninserted ? { id: "String" } : {};
+  const shape = isUninserted
+    ? schema.omit({
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      }).shape
+    : schema.shape;
   const requires: string[] = [];
-  forEach(shape, (type: ZodTypeAny, key: string) => {
-    const typeJson = type.toJSON() as { t: string; innerType?: { t: string } };
+  forEach(shape, (zType: ZodTypeAny, key: string) => {
+    const typeJson = zType.toJSON() as { t: string; innerType?: { t: string } };
     const innerType = typeJson.innerType ? typeJson.innerType.t : typeJson.t;
-    const isTypeNullable = isNullable(type);
+    const isTypeNullable = isNullable(zType);
     if (depTypes && depTypes[key]) {
       body[key] = `${depTypes[key].name}${isTypeNullable ? "" : "!"}`;
       requires.push(depTypes[key].name);
     }
     switch (innerType) {
       case "string":
+      case "nativeEnum":
         body[key] = `String${isTypeNullable ? "" : "!"}`;
+        break;
+      case "date":
+        body[key] = `GraphQLDateTime${isTypeNullable ? "" : "!"}`;
+        break;
+      case "number":
+        body[key] = `Int${isTypeNullable ? "" : "!"}`;
         break;
     }
   });
   return {
     name,
-    type: "type",
+    type,
     body,
     requires,
   };
@@ -140,11 +163,16 @@ export function buildGraphQLFilterType<Model extends Record<string, any>>(
   };
 }
 
-interface FindArgs<Model> {
+export interface FindArgs<Model> {
   limit?: number;
   offset?: number;
   sort?: Record<keyof Model, number | null>;
   filter: Partial<Model>;
+}
+
+export interface FindResult<Model> {
+  meta: { total: number | null };
+  list: Model[];
 }
 
 function translateSort(sort: Record<string, number | null>): string {
@@ -196,12 +224,14 @@ function isMetaTotalRequested(
 
 export function buildFindEndpoint<
   Model extends Record<string, any>,
-  ResolverContext extends GraphQLContextBase = GraphQLContextBase
+  ResolverContext extends GraphQLContextBase<
+    FindResult<Model>
+  > = GraphQLContextBase<FindResult<Model>>
 >(
   modelTypeName: string,
   schema: ZodObject<any>,
   dao: CalaDao<Model>,
-  middleware: Middleware<FindArgs<Model>, ResolverContext>,
+  middleware: Middleware<FindArgs<Model>, ResolverContext, FindResult<Model>>,
   {
     allowedFilterAttributes = [],
     allowedSortAttributes = [],
@@ -236,7 +266,7 @@ export function buildFindEndpoint<
     resolver: async (
       _: any,
       args: FindArgs<Model>,
-      context: GraphQLContextAuthenticated,
+      context: GraphQLContextAuthenticated<FindResult<Model>>,
       info: GraphQLResolveInfo
     ) => {
       const { limit, offset, sort, filter } = args;
@@ -267,6 +297,52 @@ export function buildFindEndpoint<
         meta: { total },
         list: items,
       };
+    },
+  };
+}
+
+export interface CreateArgs<T extends ModelWithMeta> {
+  data: T;
+}
+
+export function buildCreateEndpoint<
+  Model extends ModelWithMeta,
+  ResolverContext extends GraphQLContextBase<Model> = GraphQLContextBase<Model>
+>(
+  modelTypeName: string,
+  schema: ZodObject<any>,
+  dao: CalaDao<Model>,
+  middleware: Middleware<CreateArgs<Model>, ResolverContext, Model>
+) {
+  const modelType = schemaToGraphQLType(modelTypeName, schema);
+  const inputType = schemaToGraphQLType(`${modelTypeName}Input`, schema, {
+    isUninserted: true,
+    type: "input",
+  });
+  const types: GraphQLType[] = [modelType, inputType];
+
+  return {
+    endpointType: "MUTATION",
+    types,
+    name: `Create${modelTypeName}`,
+    signature: `(data: ${inputType.name}): ${modelType.name}`,
+    middleware,
+    resolver: async (
+      _: any,
+      args: CreateArgs<Model>,
+      context: GraphQLContextAuthenticated<Model>
+    ) => {
+      const { data } = args;
+      const { trx } = context;
+
+      const createdAt = new Date();
+      return await dao.create(trx, {
+        ...data,
+        id: data.id || uuid.v4(),
+        createdAt,
+        updatedAt: createdAt,
+        deletedAt: null,
+      });
     },
   };
 }

@@ -1,22 +1,23 @@
+import { AuthenticationError } from "apollo-server-koa";
 import { GraphQLContextBase } from "../types";
 
-export interface GraphQLContextAuthenticated
-  extends Omit<GraphQLContextBase, "session"> {
+export interface GraphQLContextAuthenticated<Result>
+  extends Omit<GraphQLContextBase<Result>, "session"> {
   session: AuthedState;
 }
 
-function isAuthedContext(
-  candidate: GraphQLContextBase
-): candidate is GraphQLContextAuthenticated {
+function isAuthedContext<Result>(
+  candidate: GraphQLContextBase<Result>
+): candidate is GraphQLContextAuthenticated<Result> {
   return Boolean(candidate.session);
 }
 
-export async function requireAuth<Args>(
+export async function requireAuth<Args, Result>(
   _: Args,
-  context: GraphQLContextBase
-): Promise<GraphQLContextAuthenticated> {
+  context: GraphQLContextBase<Result>
+): Promise<GraphQLContextAuthenticated<Result>> {
   if (!isAuthedContext(context)) {
-    throw new Error("Unauthorized");
+    throw new AuthenticationError("Unauthorized");
   }
 
   return context;

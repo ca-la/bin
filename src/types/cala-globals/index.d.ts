@@ -20,23 +20,22 @@ type UninsertedWithoutShortId<T extends WithInitialDates & WithShortId> = Omit<
   "created_at" | "createdAt" | "short_id" | "shortId"
 >;
 
-type Unsaved<
-  T extends {
-    createdAt?: Date;
-    id?: string;
-    deletedAt?: Date | null;
-    updatedAt?: Date;
-  }
-> = Omit<T, "createdAt" | "id" | "deletedAt" | "updatedAt">;
+interface ModelWithMeta {
+  createdAt?: Date;
+  id?: string;
+  deletedAt?: Date | null;
+  updatedAt?: Date;
+}
 
-type MaybeUnsaved<
-  T extends {
-    createdAt?: Date;
-    id?: string;
-    deletedAt?: Date | null;
-    updatedAt?: Date;
-  }
-> = Omit<T, "createdAt" | "id" | "deletedAt" | "updatedAt"> & { id?: string };
+type Unsaved<T extends ModelWithMeta> = Omit<
+  T,
+  "createdAt" | "id" | "deletedAt" | "updatedAt"
+>;
+
+type MaybeUnsaved<T extends ModelWithMeta> = Omit<
+  T,
+  "createdAt" | "id" | "deletedAt" | "updatedAt"
+> & { id?: string };
 
 interface WithRouter {
   params: {

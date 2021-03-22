@@ -2,7 +2,8 @@ import * as z from "zod";
 import { GraphQLContextBase } from "../types";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 
-export interface GraphQLContextWithDesign extends GraphQLContextBase {
+export interface GraphQLContextWithDesign<Result>
+  extends GraphQLContextBase<Result> {
   designId: string;
 }
 
@@ -10,10 +11,10 @@ const filterWithDesignIdSchema = z.object({
   designId: z.string(),
 });
 
-export async function attachDesignFromFilter<Args extends { filter: any }>(
-  args: Args,
-  context: GraphQLContextBase
-) {
+export async function attachDesignFromFilter<
+  Args extends { filter: any },
+  Result
+>(args: Args, context: GraphQLContextBase<Result>) {
   const result = filterWithDesignIdSchema.safeParse(args.filter);
   if (!result.success) {
     throw new Error("Filter should contain designId");
@@ -24,15 +25,15 @@ export async function attachDesignFromFilter<Args extends { filter: any }>(
   };
 }
 
-export async function getAttachDesignByApprovalStep<Args>(
+export async function getAttachDesignByApprovalStep<Args, Result>(
   getApprovalStepId: (
     args: Args,
-    context: GraphQLContextBase
+    context: GraphQLContextBase<Result>
   ) => Promise<string>
 ) {
   return async function attachDesignByApprovalStep(
     args: Args,
-    context: GraphQLContextBase
+    context: GraphQLContextBase<Result>
   ) {
     const { trx } = context;
     const approvalStepId = await getApprovalStepId(args, context);

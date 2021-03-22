@@ -5,15 +5,16 @@ import {
 } from "../../services/get-permissions";
 import { GraphQLContextWithDesign } from "./design";
 
-interface GraphQLContextWithDesignAndPermissions extends GraphQLContextBase {
+interface GraphQLContextWithDesignAndPermissions<Result>
+  extends GraphQLContextBase<Result> {
   designId: string;
   designPermissions: Permissions;
 }
 
-export async function attachDesignPermissions<Args>(
+export async function attachDesignPermissions<Args, Result>(
   _: Args,
-  context: GraphQLContextWithDesign
-): Promise<GraphQLContextWithDesignAndPermissions> {
+  context: GraphQLContextWithDesign<Result>
+): Promise<GraphQLContextWithDesignAndPermissions<Result>> {
   const { designId, session } = context;
   if (!session) {
     throw new Error("Not authenticated");
@@ -32,10 +33,10 @@ export async function attachDesignPermissions<Args>(
   };
 }
 
-export async function requireDesignViewPermissions<Args>(
+export async function requireDesignViewPermissions<Args, Result>(
   _: Args,
-  context: GraphQLContextWithDesignAndPermissions
-): Promise<GraphQLContextWithDesignAndPermissions> {
+  context: GraphQLContextWithDesignAndPermissions<Result>
+): Promise<GraphQLContextWithDesignAndPermissions<Result>> {
   const { designPermissions } = context;
 
   if (!designPermissions.canView) {

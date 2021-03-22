@@ -36,11 +36,11 @@ export async function attachSession(
 
 export async function context({
   ctx,
-}: ContextParams): Promise<GraphQLContextBase> {
+}: ContextParams): Promise<GraphQLContextBase<null>> {
   const session = await attachSession(
     ctx.req.headers.authorization,
     ctx.query.token
   );
   const trx = await db.transaction();
-  return { session, trx };
+  return { session, trx, earlyResult: null };
 }
