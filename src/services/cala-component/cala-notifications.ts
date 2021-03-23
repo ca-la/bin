@@ -10,7 +10,7 @@ import { NotificationType } from "../../components/notifications/domain-object";
 import { NotificationMessageBuilder } from "../../components/notifications/notification-messages";
 import { replaceNotifications } from "../create-notifications";
 
-interface Recipient {
+export interface Recipient {
   recipientUserId: string | null;
   recipientCollaboratorId: string | null;
   recipientTeamUserId: string | null;

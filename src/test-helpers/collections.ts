@@ -1,3 +1,4 @@
+import Knex from "knex";
 import {
   addDesigns,
   moveDesigns,
@@ -16,10 +17,11 @@ export async function addDesign(
 
 export async function moveDesign(
   collectionId: string,
-  designId: string
+  designId: string,
+  trx?: Knex.Transaction
 ): Promise<ProductDesign[]> {
-  await moveDesigns({ collectionId, designIds: [designId] });
-  return ProductDesignsDAO.findByCollectionId(collectionId);
+  await moveDesigns({ collectionId, designIds: [designId], trx });
+  return ProductDesignsDAO.findByCollectionId(collectionId, trx);
 }
 
 export async function removeDesign(

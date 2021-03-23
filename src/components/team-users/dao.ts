@@ -1,7 +1,11 @@
 import Knex from "knex";
 
 import db from "../../services/db";
-import { buildDao } from "../../services/cala-component/cala-dao";
+import {
+  buildDao,
+  identity,
+  QueryModifier,
+} from "../../services/cala-component/cala-dao";
 import first from "../../services/first";
 import {
   TeamUserDb,
@@ -168,6 +172,28 @@ async function findByUserAndDesign(
   return adapter.fromDbArray(teamUsers);
 }
 
+async function findByDesign(
+  ktx: Knex,
+  designId: string,
+  modifier: QueryModifier = identity
+) {
+  const teamUsers = await ktx
+    .select("team_users.*")
+    .from("collection_designs")
+    .join("collections", "collections.id", "collection_designs.collection_id")
+    .join("team_users", "team_users.team_id", "collections.team_id")
+    .where({
+      "collections.deleted_at": null,
+      "collection_designs.design_id": designId,
+      "team_users.deleted_at": null,
+    })
+    .orderBy("team_users.created_at", "ASC")
+    .modify(modifier)
+    .modify(withUser);
+
+  return adapter.fromDbArray(teamUsers);
+}
+
 async function findByUserAndCollection(
   ktx: Knex,
   userId: string,
@@ -200,6 +226,7 @@ export default {
   claimAllByEmail,
   findByUserAndTeam,
   transferOwnership,
+  findByDesign,
   findByUserAndDesign,
   findByUserAndCollection,
   countBilledUsers,

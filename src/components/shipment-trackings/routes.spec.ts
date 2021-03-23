@@ -17,6 +17,7 @@ import { ShipmentTracking } from "./types";
 import { ShipmentTrackingEvent } from "../shipment-tracking-events/types";
 import NotificationsLayer from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
+import * as NotificationsService from "../notifications/service";
 import { templateDesignEvent } from "../design-events/types";
 import * as ShipmentTrackingEventService from "../shipment-tracking-events/service";
 import * as ShipmentTrackingEventsDAO from "../shipment-tracking-events/dao";
@@ -59,6 +60,9 @@ function setup() {
         "send"
       )
       .resolves(),
+    getRecipientsByDesignStub: sandbox()
+      .stub(NotificationsService, "getRecipientsByDesign")
+      .resolves([]),
     aftershipCouriersStub: sandbox()
       .stub(AftershipService, "getMatchingCouriers")
       .resolves([{ slug: "usps", name: "United States Postal Service" }]),
@@ -229,6 +233,20 @@ test("POST /shipment-trackings", async (t: Test) => {
     },
   });
 
+  const recipientsList = [
+    {
+      recipientUserId: "a-user-id-1",
+      recipientCollaboratorId: null,
+      recipientTeamUserId: "a-team-user-id",
+    },
+    {
+      recipientUserId: "a-user-id-2",
+      recipientCollaboratorId: "a-collaborator-id",
+      recipientTeamUserId: null,
+    },
+  ];
+  stubs.getRecipientsByDesignStub.resolves(recipientsList);
+
   const [response, body] = await post("/shipment-trackings", {
     body: tracking,
     headers: authHeader("a session token"),
@@ -265,7 +283,29 @@ test("POST /shipment-trackings", async (t: Test) => {
     },
     "creates a design event"
   );
-  t.equal(stubs.notificationsSendStub.callCount, 1, "creates a notification");
+
+  t.equal(stubs.getRecipientsByDesignStub.callCount, 1, "get recipients lsit");
+  t.deepEqual(
+    stubs.getRecipientsByDesignStub.args[0].slice(1),
+    ["a-design-id"],
+    "get recipients has been called with correct design id"
+  );
+  t.equal(
+    stubs.notificationsSendStub.callCount,
+    2,
+    "creates two notifications according to number of recipients"
+  );
+
+  t.deepEqual(
+    stubs.notificationsSendStub.args[0][2],
+    recipientsList[0],
+    "creates first notification with provided recipient"
+  );
+  t.deepEqual(
+    stubs.notificationsSendStub.args[1][2],
+    recipientsList[1],
+    "creates second notification with provided recipient"
+  );
 });
 
 test("POST /shipment-trackings with no collaborator", async (t: Test) => {

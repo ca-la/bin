@@ -4,6 +4,7 @@ import rethrow = require("pg-rethrow");
 
 import ProductDesignsDAO from "../product-designs/dao";
 import db from "../../services/db";
+import { QueryModifier } from "../../services/cala-component/cala-dao";
 import InvalidDataError = require("../../errors/invalid-data");
 import first from "../../services/first";
 import normalizeEmail = require("../../services/normalize-email");
@@ -235,13 +236,14 @@ export async function findAllByIds(
 
 export async function findByDesign(
   designId: string,
-  trx?: Knex.Transaction
+  ktx?: Knex,
+  modifier?: QueryModifier
 ): Promise<CollaboratorWithUser[]> {
   const design = await ProductDesignsDAO.findById(designId);
   if (!design) {
     return [];
   }
-  const collaboratorRows = await getCollaboratorViewBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder(ktx)
     .whereRaw(
       "(cancelled_at IS NULL OR cancelled_at > now()) AND deleted_at IS NULL"
     )
@@ -254,8 +256,8 @@ export async function findByDesign(
       }
     })
     .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
+      if (modifier) {
+        modifier(query);
       }
     })
     .orderBy("created_at", "ASC");

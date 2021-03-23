@@ -11,7 +11,6 @@ import {
 import db from "../../services/db";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import ProductDesignsDAO from "../product-designs/dao";
-import * as CollaboratorsDAO from "../collaborators/dao";
 import * as DesignEventsDAO from "../design-events/dao";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import { hasProperties } from "../../services/require-properties";
@@ -20,6 +19,7 @@ import useTransaction from "../../middleware/use-transaction";
 import * as Aftership from "../integrations/aftership/service";
 import { templateDesignEvent } from "../design-events/types";
 import notifications from "./notifications";
+import { getRecipientsByDesign } from "../notifications/service";
 import { NotificationType } from "../notifications/domain-object";
 
 import { ShipmentTracking } from "./types";
@@ -88,20 +88,13 @@ async function create(
     createdAt: new Date(),
   });
 
-  const collaborator = await CollaboratorsDAO.findByDesignAndUser(
-    design.id,
-    design.userId
-  );
+  const recipients = await getRecipientsByDesign(trx, design.id);
 
-  if (collaborator) {
+  for (const recipient of recipients) {
     await notifications[NotificationType.SHIPMENT_TRACKING_CREATE].send(
       trx,
       ctx.state.userId,
-      {
-        recipientUserId: design.userId,
-        recipientCollaboratorId: collaborator.id,
-        recipientTeamUserId: null,
-      },
+      recipient,
       {
         designId: design.id,
         collectionId: design.collectionIds[0] || null,

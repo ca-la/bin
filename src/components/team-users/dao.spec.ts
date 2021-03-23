@@ -1,5 +1,5 @@
 import uuid from "node-uuid";
-import { isEqual } from "lodash";
+import { isEqual, sortBy } from "lodash";
 
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
@@ -716,6 +716,115 @@ test("TeamUsersDAO.countBilledUsers", async (t: Test) => {
       0,
       "returns zero for non-existent team"
     );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("TeamUsersDAO.findByDesign", async (t: Test) => {
+  const trx = await db.transaction();
+
+  const { user: user1 } = await createUser({ withSession: false });
+  const { team, teamUser: tu1 } = await generateTeam(
+    user1.id,
+    {},
+    {
+      role: TeamUserRole.ADMIN,
+    }
+  );
+
+  // team 2 is not associated with collection - team users shouldn't appear in the list
+  const { user: userForTeam2 } = await createUser({ withSession: false });
+  const { team: team2 } = await generateTeam(
+    userForTeam2.id,
+    {},
+    {
+      role: TeamUserRole.ADMIN,
+    }
+  );
+
+  try {
+    const { user: user2 } = await createUser({ withSession: false });
+    const tu2 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.EDITOR,
+      label: null,
+      teamId: team.id,
+      userId: user2.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+
+    const { user: user3 } = await createUser({ withSession: false });
+    const tu3 = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      label: null,
+      teamId: team.id,
+      userId: user3.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+
+    const { user: user4 } = await createUser({ withSession: false });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.VIEWER,
+      label: null,
+      teamId: team.id,
+      userId: user4.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const { user: team2User } = await createUser({ withSession: false });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.EDITOR,
+      label: null,
+      teamId: team2.id,
+      userId: team2User.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+
+    const { user: owner } = await createUser({ withSession: false });
+    const collection = await CollectionsDAO.create({
+      createdAt: new Date(),
+      createdBy: owner.id,
+      deletedAt: null,
+      description: null,
+      id: uuid.v4(),
+      teamId: team.id,
+      title: "C1",
+    });
+    const design1 = await DesignsDAO.create({
+      productType: "TEE",
+      title: "My Tee",
+      userId: owner.id,
+    });
+    await moveDesign(collection.id, design1.id);
+
+    t.deepEqual(
+      await TeamUsersDAO.findByDesign(trx, uuid.v4()),
+      [],
+      "no team-users for random design"
+    );
+    const teamUsers = await TeamUsersDAO.findByDesign(trx, design1.id);
+
+    t.deepEqual(sortBy(teamUsers, "createdAt"), [
+      { ...tu1, user: user1 },
+      { ...tu2, user: user2 },
+      { ...tu3, user: user3 },
+    ]);
   } finally {
     await trx.rollback();
   }
