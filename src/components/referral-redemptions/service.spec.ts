@@ -4,6 +4,8 @@ import { test } from "../../test-helpers/fresh";
 import { redeemReferralCode, InvalidReferralCodeError } from "./service";
 import db = require("../../services/db");
 import createUser = require("../../test-helpers/create-user");
+import { getCreditAmount } from "../credits/dao";
+import { REFERRED_USER_SIGNUP_CENTS } from "./grant-checkout-credits";
 
 test("redeemReferralCode", async (t: tape.Test) => {
   const { user: referrer } = await createUser({ withSession: false });
@@ -19,6 +21,13 @@ test("redeemReferralCode", async (t: tape.Test) => {
 
   t.equal(created.referredUserId, referred.id);
   t.equal(created.referringUserId, referrer.id);
+
+  const referredCredits = await getCreditAmount(referred.id, trx);
+  t.equal(
+    referredCredits,
+    REFERRED_USER_SIGNUP_CENTS,
+    "Referred user has credits after signup"
+  );
 
   trx.rollback();
 });

@@ -9,6 +9,7 @@ import { addCredit } from "../credits/dao";
 // This amount is only rewarded for the first checkout payment by each user they
 // refer which meets or exceeds this amount.
 export const REFERRING_USER_CHECKOUT_CREDIT_CENTS = 50000;
+export const REFERRED_USER_SIGNUP_CENTS = 50000;
 
 interface Result {
   redemptionId: string;

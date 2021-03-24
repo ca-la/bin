@@ -10,6 +10,7 @@ export default buildAdapter<ReferralRedemption, ReferralRedemptionRow>({
     referringUserId: row.referring_user_id,
     referredUserId: row.referred_user_id,
     referringUserCheckoutCreditId: row.referring_user_checkout_credit_id,
+    referredUserSignupCreditId: row.referred_user_signup_credit_id,
   }),
   decodeTransformer: (data: ReferralRedemption): ReferralRedemptionRow => ({
     id: data.id,
@@ -17,5 +18,6 @@ export default buildAdapter<ReferralRedemption, ReferralRedemptionRow>({
     referring_user_id: data.referringUserId,
     referred_user_id: data.referredUserId,
     referring_user_checkout_credit_id: data.referringUserCheckoutCreditId,
+    referred_user_signup_credit_id: data.referredUserSignupCreditId,
   }),
 });
