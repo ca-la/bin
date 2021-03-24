@@ -234,7 +234,7 @@ test("GET /design-approval-steps/:stepId/stream-items", async (t: Test) => {
   t.equal(unauthRes.status, 403);
 });
 
-test("PATCH /design-approval-steps/:stepId", async (t: Test) => {
+test("PATCH /design-approval-steps/:stepId updates step state", async (t: Test) => {
   sandbox().stub(PricingProductTypesDAO, "findByDesignId").resolves({
     complexity: "BLANK",
   });
@@ -567,4 +567,92 @@ test("PATCH /design-approval-steps/:stepId updates teamUserId", async (t: Test) 
       "notification has proper values"
     );
   });
+});
+
+test("PATCH /design-approval-steps/:stepId updates due date", async (t: Test) => {
+  sandbox().stub(PricingProductTypesDAO, "findByDesignId").resolves({
+    complexity: "BLANK",
+  });
+  sandbox()
+    .stub(PricingQuotesDAO, "findByDesignId")
+    .resolves([
+      {
+        processes: [],
+      },
+    ]);
+
+  const admin = await createUser({ role: "ADMIN" });
+  const { user: actor, session } = await createUser({ withSession: true });
+
+  const d1: ProductDesign = await createDesign(
+    staticProductDesign({ id: "d1", userId: actor.id })
+  );
+
+  const as1: ApprovalStep = {
+    state: ApprovalStepState.UNSTARTED,
+    id: uuid.v4(),
+    title: "Checkout",
+    ordering: 0,
+    designId: d1.id,
+    reason: null,
+    type: ApprovalStepType.CHECKOUT,
+    collaboratorId: null,
+    teamUserId: null,
+    createdAt: new Date(),
+    completedAt: null,
+    startedAt: null,
+    dueAt: null,
+  };
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepsDAO.createAll(trx, [as1]);
+  });
+
+  const dueDate = new Date();
+  const [regularUserResponse] = await patch(
+    `/design-approval-steps/${as1.id}`,
+    {
+      headers: authHeader(session.id),
+      body: {
+        dueAt: dueDate,
+      },
+    }
+  );
+  t.is(
+    regularUserResponse.status,
+    403,
+    "responds with 403, only admin can update the dueAt"
+  );
+
+  const [adminUserResponse, body] = await patch(
+    `/design-approval-steps/${as1.id}`,
+    {
+      headers: authHeader(admin.session.id),
+      body: {
+        dueAt: dueDate,
+      },
+    }
+  );
+  t.is(adminUserResponse.status, 200);
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify({ ...as1, dueAt: dueDate })),
+    "returns updated step"
+  );
+
+  const [adminUserResponseWithNullDueDate, bodyWithNullDueDate] = await patch(
+    `/design-approval-steps/${as1.id}`,
+    {
+      headers: authHeader(admin.session.id),
+      body: {
+        dueAt: null,
+      },
+    }
+  );
+  t.is(adminUserResponseWithNullDueDate.status, 200);
+  t.deepEqual(
+    bodyWithNullDueDate,
+    JSON.parse(JSON.stringify({ ...as1, dueAt: null })),
+    "returns updated step"
+  );
 });

@@ -1,16 +1,25 @@
+import Knex from "knex";
+import convert from "koa-convert";
 import dao from "./dao";
 import { buildRouter } from "../../services/cala-component/cala-router";
-import ApprovalStep, { approvalStepDomain } from "./types";
+import { ROLES } from "../users/types";
+import ApprovalStep, {
+  approvalStepDomain,
+  approvalStepUpdateSchema,
+  ApprovalStepUpdate,
+  approvalStepUpdateDueDateSchema,
+} from "./types";
 import db from "../../services/db";
 import requireAuth from "../../middleware/require-auth";
-import Knex from "knex";
-import ApprovalStepsDAO from "../approval-steps/dao";
+import { typeGuardFromSchema } from "../../middleware/type-guard";
+import useTransaction from "../../middleware/use-transaction";
 import {
   canAccessDesignInQuery,
   canAccessDesignInState,
   canEditDesign,
   requireDesignIdBy,
 } from "../../middleware/can-access-design";
+import ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import { CommentWithResources } from "../comments/types";
 import addAtMentionDetails from "../../services/add-at-mention-details";
@@ -18,6 +27,11 @@ import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { DesignEventWithMeta } from "../design-events/types";
 import DesignEventsDAO from "../design-events/dao";
 import { CalaRouter } from "../../services/cala-component/types";
+import { check } from "../../services/check";
+import filterError from "../../services/filter-error";
+import ResourceNotFoundError from "../../errors/resource-not-found";
+import { emit } from "../../services/pubsub";
+import { RouteUpdated } from "../../services/pubsub/cala-events";
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
 
@@ -45,15 +59,6 @@ const standardRouter = buildRouter<ApprovalStep>(
         allowedFilterAttributes: ["designId"],
         middleware: [requireAuth, canAccessDesignInQuery],
       },
-      update: {
-        middleware: [
-          requireAuth,
-          requireDesignIdBy(getDesignIdFromStep),
-          canAccessDesignInState,
-          canEditDesign,
-        ],
-        allowedAttributes: ["collaboratorId", "teamUserId", "state"],
-      },
     },
   }
 );
@@ -80,10 +85,60 @@ function subtractDesignEventPairs(
   return [...acc, designEvent];
 }
 
+async function update(
+  ctx: TrxContext<AuthedContext<ApprovalStepUpdate, PermittedState>>
+) {
+  const { trx, role, userId: actorId } = ctx.state;
+  const { body: patch } = ctx.request;
+  const { id } = ctx.params;
+
+  const isAdmin = role === ROLES.ADMIN;
+  if (check(approvalStepUpdateDueDateSchema, patch) && !isAdmin) {
+    ctx.throw(403, "Access denied for this resource");
+  }
+
+  const { before, updated } = await ApprovalStepsDAO.update(
+    trx,
+    id,
+    patch
+  ).catch(
+    filterError(ResourceNotFoundError, (err: ResourceNotFoundError) => {
+      ctx.throw(404, err.message);
+    })
+  );
+
+  await emit<
+    ApprovalStep,
+    RouteUpdated<ApprovalStep, typeof approvalStepDomain>
+  >({
+    type: "route.updated",
+    domain: approvalStepDomain,
+    actorId,
+    trx,
+    before,
+    updated,
+  });
+
+  ctx.status = 200;
+  ctx.body = updated;
+}
+
 const router: CalaRouter = {
   ...standardRouter,
   routes: {
     ...standardRouter.routes,
+    "/:id": {
+      ...standardRouter.routes["/:id"],
+      patch: [
+        requireAuth,
+        useTransaction,
+        requireDesignIdBy(getDesignIdFromStep),
+        canAccessDesignInState,
+        canEditDesign,
+        typeGuardFromSchema(approvalStepUpdateSchema),
+        convert.back(update),
+      ],
+    },
     "/:id/stream-items": {
       get: [
         requireAuth,
