@@ -1,6 +1,7 @@
 import uuid from "node-uuid";
 import * as Knex from "knex";
 
+import db = require("../db");
 import * as NotificationsDAO from "../../components/notifications/dao";
 import * as CanvasesDAO from "../../components/canvases/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
@@ -105,6 +106,8 @@ import {
 
 import ProductDesignStage from "../../domain-objects/product-design-stage";
 import { BidRejection } from "../../components/bid-rejections/domain-object";
+import { getRecipientsByCollection } from "../../components/notifications/service";
+import { Recipient } from "../cala-component/cala-notifications";
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -958,8 +961,6 @@ export async function sendDesignerSubmitCollection(
 
 /**
  * Creates a notification that a collection has been fully costed and immediately sends it to SQS.
- * Recipients are the edit collaborators (who have accounts) of the collection.
- * Assumption: The collection creator is an edit collaborator.
  */
 export async function immediatelySendFullyCostedCollection(
   collectionId: string,
@@ -975,50 +976,48 @@ export async function immediatelySendFullyCostedCollection(
     throw new Error(`Collection ${collectionId} does not exist!`);
   }
 
-  const collaborators = await CollaboratorsDAO.findByCollection(collectionId);
-  const recipients = collaborators.filter(
-    (collaborator: Collaborator): boolean => {
-      return collaborator.role === "EDIT" && Boolean(collaborator.userId);
-    }
-  );
+  const recipients = await getRecipientsByCollection(db, collectionId);
 
   return Promise.all(
     recipients.map(
-      async (
-        recipient: Collaborator
-      ): Promise<CommitCostInputsNotification> => {
-        if (!recipient.userId) {
-          throw new Error("User id not on collaborator!");
-        }
-        const user = await UsersDAO.findById(recipient.userId);
-        if (!user) {
-          throw new Error(`User ${recipient.userId} not found!`);
-        }
-
+      async (recipient: Recipient): Promise<CommitCostInputsNotification> => {
         const id = uuid.v4();
         const notification = await NotificationsDAO.create({
           ...templateNotification,
           actorUserId: actor.id,
           collectionId,
           id,
-          recipientUserId: user.id,
-          sentEmailAt: new Date(),
+          sentEmailAt: recipient.recipientUserId ? new Date() : null,
           type: NotificationType.COMMIT_COST_INPUTS,
+          ...recipient,
         });
+
         const notificationMessage = await createNotificationMessage(
           notification
         );
+
         if (!notificationMessage) {
           throw new Error("Could not create notification message");
         }
-        await EmailService.enqueueSend({
-          params: {
-            collection,
-            notification: notificationMessage,
-          },
-          templateName: "single_notification",
-          to: user.email,
-        });
+
+        if (recipient.recipientUserId) {
+          const user = await UsersDAO.findById(recipient.recipientUserId);
+          if (!user) {
+            throw new Error(
+              `Cannot find user with ID ${recipient.recipientUserId}`
+            );
+          }
+
+          await EmailService.enqueueSend({
+            params: {
+              collection,
+              notification: notificationMessage,
+            },
+            templateName: "single_notification",
+            to: user.email,
+          });
+        }
+
         const validated = validateTypeWithGuardOrThrow(
           notification,
           isCommitCostInputsNotification,

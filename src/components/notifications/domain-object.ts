@@ -425,6 +425,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     readAt: rowData.read_at ? new Date(rowData.read_at) : null,
     recipientUserId: rowData.recipient_user_id,
     recipientTeamUserId: rowData.recipient_team_user_id,
+    recipientCollaboratorId: rowData.recipient_collaborator_id,
     sectionId: rowData.section_id,
     sentEmailAt: rowData.sent_email_at ? new Date(rowData.sent_email_at) : null,
     shipmentTrackingDescription: rowData.shipment_tracking_description,

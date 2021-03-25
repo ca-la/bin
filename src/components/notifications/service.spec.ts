@@ -3,6 +3,7 @@ import { test, Test } from "../../test-helpers/fresh";
 import {
   transformNotificationMessageToGraphQL,
   getRecipientsByDesign,
+  getRecipientsByCollection,
 } from "./service";
 import { NotificationMessage, NotificationType } from "./types";
 
@@ -58,7 +59,7 @@ test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
   });
 });
 
-test("getRecipientsByDesign", async (t: Test) => {
+test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
   const { user: userTeamOwner } = await createUser({ withSession: false });
   const { team, teamUser: tu1 } = await generateTeam(userTeamOwner.id, {});
 
@@ -136,7 +137,9 @@ test("getRecipientsByDesign", async (t: Test) => {
     const { user: userCollaborator1 } = await createUser({
       withSession: false,
     });
-    const { collaborator: collaboratorEditor } = await generateCollaborator({
+    const {
+      collaborator: collaboratorDesignEditor,
+    } = await generateCollaborator({
       collectionId: null,
       designId: design1.id,
       role: "EDIT",
@@ -221,12 +224,16 @@ test("getRecipientsByDesign", async (t: Test) => {
       userId: userAsTeamUserAndCollaborator.id,
     });
 
-    const recipients = await getRecipientsByDesign(trx, design1.id);
+    const designRecipients = await getRecipientsByDesign(trx, design1.id);
+    const collectionRecipients = await getRecipientsByCollection(
+      trx,
+      collection.id
+    );
 
-    const expectedCollaboratorsRecipients = [
+    const expectedDesignCollaboratorsRecipients = [
       {
-        recipientUserId: collaboratorEditor.userId,
-        recipientCollaboratorId: collaboratorEditor.id,
+        recipientUserId: collaboratorDesignEditor.userId,
+        recipientCollaboratorId: collaboratorDesignEditor.id,
         recipientTeamUserId: null,
       },
       {
@@ -240,6 +247,20 @@ test("getRecipientsByDesign", async (t: Test) => {
         recipientTeamUserId: null,
       },
     ];
+
+    const expectedCollectionCollaboratorsRecipients = [
+      {
+        recipientUserId: collaboratorOwner.userId,
+        recipientCollaboratorId: collaboratorOwner.id,
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: collaboratorWithoutUserId.id,
+        recipientTeamUserId: null,
+      },
+    ];
+
     const expectedTeamUsersRecipients = [
       {
         recipientUserId: tu1.userId,
@@ -268,15 +289,22 @@ test("getRecipientsByDesign", async (t: Test) => {
       },
     ];
 
-    const expectedRecipients = [
-      ...expectedTeamUsersRecipients,
-      ...expectedCollaboratorsRecipients,
-    ];
+    t.deepEquals(
+      designRecipients,
+      [
+        ...expectedTeamUsersRecipients,
+        ...expectedDesignCollaboratorsRecipients,
+      ],
+      "the design recipients list match expected items"
+    );
 
     t.deepEquals(
-      recipients,
-      expectedRecipients,
-      "the whole recipients list match expected items"
+      collectionRecipients,
+      [
+        ...expectedTeamUsersRecipients,
+        ...expectedCollectionCollaboratorsRecipients,
+      ],
+      "the collection recipients list match expected items"
     );
   } finally {
     await trx.rollback();

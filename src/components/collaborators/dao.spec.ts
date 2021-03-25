@@ -350,6 +350,48 @@ test("CollaboratorsDAO.findByCollection returns collaborators", async (t: Test) 
   t.equal(list[0].id, collaborator.id);
 });
 
+test("CollaboratorsDAO.findByCollection accepts modifier", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    teamId: null,
+    title: "Drop 001/The Early Years",
+  });
+
+  const { collaborator } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: user.id,
+  });
+
+  const viewers = await CollaboratorsDAO.findByCollection(
+    collection.id,
+    db,
+    (query: Knex.QueryBuilder) =>
+      query.andWhere({ "collaborators_forcollaboratorsviewraw.role": "VIEW" })
+  );
+
+  t.equal(viewers.length, 0);
+
+  const editors = await CollaboratorsDAO.findByCollection(
+    collection.id,
+    db,
+    (query: Knex.QueryBuilder) =>
+      query.andWhere({ "collaborators_forcollaboratorsviewraw.role": "EDIT" })
+  );
+
+  t.equal(editors.length, 1);
+  t.equal(editors[0].id, collaborator.id);
+});
+
 test("CollaboratorsDAO.findByDesigns", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });

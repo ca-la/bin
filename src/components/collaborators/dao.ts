@@ -332,11 +332,18 @@ ORDER BY d.created_at DESC;
 }
 
 export async function findByCollection(
-  collectionId: string
+  collectionId: string,
+  ktx?: Knex,
+  modifier?: QueryModifier
 ): Promise<Collaborator[]> {
-  const collaboratorRows = await getCollaboratorViewBuilder()
+  const collaboratorRows = await getCollaboratorViewBuilder(ktx)
     .where({ collection_id: collectionId })
-    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())");
+    .andWhereRaw("(cancelled_at IS null OR cancelled_at > now())")
+    .modify((query: Knex.QueryBuilder) => {
+      if (modifier) {
+        modifier(query);
+      }
+    });
 
   const collaborators = validateEvery<
     CollaboratorWithUserRow,

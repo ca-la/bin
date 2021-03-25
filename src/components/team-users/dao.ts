@@ -194,6 +194,27 @@ async function findByDesign(
   return adapter.fromDbArray(teamUsers);
 }
 
+async function findByCollection(
+  ktx: Knex,
+  collectionId: string,
+  modifier: QueryModifier = identity
+) {
+  const teamUsers = await ktx
+    .select("team_users.*")
+    .from("collections")
+    .join("team_users", "team_users.team_id", "collections.team_id")
+    .where({
+      "collections.id": collectionId,
+      "collections.deleted_at": null,
+      "team_users.deleted_at": null,
+    })
+    .orderBy("team_users.created_at", "ASC")
+    .modify(modifier)
+    .modify(withUser);
+
+  return adapter.fromDbArray(teamUsers);
+}
+
 async function findByUserAndCollection(
   ktx: Knex,
   userId: string,
@@ -227,6 +248,7 @@ export default {
   findByUserAndTeam,
   transferOwnership,
   findByDesign,
+  findByCollection,
   findByUserAndDesign,
   findByUserAndCollection,
   countBilledUsers,
