@@ -25,7 +25,6 @@ test("grantCheckoutCredits finds and grants credits for those who deserve them",
       referringUserId: referrer.id,
       referredUserId: referred.id,
       referringUserCheckoutCreditId: null,
-      latestSubscriptionBonusIssuedAt: null,
       referredUserSignupCreditId: null,
     });
   }

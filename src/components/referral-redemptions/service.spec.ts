@@ -1,18 +1,11 @@
 import tape from "tape";
-import { sandbox, test } from "../../test-helpers/fresh";
-import {
-  redeemReferralCode,
-  InvalidReferralCodeError,
-  grantSubscriptionCredits,
-} from "./service";
-import * as types from "./types";
-import dao from "./dao";
+
+import { test } from "../../test-helpers/fresh";
+import { redeemReferralCode, InvalidReferralCodeError } from "./service";
 import db = require("../../services/db");
 import createUser = require("../../test-helpers/create-user");
-import { BillingInterval } from "../plans";
-import * as CreditsDAO from "../credits/dao";
+import { getCreditAmount } from "../credits/dao";
 import { REFERRED_USER_SIGNUP_CENTS } from "./grant-checkout-credits";
-import { daysToMs } from "../../services/time-conversion";
 
 test("redeemReferralCode", async (t: tape.Test) => {
   const { user: referrer } = await createUser({ withSession: false });
@@ -29,7 +22,7 @@ test("redeemReferralCode", async (t: tape.Test) => {
   t.equal(created.referredUserId, referred.id);
   t.equal(created.referringUserId, referrer.id);
 
-  const referredCredits = await CreditsDAO.getCreditAmount(referred.id, trx);
+  const referredCredits = await getCreditAmount(referred.id, trx);
   t.equal(
     referredCredits,
     REFERRED_USER_SIGNUP_CENTS,
@@ -56,116 +49,5 @@ test("redeemReferralCode with invalid code", async (t: tape.Test) => {
     t.equal(err.message, '"veryfakecode" is not a valid referral code');
   } finally {
     trx.rollback();
-  }
-});
-
-test("grantSubscriptionCredits", async (t: tape.Test) => {
-  const now = new Date();
-
-  sandbox()
-    .stub(types, "isReferralRedemptionRowWithSubscriptionAndPlan")
-    .returns(true);
-
-  interface TestCase {
-    title: string;
-    referralRedemptionRow: {
-      billing_interval: BillingInterval;
-      subscription_created_at: Date | null;
-      latest_subscription_bonus_issued_at: Date | null;
-    };
-    addCreditCalled: number;
-  }
-
-  const testCases: TestCase[] = [
-    {
-      title: "Annual, a year ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.ANNUALLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(367)),
-        latest_subscription_bonus_issued_at: null,
-      },
-      addCreditCalled: 1,
-    },
-    {
-      title: "Annual, 2 years ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.ANNUALLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(2 * 367)),
-        latest_subscription_bonus_issued_at: null,
-      },
-
-      // still one record, as the referral bonus programm lasts one year
-      addCreditCalled: 1,
-    },
-    {
-      // In real world, this shouldn't be returned by getReferralRedemptionRowsWithUnpaidSubscriptionBonus
-      // but let's make sure grantSubscriptionCredits can handle it
-      title: "Annual, issued more than a year ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.ANNUALLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(363)),
-        latest_subscription_bonus_issued_at: new Date(
-          now.getTime() - daysToMs(362)
-        ),
-      },
-      addCreditCalled: 0,
-    },
-    {
-      title: "Monthly paid plan, more than 2 months ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.MONTHLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(2 * 31 + 1)),
-        latest_subscription_bonus_issued_at: null,
-      },
-      addCreditCalled: 3,
-    },
-    {
-      title: "Monthly paid plan, more than 2 months ago, issued 2 months ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.MONTHLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(2 * 31 + 1)),
-        latest_subscription_bonus_issued_at: new Date(
-          now.getTime() - daysToMs(2 * 31)
-        ),
-      },
-      addCreditCalled: 2,
-    },
-    {
-      title: "Monthly paid plan, 2 years ago ago",
-      referralRedemptionRow: {
-        billing_interval: BillingInterval.MONTHLY,
-        subscription_created_at: new Date(now.getTime() - daysToMs(2 * 367)),
-        latest_subscription_bonus_issued_at: null,
-      },
-      addCreditCalled: 12,
-    },
-  ];
-
-  sandbox().stub(dao, "update");
-  const getRedemptionsStub = sandbox().stub(
-    dao,
-    "getReferralRedemptionRowsWithUnpaidSubscriptionBonus"
-  );
-
-  const addCreditStub = sandbox().stub(CreditsDAO, "addCredit");
-
-  const trx = await db.transaction();
-  try {
-    for (const testCase of testCases) {
-      addCreditStub.reset();
-      getRedemptionsStub.returns([
-        { ...testCase.referralRedemptionRow, monthly_cost_cents: 1000 },
-      ]);
-      await grantSubscriptionCredits(trx);
-      t.equal(
-        addCreditStub.args.length,
-        testCase.addCreditCalled,
-        testCase.title
-      );
-    }
-    await trx.rollback();
-  } catch (err) {
-    await trx.rollback();
-    throw err;
   }
 });
