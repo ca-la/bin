@@ -89,13 +89,20 @@ async function update(
   ctx: TrxContext<AuthedContext<ApprovalStepUpdate, PermittedState>>
 ) {
   const { trx, role, userId: actorId } = ctx.state;
-  const { body: patch } = ctx.request;
+  const { body } = ctx.request;
   const { id } = ctx.params;
 
   const isAdmin = role === ROLES.ADMIN;
-  if (check(approvalStepUpdateDueDateSchema, patch) && !isAdmin) {
+  if (check(approvalStepUpdateDueDateSchema, body) && !isAdmin) {
     ctx.throw(403, "Access denied for this resource");
   }
+
+  const patch = check(approvalStepUpdateDueDateSchema, body)
+    ? {
+        ...body,
+        dueAt: body.dueAt ? new Date(body.dueAt) : null,
+      }
+    : body;
 
   const { before, updated } = await ApprovalStepsDAO.update(
     trx,
