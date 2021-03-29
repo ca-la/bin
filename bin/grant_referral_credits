@@ -17,9 +17,11 @@ run() {
     local)
       loadenv_local
       npx ts-node src/workers/grant-referral-credits/index.ts
+      npx ts-node src/workers/grant-referral-credits-for-subscription/index.ts
       ;;
     built)
       node dist/workers/grant-referral-credits/index.js
+      node dist/workers/grant-referral-credits-for-subscription/index.js
       ;;
     *)
       echo 'Usage: bin/grant_referral_credits <local|built>'
