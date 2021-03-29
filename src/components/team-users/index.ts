@@ -6,6 +6,7 @@ import {
   TeamUserDb,
   TeamUserDbRow,
   TeamUser,
+  FREE_TEAM_USER_ROLES,
   Role as TeamUserRole,
 } from "./types";
 import listeners from "./listeners";
@@ -13,7 +14,7 @@ import notifications, { NotificationLayerSchema } from "./notifications";
 
 export const TeamUsersDAO = dao;
 export const RawTeamUsersDAO = rawDao;
-export { TeamUser, TeamUserDbRow, TeamUserRole, dao };
+export { TeamUser, TeamUserDbRow, TeamUserRole, FREE_TEAM_USER_ROLES, dao };
 
 interface TeamUserComponent
   extends CalaComponent<TeamUserDb, TeamUserDbRow, NotificationLayerSchema> {

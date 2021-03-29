@@ -22,10 +22,7 @@ export const rawDataAdapter = buildAdapter({
         row.maximum_seats_per_team === null
           ? null
           : parseNumericString(row.maximum_seats_per_team),
-      maximumCollections:
-        row.maximum_collections === null
-          ? null
-          : parseNumericString(row.maximum_collections),
+      maximumCollections: row.maximum_collections,
       monthlyCostCents: parseNumericString(row.monthly_cost_cents),
       baseCostPerBillingIntervalCents: parseNumericString(
         row.base_cost_per_billing_interval_cents

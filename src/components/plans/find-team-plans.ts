@@ -1,6 +1,7 @@
 import Knex from "knex";
 import { findTeamPlans } from "./dao";
 import { Plan, TeamPlanOption } from "./types";
+import { calculatePerBillingIntervalPrice } from "./service";
 
 export async function areThereAvailableSeatsInTeamPlan(
   trx: Knex.Transaction,
@@ -37,8 +38,9 @@ export function attachTeamOptionData(
   return {
     ...plan,
     billedUserCount,
-    totalBillingIntervalCostCents:
-      plan.baseCostPerBillingIntervalCents +
-      billedUserCount * plan.perSeatCostPerBillingIntervalCents,
+    totalBillingIntervalCostCents: calculatePerBillingIntervalPrice(
+      plan,
+      billedUserCount
+    ),
   };
 }

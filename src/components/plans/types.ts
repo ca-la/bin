@@ -54,7 +54,7 @@ export const planDbRowSchema = z.object({
   can_check_out: z.boolean(),
   can_submit: z.boolean(),
   maximum_seats_per_team: z.string().nullable(),
-  maximum_collections: z.string().nullable(),
+  maximum_collections: z.number().int().positive().nullable(),
   includes_fulfillment: z.boolean(),
   upgrade_to_plan_id: z.string().nullable(),
 });
