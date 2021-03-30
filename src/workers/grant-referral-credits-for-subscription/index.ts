@@ -14,7 +14,7 @@ run()
     Logger.log(
       `Successfully granted ${formatCentsToDollars(
         creditTotalCents
-      )} credits for checkouts`
+      )} credits for subscriptions`
     );
     process.exit(0);
   })
