@@ -1,27 +1,37 @@
+import uuid from "node-uuid";
+
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import notifications from "./notifications";
 import * as NotificationAnnouncer from "../iris/messages/notification";
 import { NotificationType } from "../notifications/domain-object";
 import { findByUserId } from "../notifications/dao";
+import * as PlansDAO from "../plans/dao";
 import createUser from "../../test-helpers/create-user";
 import { TeamDb } from "../teams/types";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { TeamUserDb, TeamUserRole } from "../../published-types";
+import { RawTeamUsersDAO } from ".";
+import { generatePlanWithoutDB } from "../../test-helpers/factories/plan";
 
 const prepareAssets = async (): Promise<{
   actor: any;
   recipient: any;
   team: TeamDb;
+  teamUser: TeamUserDb;
 }> => {
   try {
     const { user: actor } = await createUser();
     const { user: recipient } = await createUser();
-    const { team } = await generateTeam(actor.id, { title: "My Team" });
+    const { team, teamUser } = await generateTeam(actor.id, {
+      title: "My Team",
+    });
 
     return {
       actor,
       recipient,
       team,
+      teamUser,
     };
   } catch (err) {
     throw err;
@@ -32,7 +42,7 @@ test("Invite team user notification", async (t: Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
-  const { actor, recipient, team } = await prepareAssets();
+  const { actor, recipient, team, teamUser } = await prepareAssets();
 
   const trx = await db.transaction();
   try {
@@ -46,6 +56,7 @@ test("Invite team user notification", async (t: Test) => {
     await send(trx, actor.id, {
       teamId: team.id,
       recipientUserId: recipient.id,
+      recipientTeamUserId: teamUser.id,
     });
     const ns = await findByUserId(trx, recipient.id, {
       limit: 20,
@@ -63,6 +74,66 @@ test("Invite team user notification", async (t: Test) => {
     t.true(
       message && message.location[0].url.includes(`/teams/${team.id}`),
       `notification attachment message has url`
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("Invite team user notification for non-CALA users", async (t: Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+
+  const plan = generatePlanWithoutDB();
+
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves(plan);
+
+  const { actor, team } = await prepareAssets();
+
+  const trx = await db.transaction();
+  const teamUser = await RawTeamUsersDAO.create(trx, {
+    userId: null,
+    id: uuid.v4(),
+    teamId: team.id,
+    userEmail: "test@example.com",
+    role: TeamUserRole.EDITOR,
+    label: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  });
+  try {
+    const notificationComponent =
+      notifications[NotificationType.INVITE_TEAM_USER];
+    const send = notificationComponent.send as (
+      trx: any,
+      actorId: any,
+      data: any
+    ) => Promise<void>;
+    const notification: any = await send(trx, actor.id, {
+      teamId: team.id,
+      recipientTeamUserId: teamUser.id,
+      recipientUserId: null,
+    });
+
+    const message = await notificationComponent.messageBuilder(
+      notification,
+      trx
+    );
+    t.is(
+      [actor.name, " invited you to ", team.title].every(
+        (part: string) => message && message.html.includes(part)
+      ),
+      true,
+      `notification message contains expected parts`
+    );
+
+    t.true(
+      message?.link.includes(
+        `subscribe?planId=${plan.id}&invitationEmail=test%40example.com&returnTo=%2Fteams%2F${team.id}`
+      ),
+      "Link directs to subscribe page with a redirect"
     );
   } finally {
     await trx.rollback();

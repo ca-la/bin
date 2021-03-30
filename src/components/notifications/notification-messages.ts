@@ -5,7 +5,7 @@ import InvalidDataError from "../../errors/invalid-data";
 import * as CommentsDAO from "../../components/comments/dao";
 import * as PlansDAO from "../../components/plans/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-import Collaborator from "../../components/collaborators/types";
+
 import {
   DEPRECATED_NOTIFICATION_TYPES,
   FullNotification,
@@ -33,7 +33,8 @@ const messageBuilders: Partial<Record<
 >> = {};
 
 export type NotificationMessageBuilder = (
-  notification: FullNotification
+  notification: FullNotification,
+  ktx?: Knex
 ) => Promise<NotificationMessage | null>;
 
 export function registerMessageBuilder(
@@ -236,9 +237,9 @@ export function getTeamBaseWithAssets(
   };
 }
 
-async function getNonUserInvitationMessage(options: {
+export async function getNonUserInvitationMessage(options: {
   notification: FullNotification;
-  collaborator: Collaborator;
+  invitationEmail: string | null;
   escapedActorName: string;
   resourceName: string;
 }): Promise<{
@@ -247,14 +248,14 @@ async function getNonUserInvitationMessage(options: {
 }> {
   const {
     escapedActorName,
-    collaborator,
+    invitationEmail,
     notification,
     resourceName,
   } = options;
 
-  if (!collaborator.userEmail) {
+  if (!invitationEmail) {
     throw new Error(
-      `Notification ${notification.id} is missing both recipientUserId and a collaborator email`
+      `Notification ${notification.id} is missing both recipientUserId and an email`
     );
   }
 
@@ -270,8 +271,9 @@ async function getNonUserInvitationMessage(options: {
     type: LinkType.Subscribe,
     returnToDesignId: notification.designId,
     returnToCollectionId: notification.collectionId,
+    returnToTeamId: notification.teamId,
     planId: plan.id,
-    invitationEmail: collaborator.userEmail,
+    invitationEmail,
     title: resourceName,
   });
 
@@ -285,7 +287,8 @@ async function getNonUserInvitationMessage(options: {
 }
 
 export async function createNotificationMessage(
-  notification: FullNotification
+  notification: FullNotification,
+  ktx?: Knex
 ): Promise<NotificationMessage | null> {
   if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
     return null;
@@ -296,7 +299,7 @@ export async function createNotificationMessage(
 
   const builder = messageBuilders[notification.type as NotificationType];
   if (builder) {
-    return builder(notification);
+    return builder(notification, ktx);
   }
 
   const baseNotificationMessage = createBaseMessage(notification);
@@ -351,7 +354,7 @@ export async function createNotificationMessage(
         if (!collaborator.userId) {
           const { html, link } = await getNonUserInvitationMessage({
             notification,
-            collaborator,
+            invitationEmail: collaborator.userEmail,
             escapedActorName: cleanName,
             resourceName,
           });

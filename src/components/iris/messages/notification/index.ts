@@ -1,3 +1,5 @@
+import Knex from "knex";
+
 import { FullNotification } from "../../../notifications/domain-object";
 import { createNotificationMessage } from "../../../notifications/notification-messages";
 import { sendMessage } from "../../send-message";
@@ -8,9 +10,13 @@ import { buildChannelName } from "../../build-channel";
  * Publishes a notification to the Iris SQS only if the notification has a recipient that is a user.
  */
 export async function announceNotificationCreation(
-  notification: FullNotification
+  notification: FullNotification,
+  trx?: Knex.Transaction
 ): Promise<RealtimeMessage | null> {
-  const messageNotification = await createNotificationMessage(notification);
+  const messageNotification = await createNotificationMessage(
+    notification,
+    trx
+  );
   if (!notification.recipientUserId || !messageNotification) {
     return null;
   }

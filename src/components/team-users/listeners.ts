@@ -44,6 +44,7 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
       },
       {
         teamId,
+        recipientTeamUserId: id,
       }
     );
 

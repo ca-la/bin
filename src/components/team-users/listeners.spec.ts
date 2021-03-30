@@ -115,6 +115,7 @@ test("route.created", async (t: Test) => {
       notificationsSendStub.args[0][3],
       {
         teamId: tu1.teamId,
+        recipientTeamUserId: tu1.id,
       },
       "Notification tied to team"
     );
