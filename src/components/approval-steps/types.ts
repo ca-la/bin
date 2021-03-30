@@ -157,24 +157,15 @@ export interface FullApprovalStepAssignmentNotification extends BaseFull {
   type: NotificationType.APPROVAL_STEP_ASSIGNMENT;
 }
 
-const approvalStepUpdateRegularSchema = baseApprovalStepSchema
+export const approvalStepUpdateSchema = baseApprovalStepSchema
   .pick({
     collaboratorId: true,
     teamUserId: true,
-    state: true,
   })
   .extend({
     state: approvalStepStateSchema,
+    dueAt: nullableDateStringToNullableDate,
   })
   .partial();
-
-export const approvalStepUpdateDueDateSchema = z.object({
-  dueAt: z.string().nullable(),
-});
-
-export const approvalStepUpdateSchema = z.union([
-  approvalStepUpdateRegularSchema.strict(),
-  approvalStepUpdateDueDateSchema.strict(),
-]);
 
 export type ApprovalStepUpdate = z.infer<typeof approvalStepUpdateSchema>;

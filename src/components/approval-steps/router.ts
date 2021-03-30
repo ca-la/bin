@@ -7,7 +7,6 @@ import ApprovalStep, {
   approvalStepDomain,
   approvalStepUpdateSchema,
   ApprovalStepUpdate,
-  approvalStepUpdateDueDateSchema,
 } from "./types";
 import db from "../../services/db";
 import requireAuth from "../../middleware/require-auth";
@@ -27,7 +26,6 @@ import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { DesignEventWithMeta } from "../design-events/types";
 import DesignEventsDAO from "../design-events/dao";
 import { CalaRouter } from "../../services/cala-component/types";
-import { check } from "../../services/check";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { emit } from "../../services/pubsub";
@@ -85,24 +83,19 @@ function subtractDesignEventPairs(
   return [...acc, designEvent];
 }
 
-async function update(
-  ctx: TrxContext<AuthedContext<ApprovalStepUpdate, PermittedState>>
-) {
-  const { trx, role, userId: actorId } = ctx.state;
-  const { body } = ctx.request;
+type UpdateContext = AuthedContext &
+  TransactionContext &
+  SafeBodyContext<ApprovalStepUpdate>;
+
+async function update(ctx: UpdateContext) {
+  const { trx, role, userId: actorId, safeBody: patch } = ctx.state;
   const { id } = ctx.params;
 
   const isAdmin = role === ROLES.ADMIN;
-  if (check(approvalStepUpdateDueDateSchema, body) && !isAdmin) {
+
+  if (patch.dueAt !== undefined && !isAdmin) {
     ctx.throw(403, "Access denied for this resource");
   }
-
-  const patch = check(approvalStepUpdateDueDateSchema, body)
-    ? {
-        ...body,
-        dueAt: body.dueAt ? new Date(body.dueAt) : null,
-      }
-    : body;
 
   const { before, updated } = await ApprovalStepsDAO.update(
     trx,

@@ -90,6 +90,14 @@ type TrxContext<T extends import("koa").ParameterizedContext> = T & {
   state: T["state"] & { trx: import("knex").Transaction };
 };
 
+interface SafeBodyContext<BodyT = unknown> {
+  state: { safeBody: BodyT };
+}
+
+interface TransactionContext {
+  state: { trx: import("knex").Transaction };
+}
+
 interface PermissionsKoaState {
   permissions: import("../../services/get-permissions").Permissions;
 }

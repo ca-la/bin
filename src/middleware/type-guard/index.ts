@@ -1,5 +1,5 @@
-import { ZodSchema } from "zod";
-import { check } from "../../services/check";
+import { ParameterizedContext } from "koa";
+import { ZodSchema, ZodTypeDef } from "zod";
 
 export function typeGuard<T>(
   guardFn: (data: any) => data is T
@@ -21,17 +21,24 @@ export function typeGuard<T>(
 }
 
 export function typeGuardFromSchema<BodyType>(
-  schema: ZodSchema<BodyType>
-): (this: AuthedContext, next: any) => Iterator<any, any, any> {
+  schema: ZodSchema<BodyType, ZodTypeDef, any>
+): (
+  this: ParameterizedContext & SafeBodyContext<BodyType>,
+  next: any
+) => Iterator<any, any, any> {
   function* middleware(
-    this: AuthedContext,
+    this: ParameterizedContext & SafeBodyContext<BodyType>,
     next: any
   ): Iterator<any, any, any> {
     const { body } = this.request;
 
-    if (!check(schema, body)) {
+    const result = schema.safeParse(body);
+
+    if (!result.success) {
       this.throw(400, "Request does not match type.");
     }
+
+    this.state.safeBody = result.data;
 
     yield next;
   }
