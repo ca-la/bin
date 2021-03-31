@@ -33,9 +33,7 @@ export function fromSchema<
   const encodeTransformer = rowSchema
     .transform(defaultEncoder)
     .transform(modelSchema.parse).parse;
-  const decodeTransformer = modelSchema
-    .transform(defaultDecoder)
-    .transform(rowSchema.parse).parse;
+  const decodeTransformer = defaultDecoder;
   const insertionTransformer = decodeTransformer;
 
   const dataAdapter = new DataAdapter<ModelRow, Model>(
