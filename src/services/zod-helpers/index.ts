@@ -33,22 +33,3 @@ export interface ZTypeJson {
   innerType?: ZTypeJson;
   checks?: [{ expected: string }];
 }
-
-export function isNullable(zType: z.ZodTypeAny) {
-  const json = zType.toJSON() as ZTypeJson;
-  switch (json.t) {
-    case "nullable":
-    case "null":
-      return true;
-    case "union":
-      return (
-        json.options &&
-        json.options.some(
-          (option: { t: string }) =>
-            option.t === "null" || option.t === "nullable"
-        )
-      );
-    default:
-      return false;
-  }
-}

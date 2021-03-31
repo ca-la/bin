@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { z } from "zod";
 import { omit } from "lodash";
 import { test, Test } from "../../test-helpers/fresh";
 import {
@@ -12,6 +12,10 @@ import { GraphQLType } from "../published-types";
 import { CalaDao } from "../../services/cala-component/types";
 import { GraphQLContextBase } from "../types";
 
+enum Foo {
+  BAR = "BAR",
+}
+
 test("schemaToGraphQLType", async (t: Test) => {
   const schema = z.object({
     id: z.string(),
@@ -22,6 +26,8 @@ test("schemaToGraphQLType", async (t: Test) => {
     a2: z.string().nullable(),
     ref1: z.object({}),
     ref2: z.object({}).nullable(),
+    num1: z.number().int(),
+    enum1: z.nativeEnum(Foo).nullable(),
   });
 
   const type = schemaToGraphQLType("T1", schema, {
@@ -50,6 +56,8 @@ test("schemaToGraphQLType", async (t: Test) => {
       a2: "String",
       ref1: "Design!",
       ref2: "Image",
+      num1: "Int!",
+      enum1: "String",
     },
     requires: ["Design", "Image"],
   });

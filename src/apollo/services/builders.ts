@@ -1,18 +1,17 @@
 import uuid from "node-uuid";
-import { intersection, forEach } from "lodash";
+import { z } from "zod";
+import { intersection } from "lodash";
 import { GraphQLResolveInfo } from "graphql";
 import { CalaDao } from "../../services/cala-component/types";
 import { GraphQLContextAuthenticated } from "../middleware";
-import { ZodObject, ZodTypeAny } from "zod";
 import { GraphQLType, GraphQLTypeBody } from "../published-types";
 import { GraphQLContextBase, Middleware } from "../types";
 import { QueryBuilder } from "knex";
 import { parseResolveInfo, ResolveTree } from "graphql-parse-resolve-info";
-import { isNullable } from "../../services/zod-helpers";
 
 export function schemaToGraphQLType(
   name: string,
-  schema: ZodObject<any>,
+  schema: z.AnyZodObject,
   {
     depTypes,
     type = "type",
@@ -23,7 +22,6 @@ export function schemaToGraphQLType(
     isUninserted?: boolean;
   } = {}
 ): GraphQLType {
-  const body: GraphQLTypeBody = isUninserted ? { id: "String" } : {};
   const shape = isUninserted
     ? schema.omit({
         id: true,
@@ -32,28 +30,71 @@ export function schemaToGraphQLType(
         deletedAt: true,
       }).shape
     : schema.shape;
-  const requires: string[] = [];
-  forEach(shape, (zType: ZodTypeAny, key: string) => {
-    const typeJson = zType.toJSON() as { t: string; innerType?: { t: string } };
-    const innerType = typeJson.innerType ? typeJson.innerType.t : typeJson.t;
-    const isTypeNullable = isNullable(zType);
-    if (depTypes && depTypes[key]) {
-      body[key] = `${depTypes[key].name}${isTypeNullable ? "" : "!"}`;
-      requires.push(depTypes[key].name);
-    }
-    switch (innerType) {
-      case "string":
-      case "nativeEnum":
-        body[key] = `String${isTypeNullable ? "" : "!"}`;
-        break;
-      case "date":
-        body[key] = `GraphQLDateTime${isTypeNullable ? "" : "!"}`;
-        break;
-      case "number":
-        body[key] = `Int${isTypeNullable ? "" : "!"}`;
-        break;
-    }
-  });
+
+  const { body, requires } = Object.entries(shape).reduce(
+    (
+      acc: { body: GraphQLTypeBody; requires: string[] },
+      [key, value]: [string, unknown]
+    ) => {
+      const zType = value as z.ZodFirstPartySchemaTypes;
+      const maybeBang = zType.isNullable() ? "" : "!";
+
+      // This type casts our unknown to one of the base Zod schema types
+      const internal: z.ZodFirstPartySchemaTypes =
+        zType instanceof z.ZodNullable || zType instanceof z.ZodOptional
+          ? zType.unwrap()
+          : zType;
+
+      if (depTypes && depTypes[key]) {
+        const depType = depTypes[key];
+
+        return {
+          body: {
+            ...acc.body,
+            [key]: `${depType.name}${maybeBang}`,
+          },
+          requires: [...acc.requires, depType.name],
+        };
+      }
+
+      if (
+        internal instanceof z.ZodString ||
+        internal instanceof z.ZodNativeEnum
+      ) {
+        return {
+          ...acc,
+          body: {
+            ...acc.body,
+            [key]: `String${maybeBang}`,
+          },
+        };
+      }
+
+      if (internal instanceof z.ZodDate) {
+        return {
+          ...acc,
+          body: {
+            ...acc.body,
+            [key]: `GraphQLDateTime${maybeBang}`,
+          },
+        };
+      }
+
+      if (internal instanceof z.ZodNumber) {
+        return {
+          ...acc,
+          body: {
+            ...acc.body,
+            [key]: `Int${maybeBang}`,
+          },
+        };
+      }
+
+      return acc;
+    },
+    { body: isUninserted ? { id: "String" } : {}, requires: [] }
+  );
+
   return {
     name,
     type,
@@ -229,7 +270,7 @@ export function buildFindEndpoint<
   > = GraphQLContextBase<FindResult<Model>>
 >(
   modelTypeName: string,
-  schema: ZodObject<any>,
+  schema: z.AnyZodObject,
   dao: CalaDao<Model>,
   middleware: Middleware<FindArgs<Model>, ResolverContext, FindResult<Model>>,
   {
@@ -310,7 +351,7 @@ export function buildCreateEndpoint<
   ResolverContext extends GraphQLContextBase<Model> = GraphQLContextBase<Model>
 >(
   modelTypeName: string,
-  schema: ZodObject<any>,
+  schema: z.AnyZodObject,
   dao: CalaDao<Model>,
   middleware: Middleware<CreateArgs<Model>, ResolverContext, Model>
 ) {
