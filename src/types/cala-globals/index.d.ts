@@ -53,6 +53,13 @@ interface WithJsonBody<T extends object | any[]> {
   };
 }
 
+type WithResponseBody<C extends import("koa").ParameterizedContext, B> = Omit<
+  C,
+  "body"
+> & {
+  body: B;
+};
+
 interface PublicState {
   tracking: import("../../middleware/tracking").TrackingEvent[];
   trackingId: string;

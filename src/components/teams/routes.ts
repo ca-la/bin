@@ -7,6 +7,7 @@ import { check } from "../../services/check";
 import useTransaction from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import TeamsDAO from "./dao";
+import TeamUsersDAO from "../team-users/dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as PlansDAO from "../plans/dao";
 import { createSubscription } from "../subscriptions/create";
@@ -14,6 +15,7 @@ import attachPlan from "../subscriptions/attach-plan";
 import { upgradeTeamSubscription } from "../subscriptions/upgrade";
 import {
   TeamDb,
+  Team,
   unsavedTeamSchema,
   teamTypeSchema,
   TeamType,
@@ -144,16 +146,29 @@ function* findTeams(this: AuthedContext) {
   this.status = 200;
 }
 
-function* findTeam(this: AuthedContext) {
+function* findTeam(this: WithResponseBody<AuthedContext, Team | TeamDb>) {
   const { id } = this.params;
+  const { userId } = this.state;
 
-  const team = yield TeamsDAO.findById(db, id);
+  const team: TeamDb = yield TeamsDAO.findById(db, id);
   if (!team) {
     this.throw(404, `Team not found with ID: ${id}`);
   }
+  const teamUser = yield TeamUsersDAO.findOne(db, {
+    teamId: team.id,
+    userId,
+  });
 
-  this.body = team;
   this.status = 200;
+  if (teamUser) {
+    this.body = {
+      ...team,
+      role: teamUser.role,
+      teamUserId: teamUser.id,
+    };
+  } else {
+    this.body = team;
+  }
 }
 
 function* findTeamSubscriptions(this: AuthedContext) {

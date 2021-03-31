@@ -287,11 +287,38 @@ test("GET /teams?filter with invalid filter", async (t: Test) => {
 test("GET /teams/:id as ADMIN", async (t: Test) => {
   setup({ role: "ADMIN" });
 
+  sandbox().stub(TeamUsersDAO, "findOne").resolves(null);
+
   const [response, body] = await get("/teams/a-team-id", {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 200, "responds successfully");
   t.deepEqual(body, JSON.parse(JSON.stringify(t1)));
+});
+
+test("GET /teams/:id as team member returns role and teamUserId", async (t: Test) => {
+  setup();
+
+  const roleAndTeamUserId = {
+    role: TeamUserRole.VIEWER,
+    id: "tu1",
+  };
+  sandbox().stub(TeamUsersDAO, "findOne").resolves(roleAndTeamUserId);
+
+  const [response, body] = await get("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 200, "responds successfully");
+  t.deepEqual(
+    body,
+    JSON.parse(
+      JSON.stringify({
+        ...t1,
+        role: roleAndTeamUserId.role,
+        teamUserId: roleAndTeamUserId.id,
+      })
+    )
+  );
 });
 
 interface TeamAccessTestCase {
@@ -311,25 +338,25 @@ const teamAccessTestCases: TeamAccessTestCase[] = [
     title: "GET /teams/:id for team user with VIEWER role",
     findTeamUserStub: { role: TeamUserRole.VIEWER },
     responseStatus: 200,
-    responseBody: t1,
+    responseBody: { ...t1, role: TeamUserRole.VIEWER },
   },
   {
     title: "GET /teams/:id for team user with EDITOR role",
     findTeamUserStub: { role: TeamUserRole.EDITOR },
     responseStatus: 200,
-    responseBody: t1,
+    responseBody: { ...t1, role: TeamUserRole.EDITOR },
   },
   {
     title: "GET /teams/:id for team user with ADMIN role",
     findTeamUserStub: { role: TeamUserRole.ADMIN },
     responseStatus: 200,
-    responseBody: t1,
+    responseBody: { ...t1, role: TeamUserRole.ADMIN },
   },
   {
     title: "GET /teams/:id for team user with OWNER role",
     findTeamUserStub: { role: TeamUserRole.OWNER },
     responseStatus: 200,
-    responseBody: t1,
+    responseBody: { ...t1, role: TeamUserRole.OWNER },
   },
   {
     title: "GET /teams/:id forbidden for team user with unexpected team role",
