@@ -7,7 +7,6 @@ import {
   INSERTABLE_PROPERTIES,
   isCollectionRow,
   partialDataAdapter,
-  UPDATABLE_PROPERTIES,
 } from "../domain-object";
 import { Collection, CollectionDb, CollectionDbRow } from "../types";
 import { CollectionDesignRow } from "../../../domain-objects/collection-design";
@@ -88,10 +87,7 @@ export async function update(
   id: string,
   data: Partial<CollectionDb>
 ): Promise<CollectionDb> {
-  const rowData = pick(
-    partialDataAdapter.forInsertion(data),
-    UPDATABLE_PROPERTIES
-  );
+  const rowData = partialDataAdapter.forInsertion(data);
   const updated = await db(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update(rowData, "*")

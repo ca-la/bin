@@ -12,6 +12,7 @@ import {
   teamUserUpdateRoleSchema,
   teamUserUpdateLabelSchema,
   FREE_TEAM_USER_ROLES,
+  TEAM_ROLE_PERMISSIVENESS,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import createTeamUserLock from "./create-team-user-lock";
@@ -141,6 +142,56 @@ async function assertSeatLimitNotExceeded(
       "Your plan does not allow to work with this amount of paid team users, please upgrade"
     );
   }
+}
+
+export async function canUserMoveCollectionBetweenTeams({
+  trx,
+  collectionId,
+  userId,
+  teamIdToMoveTo,
+}: {
+  trx: Knex.Transaction;
+  collectionId: string;
+  userId: string;
+  teamIdToMoveTo: string;
+}): Promise<boolean> {
+  const collectionTeamUsers = await TeamUsersDAO.findByUserAndCollection(
+    trx,
+    userId,
+    collectionId
+  );
+
+  if (collectionTeamUsers.length === 0) {
+    return false;
+  }
+
+  const teamUserFromCollectionTeam = collectionTeamUsers[0];
+
+  if (
+    TEAM_ROLE_PERMISSIVENESS[teamUserFromCollectionTeam.role] <
+    TEAM_ROLE_PERMISSIVENESS[TeamUserRole.EDITOR]
+  ) {
+    return false;
+  }
+
+  const teamUserFromTeamToMoveTo = await TeamUsersDAO.findByUserAndTeam(trx, {
+    userId,
+    userEmail: null,
+    teamId: teamIdToMoveTo,
+  });
+
+  if (teamUserFromTeamToMoveTo === null) {
+    return false;
+  }
+
+  if (
+    TEAM_ROLE_PERMISSIVENESS[teamUserFromTeamToMoveTo.role] <
+    TEAM_ROLE_PERMISSIVENESS[TeamUserRole.EDITOR]
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function createTeamUser(

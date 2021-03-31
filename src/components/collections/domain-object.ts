@@ -9,11 +9,6 @@ import { CollectionDb, CollectionDbRow as Row } from "./types";
 export default CollectionDb;
 export type CollectionRow = Row;
 
-export const UPDATABLE_PROPERTIES: (keyof CollectionRow)[] = [
-  "description",
-  "title",
-];
-
 export const INSERTABLE_PROPERTIES: (keyof CollectionRow)[] = [
   "created_by",
   "description",

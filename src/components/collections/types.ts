@@ -1,3 +1,5 @@
+import * as z from "zod";
+
 import { Permissions } from "../permissions/types";
 
 export interface CollectionDb {
@@ -32,3 +34,14 @@ export interface CollectionSubmissionStatus {
   isPaired: boolean;
   pricingExpiresAt: Date | null;
 }
+
+export const collectionUpdateSchema = z
+  .object({
+    description: z.string().nullable(),
+    title: z.string().nullable(),
+    teamId: z.string(),
+  })
+  .partial()
+  .strict();
+
+export type CollectionUpdate = z.infer<typeof collectionUpdateSchema>;

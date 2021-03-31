@@ -1,4 +1,5 @@
 import Router from "koa-router";
+import convert from "koa-convert";
 import { ParameterizedContext } from "koa";
 
 import filterError = require("../../../services/filter-error");
@@ -16,6 +17,7 @@ import canAccessUserResource = require("../../../middleware/can-access-user-reso
 import requireAuth = require("../../../middleware/require-auth");
 import requireAdmin = require("../../../middleware/require-admin");
 import useTransaction from "../../../middleware/use-transaction";
+import { typeGuardFromSchema } from "../../../middleware/type-guard";
 
 import {
   checkCollectionsLimit,
@@ -23,8 +25,13 @@ import {
 } from "../../teams";
 import * as CollectionsDAO from "../dao";
 import TeamUsersDAO from "../../team-users/dao";
-import { isPartialCollection } from "../domain-object";
-import { Collection, CollectionDb } from "../types";
+import {
+  Collection,
+  CollectionDb,
+  collectionUpdateSchema,
+  CollectionUpdate,
+} from "../types";
+import { ROLES } from "../../users/types";
 import { createSubmission, getSubmissionStatus } from "./submissions";
 import {
   deleteDesign,
@@ -41,7 +48,10 @@ import {
 } from "../services/fetch-with-labels";
 import deleteCollectionAndRemoveDesigns from "../services/delete";
 import { Role as TeamUserRole } from "../../team-users/types";
-import { requireTeamRoles } from "../../team-users/service";
+import {
+  requireTeamRoles,
+  canUserMoveCollectionBetweenTeams,
+} from "../../team-users/service";
 
 const router = new Router();
 
@@ -206,42 +216,55 @@ function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-function* updateCollection(
-  this: TrxContext<AuthedContext>
-): Iterator<any, any, any> {
-  const { collectionId } = this.params;
-  const { body } = this.request;
-  const { role, trx, userId } = this.state;
+type UpdateContext = AuthedContext &
+  TransactionContext &
+  SafeBodyContext<CollectionUpdate>;
 
-  if (!body || !isPartialCollection(body)) {
-    this.throw(400, "Request to update does not match Collection");
-  }
-  if (body.teamId && role !== "ADMIN") {
-    const checkResult = yield checkCollectionsLimit(db, body.teamId);
+async function updateCollection(ctx: UpdateContext) {
+  const { collectionId } = ctx.params;
+  const { role, trx, userId, safeBody: patch } = ctx.state;
+
+  const isAdmin = role === ROLES.ADMIN;
+  if (patch.teamId !== undefined && !isAdmin) {
+    const canMove = await canUserMoveCollectionBetweenTeams({
+      trx,
+      collectionId,
+      userId,
+      teamIdToMoveTo: patch.teamId,
+    });
+
+    ctx.assert(
+      canMove,
+      403,
+      "In order to move this collection to another team you have to be a member of both teams with at least the Editor role"
+    );
+
+    const checkResult = await checkCollectionsLimit(db, patch.teamId);
     if (checkResult.isReached) {
-      this.status = 402;
-      this.body = yield generateUpgradeBodyDueToCollectionsLimit(
+      ctx.status = 402;
+      ctx.body = await generateUpgradeBodyDueToCollectionsLimit(
         db,
-        body.teamId,
+        patch.teamId,
         checkResult.limit
       );
       return;
     }
   }
-  const collection = yield CollectionsDAO.update(collectionId, body).catch(
+
+  const collection = await CollectionsDAO.update(collectionId, patch).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(400, err)
+      ctx.throw(400, err)
     )
   );
-  const permissions = yield getCollectionPermissions(
+  const permissions = await getCollectionPermissions(
     trx,
     collection,
     role,
     userId
   );
 
-  this.body = { ...collection, permissions };
-  this.status = 200;
+  ctx.body = { ...collection, permissions };
+  ctx.status = 200;
 }
 
 function* okResponse(this: ParameterizedContext): Iterator<any, any, any> {
@@ -280,7 +303,8 @@ router.patch(
   canAccessCollectionInParam,
   canEditCollection,
   useTransaction,
-  updateCollection
+  typeGuardFromSchema(collectionUpdateSchema),
+  convert.back(updateCollection)
 );
 
 router.get(

@@ -29,6 +29,7 @@ import { generateDesign } from "../../../test-helpers/factories/product-design";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
 import * as TeamsService from "../../teams/service";
+import * as TeamUsersService from "../../team-users/service";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -219,87 +220,6 @@ test("POST /collections with an exceeded limit", async (t: tape.Test) => {
   );
 });
 
-test("PATCH /collections/:collectionId allows updates to a collection", async (t: tape.Test) => {
-  const { session, user } = await createUser();
-  const { team } = await generateTeam(user.id);
-  const body = {
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    title: "Drop 001/The Early Years",
-    teamId: team.id,
-  };
-
-  const postResponse = await API.post("/collections", {
-    headers: API.authHeader(session.id),
-    body,
-  });
-
-  const updateBody = {
-    createdAt: postResponse[1].createdAt,
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: postResponse[1].id,
-    title: "Droppin bombs",
-    teamId: "another-team",
-  };
-
-  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
-    isReached: true,
-    limit: 4,
-  });
-
-  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
-    body: updateBody,
-    headers: API.authHeader(session.id),
-  });
-  t.deepEqual(
-    updateResponse[0].status,
-    402,
-    'PATCH with teamId and exceeded limit returns "402 Payment required" status'
-  );
-});
-
-test("PATCH /collections/:collectionId allows updates to a collection", async (t: tape.Test) => {
-  const { session, user } = await createUser();
-  const { team } = await generateTeam(user.id);
-  const body = {
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    title: "Drop 001/The Early Years",
-    teamId: team.id,
-  };
-
-  const postResponse = await API.post("/collections", {
-    headers: API.authHeader(session.id),
-    body,
-  });
-
-  const updateBody = {
-    createdAt: postResponse[1].createdAt,
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: postResponse[1].id,
-    title: "Droppin bombs",
-  };
-  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
-    body: updateBody,
-    headers: API.authHeader(session.id),
-  });
-  t.deepEqual(
-    updateResponse[1],
-    { ...postResponse[1], title: updateBody.title },
-    "PATCH updates the record"
-  );
-});
-
 test("PATCH /collections/:collectionId supports partial updates to a collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
   const { team } = await generateTeam(user.id);
@@ -335,6 +255,195 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
       title: updateBody.title,
     },
     "PATCH updates the record"
+  );
+});
+
+test("PATCH /collections/:collectionId request doesn not match type", async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+    teamId: team.id,
+  };
+
+  const postResponse = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
+  });
+
+  const updateBody = {
+    createdAt: postResponse[1].createdAt,
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: postResponse[1].id,
+    title: "Droppin bombs",
+  };
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id),
+  });
+  t.equal(updateResponse[0].status, 400, "PATCH request does not match type");
+});
+
+test("PATCH /collections/:collectionId doesn't allow move collection to another team when the collection limit exceeded", async (t: tape.Test) => {
+  const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const { team: teamToMoveCollectionTo } = await generateTeam(user.id);
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+    teamId: team.id,
+  };
+
+  const postResponse = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
+  });
+
+  const updateBody = {
+    teamId: teamToMoveCollectionTo.id,
+  };
+
+  sandbox()
+    .stub(TeamUsersService, "canUserMoveCollectionBetweenTeams")
+    .resolves(true);
+  const checkCollectionLimitStub = sandbox()
+    .stub(TeamsService, "checkCollectionsLimit")
+    .resolves({
+      isReached: true,
+      limit: 4,
+    });
+
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id),
+  });
+  t.deepEqual(
+    updateResponse[0].status,
+    402,
+    'PATCH with teamId and exceeded limit returns "402 Payment required" status'
+  );
+
+  // allows to admin
+  const admin = await createUser({ role: "ADMIN" });
+
+  const adminUpdateResponse = await API.patch(
+    `/collections/${postResponse[1].id}`,
+    {
+      body: updateBody,
+      headers: API.authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(
+    adminUpdateResponse[0].status,
+    200,
+    "admin can update the team id then limit is exceeded"
+  );
+
+  // no limit - update should be successful for regular user
+  checkCollectionLimitStub.resolves({
+    isReached: false,
+  });
+
+  const successfulUpdateResponse = await API.patch(
+    `/collections/${postResponse[1].id}`,
+    {
+      body: updateBody,
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(successfulUpdateResponse[0].status, 200, "update is successful");
+  t.deepEqual(
+    successfulUpdateResponse[1],
+    {
+      ...postResponse[1],
+      teamId: teamToMoveCollectionTo.id,
+    },
+    "PATCH updates the collection team"
+  );
+});
+
+test("PATCH /collections/:collectionId doesn't allow move collection to another team when user doesn't have enough permissions in both teams", async (t: tape.Test) => {
+  const teamOwnerUser = await createUser();
+  const { team } = await generateTeam(teamOwnerUser.user.id);
+  const { team: teamToMoveCollectionTo } = await generateTeam(
+    teamOwnerUser.user.id
+  );
+  const body = {
+    createdAt: new Date(),
+    createdBy: teamOwnerUser.user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+    teamId: team.id,
+  };
+
+  const postResponse = await API.post("/collections", {
+    headers: API.authHeader(teamOwnerUser.session.id),
+    body,
+  });
+
+  sandbox().stub(TeamsService, "checkCollectionsLimit").resolves({
+    isReached: false,
+  });
+
+  const canUserMoveCollectionStub = sandbox()
+    .stub(TeamUsersService, "canUserMoveCollectionBetweenTeams")
+    .resolves(true);
+
+  const successfulTeamOwnerUpdateResponse = await API.patch(
+    `/collections/${postResponse[1].id}`,
+    {
+      body: {
+        teamId: teamToMoveCollectionTo.id,
+      },
+      headers: API.authHeader(teamOwnerUser.session.id),
+    }
+  );
+
+  t.equal(
+    successfulTeamOwnerUpdateResponse[0].status,
+    200,
+    "update is successful"
+  );
+  t.deepEqual(
+    successfulTeamOwnerUpdateResponse[1],
+    {
+      ...postResponse[1],
+      teamId: teamToMoveCollectionTo.id,
+    },
+    "PATCH updates the collection team"
+  );
+
+  canUserMoveCollectionStub.resolves(false);
+
+  const failedUpdateResponse = await API.patch(
+    `/collections/${postResponse[1].id}`,
+    {
+      body: {
+        teamId: teamToMoveCollectionTo.id,
+      },
+      headers: API.authHeader(teamOwnerUser.session.id),
+    }
+  );
+
+  t.equal(
+    failedUpdateResponse[0].status,
+    403,
+    "update is failed because of user restrictions"
   );
 });
 
