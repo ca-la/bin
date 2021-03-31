@@ -17,6 +17,7 @@ import ProductDesign from "../../components/product-designs/domain-objects/produ
 import ApprovalStep from "../../components/approval-steps/domain-object";
 
 import {
+  FullNotification,
   Notification,
   NotificationType,
 } from "../../components/notifications/domain-object";
@@ -108,6 +109,7 @@ import ProductDesignStage from "../../domain-objects/product-design-stage";
 import { BidRejection } from "../../components/bid-rejections/domain-object";
 import { getRecipientsByCollection } from "../../components/notifications/service";
 import { Recipient } from "../cala-component/cala-notifications";
+import { TeamUsersDAO } from "../../components/team-users";
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -116,11 +118,11 @@ import { Recipient } from "../cala-component/cala-notifications";
 export async function replaceNotifications(options: {
   trx?: Knex.Transaction;
   notification: Uninserted<Notification>;
-}): Promise<Notification> {
+}): Promise<FullNotification> {
   const { notification, trx } = options;
 
   await NotificationsDAO.deleteRecent(notification, trx);
-  return await NotificationsDAO.create(notification, trx);
+  return NotificationsDAO.create(notification, trx);
 }
 
 /**
@@ -1124,4 +1126,46 @@ export async function immediatelySendInviteCollaborator(
   );
 
   return validated;
+}
+
+export async function immediatelySendInviteTeamUser(
+  trx: Knex.Transaction,
+  notification: FullNotification
+): Promise<void> {
+  if (!notification.recipientTeamUserId) {
+    return;
+  }
+  const teamUser = await TeamUsersDAO.findById(
+    trx,
+    notification.recipientTeamUserId
+  );
+  if (!teamUser) {
+    throw new Error(`Could not find teamUser for team invite notification`);
+  }
+
+  const user =
+    teamUser && teamUser.userId
+      ? await UsersDAO.findById(teamUser.userId)
+      : null;
+
+  const emailAddress = user
+    ? user.email
+    : teamUser.userEmail
+    ? teamUser.userEmail
+    : new Error("No one is specified to send an email to!");
+  const notificationMessage = await createNotificationMessage(
+    notification,
+    trx
+  );
+  if (!notificationMessage) {
+    throw new Error("Could not create notification message");
+  }
+  await EmailService.enqueueSend({
+    params: {
+      notification: notificationMessage,
+    },
+    templateName: "single_notification",
+    to: emailAddress,
+  });
+  await NotificationsDAO.markSent([notification.id], trx);
 }

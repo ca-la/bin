@@ -14,6 +14,7 @@ import TeamUsersDAO from "./dao";
 import * as IrisService from "../../components/iris/send-message";
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/types";
+import { immediatelySendInviteTeamUser } from "../../services/create-notifications";
 
 async function sendTeamUsersListUpdatedMessage(
   trx: Knex.Transaction,
@@ -34,7 +35,9 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
       actorId,
     } = event;
 
-    await notifications[NotificationType.INVITE_TEAM_USER].send(
+    const notification = await notifications[
+      NotificationType.INVITE_TEAM_USER
+    ].send(
       trx,
       actorId,
       {
@@ -47,7 +50,9 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
         recipientTeamUserId: id,
       }
     );
-
+    if (notification) {
+      await immediatelySendInviteTeamUser(trx, notification);
+    }
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },
   "route.updated": async (

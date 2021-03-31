@@ -278,10 +278,11 @@ export async function getNonUserInvitationMessage(options: {
   });
 
   return {
-    html: `${span(
-      escapedActorName,
-      "user-name"
-    )} invited you to collaborate on ${htmlLink}`,
+    html: `${span(escapedActorName, "user-name")} invited you to ${
+      notification.designId || notification.collectionId
+        ? "collaborate on "
+        : ""
+    }${htmlLink}`,
     link: deepLink,
   };
 }

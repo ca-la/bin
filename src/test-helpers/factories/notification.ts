@@ -229,6 +229,7 @@ export default async function generateNotification(
 
   const baseNotification = {
     ...templateNotification,
+    ...options,
     actorUserId: actor.id,
     createdAt: options.createdAt || new Date(),
     deletedAt: options.deletedAt || null,

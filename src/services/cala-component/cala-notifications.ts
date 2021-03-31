@@ -7,7 +7,7 @@ import {
   RowKeyMapping,
 } from "../../components/notifications/models/base";
 import {
-  Notification,
+  FullNotification,
   NotificationType,
 } from "../../components/notifications/domain-object";
 import { NotificationMessageBuilder } from "../../components/notifications/notification-messages";
@@ -94,7 +94,7 @@ export interface NotificationComponent<
     actorUserId: string,
     recipient: Recipient,
     data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
-  ) => Promise<Notification | void>;
+  ) => Promise<FullNotification | void>;
   messageBuilder: NotificationMessageBuilder;
 }
 
@@ -114,7 +114,7 @@ export const buildNotificationComponent = <
       actorUserId: string,
       recipient: Recipient,
       data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
-    ): Promise<Notification | void> => {
+    ): Promise<FullNotification | void> => {
       if (recipient.recipientUserId === actorUserId) {
         return;
       }
