@@ -81,7 +81,6 @@ export type LinkBase =
       title: string;
       returnToDesignId: string | null;
       returnToCollectionId: string | null;
-      returnToTeamId: string | null;
       planId: string;
       invitationEmail: string;
     };
@@ -205,7 +204,6 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.Subscribe: {
       const {
-        returnToTeamId,
         returnToDesignId,
         returnToCollectionId,
         planId,
@@ -213,9 +211,7 @@ export default function getLinks(linkBase: LinkBase): Links {
         title,
       } = linkBase;
 
-      const returnTo = returnToTeamId
-        ? `/teams/${returnToTeamId}`
-        : returnToDesignId
+      const returnTo = returnToDesignId
         ? `/designs/${returnToDesignId}`
         : returnToCollectionId
         ? `/collections/${returnToCollectionId}`

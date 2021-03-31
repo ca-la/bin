@@ -6,10 +6,7 @@ import {
   templateNotification,
   RowKeyMapping,
 } from "../../components/notifications/models/base";
-import {
-  FullNotification,
-  NotificationType,
-} from "../../components/notifications/domain-object";
+import { NotificationType } from "../../components/notifications/domain-object";
 import { NotificationMessageBuilder } from "../../components/notifications/notification-messages";
 import { replaceNotifications } from "../create-notifications";
 
@@ -94,7 +91,7 @@ export interface NotificationComponent<
     actorUserId: string,
     recipient: Recipient,
     data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
-  ) => Promise<FullNotification | void>;
+  ) => Promise<void>;
   messageBuilder: NotificationMessageBuilder;
 }
 
@@ -114,11 +111,11 @@ export const buildNotificationComponent = <
       actorUserId: string,
       recipient: Recipient,
       data: CalaNotificationArgument<type, RequiredFields, OptionalFields>
-    ): Promise<FullNotification | void> => {
+    ): Promise<void> => {
       if (recipient.recipientUserId === actorUserId) {
         return;
       }
-      return replaceNotifications({
+      await replaceNotifications({
         trx,
         notification: {
           id: uuid.v4(),

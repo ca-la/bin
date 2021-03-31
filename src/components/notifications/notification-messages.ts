@@ -5,7 +5,7 @@ import InvalidDataError from "../../errors/invalid-data";
 import * as CommentsDAO from "../../components/comments/dao";
 import * as PlansDAO from "../../components/plans/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
-
+import Collaborator from "../../components/collaborators/types";
 import {
   DEPRECATED_NOTIFICATION_TYPES,
   FullNotification,
@@ -33,8 +33,7 @@ const messageBuilders: Partial<Record<
 >> = {};
 
 export type NotificationMessageBuilder = (
-  notification: FullNotification,
-  ktx?: Knex
+  notification: FullNotification
 ) => Promise<NotificationMessage | null>;
 
 export function registerMessageBuilder(
@@ -237,9 +236,9 @@ export function getTeamBaseWithAssets(
   };
 }
 
-export async function getNonUserInvitationMessage(options: {
+async function getNonUserInvitationMessage(options: {
   notification: FullNotification;
-  invitationEmail: string | null;
+  collaborator: Collaborator;
   escapedActorName: string;
   resourceName: string;
 }): Promise<{
@@ -248,14 +247,14 @@ export async function getNonUserInvitationMessage(options: {
 }> {
   const {
     escapedActorName,
-    invitationEmail,
+    collaborator,
     notification,
     resourceName,
   } = options;
 
-  if (!invitationEmail) {
+  if (!collaborator.userEmail) {
     throw new Error(
-      `Notification ${notification.id} is missing both recipientUserId and an email`
+      `Notification ${notification.id} is missing both recipientUserId and a collaborator email`
     );
   }
 
@@ -271,25 +270,22 @@ export async function getNonUserInvitationMessage(options: {
     type: LinkType.Subscribe,
     returnToDesignId: notification.designId,
     returnToCollectionId: notification.collectionId,
-    returnToTeamId: notification.teamId,
     planId: plan.id,
-    invitationEmail,
+    invitationEmail: collaborator.userEmail,
     title: resourceName,
   });
 
   return {
-    html: `${span(escapedActorName, "user-name")} invited you to ${
-      notification.designId || notification.collectionId
-        ? "collaborate on "
-        : ""
-    }${htmlLink}`,
+    html: `${span(
+      escapedActorName,
+      "user-name"
+    )} invited you to collaborate on ${htmlLink}`,
     link: deepLink,
   };
 }
 
 export async function createNotificationMessage(
-  notification: FullNotification,
-  ktx?: Knex
+  notification: FullNotification
 ): Promise<NotificationMessage | null> {
   if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
     return null;
@@ -300,7 +296,7 @@ export async function createNotificationMessage(
 
   const builder = messageBuilders[notification.type as NotificationType];
   if (builder) {
-    return builder(notification, ktx);
+    return builder(notification);
   }
 
   const baseNotificationMessage = createBaseMessage(notification);
@@ -355,7 +351,7 @@ export async function createNotificationMessage(
         if (!collaborator.userId) {
           const { html, link } = await getNonUserInvitationMessage({
             notification,
-            invitationEmail: collaborator.userEmail,
+            collaborator,
             escapedActorName: cleanName,
             resourceName,
           });

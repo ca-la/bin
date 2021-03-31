@@ -109,12 +109,9 @@ test("notificationMessages endpoint", async () => {
         },
       ],
     ]);
-
-    t.deepEqual(
-      createNotificationMessageStub.args,
-      [[notification]],
-      "db notifications are processed into notification messages"
-    );
+    t.deepEqual(createNotificationMessageStub.args, [
+      [notification, 0, [notification]],
+    ]);
     t.deepEqual(body, {
       data: {
         notificationMessages: [pick(notificationMessage, "id", "title")],
