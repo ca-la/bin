@@ -139,3 +139,54 @@ test("Invite team user notification for non-CALA users", async (t: Test) => {
     await trx.rollback();
   }
 });
+
+test("Invite team user notification for with a deleted team user", async (t: Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+
+  const plan = generatePlanWithoutDB();
+
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves(plan);
+
+  const { actor, team } = await prepareAssets();
+
+  const trx = await db.transaction();
+  const teamUser = await RawTeamUsersDAO.create(trx, {
+    userId: null,
+    id: uuid.v4(),
+    teamId: team.id,
+    userEmail: "test@example.com",
+    role: TeamUserRole.EDITOR,
+    label: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: new Date(),
+  });
+  try {
+    const notificationComponent =
+      notifications[NotificationType.INVITE_TEAM_USER];
+    const send = notificationComponent.send as (
+      trx: any,
+      actorId: any,
+      data: any
+    ) => Promise<void>;
+    const notification: any = await send(trx, actor.id, {
+      teamId: team.id,
+      recipientTeamUserId: teamUser.id,
+      recipientUserId: null,
+    });
+
+    const message = await notificationComponent.messageBuilder(
+      notification,
+      trx
+    );
+    t.is(
+      message,
+      null,
+      `notification message is not created for deleted team user`
+    );
+  } finally {
+    await trx.rollback();
+  }
+});

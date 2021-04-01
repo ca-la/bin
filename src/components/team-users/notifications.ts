@@ -54,7 +54,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         ? await TeamUsersDAO.findById(trx || db, recipientTeamUserId)
         : null;
       if (!teamUser) {
-        throw new Error(`Could not find team user ${recipientTeamUserId}`);
+        return null;
       }
 
       const partialMessage = {
