@@ -321,7 +321,7 @@ test("POST /plans invalid for unauthenticated user", async (t: Test) => {
     },
   });
 
-  t.equal(unauthenticated.status, 403, "Does not allow unauthenticated users");
+  t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
 });
 
 test("POST /plans invalid without required fields", async (t: Test) => {

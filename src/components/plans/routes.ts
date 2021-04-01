@@ -4,6 +4,7 @@ import db from "../../services/db";
 import * as PlansDAO from "./dao";
 import TeamUsersDAO from "../team-users/dao";
 import requireAdmin = require("../../middleware/require-admin");
+import requireAuth = require("../../middleware/require-auth");
 import useTransaction from "../../middleware/use-transaction";
 import {
   CreatePlanRequest,
@@ -129,6 +130,7 @@ router.get("/", getPlans);
 router.get("/:planId", getById);
 router.post(
   "/",
+  requireAuth,
   requireAdmin,
   typeGuard((candidate: any): candidate is CreatePlanRequest =>
     check(createPlanRequestSchema, candidate)
