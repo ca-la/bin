@@ -33,8 +33,7 @@ const messageBuilders: Partial<Record<
 >> = {};
 
 export type NotificationMessageBuilder = (
-  notification: FullNotification,
-  ktx?: Knex
+  notification: FullNotification
 ) => Promise<NotificationMessage | null>;
 
 export function registerMessageBuilder(
@@ -288,8 +287,7 @@ export async function getNonUserInvitationMessage(options: {
 }
 
 export async function createNotificationMessage(
-  notification: FullNotification,
-  ktx?: Knex
+  notification: FullNotification
 ): Promise<NotificationMessage | null> {
   if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
     return null;
@@ -300,7 +298,7 @@ export async function createNotificationMessage(
 
   const builder = messageBuilders[notification.type as NotificationType];
   if (builder) {
-    return builder(notification, ktx);
+    return builder(notification);
   }
 
   const baseNotificationMessage = createBaseMessage(notification);

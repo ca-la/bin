@@ -1543,7 +1543,7 @@ test("immediatelySendInviteTeamUser with an existing CALA user", async (t: tape.
 
     await NotificationsService.immediatelySendInviteTeamUser(trx, notification);
 
-    const message = await createNotificationMessage(notification, trx);
+    const message = await createNotificationMessage(notification);
     t.equal(emailStub.callCount, 1, "only one email is sent");
     t.deepEqual(
       emailStub.args[0],
@@ -1610,7 +1610,7 @@ test("immediatelySendInviteTeamUser with a non-CALA user", async (t: tape.Test) 
 
     await NotificationsService.immediatelySendInviteTeamUser(trx, notification);
 
-    const message = await createNotificationMessage(notification, trx);
+    const message = await createNotificationMessage(notification);
     t.equal(emailStub.callCount, 1, "only one email is sent");
     t.deepEqual(
       emailStub.args[0],

@@ -267,6 +267,13 @@ function addTrackingEventSubtag(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
+function addTeamUserEmail(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  return query
+    .select("team_users.user_email as team_user_email")
+    .leftJoin("team_users", "team_users.id", "n.recipient_team_user_id")
+    .whereNull("team_users.deleted_at");
+}
+
 function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
   return trx
     .select("n.*")
@@ -282,6 +289,7 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addAnnotation)
     .modify(addTaskTitle)
     .modify(addTeamTitle)
+    .modify(addTeamUserEmail)
     .modify(addApprovalStepTitle)
     .modify(addApprovalSubmissionTitle)
     .modify(addShipmentTrackingDescription)
@@ -526,7 +534,7 @@ export async function create(
   if (!notification) {
     throw new Error("Failed to find created notification after persisting!");
   }
-  await announceNotificationCreation(notification, trx);
+  await announceNotificationCreation(notification);
   return notification;
 }
 

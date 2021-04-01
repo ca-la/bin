@@ -81,6 +81,7 @@ export interface BaseFullNotificationRow {
   tracking_event_subtag: null;
   tracking_id: null;
   team_title: null;
+  team_user_email: null;
 }
 
 export interface BaseNotification {
@@ -157,6 +158,7 @@ export interface BaseFullNotification {
   approvalSubmissionTitle: null;
   shipmentTrackingDescription: null;
   teamTitle: null;
+  teamUserEmail: null;
   trackingId: null;
   trackingEventTag: null;
   trackingEventSubtag: null;

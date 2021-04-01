@@ -149,7 +149,7 @@ const updateNotificaion: GraphQLEndpoint<
     if (!updated) {
       throw new Error("Updated notification not found");
     }
-    const message = await createNotificationMessage(updated, trx);
+    const message = await createNotificationMessage(updated);
     if (!message) {
       throw new Error("Updated a notification that cannot be displayed");
     }

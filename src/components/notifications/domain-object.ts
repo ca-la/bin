@@ -437,6 +437,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     taskId: rowData.task_id,
     teamId: rowData.team_id,
     teamTitle: rowData.team_title,
+    teamUserEmail: rowData.team_user_email,
     taskTitle: rowData.task_title,
     type: rowData.type,
   } as FullNotification;

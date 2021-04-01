@@ -1,5 +1,3 @@
-import Knex from "knex";
-
 import {
   FullNotification,
   NotificationType,
@@ -18,12 +16,10 @@ import {
   BaseFullNotification,
   BaseNotification,
 } from "../notifications/models/base";
-import db from "../../services/db";
-import { TeamUsersDAO } from ".";
 import normalizeTitle from "../../services/normalize-title";
 
 type BaseFull = Omit<BaseNotification, "teamId" | "recipientTeamUserId"> &
-  Omit<BaseFullNotification, "teamTitle">;
+  Omit<BaseFullNotification, "teamTitle" | "teamsUserEmail">;
 
 export interface FullInviteTeamUserNotification extends BaseFull {
   recipientTeamUserId: string;
@@ -44,16 +40,10 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
     NotificationLayerSchema[NotificationType.INVITE_TEAM_USER]["required"]
   >(
     NotificationType.INVITE_TEAM_USER,
-    async (notification: FullNotification, trx?: Knex) => {
-      const { recipientTeamUserId, teamTitle } = notification;
+    async (notification: FullNotification) => {
+      const { teamTitle } = notification;
       const assets = getTeamBaseWithAssets(notification);
       if (!assets) {
-        return null;
-      }
-      const teamUser = recipientTeamUserId
-        ? await TeamUsersDAO.findById(trx || db, recipientTeamUserId)
-        : null;
-      if (!teamUser) {
         return null;
       }
 
@@ -62,10 +52,11 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         text: `Invited you to ${notification.teamTitle}`,
       };
 
-      if (!teamUser.userId) {
+      // Invited user is not a CALA user
+      if (notification.teamUserEmail) {
         const { html, link } = await getNonUserInvitationMessage({
           notification,
-          invitationEmail: teamUser.userEmail,
+          invitationEmail: notification.teamUserEmail,
           escapedActorName: assets.actorName,
           resourceName: normalizeTitle({ title: teamTitle }),
         });

@@ -4,9 +4,12 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import notifications from "./notifications";
 import * as NotificationAnnouncer from "../iris/messages/notification";
-import { NotificationType } from "../notifications/domain-object";
-import { findByUserId } from "../notifications/dao";
+import {
+  FullNotification,
+  NotificationType,
+} from "../notifications/domain-object";
 import * as PlansDAO from "../plans/dao";
+import * as NotificationsDAO from "../notifications/dao";
 import createUser from "../../test-helpers/create-user";
 import { TeamDb } from "../teams/types";
 import { generateTeam } from "../../test-helpers/factories/team";
@@ -58,7 +61,7 @@ test("Invite team user notification", async (t: Test) => {
       recipientUserId: recipient.id,
       recipientTeamUserId: teamUser.id,
     });
-    const ns = await findByUserId(trx, recipient.id, {
+    const ns = await NotificationsDAO.findByUserId(trx, recipient.id, {
       limit: 20,
       offset: 0,
     });
@@ -117,10 +120,7 @@ test("Invite team user notification for non-CALA users", async (t: Test) => {
       recipientUserId: null,
     });
 
-    const message = await notificationComponent.messageBuilder(
-      notification,
-      trx
-    );
+    const message = await notificationComponent.messageBuilder(notification);
     t.is(
       [actor.name, " invited you to ", team.title].every(
         (part: string) => message && message.html.includes(part)
@@ -140,7 +140,7 @@ test("Invite team user notification for non-CALA users", async (t: Test) => {
   }
 });
 
-test("Invite team user notification for with a deleted team user", async (t: Test) => {
+test("No invite team user notification for with a deleted team user", async (t: Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -152,39 +152,44 @@ test("Invite team user notification for with a deleted team user", async (t: Tes
   const { actor, team } = await prepareAssets();
 
   const trx = await db.transaction();
-  const teamUser = await RawTeamUsersDAO.create(trx, {
-    userId: null,
-    id: uuid.v4(),
-    teamId: team.id,
-    userEmail: "test@example.com",
-    role: TeamUserRole.EDITOR,
-    label: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: new Date(),
-  });
   try {
+    const teamUser = await RawTeamUsersDAO.create(trx, {
+      userId: null,
+      id: uuid.v4(),
+      teamId: team.id,
+      userEmail: "test@example.com",
+      role: TeamUserRole.EDITOR,
+      label: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
     const notificationComponent =
       notifications[NotificationType.INVITE_TEAM_USER];
     const send = notificationComponent.send as (
       trx: any,
       actorId: any,
       data: any
-    ) => Promise<void>;
-    const notification: any = await send(trx, actor.id, {
+    ) => Promise<FullNotification>;
+    const notification = await send(trx, actor.id, {
       teamId: team.id,
       recipientTeamUserId: teamUser.id,
       recipientUserId: null,
     });
-
-    const message = await notificationComponent.messageBuilder(
-      notification,
-      trx
+    t.equal(
+      notification.teamUserEmail,
+      "test@example.com",
+      "Email for non-CALA team user is set"
+    );
+    await RawTeamUsersDAO.update(trx, teamUser.id, { deletedAt: new Date() });
+    const afterUpdateNotification = await NotificationsDAO.findById(
+      trx,
+      notification.id
     );
     t.is(
-      message,
+      afterUpdateNotification,
       null,
-      `notification message is not created for deleted team user`
+      `notification is not found after deleting the team user`
     );
   } finally {
     await trx.rollback();

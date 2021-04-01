@@ -1153,10 +1153,7 @@ export async function immediatelySendInviteTeamUser(
     : teamUser.userEmail
     ? teamUser.userEmail
     : new Error("No one is specified to send an email to!");
-  const notificationMessage = await createNotificationMessage(
-    notification,
-    trx
-  );
+  const notificationMessage = await createNotificationMessage(notification);
   if (!notificationMessage) {
     throw new Error("Could not create notification message");
   }
