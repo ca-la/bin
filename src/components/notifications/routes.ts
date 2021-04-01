@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import Knex from "knex";
 import { omit } from "lodash";
+import convert from "koa-convert";
 
 import * as NotificationsDAO from "./dao";
 import db from "../../services/db";
@@ -9,6 +10,7 @@ import { createNotificationMessage } from "./notification-messages";
 import useTransaction from "../../middleware/use-transaction";
 import { NotificationMessage, NotificationFilter } from "./types";
 import { trackTime } from "../../middleware/tracking";
+import { FullNotification } from "./domain-object";
 
 const ALLOWED_UPDATE_KEYS = ["archivedAt"];
 
@@ -20,21 +22,21 @@ interface GetListQuery {
   filter?: NotificationFilter;
 }
 
-function* getList(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.state;
-  const { limit, offset, filter }: GetListQuery = this.query;
+async function getList(ctx: AuthedContext) {
+  const { userId } = ctx.state;
+  const { limit, offset, filter }: GetListQuery = ctx.query;
   const trackEventPrefix = "notifications/getList";
 
   if ((limit && limit < 0) || (offset && offset < 0)) {
-    this.throw(400, "Offset / Limit cannot be negative!");
+    ctx.throw(400, "Offset / Limit cannot be negative!");
   }
 
   if (filter && !Object.values(NotificationFilter).includes(filter)) {
-    this.throw(400, "Unknown filter");
+    ctx.throw(400, "Unknown filter");
   }
 
-  const notifications = yield trackTime(
-    this,
+  const notifications = await trackTime<FullNotification[]>(
+    ctx,
     `${trackEventPrefix}/findByUserId`,
     () =>
       db.transaction((trx: Knex.Transaction) =>
@@ -45,14 +47,19 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
         })
       )
   );
-  const messages: (NotificationMessage | null)[] = yield trackTime(
-    this,
+  const messages = await trackTime<(NotificationMessage | null)[]>(
+    ctx,
     `${trackEventPrefix}/createNotificationMessage`,
-    () => Promise.all(notifications.map(createNotificationMessage))
+    () =>
+      Promise.all(
+        notifications.map((notification: FullNotification) =>
+          createNotificationMessage(notification)
+        )
+      )
   );
 
-  this.status = 200;
-  this.body = messages.filter(
+  ctx.status = 200;
+  ctx.body = messages.filter(
     (message: NotificationMessage | null) => message !== null
   );
 }
@@ -141,7 +148,7 @@ function* setArchiveOlderThan(
   this.status = 204;
 }
 
-router.get("/", requireAuth, getList);
+router.get("/", requireAuth, convert.back(getList));
 router.get("/unread", requireAuth, getUnreadCount);
 router.patch("/read", requireAuth, setRead);
 router.patch("/:notificationId", requireAuth, useTransaction, update);

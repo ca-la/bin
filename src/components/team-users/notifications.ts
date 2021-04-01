@@ -1,3 +1,5 @@
+import Knex from "knex";
+
 import {
   FullNotification,
   NotificationType,
@@ -9,17 +11,22 @@ import {
 import {
   span,
   getTeamBaseWithAssets,
+  getNonUserInvitationMessage,
 } from "../notifications/notification-messages";
 
 import {
   BaseFullNotification,
   BaseNotification,
 } from "../notifications/models/base";
+import db from "../../services/db";
+import { TeamUsersDAO } from ".";
+import normalizeTitle from "../../services/normalize-title";
 
-type BaseFull = Omit<BaseNotification, "teamId"> &
+type BaseFull = Omit<BaseNotification, "teamId" | "recipientTeamUserId"> &
   Omit<BaseFullNotification, "teamTitle">;
 
 export interface FullInviteTeamUserNotification extends BaseFull {
+  recipientTeamUserId: string;
   teamId: string;
   teamTitle: string;
   type: NotificationType.INVITE_TEAM_USER;
@@ -27,7 +34,7 @@ export interface FullInviteTeamUserNotification extends BaseFull {
 
 export interface NotificationLayerSchema {
   [NotificationType.INVITE_TEAM_USER]: {
-    required: "teamId";
+    required: "teamId" | "recipientTeamUserId";
   };
 }
 
@@ -37,19 +44,46 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
     NotificationLayerSchema[NotificationType.INVITE_TEAM_USER]["required"]
   >(
     NotificationType.INVITE_TEAM_USER,
-    async (notification: FullNotification) => {
+    async (notification: FullNotification, trx?: Knex) => {
+      const { recipientTeamUserId, teamTitle } = notification;
       const assets = getTeamBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
+      const teamUser = recipientTeamUserId
+        ? await TeamUsersDAO.findById(trx || db, recipientTeamUserId)
+        : null;
+      if (!teamUser) {
+        throw new Error(`Could not find team user ${recipientTeamUserId}`);
+      }
+
+      const partialMessage = {
+        title: `${assets.actorName} invited you to ${notification.teamTitle}`,
+        text: `Invited you to ${notification.teamTitle}`,
+      };
+
+      if (!teamUser.userId) {
+        const { html, link } = await getNonUserInvitationMessage({
+          notification,
+          invitationEmail: teamUser.userEmail,
+          escapedActorName: assets.actorName,
+          resourceName: normalizeTitle({ title: teamTitle }),
+        });
+
+        return {
+          ...assets.base,
+          ...partialMessage,
+          html,
+          link,
+        };
+      }
 
       return {
         ...assets.base,
+        ...partialMessage,
         html: `${span(assets.actorName, "user-name")} invited you to ${
           assets.teamHtmlLink
         }`,
-        title: `${assets.actorName} invited you to ${notification.teamTitle}`,
-        text: `Invited you to ${notification.teamTitle}`,
       };
     }
   ),

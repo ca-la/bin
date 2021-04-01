@@ -50,11 +50,11 @@ export function trackEvent(
   });
 }
 
-export function trackTime(
+export function trackTime<T>(
   ctx: PublicContext,
   event: string,
-  callback: () => Promise<any>
-) {
+  callback: () => Promise<T>
+): Promise<T> {
   const startTime = performance.now();
   return callback().finally(() => {
     const endTime = performance.now();

@@ -12,7 +12,10 @@ import * as CollaboratorsDAO from "../collaborators/dao";
 import * as CommentAttachmentDAO from "../comment-attachments/dao";
 import * as PlansDAO from "../../components/plans/dao";
 import generateNotification from "../../test-helpers/factories/notification";
-import { createNotificationMessage } from "./notification-messages";
+import {
+  createNotificationMessage,
+  getNonUserInvitationMessage,
+} from "./notification-messages";
 import { STUDIO_HOST } from "../../config";
 import { FullNotification, NotificationType } from "./domain-object";
 import generateCollection from "../../test-helpers/factories/collection";
@@ -22,6 +25,8 @@ import { findByUserId, update, findById } from "./dao";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import { registerMessageBuilders } from "../cala-components";
+import { generateTeam } from "../../test-helpers/factories/team";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 
 registerMessageBuilders();
 
@@ -1122,5 +1127,85 @@ test("submission assignment notification message", async (t: tape.Test) => {
   t.assert(
     message.html.includes(submission.title),
     "message html contains submission title"
+  );
+});
+
+test("getNonUserInvitationMessage for collection collaborator", async (t: tape.Test) => {
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves({
+    id: "plan-1",
+  });
+  const { collection } = await generateCollection();
+  const { notification: collectionNotification } = await generateNotification({
+    type: NotificationType.INVITE_COLLABORATOR,
+    collectionId: collection.id,
+    designId: null,
+    teamId: null,
+  });
+  const message = await getNonUserInvitationMessage({
+    notification: collectionNotification,
+    invitationEmail: "example@example.com",
+    escapedActorName: "Nameo",
+    resourceName: "Drop 2021",
+  });
+
+  [
+    "Nameo",
+    " invited you to collaborate on ",
+    "Drop 2021",
+  ].forEach((part: string) =>
+    t.assert(message.html.includes(part), `Message contains "${part}"`)
+  );
+});
+
+test("getNonUserInvitationMessage for design collaborator", async (t: tape.Test) => {
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves({
+    id: "plan-1",
+  });
+  const { user } = await createUser();
+  const design = await generateDesign({ userId: user.id });
+  const { notification: collectionNotification } = await generateNotification({
+    type: NotificationType.INVITE_COLLABORATOR,
+    collectionId: null,
+    designId: design.id,
+    teamId: null,
+  });
+  const message = await getNonUserInvitationMessage({
+    notification: collectionNotification,
+    invitationEmail: "example@example.com",
+    escapedActorName: "Nameo",
+    resourceName: "Hat",
+  });
+
+  ["Nameo", " invited you to collaborate on ", "Hat"].forEach((part: string) =>
+    t.assert(message.html.includes(part), `Message contains "${part}"`)
+  );
+});
+
+test("getNonUserInvitationMessage for team user", async (t: tape.Test) => {
+  sandbox().stub(PlansDAO, "findFreeAndDefaultForTeams").resolves({
+    id: "plan-1",
+  });
+  const { user } = await createUser();
+  const { team, teamUser } = await generateTeam(user.id);
+  const { notification: collectionNotification } = await generateNotification({
+    type: NotificationType.INVITE_TEAM_USER,
+    collectionId: null,
+    designId: null,
+    teamId: team.id,
+    recipientTeamUserId: teamUser.id,
+  });
+  const message = await getNonUserInvitationMessage({
+    notification: collectionNotification,
+    invitationEmail: "example@example.com",
+    escapedActorName: "Nameo",
+    resourceName: "The Team",
+  });
+
+  ["Nameo", " invited you to ", "The Team"].forEach((part: string) =>
+    t.assert(message.html.includes(part), `Message contains "${part}"`)
+  );
+  t.assert(
+    !message.html.includes("collaborate on"),
+    "team invite email does not include collaborate"
   );
 });

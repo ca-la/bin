@@ -526,7 +526,7 @@ export async function create(
   if (!notification) {
     throw new Error("Failed to find created notification after persisting!");
   }
-  await announceNotificationCreation(notification);
+  await announceNotificationCreation(notification, trx);
   return notification;
 }
 

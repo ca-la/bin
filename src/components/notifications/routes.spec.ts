@@ -17,6 +17,7 @@ import * as NotificationAnnouncer from "../iris/messages/notification";
 import { NotificationMessage, NotificationFilter } from "./types";
 import { templateNotification } from "./models/base";
 import * as NotificationMessages from "./notification-messages";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 const API_PATH = "/notifications";
 
@@ -442,4 +443,27 @@ test(`PUT ${API_PATH}/archive inboxOnly `, async (t: tape.Test) => {
     onlyArchiveInbox: false,
     recipientUserId: designerSession.userId,
   });
+});
+
+test(`End to end - /GET with filter`, async (t: tape.Test) => {
+  const { user, session } = await createUser();
+  const { team, teamUser } = await generateTeam(user.id);
+
+  await generateNotification(({
+    type: NotificationType.INVITE_TEAM_USER,
+    teamId: team.id,
+    recipientTeamUserId: teamUser.id,
+    recipientUserId: user.id,
+  } as unknown) as any);
+  await generateNotification(({
+    type: NotificationType.INVITE_TEAM_USER,
+    teamId: team.id,
+    recipientTeamUserId: teamUser.id,
+    recipientUserId: user.id,
+  } as unknown) as any);
+
+  const [responseUnarchived] = await API.get(`${API_PATH}?filter=UNARCHIVED`, {
+    headers: API.authHeader(session.id),
+  });
+  t.equal(responseUnarchived.status, 200, "valid filter succeeds");
 });

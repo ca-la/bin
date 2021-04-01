@@ -13,6 +13,7 @@ import * as NotificationsDAO from "./dao";
 import * as GraphQLTypes from "./graphql-types";
 import { createNotificationMessage } from "./notification-messages";
 import { transformNotificationMessageToGraphQL } from "./service";
+import { FullNotification } from "./domain-object";
 
 interface GetNotificationsArgs {
   limit: number;
@@ -64,7 +65,7 @@ const notificationMessages: GraphQLEndpoint<
       filter,
     });
     const messages: (NotificationMessage | null)[] = await Promise.all(
-      notifications.map(createNotificationMessage)
+      notifications.map((n: FullNotification) => createNotificationMessage(n))
     );
 
     return (messages.filter(
@@ -148,7 +149,7 @@ const updateNotificaion: GraphQLEndpoint<
     if (!updated) {
       throw new Error("Updated notification not found");
     }
-    const message = await createNotificationMessage(updated);
+    const message = await createNotificationMessage(updated, trx);
     if (!message) {
       throw new Error("Updated a notification that cannot be displayed");
     }

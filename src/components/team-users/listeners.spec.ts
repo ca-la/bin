@@ -18,6 +18,7 @@ import {
 import { baseUser } from "../users/domain-object";
 import NotificationsLayer from "./notifications";
 import { NotificationType } from "../notifications/types";
+import * as NotificationService from "../../services/create-notifications";
 
 const now = new Date();
 
@@ -54,6 +55,10 @@ const tu2: TeamUser = {
   },
 };
 
+const notification = {
+  id: "notification",
+};
+
 function setup() {
   return {
     uuidStub: sandbox().stub(uuid, "v4").returns("uuid"),
@@ -64,12 +69,15 @@ function setup() {
     clock: sandbox().useFakeTimers(now),
     notificationsSendStub: sandbox()
       .stub(NotificationsLayer[NotificationType.INVITE_TEAM_USER], "send")
+      .resolves(notification),
+    emailStub: sandbox()
+      .stub(NotificationService, "immediatelySendInviteTeamUser")
       .resolves(),
   };
 }
 
 test("route.created", async (t: Test) => {
-  const { irisStub, notificationsSendStub } = setup();
+  const { irisStub, notificationsSendStub, emailStub } = setup();
 
   const trx = await db.transaction();
 
@@ -115,8 +123,14 @@ test("route.created", async (t: Test) => {
       notificationsSendStub.args[0][3],
       {
         teamId: tu1.teamId,
+        recipientTeamUserId: tu1.id,
       },
       "Notification tied to team"
+    );
+    t.deepEqual(
+      emailStub.args,
+      [[trx, notification]],
+      "sends an invite notifications"
     );
   } finally {
     await trx.rollback();

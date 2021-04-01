@@ -9,6 +9,7 @@ test("getLinks", async () => {
       type: LinkType.Subscribe,
       returnToDesignId: null,
       returnToCollectionId: "collection-1",
+      returnToTeamId: null,
       planId: "plan-1",
       invitationEmail: "foo@example.com",
       title: "A Collection",
@@ -27,6 +28,7 @@ test("getLinks", async () => {
       type: LinkType.Subscribe,
       returnToDesignId: "design-1",
       returnToCollectionId: null,
+      returnToTeamId: null,
       planId: "plan-1",
       invitationEmail: "foo@example.com",
       title: "A Design",
@@ -40,11 +42,31 @@ test("getLinks", async () => {
     t.true(htmlLink.includes("A Design"), "HTML link contains title");
   });
 
-  test("Subscribe with neither design nor collection", async (t: Test) => {
+  test("Subscribe with team ID", async (t: Test) => {
+    const { deepLink, htmlLink } = getLinks({
+      type: LinkType.Subscribe,
+      returnToDesignId: "design-1",
+      returnToCollectionId: null,
+      returnToTeamId: "team-1",
+      planId: "plan-1",
+      invitationEmail: "foo@example.com",
+      title: "A Team",
+    });
+
+    t.equal(
+      deepLink,
+      `${STUDIO_HOST}/subscribe?planId=plan-1&invitationEmail=foo%40example.com&returnTo=%2Fteams%2Fteam-1`,
+      "Deep link matches"
+    );
+    t.true(htmlLink.includes("A Team"), "HTML link contains title");
+  });
+
+  test("Subscribe with no redirect", async (t: Test) => {
     const { deepLink, htmlLink } = getLinks({
       type: LinkType.Subscribe,
       returnToDesignId: null,
       returnToCollectionId: null,
+      returnToTeamId: null,
       planId: "plan-1",
       invitationEmail: "foo@example.com",
       title: "Subscribe",
