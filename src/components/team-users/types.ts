@@ -2,6 +2,7 @@ import * as z from "zod";
 
 import User, { UserRow, userTestBlank } from "../users/types";
 import { Roles } from "../collaborators/types";
+import { check } from "../../services/check";
 
 export const teamUserDomain = "TeamUser" as "TeamUser";
 export const rawTeamUserDomain = "TeamUserDb" as "TeamUserDb";
@@ -11,18 +12,22 @@ export enum Role {
   ADMIN = "ADMIN",
   EDITOR = "EDITOR",
   VIEWER = "VIEWER",
+  TEAM_PARTNER = "TEAM_PARTNER",
 }
+export const roleSchema = z.nativeEnum(Role);
 
 export const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<Role, Roles> = {
   [Role.OWNER]: "EDIT",
   [Role.ADMIN]: "EDIT",
   [Role.EDITOR]: "EDIT",
   [Role.VIEWER]: "VIEW",
+  [Role.TEAM_PARTNER]: "PARTNER",
 };
 
 export const TEAM_ROLE_PERMISSIVENESS: Record<Role, number> = {
   [Role.VIEWER]: 1,
   [Role.EDITOR]: 2,
+  [Role.TEAM_PARTNER]: 2,
   [Role.ADMIN]: 3,
   [Role.OWNER]: 4,
 };
@@ -34,7 +39,7 @@ export const PARTNER_TEAM_BID_EDITORS: Role[] = [
   Role.EDITOR,
 ];
 
-export const FREE_TEAM_USER_ROLES: Role[] = [Role.VIEWER];
+export const FREE_TEAM_USER_ROLES: Role[] = [Role.VIEWER, Role.TEAM_PARTNER];
 
 export interface BaseTeamUserDb {
   id: string;
@@ -124,27 +129,19 @@ export function isRegisteredTeamUserRow(
   return candidate.user !== null;
 }
 
-export interface UnsavedTeamUser {
-  teamId: string;
-  userEmail: string;
-  role: Role;
-}
+export const unsavedTeamUserSchema = z.object({
+  teamId: z.string(),
+  userEmail: z.string(),
+  role: roleSchema,
+});
+export type UnsavedTeamUser = z.infer<typeof unsavedTeamUserSchema>;
 
-export function isUnsavedTeamUser(
-  candidate: Record<string, any>
-): candidate is UnsavedTeamUser {
-  const keyset = new Set(Object.keys(candidate));
-  const roleset = new Set(Object.values(Role));
+export const isUnsavedTeamUser = (
+  candidate: unknown
+): candidate is UnsavedTeamUser => check(unsavedTeamUserSchema, candidate);
 
-  return (
-    ["teamId", "userEmail", "role"].every(keyset.has.bind(keyset)) &&
-    roleset.has(candidate.role)
-  );
-}
-
-export function isTeamUserRole(candidate: any): candidate is Role {
-  return Object.values(Role).includes(candidate);
-}
+export const isTeamUserRole = (candidate: any): candidate is Role =>
+  check(roleSchema, candidate);
 
 export const teamUserUpdateRoleSchema = z.object({
   role: z.nativeEnum(Role),

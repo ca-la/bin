@@ -1,5 +1,6 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import convert from "koa-convert";
 
 import db from "../../services/db";
 import { findByEmail as findUserByEmail } from "../users/dao";
@@ -27,6 +28,7 @@ import {
   removeSeatCharge as removeStripeSeatCharge,
 } from "../../services/stripe/index";
 import { check } from "../../services/check";
+import { StrictContext } from "../../router-context";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -42,72 +44,85 @@ const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   ],
   [TeamUserRole.EDITOR]: [TeamUserRole.EDITOR, TeamUserRole.VIEWER],
   [TeamUserRole.VIEWER]: [],
+  [TeamUserRole.TEAM_PARTNER]: [],
 };
 
-export function* requireTeamUserByTeamUserId(
-  this: AuthedContext<any, { teamUser: TeamUser }>,
-  next: () => any
-): Generator<any, any, any> {
-  const teamUser = yield TeamUsersDAO.findById(db, this.params.teamUserId);
-
-  if (!teamUser) {
-    return this.throw(
-      `Could not find team user ${this.params.teamUserId}`,
-      404
-    );
-  }
-
-  this.state.teamUser = teamUser;
-
-  yield next;
+export interface TeamUserState {
+  teamUser: TeamUser;
 }
 
-export function requireTeamRoles<StateT>(
+interface RequireTeamUserByTeamUserIdContext extends StrictContext {
+  state: TeamUserState;
+  params: {
+    teamUserId: string;
+  };
+}
+
+export const requireTeamUserByTeamUserId = convert.back(
+  async (ctx: RequireTeamUserByTeamUserIdContext, next: () => Promise<any>) => {
+    const teamUser = await TeamUsersDAO.findById(db, ctx.params.teamUserId);
+
+    if (!teamUser) {
+      ctx.throw(`Could not find team user ${ctx.params.teamUserId}`, 404);
+    }
+
+    ctx.state.teamUser = teamUser;
+
+    await next();
+  }
+);
+
+export interface TeamUserRoleState {
+  actorTeamRole: TeamUserRole;
+}
+
+export interface RequireTeamRolesContext extends StrictContext {
+  state: TeamUserRoleState & AuthedState & TeamUserState;
+}
+
+export function requireTeamRoles<ContextT extends RequireTeamRolesContext>(
   roles: TeamUserRole[],
-  getTeamId: (context: AuthedContext<any, StateT>) => Promise<string | null>,
+  getTeamId: (context: ContextT) => Promise<string | null>,
   options: {
     allowSelf?: (
-      context: AuthedContext<any, StateT>,
+      context: ContextT,
       actorTeamUserId: string | null
     ) => Promise<boolean>;
     allowNoTeam?: boolean;
   } = {}
 ) {
-  return function* (
-    this: AuthedContext<any, { actorTeamRole?: TeamUserRole } & StateT>,
-    next: () => any
-  ) {
-    const { userId } = this.state;
+  return convert.back(async (ctx: ContextT, next: () => Promise<any>) => {
+    const { userId } = ctx.state;
 
-    if (this.state.role === "ADMIN") {
-      this.state.actorTeamRole = TeamUserRole.OWNER;
+    if (ctx.state.role === "ADMIN") {
+      ctx.state.actorTeamRole = TeamUserRole.OWNER;
     } else {
-      const teamId = yield getTeamId(this);
+      const teamId = await getTeamId(ctx);
 
       if (teamId === null && !options.allowNoTeam) {
-        this.throw(403, "You are not authorized to perform this team action");
+        ctx.throw(403, "You are not authorized to perform ctx team action");
       } else if (teamId !== null) {
-        const actorTeamUser = yield TeamUsersDAO.findOne(db, {
+        const actorTeamUser = await TeamUsersDAO.findOne(db, {
           teamId,
           userId,
         });
 
         if (!actorTeamUser) {
-          this.throw(403, "You cannot modify a team you are not a member of");
+          ctx.throw(403, "You cannot modify a team you are not a member of");
         }
 
-        const isAllowSelf = yield options.allowSelf?.(this, actorTeamUser.id) ??
-          Promise.resolve(false);
+        const isAllowSelf = await (options.allowSelf?.(ctx, actorTeamUser.id) ??
+          Promise.resolve(false));
         if (!(roles.includes(actorTeamUser.role) || isAllowSelf)) {
-          this.throw(403, "You are not authorized to perform this team action");
+          ctx.throw(403, "You are not authorized to perform ctx team action");
         }
 
-        this.state.actorTeamRole = actorTeamUser.role;
+        ctx.state.actorTeamRole = actorTeamUser.role;
       }
     }
 
-    yield next;
-  };
+    await next();
+  });
 }
 
 async function assertSeatLimitNotReached(
@@ -197,10 +212,14 @@ export async function canUserMoveCollectionBetweenTeams({
 export async function createTeamUser(
   trx: Knex.Transaction,
   actorTeamRole: TeamUserRole,
+  actorSessionRole: string,
   unsavedTeamUser: UnsavedTeamUser
 ) {
   const { role, teamId, userEmail } = unsavedTeamUser;
-  if (!allowedRolesMap[actorTeamRole].includes(role)) {
+  if (
+    !allowedRolesMap[actorTeamRole].includes(role) &&
+    actorSessionRole !== "ADMIN"
+  ) {
     throw new UnauthorizedError(
       "You cannot add a user with the specified role"
     );
@@ -231,6 +250,10 @@ export async function createTeamUser(
 
   const found = await TeamUsersDAO.findById(trx, created.id);
 
+  if (!found) {
+    throw new Error("Could not find created user");
+  }
+
   if (role !== TeamUserRole.VIEWER) {
     await addStripeSeatCharge(trx, teamId);
   }
@@ -245,18 +268,23 @@ export async function updateTeamUser(
     teamId,
     teamUserId,
     actorTeamRole,
+    actorSessionRole,
     patch,
   }: {
     before: TeamUser;
     teamId: string;
     teamUserId: string;
     actorTeamRole: TeamUserRole;
+    actorSessionRole: string;
     patch: TeamUserUpdate;
   }
 ): Promise<TeamUser> {
   if (check(teamUserUpdateRoleSchema, patch)) {
     const { role } = patch;
-    if (!allowedRolesMap[actorTeamRole].includes(role)) {
+    if (
+      !allowedRolesMap[actorTeamRole].includes(role) &&
+      actorSessionRole !== "ADMIN"
+    ) {
       throw new UnauthorizedError(
         "You cannot update a user with the specified role"
       );
@@ -291,7 +319,10 @@ export async function updateTeamUser(
       }
     }
   } else if (check(teamUserUpdateLabelSchema, patch)) {
-    if (!allowedRolesMap[actorTeamRole].includes(before.role)) {
+    if (
+      !allowedRolesMap[actorTeamRole].includes(before.role) &&
+      actorSessionRole !== "ADMIN"
+    ) {
       throw new UnauthorizedError(
         "You cannot update a user with the specified role"
       );
@@ -313,11 +344,11 @@ export async function removeTeamUser(
 ) {
   await createTeamUserLock(trx, teamUser.teamId);
 
-  const deleted = await TeamUsersDAO.deleteById(trx, teamUser.id);
+  await TeamUsersDAO.deleteById(trx, teamUser.id);
 
   if (teamUser.role !== TeamUserRole.VIEWER) {
     await removeStripeSeatCharge(trx, teamUser.teamId);
   }
 
-  return deleted;
+  return TeamUsersDAO.findById(trx, teamUser.id);
 }

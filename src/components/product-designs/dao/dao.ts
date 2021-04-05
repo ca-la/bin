@@ -75,6 +75,12 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
     .filter(([, value]: [string, Roles]) => value === "VIEW")
     .map(([key]: [string, Roles]) => key);
 
+  const TEAM_USER_PARTNER_ROLES = Object.entries(
+    TEAM_USER_ROLE_TO_COLLABORATOR_ROLE
+  )
+    .filter(([, value]: [string, Roles]) => value === "PARTNER")
+    .map(([key]: [string, Roles]) => key);
+
   const result = await queryWithCollectionMeta(db)
     .leftJoin(
       db.raw(
@@ -106,6 +112,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
     CASE
       WHEN tu.role = ANY(:editorRoles) THEN 'EDIT'
       WHEN tu.role = ANY(:viewerRoles) THEN 'VIEW'
+      WHEN tu.role = ANY(:partnerRoles) THEN 'PARTNER'
     END AS role, pd4.id as product_design_id
     FROM team_users as tu
     JOIN teams ON teams.id = tu.team_id
@@ -125,6 +132,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
           userId: options.userId,
           editorRoles: TEAM_USER_EDITOR_ROLES,
           viewerRoles: TEAM_USER_VIEWER_ROLES,
+          partnerRoles: TEAM_USER_PARTNER_ROLES,
         }
       )
     )

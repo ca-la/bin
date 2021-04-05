@@ -350,6 +350,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
   const { user: user2, session: session2 } = await createUser();
   const { user: user3, session: session3 } = await createUser();
   const { user: user4, session: session4 } = await createUser();
+  const { user: user5, session: session5 } = await createUser();
   const { team } = await generateTeam(
     user1.id,
     {},
@@ -390,6 +391,17 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       userEmail: null,
       createdAt: new Date(),
       deletedAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.TEAM_PARTNER,
+      label: null,
+      teamId: team.id,
+      userId: user5.id,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
       updatedAt: new Date(),
     });
   });
@@ -481,6 +493,23 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design1.id,
+      sessionRole: session5.role,
+      sessionUserId: user5.id,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    },
+    "Permissions for TEAM_PARTNER role"
+  );
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: design1.id,
       sessionRole: session4.role,
       sessionUserId: user4.id,
     }),
@@ -499,6 +528,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
 test("#getCollectionPermissions", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2, session: session2 } = await createUser();
+  const { user: user3, session: session3 } = await createUser();
   const { user: partnerUser, session: partnerSession } = await createUser();
   const { team } = await generateTeam(user.id);
 
@@ -598,6 +628,18 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
 
   const trx = await db.transaction();
 
+  await RawTeamUsersDAO.create(trx, {
+    id: uuid.v4(),
+    role: TeamUserRole.TEAM_PARTNER,
+    label: null,
+    teamId: team.id,
+    userId: user3.id,
+    userEmail: null,
+    createdAt: new Date(),
+    deletedAt: null,
+    updatedAt: new Date(),
+  });
+
   try {
     t.deepEqual(
       await PermissionsService.getCollectionPermissions(
@@ -632,6 +674,23 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
         canView: true,
       },
       "Returns partner permissions for the collection the user is a partner on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection5,
+        session3,
+        user3.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: true,
+      },
+      "Returns partner permissions for the collection the user is a team partner on."
     );
     t.deepEqual(
       await PermissionsService.getCollectionPermissions(

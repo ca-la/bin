@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import convert from "koa-convert";
 import { ParameterizedContext } from "koa";
+import { z } from "zod";
 
 import filterError = require("../../../services/filter-error");
 import InvalidDataError from "../../../errors/invalid-data";
@@ -57,78 +58,67 @@ import { Role as TeamUserRole } from "../../team-users/types";
 import {
   requireTeamRoles,
   canUserMoveCollectionBetweenTeams,
+  RequireTeamRolesContext,
 } from "../../team-users/service";
 import { StrictContext } from "../../../router-context";
 
 const router = new Router();
 
-interface CreateCollectionRequest {
-  createdAt: string;
-  description: string;
-  id: string;
-  title: string;
-  teamId: string;
+const createCollectionRequestSchema = z.object({
+  createdAt: z.string(),
+  description: z.string(),
+  id: z.string(),
+  title: z.string(),
+  teamId: z.string(),
+});
+type CreateCollectionRequest = z.infer<typeof createCollectionRequestSchema>;
+
+interface CreateContext extends StrictContext<Collection | UpgradeTeamBody> {
+  state: AuthedState & SafeBodyState<CreateCollectionRequest>;
 }
 
-function isCreateCollectionRequest(
-  candidate: Record<string, any>
-): candidate is CreateCollectionRequest {
-  const keyset = new Set(Object.keys(candidate));
-
-  return (
-    ["createdAt", "description", "id", "title"].every(
-      keyset.has.bind(keyset)
-    ) && candidate.teamId
-  );
-}
-
-function* createCollection(this: AuthedContext): Iterator<any, any, any> {
-  const { body } = this.request;
-  const { role, userId } = this.state;
-
-  if (!isCreateCollectionRequest(body)) {
-    this.throw(400, "Request does not match expected Collection type");
-  }
+const createCollection = convert.back(async (ctx: CreateContext) => {
+  const { role, userId, safeBody } = ctx.state;
 
   const data: CollectionDb = {
     deletedAt: null,
     createdBy: userId,
-    teamId: body.teamId,
-    createdAt: new Date(body.createdAt),
-    description: body.description,
-    id: body.id,
-    title: body.title,
+    teamId: safeBody.teamId,
+    createdAt: new Date(safeBody.createdAt),
+    description: safeBody.description,
+    id: safeBody.id,
+    title: safeBody.title,
   };
 
   if (role !== "ADMIN") {
-    const checkResult = yield checkCollectionsLimit(db, body.teamId);
+    const checkResult = await checkCollectionsLimit(db, safeBody.teamId);
     if (checkResult.isReached) {
-      this.status = 402;
-      this.body = yield generateUpgradeBodyDueToCollectionsLimit(
+      ctx.status = 402;
+      ctx.body = await generateUpgradeBodyDueToCollectionsLimit(
         db,
-        body.teamId,
+        safeBody.teamId,
         checkResult.limit
       );
       return;
     }
   }
 
-  const collection = yield CollectionsDAO.create(data).catch(
+  const collection = await CollectionsDAO.create(data).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
-      this.throw(400, err)
+      ctx.throw(400, err)
     )
   );
 
-  const permissions = yield getCollectionPermissions(
+  const permissions = await getCollectionPermissions(
     db,
     collection,
     role,
     userId
   );
 
-  this.body = { ...collection, permissions };
-  this.status = 201;
-}
+  ctx.body = { ...collection, permissions };
+  ctx.status = 201;
+});
 
 function* getList(this: AuthedContext): Iterator<any, any, any> {
   const {
@@ -279,13 +269,25 @@ function* okResponse(this: ParameterizedContext): Iterator<any, any, any> {
   this.status = 204;
 }
 
+interface CreateCollectionRequireTeamRolesContext
+  extends RequireTeamRolesContext {
+  state: RequireTeamRolesContext["state"] &
+    SafeBodyState<CreateCollectionRequest>;
+}
+
 router.post(
   "/",
   requireAuth,
+  typeGuardFromSchema<CreateCollectionRequest>(createCollectionRequestSchema),
   requireTeamRoles(
-    [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
-    async (context: AuthedContext<{ teamId: string | null }>) =>
-      context.request.body.teamId
+    [
+      TeamUserRole.OWNER,
+      TeamUserRole.ADMIN,
+      TeamUserRole.EDITOR,
+      TeamUserRole.TEAM_PARTNER,
+    ],
+    async (context: CreateCollectionRequireTeamRolesContext) =>
+      context.state.safeBody.teamId
   ),
   createCollection
 );
@@ -310,8 +312,8 @@ router.patch(
   requireAuth,
   canAccessCollectionInParam,
   canEditCollection,
-  useTransaction,
   typeGuardFromSchema(collectionUpdateSchema),
+  useTransaction,
   convert.back(updateCollection)
 );
 

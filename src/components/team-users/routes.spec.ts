@@ -732,6 +732,26 @@ test("PATCH /team-users/:id: invalid update body (unknown keys)", async (t: Test
   );
 });
 
+test("PATCH /team-users/:id: CALA admin can upgrade to TEAM_PARTNER", async (t: Test) => {
+  const { addStripeSeatStub, updateStub } = setup({
+    role: "ADMIN",
+  });
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: Role.TEAM_PARTNER,
+    },
+  });
+
+  t.equal(response.status, 200, "Response with a success status");
+  t.equal(updateStub.callCount, 1, "Calls the standard update method");
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function for free type"
+  );
+});
+
 test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test) => {
   const {
     addStripeSeatStub,
@@ -762,6 +782,32 @@ test("PATCH /team-users/:id: non-owners cannot upgrade to owner", async (t: Test
     0,
     "Does not call stripe add seat function"
   );
+});
+
+test("PATCH /team-users/:id: even owners cannot create TEAM_PARTNERs", async (t: Test) => {
+  const { findTeamUserByIdStub, findActorTeamUserStub } = setup();
+  const teamViewer: TeamUser = {
+    ...tu1,
+    id: "viewer",
+    role: Role.VIEWER,
+  };
+  const teamOwner: TeamUser = {
+    ...tu1,
+    id: "owner",
+    role: Role.OWNER,
+  };
+  findTeamUserByIdStub.onFirstCall().resolves(teamViewer); // requireTeamUserByTeamUserId
+  findTeamUserByIdStub.onSecondCall().resolves(teamViewer); // before update
+  findActorTeamUserStub.resolves(teamOwner);
+
+  const [response] = await patch(`/team-users/${teamViewer.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: Role.TEAM_PARTNER,
+    },
+  });
+
+  t.equal(response.status, 403, "Responds with forbidden status");
 });
 
 test("PATCH /team-users/:id: owners can transfer ownership to viewer", async (t: Test) => {

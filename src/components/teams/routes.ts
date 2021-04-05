@@ -1,4 +1,5 @@
 import Knex from "knex";
+import convert from "koa-convert";
 
 import db from "../../services/db";
 import { emit } from "../../services/pubsub";
@@ -21,19 +22,32 @@ import {
   TeamType,
   teamSubscriptionUpgradeSchema,
   TeamSubscriptionUpgrade,
+  teamDbSchema,
 } from "./types";
-import { typeGuardFromSchema } from "../../middleware/type-guard";
-import requireAdmin from "../../middleware/require-admin";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
 import { buildRouter } from "../../services/cala-component/cala-router";
 import { createTeamWithOwner } from "./service";
-import { requireTeamRoles } from "../team-users/service";
+import {
+  requireTeamRoles,
+  RequireTeamRolesContext,
+} from "../team-users/service";
 import { Role as TeamUserRole } from "../team-users/types";
 import filterError from "../../services/filter-error";
 import InvalidDataError from "../../errors/invalid-data";
+import { StrictContext } from "../../router-context";
 
 const domain = "Team" as "Team";
 
-async function findTeamById(context: TrxContext<AuthedContext>) {
+interface FindByTeamRequireTeamRolesContext extends RequireTeamRolesContext {
+  params: {
+    id: string;
+  };
+}
+
+async function findTeamById(context: FindByTeamRequireTeamRolesContext) {
   return context.params.id;
 }
 
@@ -196,25 +210,35 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
-function* checkUpdateRights(
-  this: TrxContext<AuthedContext<any, { actorTeamRole?: TeamUserRole }>>,
-  next: any
-) {
-  if (this.request.body.hasOwnProperty("type")) {
-    return yield requireAdmin.call(this, next);
-  }
-
-  yield requireTeamRoles(
-    [TeamUserRole.ADMIN, TeamUserRole.OWNER, TeamUserRole.EDITOR],
-    findTeamById
-  ).call(this, next);
+interface CheckUpdateRightsContext extends StrictContext {
+  state: SafeBodyState<Partial<TeamDb>> & AuthedState;
 }
+
+const checkUpdateRights = convert.back(
+  async (ctx: CheckUpdateRightsContext, next: () => Promise<any>) => {
+    if (ctx.state.safeBody.type !== undefined) {
+      if (ctx.state.role !== "ADMIN") {
+        ctx.throw(403);
+      }
+    }
+
+    await next();
+  }
+);
 
 const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
   pickRoutes: ["update"],
   routeOptions: {
     update: {
-      middleware: [requireAuth, checkUpdateRights],
+      middleware: [
+        requireAuth,
+        typeGuardFromSchema<Partial<TeamDb>>(teamDbSchema.partial()),
+        checkUpdateRights,
+        requireTeamRoles(
+          [TeamUserRole.ADMIN, TeamUserRole.OWNER, TeamUserRole.EDITOR],
+          findTeamById
+        ),
+      ],
       allowedAttributes: ["type", "title"],
     },
   },

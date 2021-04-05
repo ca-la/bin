@@ -6,6 +6,7 @@ interface UnknownRequest extends Request {
 }
 
 export interface StrictContext<ResponseBodyT = never> extends Context {
+  [key: string]: unknown;
   request: UnknownRequest;
   state: DefaultState;
   params: unknown;

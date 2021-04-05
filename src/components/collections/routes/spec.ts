@@ -106,9 +106,10 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { session: nonTeamUserSession } = await createUser();
   const { session: teamViewerSession } = await createUser();
+  const { session: teamPartnerSession } = await createUser();
   const { team } = await generateTeam(user.id);
-  await db.transaction((trx: Knex.Transaction) =>
-    RawTeamUsersDAO.create(trx, {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
       label: null,
@@ -118,8 +119,19 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
       createdAt: new Date(),
       deletedAt: null,
       updatedAt: new Date(),
-    })
-  );
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.TEAM_PARTNER,
+      label: null,
+      teamId: team.id,
+      userId: teamPartnerSession.userId,
+      userEmail: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+  });
   const body = {
     createdAt: new Date(),
     description: "Initial commit",
@@ -170,6 +182,20 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     viewerForbidden.status,
     403,
     "Does not allow viewers to create collections"
+  );
+
+  const [partnerAllowed] = await API.post("/collections", {
+    headers: API.authHeader(teamPartnerSession.id),
+    body: {
+      ...body,
+      id: uuid.v4(),
+    },
+  });
+
+  t.equal(
+    partnerAllowed.status,
+    201,
+    "Allows team partners to create collections"
   );
 });
 

@@ -1,16 +1,22 @@
+import convert from "koa-convert";
+
 import db from "../../services/db";
-import useTransaction from "../../middleware/use-transaction";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 import requireAuth from "../../middleware/require-auth";
 import { requireQueryParam } from "../../middleware/require-query-param";
-import { typeGuard, typeGuardFromSchema } from "../../middleware/type-guard";
-import { generateUpgradeBodyDueToUsersLimit } from "../teams";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
+import { generateUpgradeBodyDueToUsersLimit, UpgradeTeamBody } from "../teams";
 
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
 import { check } from "../../services/check";
 
 import {
-  isUnsavedTeamUser,
   UnsavedTeamUser,
   Role as TeamUserRole,
   TeamUserUpdate,
@@ -18,6 +24,7 @@ import {
   teamUserUpdateRoleSchema,
   TeamUser,
   teamUserDomain,
+  unsavedTeamUserSchema,
 } from "./types";
 import {
   createTeamUser,
@@ -25,6 +32,9 @@ import {
   updateTeamUser,
   requireTeamUserByTeamUserId,
   removeTeamUser,
+  TeamUserRoleState,
+  TeamUserState,
+  RequireTeamRolesContext,
 } from "./service";
 import TeamUsersDAO from "./dao";
 import { emit } from "../../services/pubsub";
@@ -34,24 +44,29 @@ import {
   RouteDeleted,
 } from "../../services/pubsub/cala-events";
 import ConflictError from "../../errors/conflict";
+import { StrictContext } from "../../router-context";
 
-async function findTeamByTeamUser(
-  context: AuthedContext<any, { teamUser: TeamUser }>
-) {
+interface FindTeamByTeamUserContext extends StrictContext {
+  state: TeamUserState;
+}
+async function findTeamByTeamUser(context: FindTeamByTeamUserContext) {
   return context.state.teamUser.teamId;
 }
 
-function* create(
-  this: TrxContext<
-    AuthedContext<UnsavedTeamUser, { actorTeamRole: TeamUserRole }>
-  >
-) {
-  const { body } = this.request;
-  const { trx, actorTeamRole, userId: actorUserId } = this.state;
+interface CreateContext extends StrictContext<TeamUser | UpgradeTeamBody> {
+  state: AuthedState &
+    TransactionState &
+    SafeBodyState<UnsavedTeamUser> &
+    TeamUserRoleState;
+}
+
+async function create(ctx: CreateContext) {
+  const { trx, actorTeamRole, userId: actorUserId, role, safeBody } = ctx.state;
 
   try {
-    const created = yield createTeamUser(trx, actorTeamRole, body);
-    yield emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
+    const created = await createTeamUser(trx, actorTeamRole, role, safeBody);
+
+    await emit<TeamUser, RouteCreated<TeamUser, typeof teamUserDomain>>({
       type: "route.created",
       domain: teamUserDomain,
       actorId: actorUserId,
@@ -59,65 +74,85 @@ function* create(
       created,
     });
 
-    this.body = created;
-    this.status = 201;
+    ctx.body = created;
+    ctx.status = 201;
   } catch (error) {
     if (error instanceof InsufficientPlanError) {
-      this.status = 402;
-      this.body = yield generateUpgradeBodyDueToUsersLimit(
+      ctx.status = 402;
+      ctx.body = await generateUpgradeBodyDueToUsersLimit(
         trx,
-        body.teamId,
-        body.role
+        safeBody.teamId,
+        safeBody.role
       );
       return;
     }
     if (error instanceof UnauthorizedError) {
-      this.throw(403, error.message);
+      ctx.throw(403, error.message);
     }
     if (error instanceof ConflictError) {
-      this.throw(409, error.message);
+      ctx.throw(409, error.message);
     }
     throw error;
   }
 }
 
-function* getList(this: AuthedContext) {
-  const { teamId } = this.request.query;
-
-  this.body = yield TeamUsersDAO.find(db, { teamId });
-  this.status = 200;
+interface GetListContext extends StrictContext<TeamUser[]> {
+  query: {
+    teamId: string;
+  };
 }
 
-function* update(
-  this: TrxContext<
-    AuthedContext<
-      TeamUserUpdate,
-      { actorTeamRole: TeamUserRole; teamUser: TeamUser }
-    >
-  >
-) {
-  const { trx, actorTeamRole, teamUser, userId: actorUserId } = this.state;
-  const { teamUserId } = this.params;
-  const { body } = this.request;
+async function getList(ctx: GetListContext) {
+  const { teamId } = ctx.query;
 
-  if (check(teamUserUpdateRoleSchema, body)) {
+  ctx.body = await TeamUsersDAO.find(db, { teamId });
+  ctx.status = 200;
+}
+
+interface UpdateContext extends StrictContext<TeamUser | UpgradeTeamBody> {
+  state: TransactionState &
+    SafeBodyState<TeamUserUpdate> &
+    TeamUserState &
+    TeamUserRoleState &
+    AuthedState;
+  params: { teamUserId: string };
+}
+
+async function update(ctx: UpdateContext) {
+  const {
+    trx,
+    actorTeamRole,
+    teamUser,
+    userId: actorUserId,
+    role,
+    safeBody,
+  } = ctx.state;
+  const { teamUserId } = ctx.params;
+
+  if (check(teamUserUpdateRoleSchema, safeBody)) {
     const isTryingToUpdateTeamOwner = teamUser.role === TeamUserRole.OWNER;
     if (isTryingToUpdateTeamOwner) {
-      this.throw(403, `You cannot update team owner role`);
+      ctx.throw(403, `You cannot update team owner role`);
     }
   }
 
-  const before = yield TeamUsersDAO.findById(trx, teamUserId);
+  const before = await TeamUsersDAO.findById(trx, teamUserId);
+
+  if (!before) {
+    ctx.throw(404, `Could not find team user with ID ${teamUserId}`);
+  }
+
   try {
-    const updated = yield updateTeamUser(trx, {
+    const updated = await updateTeamUser(trx, {
       before,
       teamId: before.teamId,
       teamUserId,
       actorTeamRole,
-      patch: body,
+      actorSessionRole: role,
+      patch: safeBody,
     });
 
-    yield emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
+    await emit<TeamUser, RouteUpdated<TeamUser, typeof teamUserDomain>>({
       type: "route.updated",
       domain: teamUserDomain,
       actorId: actorUserId,
@@ -126,18 +161,18 @@ function* update(
       updated,
     });
 
-    this.body = updated;
-    this.status = 200;
+    ctx.body = updated;
+    ctx.status = 200;
   } catch (error) {
     if (error instanceof InsufficientPlanError) {
-      this.status = 402;
-      const role = check(teamUserUpdateRoleSchema, body)
-        ? body.role
+      ctx.status = 402;
+      const updatedRole = check(teamUserUpdateRoleSchema, safeBody)
+        ? safeBody.role
         : before.role;
-      this.body = yield generateUpgradeBodyDueToUsersLimit(
+      ctx.body = await generateUpgradeBodyDueToUsersLimit(
         trx,
         before.teamId,
-        role
+        updatedRole
       );
       return;
     }
@@ -145,26 +180,44 @@ function* update(
   }
 }
 
-function* deleteTeamUser(
-  this: TrxContext<AuthedContext<TeamUserUpdate, { teamUser: TeamUser }>>
-) {
-  const { trx, teamUser, userId: actorUserId } = this.state;
+interface DeleteContext extends StrictContext {
+  state: AuthedState & TransactionState & TeamUserState;
+}
+
+async function deleteTeamUser(ctx: DeleteContext) {
+  const { trx, teamUser, userId: actorUserId } = ctx.state;
 
   const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
   if (isTryingToDeleteTeamOwner) {
-    this.throw(403, `You cannot delete the owner of the team`);
+    ctx.throw(403, `You cannot delete the owner of the team`);
   }
 
-  const deleted = yield removeTeamUser(trx, teamUser);
+  const deleted = await removeTeamUser(trx, teamUser);
 
-  yield emit<TeamUser, RouteDeleted<TeamUser, typeof teamUserDomain>>({
+  if (!deleted) {
+    ctx.throw(404, "Could not find team user to delete");
+  }
+
+  await emit<TeamUser, RouteDeleted<TeamUser, typeof teamUserDomain>>({
     type: "route.deleted",
     domain: teamUserDomain,
     actorId: actorUserId,
     trx,
     deleted,
   });
-  this.status = 204;
+  ctx.status = 204;
+}
+
+interface CreateRequireTeamRolesContext extends RequireTeamRolesContext {
+  state: RequireTeamRolesContext["state"] & SafeBodyState<UnsavedTeamUser>;
+}
+
+interface GetListRequireTeamRolesContext extends RequireTeamRolesContext {
+  query: { teamId: string };
+}
+
+interface DeleteRequireTeamRolesContext extends RequireTeamRolesContext {
+  params: { teamUserId: string };
 }
 
 export default {
@@ -173,23 +226,24 @@ export default {
     "/": {
       post: [
         requireAuth,
-        typeGuard(isUnsavedTeamUser),
+        typeGuardFromSchema(unsavedTeamUserSchema),
         requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
-          async (context: AuthedContext<{ teamId: string }>) =>
-            context.request.body.teamId
+          async (context: CreateRequireTeamRolesContext) =>
+            context.state.safeBody.teamId
         ),
         useTransaction,
-        create,
+        convert.back(create),
       ],
       get: [
         requireAuth,
-        requireQueryParam("teamId"),
+        requireQueryParam<GetListContext["query"]>("teamId"),
         requireTeamRoles(
           Object.values(TeamUserRole),
-          async (context: AuthedContext) => context.query.teamId
+          async (context: GetListRequireTeamRolesContext) =>
+            context.query.teamId
         ),
-        getList,
+        convert.back(getList),
       ],
     },
     "/:teamUserId": {
@@ -198,27 +252,27 @@ export default {
         useTransaction,
         typeGuardFromSchema(teamUserUpdateSchema),
         requireTeamUserByTeamUserId,
-        requireTeamRoles<{ teamUser: TeamUser }>(
+        requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           findTeamByTeamUser
         ),
-        update,
+        convert.back(update),
       ],
       del: [
         requireAuth,
         requireTeamUserByTeamUserId,
-        requireTeamRoles<{ teamUser: TeamUser }>(
+        requireTeamRoles(
           [TeamUserRole.ADMIN, TeamUserRole.OWNER],
           findTeamByTeamUser,
           {
             allowSelf: async (
-              context: AuthedContext,
+              context: DeleteRequireTeamRolesContext,
               actorTeamUserId: string | null
             ) => context.params.teamUserId === actorTeamUserId,
           }
         ),
         useTransaction,
-        deleteTeamUser,
+        convert.back(deleteTeamUser),
       ],
     },
   },

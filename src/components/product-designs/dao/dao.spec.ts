@@ -1043,9 +1043,10 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
   const { user } = await createUser({ withSession: false });
   const { user: partner } = await createUser({ withSession: false });
   const { user: deletedTeamUser } = await createUser({ withSession: false });
+  const { user: teamPartner } = await createUser({ withSession: false });
   const { team } = await generateTeam(partner.id, { type: TeamType.PARTNER });
-  await db.transaction((trx: Knex.Transaction) =>
-    RawTeamUsersDAO.create(trx, {
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       teamId: team.id,
       userId: deletedTeamUser.id,
@@ -1055,8 +1056,19 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
       createdAt: new Date(),
       deletedAt: new Date(),
       updatedAt: new Date(),
-    })
-  );
+    });
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      teamId: team.id,
+      userId: teamPartner.id,
+      userEmail: null,
+      role: TeamUserRole.TEAM_PARTNER,
+      label: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+  });
 
   const { collection } = await generateCollection({
     createdBy: user.id,
@@ -1101,6 +1113,15 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
     designs.map((d: ProductDesignWithApprovalSteps) => d.id),
     [designTwo.id, designOne.id],
     "Returns designs for team collaborator"
+  );
+
+  const forTeamPartner = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: teamPartner.id,
+  });
+  t.deepEqual(
+    forTeamPartner.map((d: ProductDesignWithApprovalSteps) => d.id),
+    [designTwo.id, designOne.id],
+    "Returns designs for team partner"
   );
 
   const forDeletedTeamUser = await findAllDesignsThroughCollaboratorAndTeam({

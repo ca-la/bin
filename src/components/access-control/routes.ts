@@ -8,7 +8,10 @@ import { canAccessTaskInParams } from "../../middleware/can-access-task";
 import { canAccessDesignInParam } from "../../middleware/can-access-design";
 import { canAccessApprovalStepInParam } from "../../middleware/can-access-approval-step";
 import { canAccessCollectionInParam } from "../../middleware/can-access-collection";
-import { requireTeamRoles } from "../../components/team-users/service";
+import {
+  requireTeamRoles,
+  RequireTeamRolesContext,
+} from "../../components/team-users/service";
 
 import { Role as TeamUserRole } from "../../components/team-users/types";
 import { StrictContext } from "../../router-context";
@@ -147,13 +150,18 @@ router.get(
   getApprovalStepAccess
 );
 
+interface GetTeamAccessRequireTeamRolesContext extends RequireTeamRolesContext {
+  params: { teamId: string };
+}
+
 router.get(
   "/teams/:teamId",
   requireAuth,
   useTransaction,
   requireTeamRoles(
     Object.values(TeamUserRole),
-    async (context: AuthedContext) => context.params.teamId
+    async (context: GetTeamAccessRequireTeamRolesContext) =>
+      context.params.teamId
   ),
   getTeamAccess
 );
