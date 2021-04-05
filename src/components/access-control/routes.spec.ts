@@ -68,6 +68,32 @@ test(`GET ${API_PATH}/annotations checks access`, async (t: tape.Test) => {
   t.equal(responseThree.status, 200);
 });
 
+test(`GET ${API_PATH}/users checks access`, async (t: tape.Test) => {
+  const userOne = await createUser();
+  const userTwo = await createUser();
+
+  const [response1] = await API.get(
+    `${API_PATH}/users?userId=${userTwo.user.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id),
+    }
+  );
+  t.equal(response1.status, 200);
+
+  const [response2] = await API.get(
+    `${API_PATH}/users?userId=${userOne.user.id}`,
+    {
+      headers: API.authHeader(userTwo.session.id),
+    }
+  );
+  t.equal(response2.status, 400);
+
+  const [response3] = await API.get(`${API_PATH}/users?userId=abc-123`, {
+    headers: API.authHeader(userTwo.session.id),
+  });
+  t.equal(response3.status, 400);
+});
+
 test(`GET ${API_PATH}/notifications checks access`, async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();

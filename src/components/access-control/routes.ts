@@ -1,4 +1,6 @@
 import Router from "koa-router";
+import convert from "koa-convert";
+
 import requireAuth from "../../middleware/require-auth";
 import useTransaction from "../../middleware/use-transaction";
 import { canAccessAnnotationInParams } from "../../middleware/can-access-annotation";
@@ -9,6 +11,7 @@ import { canAccessCollectionInParam } from "../../middleware/can-access-collecti
 import { requireTeamRoles } from "../../components/team-users/service";
 
 import { Role as TeamUserRole } from "../../components/team-users/types";
+import { StrictContext } from "../../router-context";
 
 const router = new Router();
 
@@ -22,6 +25,31 @@ function* getAnnotationsAccess(this: AuthedContext): Iterator<any, any, any> {
 
 interface NotificationAccessQuery {
   userId?: string;
+}
+
+/**
+ * Checks the state's userId against the query param's userId;
+ * Responds with a 200 if there's a match, otherwise throws a 400.
+ */
+interface GetUserAccessContext extends StrictContext {
+  state: AuthedState;
+  query: {
+    userId: string;
+  };
+}
+
+async function getUserAccess(ctx: GetUserAccessContext) {
+  const { userId } = ctx.state;
+  const { userId: checkUserId }: NotificationAccessQuery = ctx.query;
+
+  if (userId !== checkUserId) {
+    ctx.throw(
+      400,
+      "The user id in the query does not match the session's user!"
+    );
+  }
+
+  ctx.status = 200;
 }
 
 /**
@@ -85,6 +113,7 @@ function* getTeamAccess(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
+router.get("/users", requireAuth, convert.back(getUserAccess));
 router.get("/notifications", requireAuth, getNotificationAccess);
 router.get(
   "/annotations/:annotationId",
