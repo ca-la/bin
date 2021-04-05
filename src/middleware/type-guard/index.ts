@@ -20,6 +20,10 @@ export function typeGuard<T>(
   return middleware;
 }
 
+export interface SafeBodyState<T> {
+  safeBody: T;
+}
+
 export function typeGuardFromSchema<BodyType>(
   schema: ZodSchema<BodyType, ZodTypeDef, any>
 ): (

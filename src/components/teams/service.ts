@@ -86,7 +86,7 @@ export async function checkCollectionsLimit(
   return count >= limit ? { isReached: true, limit } : { isReached: false };
 }
 
-interface UpgradeTeamBody {
+export interface UpgradeTeamBody {
   title: string;
   message: string;
   actionText: string;

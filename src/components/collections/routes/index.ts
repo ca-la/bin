@@ -16,12 +16,18 @@ import {
 import canAccessUserResource = require("../../../middleware/can-access-user-resource");
 import requireAuth = require("../../../middleware/require-auth");
 import requireAdmin = require("../../../middleware/require-admin");
-import useTransaction from "../../../middleware/use-transaction";
-import { typeGuardFromSchema } from "../../../middleware/type-guard";
+import useTransaction, {
+  TransactionState,
+} from "../../../middleware/use-transaction";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../../middleware/type-guard";
 
 import {
   checkCollectionsLimit,
   generateUpgradeBodyDueToCollectionsLimit,
+  UpgradeTeamBody,
 } from "../../teams";
 import * as CollectionsDAO from "../dao";
 import TeamUsersDAO from "../../team-users/dao";
@@ -52,6 +58,7 @@ import {
   requireTeamRoles,
   canUserMoveCollectionBetweenTeams,
 } from "../../team-users/service";
+import { StrictContext } from "../../../router-context";
 
 const router = new Router();
 
@@ -216,9 +223,10 @@ function* getCollection(this: AuthedContext): Iterator<any, any, any> {
   }
 }
 
-type UpdateContext = AuthedContext &
-  TransactionContext &
-  SafeBodyContext<CollectionUpdate>;
+interface UpdateContext extends StrictContext<Collection | UpgradeTeamBody> {
+  state: AuthedState & TransactionState & SafeBodyState<CollectionUpdate>;
+  params: { collectionId: string };
+}
 
 async function updateCollection(ctx: UpdateContext) {
   const { collectionId } = ctx.params;

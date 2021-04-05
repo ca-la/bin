@@ -1,5 +1,17 @@
 import { AuthenticationError } from "apollo-server-koa";
+import { TrackingEvent } from "../../middleware/tracking";
 import { GraphQLContextBase } from "../types";
+
+export interface PublicState {
+  tracking: TrackingEvent[];
+  trackingId: string;
+}
+
+export interface AuthedState extends PublicState {
+  userId: string;
+  role: string;
+  token: string;
+}
 
 export interface GraphQLContextAuthenticated<Result>
   extends Omit<GraphQLContextBase<Result>, "session"> {

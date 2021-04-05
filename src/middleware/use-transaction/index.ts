@@ -1,21 +1,31 @@
+import { Transaction } from "knex";
 import Koa from "koa";
+import convert from "koa-convert";
 
 import db from "../../services/db";
 
-export default function* useTransaction(
-  this: Koa.Context,
-  next: any
-): Iterator<any, any, any> {
-  if (this.state.trx) {
-    this.throw("Transaction already created");
-  }
-  const trx = yield db.transaction();
-  try {
-    this.state.trx = trx;
-    yield next;
-    yield trx.commit();
-  } catch (err) {
-    trx.rollback();
-    throw err;
-  }
+export interface TransactionState {
+  trx: Transaction;
 }
+
+export default convert.back(
+  async (
+    ctx: Koa.ParameterizedContext<Partial<TransactionState>>,
+    next: () => Promise<any>
+  ) => {
+    if (ctx.state.trx) {
+      ctx.throw("Transaction already created");
+    }
+
+    const trx = await db.transaction();
+    ctx.state.trx = trx;
+
+    try {
+      await next();
+      await trx.commit();
+    } catch (err) {
+      await trx.rollback();
+      throw err;
+    }
+  }
+);
