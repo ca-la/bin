@@ -52,3 +52,5 @@ export const GraphQLTypes = {
   ...UsersGraphQLTypes,
   ...NotificationsGraphQLTypes,
 };
+
+export { z } from "zod";
