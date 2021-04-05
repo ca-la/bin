@@ -4,8 +4,7 @@ export function up(knex: Knex): Knex.Raw {
   return knex.raw(`
 alter table credit_transactions
   add column type text,
-  alter column created_by drop not null,
-  alter column credit_delta_cents type integer
+  alter column created_by drop not null
 ;
 
 create table referral_runs (
@@ -20,8 +19,7 @@ export function down(knex: Knex): Knex.Raw {
   return knex.raw(`
 alter table credit_transactions
   drop column type,
-  alter column created_by set not null,
-  alter column credit_delta_cents type bigint
+  alter column created_by set not null
 ;
 drop table referral_runs;
   `);
