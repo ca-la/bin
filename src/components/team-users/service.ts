@@ -341,14 +341,14 @@ export async function updateTeamUser(
 export async function removeTeamUser(
   trx: Knex.Transaction,
   teamUser: TeamUserDb
-) {
+): Promise<TeamUserDb> {
   await createTeamUserLock(trx, teamUser.teamId);
 
-  await TeamUsersDAO.deleteById(trx, teamUser.id);
+  const deleted = await TeamUsersDAO.deleteById(trx, teamUser.id);
 
   if (teamUser.role !== TeamUserRole.VIEWER) {
     await removeStripeSeatCharge(trx, teamUser.teamId);
   }
 
-  return TeamUsersDAO.findById(trx, teamUser.id);
+  return deleted;
 }

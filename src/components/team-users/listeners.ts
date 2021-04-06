@@ -3,7 +3,7 @@ import {
   Listeners,
   buildListeners,
 } from "../../services/cala-component/cala-listeners";
-import { TeamUser, teamUserDomain } from "./types";
+import { TeamUser, TeamUserDb, teamUserDomain } from "./types";
 import {
   RouteCreated,
   RouteUpdated,
@@ -66,7 +66,7 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },
   "route.deleted": async (
-    event: RouteDeleted<TeamUser, typeof teamUserDomain>
+    event: RouteDeleted<TeamUserDb, typeof teamUserDomain>
   ) => {
     const {
       trx,

@@ -25,6 +25,7 @@ import {
   TeamUser,
   teamUserDomain,
   unsavedTeamUserSchema,
+  TeamUserDb,
 } from "./types";
 import {
   createTeamUser,
@@ -194,11 +195,7 @@ async function deleteTeamUser(ctx: DeleteContext) {
 
   const deleted = await removeTeamUser(trx, teamUser);
 
-  if (!deleted) {
-    ctx.throw(404, "Could not find team user to delete");
-  }
-
-  await emit<TeamUser, RouteDeleted<TeamUser, typeof teamUserDomain>>({
+  await emit<TeamUserDb, RouteDeleted<TeamUserDb, typeof teamUserDomain>>({
     type: "route.deleted",
     domain: teamUserDomain,
     actorId: actorUserId,
