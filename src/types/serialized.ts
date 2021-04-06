@@ -7,7 +7,9 @@ export type Serialized<T> = {
     ? Serialized<T[P]>
     : T[P] extends any[] | null
     ? Serialized<T[P]> | null
-    : T[P] extends object
+    : T[P] extends Record<string, any>
     ? Serialized<T[P]>
+    : T[P] extends Record<string, any> | null
+    ? Serialized<T[P]> | null
     : T[P];
 };
