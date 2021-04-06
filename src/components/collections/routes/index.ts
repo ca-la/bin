@@ -231,11 +231,7 @@ async function updateCollection(ctx: UpdateContext) {
       teamIdToMoveTo: patch.teamId,
     });
 
-    ctx.assert(
-      canMove,
-      403,
-      "In order to move this collection to another team you have to be a member of both teams with at least the Editor role"
-    );
+    ctx.assert(canMove, 403, "Invalid team permissions");
 
     const checkResult = await checkCollectionsLimit(db, patch.teamId);
     if (checkResult.isReached) {
