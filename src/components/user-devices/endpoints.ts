@@ -4,7 +4,7 @@ import {
   CreateArgs,
   composeMiddleware,
 } from "../../apollo/services";
-import { UserDevice, userDeviceSchema, domain } from "./types";
+import { UserDevice, userDeviceSchema, userDeviceDomain } from "./types";
 import dao from "./dao";
 import {
   GraphQLContextAuthenticated,
@@ -41,7 +41,7 @@ export async function lookForExistingDevice(
 
 export const UserDeviceEndpoints = [
   buildCreateEndpoint<UserDevice>(
-    domain,
+    userDeviceDomain,
     userDeviceSchema,
     dao,
     composeMiddleware(

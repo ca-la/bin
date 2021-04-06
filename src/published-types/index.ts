@@ -39,6 +39,7 @@ export * from "../components/pricing-cost-inputs/types";
 export { Bid } from "../components/bids/types";
 export * from "../components/participants/types";
 export * from "../components/user-page-onboardings/types";
+export * from "../components/user-devices/types";
 
 import * as CommentService from "../components/comments/service";
 export { CommentService };

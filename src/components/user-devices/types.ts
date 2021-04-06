@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-export const domain = "UserDevice" as "UserDevice";
+export const userDeviceDomain = "UserDevice" as "UserDevice";
 
 export const userDeviceSchema = z.object({
   id: z.string(),
