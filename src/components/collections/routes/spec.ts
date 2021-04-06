@@ -134,7 +134,7 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
   });
   const body = {
     createdAt: new Date(),
-    description: "Initial commit",
+    description: null,
     id: uuid.v4(),
     teamId: team.id,
     title: "Drop 001/The Early Years",

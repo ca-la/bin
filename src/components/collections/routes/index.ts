@@ -66,7 +66,7 @@ const router = new Router();
 
 const createCollectionRequestSchema = z.object({
   createdAt: z.string(),
-  description: z.string(),
+  description: z.string().nullable(),
   id: z.string(),
   title: z.string(),
   teamId: z.string(),
