@@ -268,6 +268,7 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
   const updateBody = {
     description: "Updated Description",
     title: "Updated Title",
+    id: body.id,
   };
   const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
     body: updateBody,
