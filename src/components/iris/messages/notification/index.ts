@@ -16,7 +16,7 @@ export async function announceNotificationCreation(
   }
 
   const realtimeNotification: RealtimeMessage = {
-    channels: [buildChannelName("notifications", notification.recipientUserId)],
+    channels: [buildChannelName("updates", notification.recipientUserId)],
     resource: messageNotification,
     type: RealtimeMessageType.notificationCreated,
   };

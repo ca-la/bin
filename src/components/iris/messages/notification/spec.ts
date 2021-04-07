@@ -54,7 +54,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   const response = await announceNotificationCreation(notification);
 
   t.deepEqual(response, {
-    channels: ["notifications/zzzz-2222"],
+    channels: ["updates/zzzz-2222"],
     resource: { foo: "bar" },
     type: "notification/created",
   });
