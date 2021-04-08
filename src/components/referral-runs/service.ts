@@ -1,4 +1,5 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 
 import ReferralRunsDAO from "./dao";
 import { CreditsDAO, CreditType } from "../credits";
@@ -21,14 +22,17 @@ export async function addReferralSubscriptionBonuses(
 
   const stripeInvoices = await getInvoicesAfterSpecified(latestStripeInvoiceId);
 
-  const byStripeSubscriptionId: Record<string, Invoice> = {};
+  const byStripeSubscriptionId: Record<string, Invoice[]> = {};
   for (const invoice of stripeInvoices.data) {
     if (invoice.subscription) {
-      byStripeSubscriptionId[invoice.subscription] = invoice;
+      if (!byStripeSubscriptionId[invoice.subscription]) {
+        byStripeSubscriptionId[invoice.subscription] = [invoice];
+      } else {
+        byStripeSubscriptionId[invoice.subscription].push(invoice);
+      }
     }
   }
   const stripeSubscriptionIds: string[] = Object.keys(byStripeSubscriptionId);
-
   const rows = await ReferralRedemptionsDAO.findByStripeSubscriptionIds(
     trx,
     stripeSubscriptionIds
@@ -36,14 +40,18 @@ export async function addReferralSubscriptionBonuses(
 
   let total = 0;
   for (const row of rows) {
-    const invoice = byStripeSubscriptionId[row.stripe_subscription_id];
-    if (!invoice) {
+    const invoices = byStripeSubscriptionId[row.stripe_subscription_id];
+    if (!invoices || invoices.length === 0) {
       throw new Error(
         `Could not find invoice for subscription #${row.stripe_subscription_id}`
       );
     }
+    let invoicesTotal = 0;
+    for (const invoice of invoices) {
+      invoicesTotal += invoice.total;
+    }
     const creditDeltaCents = Math.floor(
-      (invoice.total * REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) / 100
+      (invoicesTotal * REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) / 100
     );
 
     // invoice.total can be zero or less than 10
@@ -60,6 +68,14 @@ export async function addReferralSubscriptionBonuses(
       creditDeltaCents,
       description: "Referral subscription bonus",
       expiresAt: null,
+    });
+  }
+
+  if (latestStripeInvoiceId !== stripeInvoices.data[0].id) {
+    await ReferralRunsDAO.create(trx, {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      latestStripeInvoiceId: stripeInvoices.data[0].id,
     });
   }
 

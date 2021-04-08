@@ -70,13 +70,18 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
       data: [
         {
           id: "in_2",
-          total: paymentTotal,
+          total: paymentTotal / 2,
           subscription: "stripe-subscription-1",
         },
         {
           id: "in_3",
-          total: paymentTotal * 2,
+          total: paymentTotal * 30,
           subscription: null,
+        },
+        {
+          id: "in_4",
+          total: paymentTotal / 2,
+          subscription: "stripe-subscription-1",
         },
       ],
     });
@@ -87,6 +92,9 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
     (paymentTotal * REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) / 100,
     "Returned proper amount of credits"
   );
+
+  const existingRuns = await ReferralRunsDAO.count(trx, {});
+  t.equal(existingRuns, 2, "created new referral_runs instance");
 
   trx.rollback();
 
