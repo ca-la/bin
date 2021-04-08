@@ -19,6 +19,7 @@ import {
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { announceNotificationCreation } from "../iris/messages/notification";
 import { NotificationFilter } from "./types";
+import { sendPushNotifications } from "../../services/push-notifications";
 
 interface SearchInterface {
   limit: number;
@@ -535,6 +536,7 @@ export async function create(
     throw new Error("Failed to find created notification after persisting!");
   }
   await announceNotificationCreation(notification);
+  await sendPushNotifications(notification, trx);
   return notification;
 }
 

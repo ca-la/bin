@@ -23,3 +23,12 @@ export const userDeviceRowSchema = z.object({
 });
 
 export type UserDeviceRow = z.infer<typeof userDeviceRowSchema>;
+
+export const userDeviceTestBlank = {
+  id: "user-device-1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  deletedAt: null,
+  userId: "user-id",
+  deviceToken: "1234-4567",
+};

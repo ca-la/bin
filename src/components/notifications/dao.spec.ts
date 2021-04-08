@@ -35,11 +35,16 @@ import { ComponentType } from "../components/domain-object";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import { NotificationFilter } from "./types";
+import * as PushNotificationService from "../../services/push-notifications";
 
 test("Notifications DAO supports creation", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
+
+  const sendPushNotificationStub = sandbox()
+    .stub(PushNotificationService, "sendPushNotifications")
+    .resolves();
 
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
@@ -69,6 +74,7 @@ test("Notifications DAO supports creation", async (t: tape.Test) => {
     const inserted = await NotificationsDAO.create(data);
     const result = await NotificationsDAO.findById(trx, inserted.id);
     t.deepEqual(result, inserted, "Returned the inserted notification");
+    t.equal(sendPushNotificationStub.callCount, 1, "Sends a push notification");
   });
 });
 
