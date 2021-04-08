@@ -61,7 +61,7 @@ export const creditRowSchema = z.object({
   type: creditTypeSchema,
   created_by: z.string().nullable(),
   given_to: z.string(),
-  credit_delta_cents: z.bigint(),
+  credit_delta_cents: z.union([z.bigint(), z.number().int()]),
   description: z.string(),
   expires_at: z.date().nullable(),
 });
