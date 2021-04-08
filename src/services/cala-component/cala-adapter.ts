@@ -26,14 +26,15 @@ export function fromSchema<
 >({
   modelSchema,
   rowSchema,
+  encodeTransformer = defaultEncoder,
 }: {
   modelSchema: z.ZodSchema<Model, z.ZodTypeDef, Record<string, unknown>>;
   rowSchema: z.ZodSchema<ModelRow, z.ZodTypeDef, Record<string, unknown>>;
+  encodeTransformer?: DataTransformer<ModelRow, Model>;
 }): CalaAdapter<Model, ModelRow> {
-  const encodeTransformer = rowSchema
-    .transform(defaultEncoder)
-    .transform(modelSchema.parse).parse;
-  const decodeTransformer = defaultDecoder;
+  const decodeTransformer = modelSchema
+    .transform(defaultDecoder)
+    .transform(rowSchema.parse).parse;
   const insertionTransformer = decodeTransformer;
 
   const dataAdapter = new DataAdapter<ModelRow, Model>(
