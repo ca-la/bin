@@ -8,6 +8,7 @@ test("invoiceSchema", async (t: Test) => {
       id: "",
       total: -1,
       subscription: null,
+      created: 1,
     }).success,
     false,
     "total can't be negative"
@@ -18,6 +19,7 @@ test("invoiceSchema", async (t: Test) => {
       id: "",
       total: 1,
       subscription: null,
+      created: 1,
     }).success,
     true,
     "total can be positive"
@@ -28,6 +30,7 @@ test("invoiceSchema", async (t: Test) => {
       id: "",
       total: 0,
       subscription: null,
+      created: 1,
     }).success,
     true,
     "total can be zero"

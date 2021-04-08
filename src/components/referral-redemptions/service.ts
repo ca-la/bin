@@ -33,14 +33,13 @@ export async function redeemReferralCode({
     );
   }
 
-  const now = new Date();
   await CreditsDAO.create(trx, {
     type: CreditType.REFERRED_SIGNUP,
     createdBy: null,
     givenTo: referredUserId,
     creditDeltaCents: REFERRED_USER_SIGNUP_CENTS,
     description: `Referral credit for registration`,
-    expiresAt: new Date(now.setFullYear(now.getFullYear() + 1)),
+    expiresAt: null,
   });
 
   return await ReferralRedemptionsDAO.create(trx, {

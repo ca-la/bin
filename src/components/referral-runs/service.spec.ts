@@ -63,6 +63,7 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
   });
 
   const paymentTotal = 1000;
+  const created = Math.round(new Date().getTime() / 1000);
   const findSubscriptionsStub = sandbox()
     .stub(StripeAPI, "getInvoicesAfterSpecified")
     .resolves({
@@ -72,16 +73,27 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
           id: "in_2",
           total: paymentTotal / 2,
           subscription: "stripe-subscription-1",
+          created,
         },
         {
           id: "in_3",
           total: paymentTotal * 30,
           subscription: null,
+          created,
         },
         {
           id: "in_4",
           total: paymentTotal / 2,
           subscription: "stripe-subscription-1",
+          created: created + 364 * 24 * 60 * 60,
+        },
+        {
+          // this record should not count as it is not inside the first year after
+          // redemption was created
+          id: "in_5",
+          total: paymentTotal * 100,
+          subscription: "stripe-subscription-1",
+          created: created + 367 * 24 * 60 * 60,
         },
       ],
     });
@@ -96,11 +108,16 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
   const existingRuns = await ReferralRunsDAO.count(trx, {});
   t.equal(existingRuns, 2, "created new referral_runs instance");
 
-  trx.rollback();
-
   t.deepEqual(
     findSubscriptionsStub.args,
     [["in_1"]],
     "Called StripeAPI.findSubscriptions with the latest invoice id"
   );
+
+  findSubscriptionsStub.resolves({ data: [] });
+  const emptyResult = await addReferralSubscriptionBonuses(trx);
+
+  t.equal(emptyResult, 0, "should return zero if no new subscriptions");
+
+  trx.rollback();
 });

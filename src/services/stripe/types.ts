@@ -96,6 +96,7 @@ export const invoiceSchema = z
   .object({
     id: z.string(),
     total: z.number().int().nonnegative(),
+    created: z.number().int().positive(),
     subscription: z.string().nullable(),
   })
   .passthrough();

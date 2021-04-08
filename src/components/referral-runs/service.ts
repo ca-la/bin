@@ -21,6 +21,9 @@ export async function addReferralSubscriptionBonuses(
     : REFERRAL_RUNS_FALLBACK_STRIPE_INVOICE_ID;
 
   const stripeInvoices = await getInvoicesAfterSpecified(latestStripeInvoiceId);
+  if (stripeInvoices.data.length === 0) {
+    return 0;
+  }
 
   const byStripeSubscriptionId: Record<string, Invoice[]> = {};
   for (const invoice of stripeInvoices.data) {
@@ -32,6 +35,7 @@ export async function addReferralSubscriptionBonuses(
       }
     }
   }
+
   const stripeSubscriptionIds: string[] = Object.keys(byStripeSubscriptionId);
   const rows = await ReferralRedemptionsDAO.findByStripeSubscriptionIds(
     trx,
@@ -40,6 +44,9 @@ export async function addReferralSubscriptionBonuses(
 
   let total = 0;
   for (const row of rows) {
+    const actualBefore = new Date(row.created_at);
+    actualBefore.setFullYear(actualBefore.getFullYear() + 1);
+
     const invoices = byStripeSubscriptionId[row.stripe_subscription_id];
     if (!invoices || invoices.length === 0) {
       throw new Error(
@@ -48,7 +55,10 @@ export async function addReferralSubscriptionBonuses(
     }
     let invoicesTotal = 0;
     for (const invoice of invoices) {
-      invoicesTotal += invoice.total;
+      const invoiceCreatedAt = new Date(invoice.created * 1000);
+      if (invoiceCreatedAt <= actualBefore) {
+        invoicesTotal += invoice.total;
+      }
     }
     const creditDeltaCents = Math.floor(
       (invoicesTotal * REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) / 100
