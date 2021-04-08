@@ -100,7 +100,7 @@ export function requireTeamRoles<ContextT extends RequireTeamRolesContext>(
       const teamId = await getTeamId(ctx);
 
       if (teamId === null && !options.allowNoTeam) {
-        ctx.throw(403, "You are not authorized to perform ctx team action");
+        ctx.throw(403, "You are not authorized to perform this team action");
       } else if (teamId !== null) {
         const actorTeamUser = await TeamUsersDAO.findOne(db, {
           teamId,
@@ -114,7 +114,7 @@ export function requireTeamRoles<ContextT extends RequireTeamRolesContext>(
         const isAllowSelf = await (options.allowSelf?.(ctx, actorTeamUser.id) ??
           Promise.resolve(false));
         if (!(roles.includes(actorTeamUser.role) || isAllowSelf)) {
-          ctx.throw(403, "You are not authorized to perform ctx team action");
+          ctx.throw(403, "You are not authorized to perform this team action");
         }
 
         ctx.state.actorTeamRole = actorTeamUser.role;
