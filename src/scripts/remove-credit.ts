@@ -5,7 +5,7 @@ import { CALA_OPS_USER_ID } from "../config";
 import { log, logServerError } from "../services/logger";
 import { green, reset } from "../services/colors";
 
-import * as CreditsDAO from "../components/credits/dao";
+import { CreditsDAO, CreditType } from "../components/credits";
 import db from "../services/db";
 
 run()
@@ -27,15 +27,14 @@ async function run(): Promise<void> {
   }
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await CreditsDAO.removeCredit(
-      {
-        amountCents: Number(creditAmountString),
-        createdBy: CALA_OPS_USER_ID,
-        description: "Manual reduction of credit",
-        givenTo: userId,
-      },
-      trx
-    );
+    await CreditsDAO.create(trx, {
+      type: CreditType.REMOVE,
+      creditDeltaCents: -Number(creditAmountString),
+      createdBy: CALA_OPS_USER_ID,
+      description: "Manual reduction of credit",
+      expiresAt: null,
+      givenTo: userId,
+    });
   });
 
   log(green, `Removed ${creditAmountString} cents of credit`, reset);

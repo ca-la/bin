@@ -1,9 +1,11 @@
+import Knex from "knex";
+import db from "../services/db";
 import process from "process";
 import { CALA_OPS_USER_ID } from "../config";
 import { log, logServerError } from "../services/logger";
 import { green, reset } from "../services/colors";
 
-import * as CreditsDAO from "../components/credits/dao";
+import { CreditsDAO, CreditType } from "../components/credits";
 
 run()
   .then(() => {
@@ -23,12 +25,15 @@ async function run(): Promise<void> {
     throw new Error("Usage: give-credit.ts [userId] [amount in cents]");
   }
 
-  await CreditsDAO.addCredit({
-    amountCents: Number(creditAmountString),
-    createdBy: CALA_OPS_USER_ID,
-    description: "Manual credit grant",
-    expiresAt: null,
-    givenTo: userId,
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: Number(creditAmountString),
+      createdBy: CALA_OPS_USER_ID,
+      description: "Manual credit grant",
+      expiresAt: null,
+      givenTo: userId,
+    });
   });
 
   log(green, `Added ${creditAmountString} cents of credit`, reset);

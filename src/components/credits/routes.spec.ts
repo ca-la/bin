@@ -3,23 +3,21 @@ import Knex from "knex";
 import API from "../../test-helpers/http";
 import db from "../../services/db";
 import createUser = require("../../test-helpers/create-user");
-import { addCredit } from "./dao";
+import { CreditsDAO, CreditType } from ".";
 import { test, Test } from "../../test-helpers/fresh";
 
 test("GET /credits returns credit amount", async (t: Test) => {
   const { session, user } = await createUser();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await addCredit(
-      {
-        amountCents: 12345,
-        createdBy: user.id,
-        description: "For being a good customer",
-        expiresAt: null,
-        givenTo: user.id,
-      },
-      trx
-    );
+    await CreditsDAO.create(trx, {
+      type: CreditType.PROMO_CODE,
+      creditDeltaCents: 12345,
+      createdBy: null,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: user.id,
+    });
   });
 
   const [response, body] = await API.get(`/credits?userId=${user.id}`, {

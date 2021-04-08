@@ -16,6 +16,7 @@ import {
   Subscription,
   subscriptionItemSchema,
   subscriptionSchema,
+  invoicesSchema,
   transferSchema,
   prorationBehaviourSchema,
 } from "./types";
@@ -205,6 +206,17 @@ export function getSubscription(subscriptionId: string) {
     options: {
       method: "get",
       path: `/subscriptions/${subscriptionId}`,
+    },
+  });
+}
+
+export function getInvoicesAfterSpecified(invoiceId: string) {
+  return safeRequest({
+    inputSchema: z.never(),
+    outputSchema: invoicesSchema,
+    options: {
+      method: "get",
+      path: `/invoices?ending_before=${invoiceId}`,
     },
   });
 }

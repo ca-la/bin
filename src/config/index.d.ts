@@ -88,3 +88,4 @@ export const COMMERCE_HOST: string;
 export const COMMERCE_TOKEN: string;
 
 export const REFERRAL_CODE_SALT: string;
+export const REFERRAL_RUNS_FALLBACK_STRIPE_INVOICE_ID: string;

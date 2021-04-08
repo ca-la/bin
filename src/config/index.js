@@ -162,6 +162,8 @@ const config = {
   COMMERCE_TOKEN: process.env.COMMERCE_TOKEN,
 
   REFERRAL_CODE_SALT: process.env.REFERRAL_CODE_SALT,
+  REFERRAL_RUNS_FALLBACK_STRIPE_INVOICE_ID:
+    process.env.REFERRAL_RUNS_FALLBACK_STRIPE_INVOICE_ID,
 };
 
 Object.keys(config).forEach((key) => {

@@ -2,7 +2,7 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import InvalidDataError = require("../../errors/invalid-data");
-import { addCredit } from "../credits/dao";
+import { CreditsDAO, CreditType } from "../credits";
 import { findByCode, update } from "./dao";
 
 type CreditedAmountCents = number;
@@ -19,16 +19,14 @@ export default async function applyCode(
 
   return await db.transaction(
     async (trx: Knex.Transaction): Promise<CreditedAmountCents> => {
-      await addCredit(
-        {
-          amountCents: promoCode.creditAmountCents,
-          createdBy: userId,
-          description: `Promo code applied: ${code}`,
-          expiresAt: promoCode.creditExpiresAt,
-          givenTo: userId,
-        },
-        trx
-      );
+      await CreditsDAO.create(trx, {
+        type: CreditType.PROMO_CODE,
+        createdBy: null,
+        givenTo: userId,
+        creditDeltaCents: promoCode.creditAmountCents,
+        description: `Promo code applied: ${code}`,
+        expiresAt: promoCode.creditExpiresAt,
+      });
 
       if (promoCode.isSingleUse) {
         await update(

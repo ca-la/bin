@@ -4,7 +4,7 @@ import * as attachSource from "../../services/stripe/attach-source";
 import * as CohortsDAO from "../../components/cohorts/dao";
 import * as CohortUsersDAO from "../../components/cohorts/users/dao";
 import * as createStripeSubscription from "../../services/stripe/create-subscription";
-import * as CreditsDAO from "../../components/credits/dao";
+import { CreditsDAO } from "../../components/credits";
 import * as DuplicationService from "../../services/duplicate";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
 import * as ReferralRedemptionsService from "../../components/referral-redemptions/service";
@@ -20,7 +20,7 @@ import SessionsDAO from "../../dao/sessions";
 import Stripe = require("../../services/stripe");
 import TeamUsersDAO from "../../components/team-users/dao";
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
-import { baseUser } from "./domain-object";
+import { baseUser } from "./types";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
 
 const createBody = {

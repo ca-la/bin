@@ -2,9 +2,9 @@ import * as Fetch from "../fetch";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { generatePlanWithoutDB } from "../../test-helpers/factories/plan";
-import { Subscription } from "../../components/subscriptions/domain-object";
+import { Subscription } from "../../components/subscriptions";
 import { TeamDb, TeamType } from "../../components/teams/types";
-import { Plan } from "../../components/plans/types";
+import { Plan } from "../../components/plans";
 import {
   PlanStripePriceType,
   PlanStripePrice,
@@ -73,6 +73,7 @@ async function setup({
 }) {
   const stripeSubscriptionToUpdate: StripeSubscription = {
     id: stripeSubscriptionId,
+    latest_invoice: null,
     items: {
       object: "list",
       data: subscriptionItems,
@@ -100,6 +101,7 @@ async function setup({
     json(): object {
       return {
         id: "a-stripe-subscription-id",
+        latest_invoice: null,
         items: {
           object: "list",
           data: [

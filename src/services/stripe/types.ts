@@ -82,6 +82,7 @@ export type SubscriptionItem = z.infer<typeof subscriptionItemSchema>;
 export const subscriptionSchema = z
   .object({
     id: z.string(),
+    latest_invoice: z.string().nullable(),
     items: z.object({
       object: z.literal("list"),
       data: z.array(subscriptionItemSchema),
@@ -90,6 +91,22 @@ export const subscriptionSchema = z
   .passthrough();
 
 export type Subscription = z.infer<typeof subscriptionSchema>;
+
+export const invoiceSchema = z
+  .object({
+    id: z.string(),
+    total: z.number().int().nonnegative(),
+    subscription: z.string().nullable(),
+  })
+  .passthrough();
+export type Invoice = z.infer<typeof invoiceSchema>;
+
+export const invoicesSchema = z
+  .object({
+    object: z.literal("list"),
+    data: z.array(invoiceSchema),
+  })
+  .passthrough();
 
 export const prorationBehaviourSchema = z.enum([
   "create_prorations",

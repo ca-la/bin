@@ -1,128 +1,29 @@
-import Knex from "knex";
-import uuid from "node-uuid";
+import Knex, { Transaction } from "knex";
 import { sortedIndexBy } from "lodash";
 
 import db from "../../services/db";
+import { buildDao } from "../../services/cala-component/cala-dao";
+import { Credit, CreditRow } from "./types";
+import adapter from "./adapter";
+import uuid from "node-uuid";
 
 const TABLE_NAME = "credit_transactions";
 
-interface CreditOptions {
-  description: string;
-  amountCents: number;
-  createdBy: string;
-  givenTo: string;
-}
-
-interface Row {
-  created_at: Date;
-  created_by: string;
-  credit_delta_cents: number;
-  description: string;
-  expires_at: Date | null;
-  id: string;
-  given_to: string;
-}
-
-interface AddCreditOptions extends CreditOptions {
-  expiresAt: Date | null;
-}
-
-function validateAmount(amountCents: number): void {
-  if (amountCents < 1 || amountCents % 1 !== 0) {
-    throw new Error(
-      `${amountCents} cents of credit must be a positive integer`
-    );
+export const standardDao = buildDao<Credit, CreditRow>(
+  "Credit",
+  TABLE_NAME,
+  adapter,
+  {
+    orderColumn: "created_at",
+    excludeDeletedAt: false,
   }
-}
+);
 
-export async function addCredit(
-  options: AddCreditOptions,
-  trx?: Knex.Transaction
-): Promise<string> {
-  const { amountCents } = options;
-
-  validateAmount(amountCents);
-
-  const transaction = await db<Row>(TABLE_NAME)
-    .insert(
-      {
-        created_at: new Date(),
-        created_by: options.createdBy,
-        credit_delta_cents: amountCents,
-        description: options.description,
-        expires_at: options.expiresAt,
-        given_to: options.givenTo,
-        id: uuid.v4(),
-      },
-      "*"
-    )
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
-
-  return transaction[0].id;
-}
-
-export async function removeCredit(
-  options: CreditOptions,
-  trx: Knex.Transaction
-): Promise<void> {
-  const { amountCents } = options;
-  validateAmount(amountCents);
-
-  // We acquire an update lock on the most recent transaction, if possible, to
-  // ensure we don't remove the same "available" credit multiple times if
-  // called in parallel
-  await db
-    .raw(
-      `
-    select * from credit_transactions
-    where given_to = ?
-    order by created_at desc
-    limit 1
-    for update`,
-      [options.givenTo]
-    )
-    .transacting(trx);
-
-  const availableAmount = await getCreditAmount(options.givenTo, trx);
-
-  if (amountCents > availableAmount) {
-    throw new Error(
-      `Cannot remove ${amountCents} cents of credit from user ${options.givenTo}; ` +
-        `they only have ${availableAmount} available`
-    );
-  }
-
-  await db(TABLE_NAME)
-    .insert(
-      {
-        created_at: new Date(),
-        created_by: options.createdBy,
-        credit_delta_cents: -1 * amountCents,
-        description: options.description,
-        given_to: options.givenTo,
-        id: uuid.v4(),
-      },
-      "*"
-    )
-    .transacting(trx);
-}
-
-export async function getCreditAmount(
+async function getCreditAmount(
   userId: string,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<number> {
-  const records = await db(TABLE_NAME)
-    .where({ given_to: userId })
-    .orderBy("created_at", "asc")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+  const records = await standardDao.find(ktx, { givenTo: userId });
 
   interface CreditBucket {
     amount: number;
@@ -131,10 +32,9 @@ export async function getCreditAmount(
 
   let creditBuckets: CreditBucket[] = [];
   let balance = 0;
-
-  records.forEach((row: Row) => {
-    const expiresAt = row.expires_at ? new Date(row.expires_at) : null;
-    const deltaCents = Number(row.credit_delta_cents);
+  records.forEach((credit: Credit) => {
+    const expiresAt = credit.expiresAt ? new Date(credit.expiresAt) : null;
+    const deltaCents = Number(credit.creditDeltaCents);
 
     if (deltaCents > 0) {
       // Add credit bucket in the right spot to ensure they're sorted by
@@ -155,8 +55,7 @@ export async function getCreditAmount(
       // Subtract from available credit buckets, and take the remainder off the
       // balance
       let leftToSpend = -1 * deltaCents;
-      const spentAt = new Date(row.created_at);
-
+      const spentAt = new Date(credit.createdAt);
       creditBuckets = creditBuckets.filter((bucket: CreditBucket) => {
         if (bucket.expiresAt && bucket.expiresAt < spentAt) {
           return false;
@@ -190,3 +89,45 @@ export async function getCreditAmount(
 
   return balance;
 }
+
+async function create(
+  trx: Transaction,
+  blank: MaybeUnsaved<Credit>
+): Promise<Credit> {
+  if (blank.creditDeltaCents < 0) {
+    // We acquire an update lock on the most recent transaction, if possible, to
+    // ensure we don't remove the same "available" credit multiple times if
+    // called in parallel
+    await trx.raw(
+      `select * from credit_transactions
+where given_to = ?
+order by created_at desc
+limit 1
+for update`,
+      [blank.givenTo]
+    );
+  }
+
+  const created = await standardDao.create(trx, {
+    ...blank,
+    id: blank.id || uuid.v4(),
+    createdAt: new Date(),
+  });
+  const amount = await getCreditAmount(blank.givenTo, trx);
+  if (amount < 0) {
+    throw new Error(
+      `Cannot remove ${-blank.creditDeltaCents} cents of credit from user ${
+        blank.givenTo
+      }; they only have ${
+        BigInt(amount) - BigInt(blank.creditDeltaCents)
+      } available`
+    );
+  }
+  return created;
+}
+
+export default {
+  ...standardDao,
+  create,
+  getCreditAmount,
+};

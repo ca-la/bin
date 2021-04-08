@@ -1,7 +1,9 @@
 "use strict";
 
+const { CreditType } = require("../../components/credits");
+
 const InvalidDataError = require("../../errors/invalid-data");
-const CreditsDAO = require("../../components/credits/dao");
+const { CreditsDAO } = require("../../components/credits");
 const payInvoice = require("./index");
 const db = require("../db");
 const Stripe = require("../stripe");
@@ -69,15 +71,16 @@ test("payInvoice does not charge a $0 amount", async (t) => {
 
   const unpaidInvoice = createdInvoices[2];
 
-  await CreditsDAO.addCredit({
-    description: "free money",
-    amountCents: 1000000,
+  const trx = await db.transaction();
+  await CreditsDAO.create(trx, {
+    type: CreditType.MANUAL,
+    creditDeltaCents: 1000000,
     createdBy: users[1].id,
-    givenTo: users[1].id,
+    description: "free money",
     expiresAt: null,
+    givenTo: users[1].id,
   });
 
-  const trx = await db.transaction();
   try {
     const { invoice: paidInvoice } = await payInvoice(
       unpaidInvoice.id,

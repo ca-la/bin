@@ -1,11 +1,11 @@
 import Router from "koa-router";
-import Knex from "knex";
 
-import { addCredit, getCreditAmount, removeCredit } from "./dao";
+import CreditsDAO from "./dao";
 import requireAuth = require("../../middleware/require-auth");
 import requireAdmin = require("../../middleware/require-admin");
-import db from "../../services/db";
+import useTransaction from "../../middleware/use-transaction";
 import { hasProperties } from "@cala/ts-lib";
+import { CreditType } from "./types";
 
 const router = new Router();
 
@@ -20,7 +20,7 @@ function* getCredits(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, "Missing user ID");
   }
 
-  const creditAmountCents = yield getCreditAmount(userId);
+  const creditAmountCents = yield CreditsDAO.getCreditAmount(userId);
 
   this.status = 200;
   this.body = { creditAmountCents };
@@ -43,8 +43,10 @@ function isChangeRequest(data: any): data is ChangeRequest {
   );
 }
 
-function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.state;
+function* changeCredit(
+  this: TrxContext<AuthedContext>
+): Iterator<any, any, any> {
+  const { userId, trx } = this.state;
   const { body } = this.request;
 
   if (!isChangeRequest(body)) {
@@ -55,44 +57,27 @@ function* changeCredit(this: AuthedContext): Iterator<any, any, any> {
   const deserializedExpiration = body.expiresAt
     ? new Date(body.expiresAt)
     : null;
-  const currentAmountForUser = yield getCreditAmount(body.userId);
+  const currentAmountForUser = yield CreditsDAO.getCreditAmount(body.userId);
   const futureAmountForUser = deserializedAmount + currentAmountForUser;
 
   if (currentAmountForUser + deserializedAmount < 0) {
     this.throw(400, "A user cannot have negative credit.");
   }
 
-  if (deserializedAmount > 0) {
-    yield addCredit({
-      amountCents: deserializedAmount,
-      createdBy: userId,
-      description: body.description,
-      expiresAt: deserializedExpiration,
-      givenTo: body.userId,
-    });
-    this.status = 200;
-    this.body = { creditAmountCents: futureAmountForUser };
-  } else if (deserializedAmount < 0) {
-    yield db.transaction(async (trx: Knex.Transaction) => {
-      await removeCredit(
-        {
-          amountCents: Math.abs(deserializedAmount),
-          createdBy: userId,
-          description: body.description,
-          givenTo: body.userId,
-        },
-        trx
-      );
-    });
-    this.status = 200;
-    this.body = { creditAmountCents: futureAmountForUser };
-  } else {
-    this.status = 200;
-    this.body = { creditAmountCents: currentAmountForUser };
-  }
+  yield CreditsDAO.create(trx, {
+    creditDeltaCents: deserializedAmount,
+    type: deserializedAmount > 0 ? CreditType.MANUAL : CreditType.REMOVE,
+    createdBy: userId,
+    description: body.description,
+    expiresAt: deserializedExpiration,
+    givenTo: body.userId,
+  });
+
+  this.status = 200;
+  this.body = { creditAmountCents: futureAmountForUser };
 }
 
 router.get("/", requireAuth, getCredits);
-router.post("/", requireAdmin, changeCredit);
+router.post("/", requireAdmin, useTransaction, changeCredit);
 
 export default router.routes();

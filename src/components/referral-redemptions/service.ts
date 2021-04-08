@@ -1,19 +1,10 @@
 import { Transaction } from "knex";
 import uuid from "node-uuid";
-import {
-  BillingInterval,
-  isPlanFree,
-  calculatePerBillingIntervalPrice,
-} from "../plans";
-import * as CreditsDAO from "../credits/dao";
-import { isReferralRedemptionRowWithSubscriptionAndPlan } from "./types";
+import { CreditsDAO, CreditType } from "../credits";
 import ReferralRedemptionsDAO from "./dao";
 import * as UsersDAO from "../users/dao";
 
-import {
-  REFERRED_USER_SIGNUP_CENTS,
-  REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS,
-} from "./grant-checkout-credits";
+import { REFERRED_USER_SIGNUP_CENTS } from "./constants";
 
 export class InvalidReferralCodeError extends Error {
   constructor(message: string) {
@@ -43,16 +34,14 @@ export async function redeemReferralCode({
   }
 
   const now = new Date();
-  const creditId = await CreditsDAO.addCredit(
-    {
-      description: `Referral credit for registration`,
-      amountCents: REFERRED_USER_SIGNUP_CENTS,
-      createdBy: referredUserId,
-      givenTo: referredUserId,
-      expiresAt: new Date(now.setFullYear(now.getFullYear() + 1)),
-    },
-    trx
-  );
+  await CreditsDAO.create(trx, {
+    type: CreditType.REFERRED_SIGNUP,
+    createdBy: null,
+    givenTo: referredUserId,
+    creditDeltaCents: REFERRED_USER_SIGNUP_CENTS,
+    description: `Referral credit for registration`,
+    expiresAt: new Date(now.setFullYear(now.getFullYear() + 1)),
+  });
 
   return await ReferralRedemptionsDAO.create(trx, {
     id: uuid.v4(),
@@ -60,111 +49,5 @@ export async function redeemReferralCode({
     referredUserId,
     referringUserId: referringUser.id,
     referringUserCheckoutCreditId: null,
-    latestSubscriptionBonusIssuedAt: null,
-    referredUserSignupCreditId: creditId,
   });
-}
-
-export async function grantSubscriptionCredits(trx: Transaction) {
-  const now = new Date();
-  const rows = await ReferralRedemptionsDAO.getReferralRedemptionRowsWithUnpaidSubscriptionBonus(
-    trx
-  );
-  let total = 0;
-  for (const row of rows) {
-    if (!isReferralRedemptionRowWithSubscriptionAndPlan(row)) {
-      throw new Error(`Invalid row obtained from db: ${JSON.stringify(row)}`);
-    }
-    const bonusPeriodLimit = new Date(row.subscription_created_at);
-    bonusPeriodLimit.setFullYear(row.subscription_created_at.getFullYear() + 1);
-
-    const dateLimit = now < bonusPeriodLimit ? now : bonusPeriodLimit;
-
-    const dateAmountPairs: { date: Date; amount: number }[] = [];
-    const planPart = {
-      baseCostPerBillingIntervalCents: Number(
-        row.base_cost_per_billing_interval_cents
-      ),
-      perSeatCostPerBillingIntervalCents: Number(
-        row.per_seat_cost_per_billing_interval_cents
-      ),
-    };
-    if (isPlanFree(planPart)) {
-      continue;
-    }
-    const perIntervalPrice = calculatePerBillingIntervalPrice(
-      planPart,
-      row.team_users_count
-    );
-    switch (row.billing_interval) {
-      case BillingInterval.ANNUALLY: {
-        for (
-          const d = row.subscription_created_at;
-          d < dateLimit;
-          d.setFullYear(d.getFullYear() + 1)
-        ) {
-          if (
-            row.latest_subscription_bonus_issued_at === null ||
-            d > row.latest_subscription_bonus_issued_at
-          ) {
-            dateAmountPairs.push({
-              date: new Date(d),
-              amount: Math.floor(
-                (perIntervalPrice *
-                  REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) /
-                  100
-              ),
-            });
-          }
-        }
-        break;
-      }
-      case BillingInterval.MONTHLY: {
-        for (
-          const d = row.subscription_created_at;
-          d < dateLimit;
-          d.setMonth(d.getMonth() + 1)
-        ) {
-          if (
-            row.latest_subscription_bonus_issued_at === null ||
-            d > row.latest_subscription_bonus_issued_at
-          ) {
-            dateAmountPairs.push({
-              date: new Date(d),
-              amount: Math.floor(
-                (perIntervalPrice *
-                  REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS) /
-                  100
-              ),
-            });
-          }
-        }
-        break;
-      }
-      default:
-        throw new Error(
-          `Unexpected billing_interval value ${row.billing_interval}`
-        );
-    }
-    for (const { date, amount } of dateAmountPairs) {
-      await CreditsDAO.addCredit(
-        {
-          description: `Referral subscription bonus for ${date.toISOString()}`,
-          amountCents: amount,
-          createdBy: row.referred_user_id,
-          givenTo: row.referring_user_id,
-          expiresAt: null,
-        },
-        trx
-      );
-
-      await ReferralRedemptionsDAO.update(trx, row.referral_redemption_id, {
-        latestSubscriptionBonusIssuedAt: now,
-      });
-
-      total = total + amount;
-    }
-  }
-
-  return total;
 }

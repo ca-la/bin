@@ -1,7 +1,7 @@
 import * as PromoCodesDAO from "./dao";
 import applyCode from "./apply-code";
 import createUser = require("../../test-helpers/create-user");
-import { getCreditAmount } from "../credits/dao";
+import { CreditsDAO } from "../credits";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 test("applyCode applies a code", async (t: Test) => {
@@ -19,7 +19,7 @@ test("applyCode applies a code", async (t: Test) => {
   await applyCode(user.id, "freebie");
   const code = await PromoCodesDAO.findByCode("freebie");
 
-  t.equal(await getCreditAmount(user.id), 1239);
+  t.equal(await CreditsDAO.getCreditAmount(user.id), 1239);
   t.equal(code && code.codeExpiresAt, null, "does not expire the code");
 });
 
@@ -42,7 +42,7 @@ test("applyCode does not apply an expired code", async (t: Test) => {
     t.equal(err.message, "Invalid promo code: freebie");
   }
 
-  t.equal(await getCreditAmount(user.id), 0);
+  t.equal(await CreditsDAO.getCreditAmount(user.id), 0);
 });
 
 test("applyCode applies an expiring amount of credit", async (t: Test) => {
@@ -61,9 +61,9 @@ test("applyCode applies an expiring amount of credit", async (t: Test) => {
 
   await applyCode(user.id, "freebie");
 
-  t.equal(await getCreditAmount(user.id), 1239);
+  t.equal(await CreditsDAO.getCreditAmount(user.id), 1239);
   clock.tick(1001);
-  t.equal(await getCreditAmount(user.id), 0);
+  t.equal(await CreditsDAO.getCreditAmount(user.id), 0);
 });
 
 test("applyCode expires a single use code once applied", async (t: Test) => {

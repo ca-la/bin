@@ -9,11 +9,9 @@ export interface ReferralRedemption {
   referredUserId: string;
 
   // For a ("referring") user who has referred someone, the credit transaction
-  // indicating if/when they have been compensated for checkout payments made by
+  // indicating if/when they have been compensated for first checkout payments made by
   // their referral.
   referringUserCheckoutCreditId: string | null;
-  latestSubscriptionBonusIssuedAt: Date | null;
-  referredUserSignupCreditId: string | null;
 }
 
 export interface ReferralRedemptionRow {
@@ -22,8 +20,11 @@ export interface ReferralRedemptionRow {
   referring_user_id: string;
   referred_user_id: string;
   referring_user_checkout_credit_id: string | null;
-  latest_subscription_bonus_issued_at: Date | null;
-  referred_user_signup_credit_id: string | null;
+}
+
+export interface ReferralRedemptionRowWithStripeSubscriptionId
+  extends ReferralRedemptionRow {
+  stripe_subscription_id: string;
 }
 
 export interface ReferralRedemptionRowWithSubscriptionAndPlan

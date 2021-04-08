@@ -1,10 +1,11 @@
 import process from "process";
 
-import * as CreditsDAO from "../components/credits/dao";
+import { CreditsDAO, CreditType } from "../components/credits";
 import db from "../services/db";
 import { CALA_OPS_USER_ID } from "../config";
 import { green, reset } from "../services/colors";
 import { log, logServerError } from "../services/logger";
+import Knex from "knex";
 
 // Brings the credit amount of users in a given cohort all up to a minimum
 // level.
@@ -43,27 +44,30 @@ async function run(): Promise<void> {
 
   log(green, `Found ${cohortUsers.length} users in cohort ${cohortId}`, reset);
 
-  for (const cohortUser of cohortUsers) {
-    const userId = cohortUser.user_id;
-    const existingCredits = await CreditsDAO.getCreditAmount(userId);
-    log(
-      green,
-      `User ${userId} has ${existingCredits} cents of existing credit`
-    );
-    const amountToAdd = Math.max(0, creditAmountCents - existingCredits);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    for (const cohortUser of cohortUsers) {
+      const userId = cohortUser.user_id;
+      const existingCredits = await CreditsDAO.getCreditAmount(userId);
+      log(
+        green,
+        `User ${userId} has ${existingCredits} cents of existing credit`
+      );
+      const amountToAdd = Math.max(0, creditAmountCents - existingCredits);
 
-    if (amountToAdd > 0) {
-      log(green, `Adding ${amountToAdd} cents of credit`, reset);
-      await CreditsDAO.addCredit({
-        amountCents: amountToAdd,
-        createdBy: CALA_OPS_USER_ID,
-        description: "Manual credit grant",
-        expiresAt: null,
-        givenTo: userId,
-      });
-      log(green, "Done!", reset);
-    } else {
-      log(green, "No more credits needed, skipping", reset);
+      if (amountToAdd > 0) {
+        log(green, `Adding ${amountToAdd} cents of credit`, reset);
+        await CreditsDAO.create(trx, {
+          type: CreditType.MANUAL,
+          creditDeltaCents: amountToAdd,
+          createdBy: CALA_OPS_USER_ID,
+          description: "Manual credit grant",
+          expiresAt: null,
+          givenTo: userId,
+        });
+        log(green, "Done!", reset);
+      } else {
+        log(green, "No more credits needed, skipping", reset);
+      }
     }
-  }
+  });
 }

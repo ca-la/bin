@@ -6,7 +6,7 @@ import StripeError = require("../../errors/stripe");
 import InvalidDataError = require("../../errors/invalid-data");
 import * as attachSource from "../../services/stripe/attach-source";
 import * as CollectionsDAO from "../../components/collections/dao";
-import * as CreditsDAO from "../../components/credits/dao";
+import { CreditsDAO, CreditType } from "../../components/credits";
 import * as InvoicesDAO from "../../dao/invoices";
 import { create as createAddress } from "../../dao/addresses";
 import { findByAddressId } from "../../dao/invoice-addresses";
@@ -27,7 +27,7 @@ import { addDesign } from "../../test-helpers/collections";
 import { createStorefront } from "../../services/create-storefront";
 import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 import * as CreateShopifyProducts from "../../services/create-shopify-products";
-import { ApprovalStepState } from "../../components/approval-steps/domain-object";
+import { ApprovalStepState } from "../../components/approval-steps/types";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
 
@@ -409,14 +409,15 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
       productComplexity: "SIMPLE",
       productType: "TEESHIRT",
     });
-  });
 
-  await CreditsDAO.addCredit({
-    amountCents: 10000000,
-    createdBy: user.id,
-    description: "Free money",
-    expiresAt: null,
-    givenTo: user.id,
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 10000000,
+      createdBy: user.id,
+      description: "Free money",
+      expiresAt: null,
+      givenTo: user.id,
+    });
   });
 
   const [postResponse, body] = await post("/quote-payments?isWaived=true", {
