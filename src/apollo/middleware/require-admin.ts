@@ -1,3 +1,4 @@
+import { ForbiddenError } from "apollo-server-koa";
 import { GraphQLContextAuthenticated } from "./require-auth";
 
 export async function requireAdmin<Args, Result>(
@@ -7,7 +8,7 @@ export async function requireAdmin<Args, Result>(
   const { session } = context;
 
   if (session.role !== "ADMIN") {
-    throw new Error("Unauthorized");
+    throw new ForbiddenError("Unauthorized");
   }
 
   return context;

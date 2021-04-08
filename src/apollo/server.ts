@@ -9,7 +9,7 @@ import { GraphQLContextBase } from "./types";
 import { endpoints, Endpoint } from "./endpoints";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { ENABLE_APOLLO_PLAYGROUND } from "../config";
-import { extractSortedTypes, buildTypes } from "./services";
+import { extractSortedTypes, buildTypes, isClientError } from "./services";
 import { logServerError } from "../services/logger";
 
 function extractResolvers() {
@@ -75,11 +75,17 @@ ${extractSchema()}
 
 export const apolloServer = new ApolloServer({
   context,
+  debug: false,
   resolvers: {
     GraphQLDateTime,
     ...extractResolvers(),
   },
-  formatError: (_: GraphQLError): Error => {
+  formatError: (error: GraphQLError): Error => {
+    if (isClientError(error)) {
+      return error;
+    }
+
+    logServerError(error);
     return new Error(
       "Something went wrong! Please try again, or email hi@ca.la if this message persists."
     );
@@ -95,9 +101,6 @@ export const apolloServer = new ApolloServer({
               GraphQLContextBase<null>
             >
           ) => {
-            requestContext.errors.forEach((error: GraphQLError) => {
-              logServerError(error.originalError);
-            });
             await requestContext.context.trx.rollback();
           },
           willSendResponse: async (

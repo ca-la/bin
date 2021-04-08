@@ -51,7 +51,7 @@ test("notificationMessages endpoint", async () => {
       body: buildRequest(),
     });
     t.equal(response.status, 200);
-    t.true(body.errors[0].message.includes("Something went wrong!"));
+    t.equal(body.errors[0].message, "Unauthorized");
   });
 
   test("Fails on negative offset", async (t: Test) => {
@@ -62,7 +62,7 @@ test("notificationMessages endpoint", async () => {
       headers,
     });
     t.equal(response.status, 200);
-    t.true(body.errors[0].message.includes("Something went wrong!"));
+    t.equal(body.errors[0].message, "Offset / Limit cannot be negative!");
   });
 
   test("Fails on negative limit", async (t: Test) => {
@@ -72,7 +72,7 @@ test("notificationMessages endpoint", async () => {
       headers: authHeader(session.id),
     });
     t.equal(response.status, 200);
-    t.true(body.errors[0].message.includes("Something went wrong!"));
+    t.equal(body.errors[0].message, "Offset / Limit cannot be negative!");
   });
 
   test("Valid request", async (t: Test) => {
@@ -138,14 +138,17 @@ test("archiveNotifications endpoint", async (t: Test) => {
     body: buildRequest(),
   });
   t.equal(forbiddenResponse.status, 200);
-  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
+  t.equal(forbiddenBody.errors[0].message, "Unauthorized");
 
   const [errorResponse, errorBody] = await post("/v2", {
     body: buildRequest(""),
     headers: authHeader(session.id),
   });
   t.equal(errorResponse.status, 200);
-  t.true(errorBody.errors[0].message.includes("Something went wrong!"));
+  t.equal(
+    errorBody.errors[0].message,
+    "You must indicate the last archived notification"
+  );
 
   const archiveStub = sandbox()
     .stub(NotificationsDAO, "archiveOlderThan")
@@ -195,7 +198,7 @@ test("updateNotification endpoint", async (t: Test) => {
     body: buildRequest(),
   });
   t.equal(forbiddenResponse.status, 200);
-  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
+  t.equal(forbiddenBody.errors[0].message, "Unauthorized");
 
   sandbox().stub(NotificationsDAO, "findById").resolves(notification);
   sandbox()

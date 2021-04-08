@@ -3,6 +3,9 @@ import {
   GraphQLContextAuthenticated,
   requireAuth,
   Middleware,
+  NotFoundError,
+  UserInputError,
+  ForbiddenError,
 } from "../../apollo";
 import {
   NotificationFilter,
@@ -56,7 +59,7 @@ const notificationMessages: GraphQLEndpoint<
     const { userId } = session;
 
     if ((limit && limit < 0) || (offset && offset < 0)) {
-      throw new Error("Offset / Limit cannot be negative!");
+      throw new UserInputError("Offset / Limit cannot be negative!");
     }
 
     const notifications = await NotificationsDAO.findByUserId(trx, userId, {
@@ -99,7 +102,9 @@ const archiveNotifications: GraphQLEndpoint<
       session: { userId },
     } = context;
     if (!id) {
-      throw new Error("You must indicate the last archived notification");
+      throw new UserInputError(
+        "You must indicate the last archived notification"
+      );
     }
 
     return await NotificationsDAO.archiveOlderThan(trx, {
@@ -137,10 +142,10 @@ const updateNotificaion: GraphQLEndpoint<
 
     const notification = await NotificationsDAO.findById(trx, id);
     if (!notification) {
-      throw new Error("Notification not found");
+      throw new NotFoundError("Notification not found");
     }
     if (notification.recipientUserId !== userId) {
-      throw new Error("Access denied for this resource");
+      throw new ForbiddenError("Access denied for this resource");
     }
 
     await NotificationsDAO.update(trx, id, { archivedAt });

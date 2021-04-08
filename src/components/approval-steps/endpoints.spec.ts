@@ -163,17 +163,14 @@ test("FindApprovalSteps endpoint", async (t: Test) => {
     if (testCase.data) {
       t.deepEqual(body.data.FindApprovalSteps, testCase.data, testCase.title);
     } else {
-      t.equal(
-        body.errors[0].message,
-        "Something went wrong! Please try again, or email hi@ca.la if this message persists."
-      );
-      t.equal(
-        logServerErrorStub.args[0][0].message,
-        testCase.error,
-        testCase.title
-      );
+      t.equal(body.errors[0].message, testCase.error, testCase.title);
     }
   }
+  t.equal(
+    logServerErrorStub.args.length,
+    0,
+    "Haven't called logServerError for FindApprovalSteps"
+  );
 
   const countStub = sandbox().stub(ApprovalStepsDAO, "count").resolves(1);
   const [, noTotalBody] = await post("/v2", {

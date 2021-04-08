@@ -1,6 +1,8 @@
 import * as z from "zod";
 import { GraphQLContextBase } from "../types";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
+import { UserInputError } from "apollo-server-koa";
+import { NotFoundError } from "../services";
 
 export interface GraphQLContextWithDesign<Result>
   extends GraphQLContextBase<Result> {
@@ -17,7 +19,7 @@ export async function attachDesignFromFilter<
 >(args: Args, context: GraphQLContextBase<Result>) {
   const result = filterWithDesignIdSchema.safeParse(args.filter);
   if (!result.success) {
-    throw new Error("Filter should contain designId");
+    throw new UserInputError("Filter should contain designId");
   }
   return {
     ...context,
@@ -39,7 +41,7 @@ export async function getAttachDesignByApprovalStep<Args, Result>(
     const approvalStepId = await getApprovalStepId(args, context);
     const approvalStep = await ApprovalStepsDAO.findById(trx, approvalStepId);
     if (!approvalStep) {
-      throw new Error("ApprovalStep not found");
+      throw new NotFoundError("ApprovalStep not found");
     }
 
     return {

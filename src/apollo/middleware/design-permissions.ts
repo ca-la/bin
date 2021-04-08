@@ -4,6 +4,7 @@ import {
   Permissions,
 } from "../../services/get-permissions";
 import { GraphQLContextWithDesign } from "./design";
+import { AuthenticationError, ForbiddenError } from "apollo-server-koa";
 
 interface GraphQLContextWithDesignAndPermissions<Result>
   extends GraphQLContextBase<Result> {
@@ -17,7 +18,7 @@ export async function attachDesignPermissions<Args, Result>(
 ): Promise<GraphQLContextWithDesignAndPermissions<Result>> {
   const { designId, session } = context;
   if (!session) {
-    throw new Error("Not authenticated");
+    throw new AuthenticationError("Not authenticated");
   }
   const { role, userId } = session;
 
@@ -40,7 +41,7 @@ export async function requireDesignViewPermissions<Args, Result>(
   const { designPermissions } = context;
 
   if (!designPermissions.canView) {
-    throw new Error("Not authorized to view this design");
+    throw new ForbiddenError("Not authorized to view this design");
   }
 
   return context;

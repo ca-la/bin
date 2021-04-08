@@ -30,17 +30,7 @@ test("CreateUserDevice needs authentication", async (t: Test) => {
     body: buildCreateRequest(user.id, "token1"),
   });
   t.equal(forbiddenResponse.status, 200);
-  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
-});
-
-test("CreateUserDevice needs authentication", async (t: Test) => {
-  const { user } = await createUser({ role: "USER" });
-
-  const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildCreateRequest(user.id, "token1"),
-  });
-  t.equal(forbiddenResponse.status, 200);
-  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
+  t.equal(forbiddenBody.errors[0].message, "Unauthorized");
 });
 
 test("CreateUserDevice allows creating only own tokens", async (t: Test) => {
@@ -52,7 +42,7 @@ test("CreateUserDevice allows creating only own tokens", async (t: Test) => {
     headers: authHeader(session2.id),
   });
   t.equal(forbiddenResponse.status, 200);
-  t.true(forbiddenBody.errors[0].message.includes("Something went wrong!"));
+  t.equal(forbiddenBody.errors[0].message, "Not authorized");
 });
 
 test("CreateUserDevice calls UserDevicesDAO.create", async (t: Test) => {

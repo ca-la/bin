@@ -8,6 +8,7 @@ import { GraphQLType, GraphQLTypeBody } from "../published-types";
 import { GraphQLContextBase, Middleware } from "../types";
 import { QueryBuilder } from "knex";
 import { parseResolveInfo, ResolveTree } from "graphql-parse-resolve-info";
+import { UserInputError } from "apollo-server-koa";
 
 export function schemaToGraphQLType(
   name: string,
@@ -314,7 +315,7 @@ export function buildFindEndpoint<
       const { trx } = context;
 
       if ((limit && limit < 0) || (offset && offset < 0)) {
-        throw new Error("Offset / Limit cannot be negative!");
+        throw new UserInputError("Offset / Limit cannot be negative!");
       }
 
       const items = await dao.find(trx, filter, (query: QueryBuilder) => {

@@ -4,6 +4,7 @@ import {
   requireAuth,
   requireAdmin,
   composeMiddleware,
+  NotFoundError,
 } from "../../apollo";
 import { User } from "./types";
 import { findById } from "./dao";
@@ -33,7 +34,7 @@ const user: GraphQLEndpoint<
     const userFound = await findById(id);
 
     if (!userFound) {
-      throw new Error(`User "${id}" could not be found.`);
+      throw new NotFoundError(`User "${id}" could not be found.`);
     }
 
     return userFound;
