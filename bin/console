@@ -12,7 +12,7 @@ run() {
   source bin/lib/loadenv
   loadenv_local
 
-  node
+  npx ts-node
 }
 
 run "$@"
