@@ -9,6 +9,7 @@ import {
   RouteDeleted,
 } from "../../services/pubsub/cala-events";
 import TeamUsersDAO from "./dao";
+import TeamsDAO from "../teams/dao";
 import {
   Role as TeamUserRole,
   TeamUser,
@@ -65,6 +66,13 @@ function setup() {
     findTeamUsersStub: sandbox()
       .stub(TeamUsersDAO, "find")
       .resolves([tu1, tu2]),
+    findTeamsStub: sandbox()
+      .stub(TeamsDAO, "findByUser")
+      .resolves([
+        {
+          id: "a-team-id",
+        },
+      ]),
     irisStub: sandbox().stub(IrisService, "sendMessage").resolves(),
     clock: sandbox().useFakeTimers(now),
     notificationsSendStub: sandbox()
@@ -98,6 +106,15 @@ test("route.created", async (t: Test) => {
 
     t.deepEquals(
       irisStub.args[0][0],
+      {
+        type: "team-list/updated",
+        resource: [{ id: "a-team-id" }],
+        channels: ["updates/a-user-id"],
+      },
+      "Send team via realtime on team user create"
+    );
+    t.deepEquals(
+      irisStub.args[1][0],
       {
         type: "team-users-list/updated",
         resource: [tu1, tu2],
@@ -161,6 +178,16 @@ test("route.updated", async (t: Test) => {
     t.deepEquals(
       irisStub.args[0][0],
       {
+        type: "team-list/updated",
+        resource: [{ id: "a-team-id" }],
+        channels: ["updates/a-user-id"],
+      },
+      "Send list of team users via realtime on team user update"
+    );
+
+    t.deepEquals(
+      irisStub.args[1][0],
+      {
         type: "team-users-list/updated",
         resource: [tu1, tu2],
         channels: ["teams/a-team-id"],
@@ -194,6 +221,16 @@ test("route.deleted", async (t: Test) => {
 
     t.deepEquals(
       irisStub.args[0][0],
+      {
+        type: "team-list/updated",
+        resource: [{ id: "a-team-id" }],
+        channels: ["updates/a-user-id"],
+      },
+      "Send list of team users via realtime on team user update"
+    );
+
+    t.deepEquals(
+      irisStub.args[1][0],
       {
         type: "team-users-list/updated",
         resource: [tu1, tu2],

@@ -9,8 +9,12 @@ import {
   RouteUpdated,
   RouteDeleted,
 } from "../../services/pubsub/cala-events";
-import { realtimeTeamUsersListUpdated } from "./realtime";
+import {
+  realtimeTeamListUpdated,
+  realtimeTeamUsersListUpdated,
+} from "./realtime";
 import TeamUsersDAO from "./dao";
+import TeamsDAO from "../teams/dao";
 import * as IrisService from "../../components/iris/send-message";
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/types";
@@ -23,6 +27,12 @@ async function sendTeamUsersListUpdatedMessage(
   const teamUsersList = await TeamUsersDAO.find(trx, { teamId });
 
   IrisService.sendMessage(realtimeTeamUsersListUpdated(teamId, teamUsersList));
+}
+
+async function sendTeamsToUpdatedUser(trx: Knex.Transaction, userId: string) {
+  const teams = await TeamsDAO.findByUser(trx, userId);
+
+  IrisService.sendMessage(realtimeTeamListUpdated(userId, teams));
 }
 
 export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
@@ -53,6 +63,9 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
     if (notification) {
       await immediatelySendInviteTeamUser(trx, notification);
     }
+    if (userId) {
+      await sendTeamsToUpdatedUser(trx, userId);
+    }
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },
   "route.updated": async (
@@ -60,9 +73,12 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
   ) => {
     const {
       trx,
-      updated: { teamId },
+      updated: { teamId, userId },
     } = event;
 
+    if (userId) {
+      await sendTeamsToUpdatedUser(trx, userId);
+    }
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },
   "route.deleted": async (
@@ -70,9 +86,12 @@ export const listeners: Listeners<TeamUser, typeof teamUserDomain> = {
   ) => {
     const {
       trx,
-      deleted: { teamId },
+      deleted: { teamId, userId },
     } = event;
 
+    if (userId) {
+      await sendTeamsToUpdatedUser(trx, userId);
+    }
     await sendTeamUsersListUpdatedMessage(trx, teamId);
   },
 };

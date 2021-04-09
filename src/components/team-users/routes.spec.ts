@@ -19,6 +19,7 @@ import generatePlan from "../../test-helpers/factories/plan";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType, TeamUserRole } from "../../published-types";
 import ConflictError from "../../errors/conflict";
+import * as IrisService from "../../components/iris/send-message";
 
 const now = new Date();
 const tuDb1: TeamUserDb = {
@@ -41,6 +42,14 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-user-id");
   return {
+    findTeamsStub: sandbox()
+      .stub(TeamsDAO, "findByUser")
+      .resolves([
+        {
+          id: "a-team-id",
+        },
+      ]),
+    irisStub: sandbox().stub(IrisService, "sendMessage"),
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
       role,
       userId: "a-user-id",
@@ -67,7 +76,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .resolves(),
     deleteStub: sandbox()
       .stub(TeamUsersDAO, "deleteById")
-      .resolves({ teamId: "a-team-id" }),
+      .resolves({ teamId: "a-team-id", userId: "a-user-id" }),
     createTeamUserLockStub: sandbox()
       .stub(TeamUserLockService, "default")
       .resolves(),
@@ -88,7 +97,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
 }
 
 test("POST /team-users: valid", async (t: Test) => {
-  const { createStub, addStripeSeatStub } = setup();
+  const { createStub, addStripeSeatStub, irisStub } = setup();
 
   const [response, body] = await post("/team-users", {
     headers: authHeader("a-session-id"),
@@ -104,6 +113,26 @@ test("POST /team-users: valid", async (t: Test) => {
     body,
     JSON.parse(JSON.stringify(tu1)),
     "returns the created team user from the DAO"
+  );
+  t.deepEqual(
+    irisStub.args,
+    [
+      [
+        {
+          channels: ["updates/a-user-id"],
+          resource: [{ id: "a-team-id" }],
+          type: "team-list/updated",
+        },
+      ],
+      [
+        {
+          channels: ["teams/a-team-id"],
+          resource: [tu1],
+          type: "team-users-list/updated",
+        },
+      ],
+    ],
+    "realtime updates for team users list and new teams"
   );
   t.deepEqual(
     createStub.args[0][1],
@@ -391,6 +420,7 @@ test("PATCH /team-users/:id: valid downgrade to viewer", async (t: Test) => {
     findTeamUserByIdStub,
     addStripeSeatStub,
     removeStripeSeatStub,
+    irisStub,
   } = setup();
   const [response, body] = await patch(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
@@ -420,6 +450,26 @@ test("PATCH /team-users/:id: valid downgrade to viewer", async (t: Test) => {
     removeStripeSeatStub.callCount,
     1,
     "calls stripe remove seat function when downgrading a non-viewer to a viewer"
+  );
+  t.deepEqual(
+    irisStub.args,
+    [
+      [
+        {
+          channels: ["updates/a-user-id"],
+          resource: [{ id: "a-team-id" }],
+          type: "team-list/updated",
+        },
+      ],
+      [
+        {
+          channels: ["teams/a-team-id"],
+          resource: [tu1],
+          type: "team-users-list/updated",
+        },
+      ],
+    ],
+    "realtime updates for team users list and teams"
   );
 });
 
@@ -1133,13 +1183,33 @@ test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) 
 });
 
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
-  const { deleteStub, removeStripeSeatStub } = setup();
+  const { deleteStub, removeStripeSeatStub, irisStub } = setup();
   const [response] = await del(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
   });
   t.equal(response.status, 204, "Allows deletion");
   t.equal(deleteStub.args[0][1], tu1.id);
   t.equal(removeStripeSeatStub.callCount, 1, "Removes seat from Stripe");
+  t.deepEqual(
+    irisStub.args,
+    [
+      [
+        {
+          channels: ["updates/a-user-id"],
+          resource: [{ id: "a-team-id" }],
+          type: "team-list/updated",
+        },
+      ],
+      [
+        {
+          channels: ["teams/a-team-id"],
+          resource: [tu1],
+          type: "team-users-list/updated",
+        },
+      ],
+    ],
+    "realtime updates for team users list and new teams"
+  );
 });
 
 test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
