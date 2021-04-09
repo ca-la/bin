@@ -21,7 +21,7 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
   }
 );
 
-export const withTeamUserMetaDao = buildDao<Team, TeamRow>(
+const withTeamUserMetaDao = buildDao<Team, TeamRow>(
   "Team",
   TABLE_NAME,
   teamAdapter,

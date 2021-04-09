@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { check } from "../../services/check";
 import { Serialized } from "../../types/serialized";
 
 export enum RealtimeMessageType {
@@ -7,19 +5,16 @@ export enum RealtimeMessageType {
   shipmentTrackingCreated = "shipment-tracking/created",
   notificationCreated = "notification/created",
   teamUsersListUpdated = "team-users-list/updated",
-  teamInvited = "team/invited",
 }
 
-export const realtimeMessageSchema = z.object({
-  // string here to avoid breaking backwards compatibility when adding new messages
-  type: z.string(),
-  channels: z.array(z.string()),
-  resource: z.any(),
-});
-export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;
+export interface RealtimeMessage {
+  type: RealtimeMessageType;
+  channels: string[];
+  resource: any;
+}
 
 export function isRealtimeMessage(
   data: any
 ): data is Serialized<RealtimeMessage> {
-  return check(realtimeMessageSchema, data);
+  return "channels" in data && "type" in data && "resource" in data;
 }

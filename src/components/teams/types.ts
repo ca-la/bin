@@ -52,13 +52,3 @@ export const teamSubscriptionUpgradeSchema = z.object({
 export type TeamSubscriptionUpgrade = z.infer<
   typeof teamSubscriptionUpgradeSchema
 >;
-
-export const teamTestBlank: Team = {
-  createdAt: new Date(2012, 11, 24),
-  deletedAt: null,
-  id: "a-team-id",
-  role: TeamUserRole.EDITOR,
-  teamUserId: "a-team-user-id",
-  title: "A team",
-  type: TeamType.DESIGNER,
-};

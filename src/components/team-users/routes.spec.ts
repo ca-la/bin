@@ -11,9 +11,7 @@ import * as TeamUserLockService from "./create-team-user-lock";
 import * as StripeService from "../../services/stripe";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
-import TeamsDAO, {
-  withTeamUserMetaDao as TeamsWithMetaDAO,
-} from "../teams/dao";
+import TeamsDAO from "../teams/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import { Role, TeamUser, TeamUserDb } from "./types";
 import { generateTeam } from "../../test-helpers/factories/team";
@@ -21,7 +19,6 @@ import generatePlan from "../../test-helpers/factories/plan";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType, TeamUserRole } from "../../published-types";
 import ConflictError from "../../errors/conflict";
-import * as IrisService from "../../components/iris/send-message";
 
 const now = new Date();
 const tuDb1: TeamUserDb = {
@@ -44,10 +41,6 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
   sandbox().useFakeTimers(now);
   sandbox().stub(uuid, "v4").returns("a-team-user-id");
   return {
-    findTeamStub: sandbox().stub(TeamsWithMetaDAO, "findById").resolves({
-      id: "a-team-id",
-    }),
-    irisStub: sandbox().stub(IrisService, "sendMessage"),
     sessionsStub: sandbox().stub(SessionsDAO, "findById").resolves({
       role,
       userId: "a-user-id",
@@ -95,7 +88,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
 }
 
 test("POST /team-users: valid", async (t: Test) => {
-  const { createStub, addStripeSeatStub, irisStub } = setup();
+  const { createStub, addStripeSeatStub } = setup();
 
   const [response, body] = await post("/team-users", {
     headers: authHeader("a-session-id"),
@@ -111,26 +104,6 @@ test("POST /team-users: valid", async (t: Test) => {
     body,
     JSON.parse(JSON.stringify(tu1)),
     "returns the created team user from the DAO"
-  );
-  t.deepEqual(
-    irisStub.args,
-    [
-      [
-        {
-          channels: ["updates/a-user-id"],
-          resource: { id: "a-team-id" },
-          type: "team/invited",
-        },
-      ],
-      [
-        {
-          channels: ["teams/a-team-id"],
-          resource: [tu1],
-          type: "team-users-list/updated",
-        },
-      ],
-    ],
-    "realtime updates for team users list and new teams"
   );
   t.deepEqual(
     createStub.args[0][1],

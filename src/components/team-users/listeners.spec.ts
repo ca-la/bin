@@ -9,7 +9,6 @@ import {
   RouteDeleted,
 } from "../../services/pubsub/cala-events";
 import TeamUsersDAO from "./dao";
-import { withTeamUserMetaDao as TeamsDAO } from "../teams/dao";
 import {
   Role as TeamUserRole,
   TeamUser,
@@ -66,9 +65,6 @@ function setup() {
     findTeamUsersStub: sandbox()
       .stub(TeamUsersDAO, "find")
       .resolves([tu1, tu2]),
-    findTeamStub: sandbox().stub(TeamsDAO, "findById").resolves({
-      id: "a-team-id",
-    }),
     irisStub: sandbox().stub(IrisService, "sendMessage").resolves(),
     clock: sandbox().useFakeTimers(now),
     notificationsSendStub: sandbox()
@@ -102,15 +98,6 @@ test("route.created", async (t: Test) => {
 
     t.deepEquals(
       irisStub.args[0][0],
-      {
-        type: "team/invited",
-        resource: { id: "a-team-id" },
-        channels: ["updates/a-user-id"],
-      },
-      "Send team via realtime on team user create"
-    );
-    t.deepEquals(
-      irisStub.args[1][0],
       {
         type: "team-users-list/updated",
         resource: [tu1, tu2],

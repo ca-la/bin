@@ -1,10 +1,6 @@
-import { z } from "zod";
+import * as z from "zod";
 
-import {
-  serializedUserRowSchema,
-  serializedUserSchema,
-  userTestBlank,
-} from "../users/types";
+import User, { UserRow, userTestBlank } from "../users/types";
 import { Roles } from "../collaborators/types";
 import { check } from "../../services/check";
 
@@ -45,88 +41,81 @@ export const PARTNER_TEAM_BID_EDITORS: Role[] = [
 
 export const FREE_TEAM_USER_ROLES: Role[] = [Role.VIEWER, Role.TEAM_PARTNER];
 
-const baseDb = {
-  id: z.string(),
-  teamId: z.string(),
-  role: roleSchema,
-  label: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  deletedAt: z.date().nullable(),
-};
+export interface BaseTeamUserDb {
+  id: string;
+  teamId: string;
+  role: Role;
+  label: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
 
-export const registeredDbSchema = z.object({
-  ...baseDb,
-  userId: z.string(),
-  userEmail: z.null(),
-});
-export const registeredDbRowSchema = z.object({
-  id: registeredDbSchema.shape.id,
-  team_id: registeredDbSchema.shape.teamId,
-  role: registeredDbSchema.shape.role,
-  label: registeredDbSchema.shape.label,
-  created_at: registeredDbSchema.shape.createdAt,
-  updated_at: registeredDbSchema.shape.updatedAt,
-  deleted_at: registeredDbSchema.shape.deletedAt,
-  user_id: registeredDbSchema.shape.userId,
-  user_email: registeredDbSchema.shape.userEmail,
-});
+interface BaseTeamUserDbRow {
+  id: string;
+  team_id: string;
+  role: Role;
+  label: string | null;
+  created_at: Date;
+  updated_at: Date;
+  deleted_at: Date | null;
+}
 
-export const invitedDbSchema = z.object({
-  ...baseDb,
-  userId: z.null(),
-  userEmail: z.string(),
-});
-export const invitedDbRowSchema = z.object({
-  id: invitedDbSchema.shape.id,
-  team_id: invitedDbSchema.shape.teamId,
-  role: invitedDbSchema.shape.role,
-  label: invitedDbSchema.shape.label,
-  created_at: invitedDbSchema.shape.createdAt,
-  updated_at: invitedDbSchema.shape.updatedAt,
-  deleted_at: invitedDbSchema.shape.deletedAt,
-  user_id: invitedDbSchema.shape.userId,
-  user_email: invitedDbSchema.shape.userEmail,
-});
+interface Registered extends BaseTeamUserDb {
+  userId: string;
+  userEmail: null;
+}
 
-export const teamUserDbSchema = z.union([invitedDbSchema, registeredDbSchema]);
-export type TeamUserDb = z.infer<typeof teamUserDbSchema>;
+interface RegisteredRow extends BaseTeamUserDbRow {
+  user_id: string;
+  user_email: null;
+}
 
-export const teamUserDbRowSchema = z.union([
-  invitedDbRowSchema,
-  registeredDbRowSchema,
-]);
-export type TeamUserDbRow = z.infer<typeof teamUserDbRowSchema>;
+interface Invited extends BaseTeamUserDb {
+  userId: null;
+  userEmail: string;
+}
 
-export const registeredTeamUserSchema = registeredDbSchema.extend({
-  user: serializedUserSchema,
-});
-type RegisteredTeamUser = z.infer<typeof registeredTeamUserSchema>;
+interface InvitedRow extends BaseTeamUserDbRow {
+  user_id: null;
+  user_email: string;
+}
 
-export const invitedTeamUserSchema = invitedDbSchema.extend({
-  user: z.null(),
-});
+export type TeamUserDb = Registered | Invited;
 
-const registeredTeamUserRowSchema = registeredDbRowSchema.extend({
-  user: serializedUserRowSchema,
-});
-type RegisteredTeamUserRow = z.infer<typeof registeredTeamUserRowSchema>;
+export type TeamUserDbRow = RegisteredRow | InvitedRow;
 
-const invitedTeamUserRowSchema = invitedDbRowSchema.extend({
-  user: z.null(),
-});
+export function isRegisteredTeamUserDb(
+  candidate: TeamUserDb
+): candidate is Registered {
+  return candidate.userId !== null;
+}
 
-export const teamUserSchema = z.union([
-  registeredTeamUserSchema,
-  invitedTeamUserSchema,
-]);
-export type TeamUser = z.infer<typeof teamUserSchema>;
+export function isRegisteredTeamUserDbRow(
+  candidate: TeamUserDbRow
+): candidate is RegisteredRow {
+  return candidate.user_id !== null;
+}
 
-export const teamUserRowSchema = z.union([
-  registeredTeamUserRowSchema,
-  invitedTeamUserRowSchema,
-]);
-export type TeamUserRow = z.infer<typeof teamUserRowSchema>;
+interface RegisteredTeamUser extends Registered {
+  user: User;
+}
+
+interface InvitedTeamUser extends Invited {
+  user: null;
+}
+
+interface RegisteredTeamUserRow extends RegisteredRow {
+  user: UserRow;
+}
+
+interface InvitedTeamUserRow extends InvitedRow {
+  user: null;
+}
+
+export type TeamUser = RegisteredTeamUser | InvitedTeamUser;
+
+export type TeamUserRow = RegisteredTeamUserRow | InvitedTeamUserRow;
 
 export function isRegisteredTeamUser(
   candidate: TeamUser
@@ -169,7 +158,7 @@ export const teamUserUpdateSchema = z.union([
 
 export type TeamUserUpdate = z.infer<typeof teamUserUpdateSchema>;
 
-export const teamUserDbTestBlank: TeamUserDb = {
+export const teamUserDbTestBlank: BaseTeamUserDb = {
   id: "team-user-1",
   teamId: "team-1",
   role: Role.VIEWER,
@@ -177,11 +166,11 @@ export const teamUserDbTestBlank: TeamUserDb = {
   updatedAt: new Date(),
   deletedAt: null,
   label: null,
-  userId: userTestBlank.id,
-  userEmail: null,
 };
 
 export const teamUserTestBlank: TeamUser = {
   ...teamUserDbTestBlank,
+  userId: userTestBlank.id,
+  userEmail: null,
   user: userTestBlank,
 };
