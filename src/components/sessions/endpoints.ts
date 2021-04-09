@@ -1,7 +1,13 @@
-import { GraphQLEndpoint, GraphQLContextBase } from "../../apollo";
+import {
+  GraphQLEndpoint,
+  GraphQLContextBase,
+  ForbiddenError,
+} from "../../apollo";
 import Session from "../../domain-objects/session";
 import * as GraphQLTypes from "./graphql-types";
 import * as SessionsDAO from "../../dao/sessions";
+import filterError from "../../services/filter-error";
+import InvalidDataError from "../../errors/invalid-data";
 
 interface LoginArgs {
   email: string;
@@ -32,7 +38,11 @@ const login: GraphQLEndpoint<
       expiresAt,
       password,
       role,
-    });
+    }).catch(
+      filterError(InvalidDataError, () => {
+        throw new ForbiddenError("Incorrect credentials");
+      })
+    );
   },
 };
 

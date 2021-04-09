@@ -21,7 +21,7 @@ test("login(id) will not work for credentials that do not exist", async (t: Test
   });
 
   t.equal(response.status, 200);
-  t.true(body.errors[0].message.includes("Something went wrong!"));
+  t.equal(body.errors[0].message, "Incorrect credentials");
 
   const graphRequest2 = {
     operationName: null,
@@ -39,7 +39,7 @@ test("login(id) will not work for credentials that do not exist", async (t: Test
   });
 
   t.equal(response2.status, 200);
-  t.true(body2.errors[0].message.includes("Something went wrong!"));
+  t.equal(body2.errors[0].message, "Incorrect credentials");
 });
 
 test("login(id) can return a user", async (t: Test) => {
