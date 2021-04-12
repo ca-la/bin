@@ -20,6 +20,7 @@ import {
 import * as StripeAPI from "./api";
 
 export * from "./types";
+export * from "./service";
 
 interface StripeChargeOptions {
   customerId: string;

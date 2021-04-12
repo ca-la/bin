@@ -15,7 +15,7 @@ import {
   REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS,
 } from "../referral-redemptions";
 import ReferralRunsDAO from "./dao";
-import * as StripeAPI from "../../services/stripe/api";
+import * as StripeService from "../../services/stripe/service";
 
 test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
   const { user: referrer } = await createUser({ withSession: false });
@@ -65,38 +65,35 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
   const paymentTotal = 1000;
   const created = Math.round(new Date().getTime() / 1000);
   const findSubscriptionsStub = sandbox()
-    .stub(StripeAPI, "getInvoicesAfterSpecified")
-    .resolves({
-      object: "list",
-      data: [
-        {
-          id: "in_2",
-          total: paymentTotal / 2,
-          subscription: "stripe-subscription-1",
-          created,
-        },
-        {
-          id: "in_3",
-          total: paymentTotal * 30,
-          subscription: null,
-          created,
-        },
-        {
-          id: "in_4",
-          total: paymentTotal / 2,
-          subscription: "stripe-subscription-1",
-          created: created + 364 * 24 * 60 * 60,
-        },
-        {
-          // this record should not count as it is not inside the first year after
-          // redemption was created
-          id: "in_5",
-          total: paymentTotal * 100,
-          subscription: "stripe-subscription-1",
-          created: created + 367 * 24 * 60 * 60,
-        },
-      ],
-    });
+    .stub(StripeService, "fetchInvoicesFrom")
+    .resolves([
+      {
+        id: "in_2",
+        total: paymentTotal / 2,
+        subscription: "stripe-subscription-1",
+        created,
+      },
+      {
+        id: "in_3",
+        total: paymentTotal * 30,
+        subscription: null,
+        created,
+      },
+      {
+        id: "in_4",
+        total: paymentTotal / 2,
+        subscription: "stripe-subscription-1",
+        created: created + 364 * 24 * 60 * 60,
+      },
+      {
+        // this record should not count as it is not inside the first year after
+        // redemption was created
+        id: "in_5",
+        total: paymentTotal * 100,
+        subscription: "stripe-subscription-1",
+        created: created + 367 * 24 * 60 * 60,
+      },
+    ]);
 
   const result = await addReferralSubscriptionBonuses(trx);
   t.equal(
@@ -114,7 +111,7 @@ test("addReferralSubscriptionBonuses", async (t: tape.Test) => {
     "Called StripeAPI.findSubscriptions with the latest invoice id"
   );
 
-  findSubscriptionsStub.resolves({ data: [] });
+  findSubscriptionsStub.resolves([]);
   const emptyResult = await addReferralSubscriptionBonuses(trx);
 
   t.equal(emptyResult, 0, "should return zero if no new subscriptions");

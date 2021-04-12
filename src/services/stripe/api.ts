@@ -210,13 +210,16 @@ export function getSubscription(subscriptionId: string) {
   });
 }
 
-export function getInvoicesAfterSpecified(invoiceId: string) {
+export function getInvoicesAfterSpecified(
+  invoiceId: string,
+  { limit = 100 }: { limit?: number } = {}
+) {
   return safeRequest({
     inputSchema: z.never(),
     outputSchema: invoicesSchema,
     options: {
       method: "get",
-      path: `/invoices?ending_before=${invoiceId}`,
+      path: `/invoices?ending_before=${invoiceId}&limit=${limit}`,
     },
   });
 }

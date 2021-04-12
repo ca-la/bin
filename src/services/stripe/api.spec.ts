@@ -7,6 +7,7 @@ test("getInvoicesAfterSpecified", async (t: Test) => {
   const correctResult = {
     object: "list",
     data: [],
+    has_more: false,
   };
   const makeRequestStub = sandbox()
     .stub(MakeRequest, "default")
@@ -21,7 +22,7 @@ test("getInvoicesAfterSpecified", async (t: Test) => {
       [
         {
           method: "get",
-          path: "/invoices?ending_before=in_1",
+          path: "/invoices?ending_before=in_1&limit=100",
         },
       ],
     ],

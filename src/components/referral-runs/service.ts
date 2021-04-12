@@ -9,8 +9,7 @@ import {
   REFERRING_USER_SUBSCRIPTION_SHARE_PERCENTS,
 } from "../referral-redemptions";
 
-import { getInvoicesAfterSpecified } from "../../services/stripe/api";
-import { Invoice } from "../../services/stripe";
+import { fetchInvoicesFrom, Invoice } from "../../services/stripe";
 
 export async function addReferralSubscriptionBonuses(
   trx: Knex.Transaction
@@ -20,13 +19,13 @@ export async function addReferralSubscriptionBonuses(
     ? latestRun.latestStripeInvoiceId
     : REFERRAL_RUNS_FALLBACK_STRIPE_INVOICE_ID;
 
-  const stripeInvoices = await getInvoicesAfterSpecified(latestStripeInvoiceId);
-  if (stripeInvoices.data.length === 0) {
+  const stripeInvoices = await fetchInvoicesFrom(latestStripeInvoiceId);
+  if (stripeInvoices.length === 0) {
     return 0;
   }
 
   const byStripeSubscriptionId: Record<string, Invoice[]> = {};
-  for (const invoice of stripeInvoices.data) {
+  for (const invoice of stripeInvoices) {
     if (invoice.subscription) {
       if (!byStripeSubscriptionId[invoice.subscription]) {
         byStripeSubscriptionId[invoice.subscription] = [invoice];
@@ -81,11 +80,11 @@ export async function addReferralSubscriptionBonuses(
     });
   }
 
-  if (latestStripeInvoiceId !== stripeInvoices.data[0].id) {
+  if (latestStripeInvoiceId !== stripeInvoices[0].id) {
     await ReferralRunsDAO.create(trx, {
       id: uuid.v4(),
       createdAt: new Date(),
-      latestStripeInvoiceId: stripeInvoices.data[0].id,
+      latestStripeInvoiceId: stripeInvoices[0].id,
     });
   }
 

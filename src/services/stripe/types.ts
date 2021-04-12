@@ -106,6 +106,7 @@ export const invoicesSchema = z
   .object({
     object: z.literal("list"),
     data: z.array(invoiceSchema),
+    has_more: z.boolean(),
   })
   .passthrough();
 
