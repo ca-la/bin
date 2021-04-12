@@ -14,7 +14,7 @@ export async function fetchInvoicesFrom(
   const result: Invoice[] = [];
   for (let i = 0, id = fromId; i < maxIterations; i = i + 1) {
     const fetchResult = await getInvoicesAfterSpecified(id, { limit });
-    result.push.apply(result, fetchResult.data);
+    result.unshift.apply(result, fetchResult.data);
     id = fetchResult.data[0].id;
     if (!fetchResult.has_more) {
       break;

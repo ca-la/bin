@@ -19,14 +19,21 @@ test("fetchInvoicesFrom", async (t: Test) => {
     .onCall(4)
     .resolves({
       ...getInvoicesResult,
-      data: [getInvoicesResult.data[0]],
+      data: [
+        {
+          ...getInvoicesResult.data[0],
+          id: "latest_id",
+        },
+        getInvoicesResult.data[1],
+      ],
       has_more: false,
     });
 
   const result = await fetchInvoicesFrom("in_1");
   // 4 calls of getInvoicesAfterSpecified with 3 items
-  // 1 call with 1 item returning has_more: false
-  t.deepEqual(result.length, 4 * 3 + 1, "loops until has_more: false");
+  // 1 call with 2 items returning has_more: false
+  t.deepEqual(result.length, 4 * 3 + 2, "loops until has_more: false");
+  t.deepEqual(result[0].id, "latest_id", "latest_id goes first");
 
   getInvoicesAfterSpecifiedStub.resetHistory();
 
