@@ -40,4 +40,8 @@ test("fetchInvoicesFrom", async (t: Test) => {
   const result2 = await fetchInvoicesFrom("in_1", { maxIterations: 2 });
   // just 2 calls of getInvoicesAfterSpecified
   t.deepEqual(result2.length, 2 * 3, "loops allowed times");
+
+  getInvoicesAfterSpecifiedStub.resolves({ data: [] });
+  const result3 = await fetchInvoicesFrom("in_1");
+  t.deepEqual(result3.length, 0, "works on empty result");
 });
