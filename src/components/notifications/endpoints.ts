@@ -16,7 +16,7 @@ import * as NotificationsDAO from "./dao";
 import * as GraphQLTypes from "./graphql-types";
 import { createNotificationMessage } from "./notification-messages";
 import { transformNotificationMessageToGraphQL } from "./service";
-import { FullNotification } from "./domain-object";
+import { FullNotification, Notification } from "./domain-object";
 
 interface GetNotificationsArgs {
   limit: number;
@@ -162,8 +162,55 @@ const updateNotificaion: GraphQLEndpoint<
   },
 };
 
+interface ReadNotificationsArgs {
+  ids: string[];
+}
+
+interface ReadNotification {
+  id: string;
+  readAt: Date | null;
+}
+
+const readNotifications: GraphQLEndpoint<
+  ReadNotificationsArgs,
+  ReadNotification[],
+  GraphQLContextAuthenticated<ReadNotification[]>
+> = {
+  endpointType: "MUTATION",
+  name: "readNotifications",
+  signature: "(ids: [String]!): [NotificationMessage]!",
+  middleware: requireAuth,
+  resolver: async (
+    _: unknown,
+    args: ReadNotificationsArgs,
+    context: GraphQLContextAuthenticated<ReadNotification[]>
+  ) => {
+    const { ids } = args;
+    const {
+      trx,
+      session: { userId },
+    } = context;
+
+    const notifications = await NotificationsDAO.markRead(ids, trx);
+
+    const read = notifications.map((notification: Notification) => {
+      if (
+        !notification ||
+        (notification.recipientUserId !== null &&
+          notification.recipientUserId !== userId)
+      ) {
+        throw new ForbiddenError("Access denied for this resource");
+      }
+      return { id: notification.id, readAt: notification.readAt };
+    });
+
+    return read;
+  },
+};
+
 export const NotificationEndpoints = [
   notificationMessages,
   archiveNotifications,
   updateNotificaion,
+  readNotifications,
 ];

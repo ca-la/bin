@@ -234,3 +234,75 @@ test("updateNotification endpoint", async (t: Test) => {
     ],
   ]);
 });
+
+test("readNotifications endpoint", async (t: Test) => {
+  const testTime = new Date(2020, 0, 1);
+  sandbox().useFakeTimers(testTime);
+  const { session: notifiedUserSession, user } = await createUser({
+    role: "USER",
+  });
+  const { session } = await createUser({ role: "USER" });
+  const notification = {
+    ...templateNotification,
+    id: "some-id",
+    actorUserId: "actor-id",
+    recipientUserId: user.id,
+    type: NotificationType.PARTNER_ACCEPT_SERVICE_BID,
+  };
+  function buildRequest(ids: string[]) {
+    return {
+      operationName: "readNotifications",
+      query: `mutation readNotifications($ids: [String]!) {
+        readNotifications(ids: $ids) {
+          id
+          readAt
+        }
+      }`,
+      variables: { ids },
+    };
+  }
+  const [unauthenticatedResponse, unauthenticatedBody] = await post("/v2", {
+    body: buildRequest([notification.id]),
+  });
+  t.equal(unauthenticatedResponse.status, 200);
+  t.equal(
+    unauthenticatedBody.errors[0].message,
+    "Unauthorized",
+    "Requires authentication"
+  );
+  t.equal(unauthenticatedBody.errors[0].extensions.code, "UNAUTHENTICATED");
+
+  const markReadStub = sandbox()
+    .stub(NotificationsDAO, "markRead")
+    .resolves([{ ...notification, readAt: testTime }]);
+
+  const [response, body] = await post("/v2", {
+    body: buildRequest(["some-id"]),
+    headers: authHeader(notifiedUserSession.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      readNotifications: [{ id: "some-id", readAt: testTime.toISOString() }],
+    },
+  });
+
+  t.deepEqual(
+    markReadStub.args[0][0],
+    ["some-id"],
+    "Marks provided notifications as read"
+  );
+
+  const [forbiddenResponse, forbiddenBody] = await post("/v2", {
+    body: buildRequest(["some-id"]),
+    headers: authHeader(session.id),
+  });
+
+  t.equal(forbiddenResponse.status, 200);
+  t.equal(
+    forbiddenBody.errors[0].message,
+    "Access denied for this resource",
+    "Cannot read other users notifications"
+  );
+  t.equal(forbiddenBody.errors[0].extensions.code, "FORBIDDEN");
+});
