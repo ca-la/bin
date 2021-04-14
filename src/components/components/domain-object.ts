@@ -1,4 +1,6 @@
-import DataAdapter from "../../services/data-adapter";
+import { pick } from "lodash";
+
+import DataAdapter, { defaultEncoder } from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 
 export enum ComponentType {
@@ -19,6 +21,18 @@ export default interface Component {
   sketchId: string | null;
 }
 
+const knownKeys = [
+  "id",
+  "createdAt",
+  "createdBy",
+  "deletedAt",
+  "parentId",
+  "type",
+  "materialId",
+  "artworkId",
+  "sketchId",
+];
+
 export interface ComponentRow {
   id: string;
   parent_id: string | null;
@@ -31,7 +45,12 @@ export interface ComponentRow {
   sketch_id: string | null;
 }
 
-export const dataAdapter = new DataAdapter<ComponentRow, Component>();
+function encode(row: ComponentRow): Component {
+  const defaultEncoded = defaultEncoder<ComponentRow, Component>(row);
+  return pick(defaultEncoded, knownKeys) as Component;
+}
+
+export const dataAdapter = new DataAdapter<ComponentRow, Component>(encode);
 
 export function isUnsavedComponent(data: object): data is Component {
   return hasProperties(
