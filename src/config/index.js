@@ -34,7 +34,7 @@ const ENABLE_APOLLO_PLAYGROUND = {
   [envs.DEMO]: false,
   [envs.LOCAL]: true,
   [envs.PROD]: false,
-  [envs.STG]: true,
+  [envs.STG]: false,
 }[ENV];
 
 /**
