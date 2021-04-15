@@ -62,9 +62,11 @@ export const requireTeamUserByTeamUserId = convert.back(
   async (ctx: RequireTeamUserByTeamUserIdContext, next: () => Promise<any>) => {
     const teamUser = await TeamUsersDAO.findById(db, ctx.params.teamUserId);
 
-    if (!teamUser) {
-      ctx.throw(`Could not find team user ${ctx.params.teamUserId}`, 404);
-    }
+    ctx.assert(
+      teamUser,
+      404,
+      `Could not find team user ${ctx.params.teamUserId}`
+    );
 
     ctx.state.teamUser = teamUser;
 
@@ -107,15 +109,20 @@ export function requireTeamRoles<ContextT extends RequireTeamRolesContext>(
           userId,
         });
 
-        if (!actorTeamUser) {
-          ctx.throw(403, "You cannot modify a team you are not a member of");
-        }
+        ctx.assert(
+          actorTeamUser,
+          403,
+          "You cannot modify a team you are not a member of"
+        );
 
         const isAllowSelf = await (options.allowSelf?.(ctx, actorTeamUser.id) ??
           Promise.resolve(false));
-        if (!(roles.includes(actorTeamUser.role) || isAllowSelf)) {
-          ctx.throw(403, "You are not authorized to perform this team action");
-        }
+
+        ctx.assert(
+          roles.includes(actorTeamUser.role) || isAllowSelf,
+          403,
+          "You are not authorized to perform this team action"
+        );
 
         ctx.state.actorTeamRole = actorTeamUser.role;
       }

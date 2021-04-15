@@ -120,3 +120,15 @@ interface CollaboratorKoaState {
 type UnknownObject = Record<string, any>;
 
 type EmptyObject = Record<string, never>;
+
+declare module "http-assert" {
+  function assert(
+    value: any,
+    status?: number,
+    msg?: string,
+    opts?: {}
+  ): asserts value;
+  function assert(value: any, status?: number, opts?: {}): asserts value;
+
+  export = assert;
+}

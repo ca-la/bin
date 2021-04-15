@@ -139,9 +139,7 @@ async function update(ctx: UpdateContext) {
 
   const before = await TeamUsersDAO.findById(trx, teamUserId);
 
-  if (!before) {
-    ctx.throw(404, `Could not find team user with ID ${teamUserId}`);
-  }
+  ctx.assert(before, 404, `Could not find team user with ID ${teamUserId}`);
 
   try {
     const updated = await updateTeamUser(trx, {
@@ -189,9 +187,11 @@ async function deleteTeamUser(ctx: DeleteContext) {
   const { trx, teamUser, userId: actorUserId } = ctx.state;
 
   const isTryingToDeleteTeamOwner = teamUser.role === TeamUserRole.OWNER;
-  if (isTryingToDeleteTeamOwner) {
-    ctx.throw(403, `You cannot delete the owner of the team`);
-  }
+  ctx.assert(
+    !isTryingToDeleteTeamOwner,
+    403,
+    "You cannot delete the owner of the team"
+  );
 
   const deleted = await removeTeamUser(trx, teamUser);
 
