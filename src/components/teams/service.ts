@@ -189,3 +189,12 @@ export async function generateUpgradeBodyDueToCheckoutAttempt(
     upgradePlan ? { upgradePlan } : {}
   );
 }
+
+export function generateUpgradeBodyDueToMissingSubscription(
+  teamId: string
+): UpgradeTeamBody {
+  return Teams.generateUpgradeBody(
+    teamId,
+    "This team does not have an active subscription."
+  );
+}

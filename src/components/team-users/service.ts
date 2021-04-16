@@ -16,6 +16,7 @@ import {
   TEAM_ROLE_PERMISSIVENESS,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
+import * as SubscriptionsDAO from "../subscriptions/dao";
 import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
@@ -29,6 +30,8 @@ import {
 } from "../../services/stripe/index";
 import { check } from "../../services/check";
 import { StrictContext } from "../../router-context";
+import { SubscriptionWithPlan } from "../subscriptions";
+import { generateUpgradeBodyDueToMissingSubscription } from "../teams";
 
 const allowedRolesMap: Record<TeamUserRole, TeamUserRole[]> = {
   [TeamUserRole.OWNER]: [
@@ -215,6 +218,40 @@ export async function canUserMoveCollectionBetweenTeams({
 
   return true;
 }
+
+export interface SubscriptionsState {
+  subscriptions: SubscriptionWithPlan[];
+}
+
+interface RequireActiveSubscriptionContext extends StrictContext<any> {
+  state: SubscriptionsState;
+}
+
+export const requireActiveSubscription = <ContextT extends StrictContext<any>>(
+  getTeamId: (ctx: ContextT) => Promise<string | null>
+) =>
+  convert.back(async (ctx: ContextT, next: () => Promise<any>) => {
+    const teamId = await getTeamId(ctx);
+    ctx.assert(teamId, 400, "Could not find teamId in route");
+
+    const subscriptions = await SubscriptionsDAO.findForTeamWithPlans(
+      db,
+      teamId,
+      {
+        isActive: true,
+      }
+    );
+
+    ctx.assert(
+      subscriptions.length > 0,
+      402,
+      generateUpgradeBodyDueToMissingSubscription(teamId)
+    );
+
+    ((ctx as unknown) as RequireActiveSubscriptionContext).state.subscriptions = subscriptions;
+
+    await next();
+  });
 
 export async function createTeamUser(
   trx: Knex.Transaction,

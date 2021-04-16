@@ -1,38 +1,56 @@
 import Koa from "koa";
+import convert from "koa-convert";
 
 import Logger = require("../../services/logger");
 
 // Handle non-500 controller errors gracefully. Instead of outputting to
 // stdout/stderr, just return them in a JSON response body.
 
-export default function* errors(this: Koa.Context, next: any) {
-  try {
-    yield next;
+export default convert.back(
+  async (ctx: Koa.Context, next: () => Promise<any>) => {
+    try {
+      await next();
 
-    if (this.status === 404) {
-      this.throw(404, `Route not found: ${this.path}`);
+      if (ctx.status === 404) {
+        ctx.throw(404, `Route not found: ${ctx.path}`);
+      }
+    } catch (err) {
+      const {
+        stack,
+        status,
+        statusCode,
+        expose: _expose,
+        name: _name,
+        ...error
+      } = err;
+
+      ctx.status = status || statusCode || 500;
+
+      if (ctx.status === 500) {
+        ctx.app.emit("error", err, ctx);
+      }
+
+      if (ctx.status >= 500) {
+        Logger.logServerError(stack);
+      } else {
+        Logger.logClientError(stack);
+        ctx.body = {
+          ...error,
+          // For custom errors, `message` is on the prototype (Error) so it does
+          // not end up on the error object due to destructuring only using own
+          // enumerable properties
+          message: err.message,
+        };
+      }
     }
-  } catch (err) {
-    this.status = err.status || 500;
 
-    if (this.status === 500) {
-      this.app.emit("error", err, this);
-    }
-
-    if (this.status >= 500) {
-      Logger.logServerError(err.stack);
-    } else {
-      Logger.logClientError(err.stack);
-      this.body = { message: err.message, errors: err.errors };
+    // 5xx status may be set by the block above or another part of the code —
+    // either way we redact the original error.
+    if (ctx.status >= 500) {
+      ctx.body = {
+        message:
+          "Something went wrong! Please try again, or email hi@ca.la if this message persists.",
+      };
     }
   }
-
-  // 5xx status may be set by the block above or another part of the code —
-  // either way we redact the original error.
-  if (this.status >= 500) {
-    this.body = {
-      message:
-        "Something went wrong! Please try again, or email hi@ca.la if this message persists.",
-    };
-  }
-}
+);

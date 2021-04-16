@@ -36,6 +36,7 @@ import {
   TeamUserRoleState,
   TeamUserState,
   RequireTeamRolesContext,
+  requireActiveSubscription,
 } from "./service";
 import TeamUsersDAO from "./dao";
 import { emit } from "../../services/pubsub";
@@ -230,6 +231,10 @@ export default {
             context.state.safeBody.teamId
         ),
         useTransaction,
+        requireActiveSubscription(
+          async (context: CreateRequireTeamRolesContext) =>
+            context.state.safeBody.teamId
+        ),
         convert.back(create),
       ],
       get: [
@@ -246,13 +251,14 @@ export default {
     "/:teamUserId": {
       patch: [
         requireAuth,
-        useTransaction,
         typeGuardFromSchema(teamUserUpdateSchema),
         requireTeamUserByTeamUserId,
         requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
           findTeamByTeamUser
         ),
+        requireActiveSubscription(findTeamByTeamUser),
+        useTransaction,
         convert.back(update),
       ],
       del: [
@@ -268,6 +274,7 @@ export default {
             ) => context.params.teamUserId === actorTeamUserId,
           }
         ),
+        requireActiveSubscription(findTeamByTeamUser),
         useTransaction,
         convert.back(deleteTeamUser),
       ],

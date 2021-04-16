@@ -59,6 +59,7 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     }),
     findActorTeamUserStub: sandbox().stub(TeamUsersDAO, "findOne").resolves({
       role: TeamUserRole.ADMIN,
+      teamId: "a-team-id",
     }),
     findTeamMembersStub: sandbox().stub(TeamUsersDAO, "find").resolves([tu1]),
     findTeamNonViewerStub: sandbox()
@@ -93,6 +94,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     removeStripeSeatStub: sandbox()
       .stub(StripeService, "removeSeatCharge")
       .resolves(),
+    findTeamSubscriptionsStub: sandbox()
+      .stub(SubscriptionsDAO, "findForTeamWithPlans")
+      .resolves([{ id: "a-subscription-id" }]),
   };
 }
 
@@ -160,6 +164,21 @@ test("POST /team-users: invalid", async (t: Test) => {
 
   t.equal(invalid.status, 400, "Requires a valid role");
   t.equal(addStripeSeatStub.callCount, 0, "Does not add Stripe seat charge");
+});
+
+test("POST /team-users: throws a 402 if team subscription is missing", async (t: Test) => {
+  const { findTeamSubscriptionsStub } = setup();
+  findTeamSubscriptionsStub.resolves([]);
+
+  const [response] = await post(`/team-users`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teammate@example.com",
+      role: "ADMIN",
+    },
+  });
+  t.equal(response.status, 402);
 });
 
 test("POST /teams-user: unauthenticated", async (t: Test) => {
@@ -509,6 +528,19 @@ test("PATCH /team-users/:id: valid role change to editor", async (t: Test) => {
     0,
     "does not call stripe remove seat function when changing between non-viewer roles"
   );
+});
+
+test("PATCH /team-users/:id: throws a 402 if team subscription is missing", async (t: Test) => {
+  const { findTeamSubscriptionsStub } = setup();
+  findTeamSubscriptionsStub.resolves([]);
+
+  const [response] = await patch(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      role: "ADMIN",
+    },
+  });
+  t.equal(response.status, 402);
 });
 
 test("PATCH /team-users/:id: invalid role change from paid (editor) to paid (admin) with exceded plan the limit", async (t: Test) => {
@@ -1182,6 +1214,16 @@ test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) 
   t.equal(response.status, 404);
 });
 
+test("DEL /team-users/:id throws a 402 if team subscription is missing", async (t: Test) => {
+  const { findTeamSubscriptionsStub } = setup();
+  findTeamSubscriptionsStub.resolves([]);
+
+  const [response] = await del(`/team-users/0000-0000-0000`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 402);
+});
+
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
   const { deleteStub, removeStripeSeatStub, irisStub } = setup();
   const [response] = await del(`/team-users/${tu1.id}`, {
@@ -1281,10 +1323,12 @@ test("DEL /team-users/:id doesn't allow team admin to delete team owner", async 
   findActorTeamUserStub.resolves({
     userId: tu1.userId,
     role: TeamUserRole.ADMIN,
+    teamId: "a-team-id",
   });
   findTeamUserByIdStub.resolves({
     userId: tu1.userId,
     role: TeamUserRole.OWNER,
+    teamId: "a-team-id",
   });
 
   const [response] = await del(`/team-users/${tu1.id}`, {
@@ -1300,6 +1344,7 @@ test("DEL /team-users/:id doesn't allow CALA admin to delete team owner", async 
   findTeamUserByIdStub.resolves({
     userId: tu1.userId,
     role: TeamUserRole.OWNER,
+    teamId: "a-team-id",
   });
 
   const [response] = await del(`/team-users/${tu1.id}`, {
@@ -1360,6 +1405,28 @@ test("/team-users end-to-end", async (t: Test) => {
       deletedAt: null,
       updatedAt: new Date(),
     });
+    const freeAndDefaultTeamPlan = await generatePlan(trx, {
+      title: "Team Plan",
+      isDefault: true,
+      baseCostPerBillingIntervalCents: 0,
+      perSeatCostPerBillingIntervalCents: 0,
+      maximumSeatsPerTeam: 2,
+    });
+
+    // Team's subscription
+    await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: freeAndDefaultTeamPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId,
+        isPaymentWaived: false,
+      },
+      trx
+    );
   } catch (err) {
     await trx.rollback();
     t.fail(err.message);
