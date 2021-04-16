@@ -8,7 +8,7 @@ import createUser = require("../create-user");
 import generateProcess from "./process";
 import generateComponent from "./component";
 import Process from "../../components/processes/domain-object";
-import { Component } from "../../components/components/types";
+import Component from "../../components/components/domain-object";
 
 interface ComponentRelationshipWithResources {
   componentRelationship: ComponentRelationship;

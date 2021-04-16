@@ -8,7 +8,7 @@ import Process, {
 } from "./domain-object";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
-import { ComponentType } from "../components/types";
+import { ComponentType } from "../components/domain-object";
 
 const TABLE_NAME = "processes";
 

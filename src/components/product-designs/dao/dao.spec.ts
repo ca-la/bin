@@ -60,7 +60,7 @@ import {
   staticProductDesign,
 } from "../../../test-helpers/factories/product-design";
 import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
-import { ComponentType } from "../../components/types";
+import { ComponentType } from "../../components/domain-object";
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
 import generateBid from "../../../test-helpers/factories/bid";
 import * as Aftership from "../../../components/integrations/aftership/service";
@@ -125,7 +125,6 @@ test("ProductDesignsDAO supports creation/retrieval, enriched with image links",
     uploadCompletedAt: null,
     userId: user.id,
   });
-
   const { component: uploadingComponent } = await generateComponent({
     createdBy: user.id,
     sketchId: uploading.id,

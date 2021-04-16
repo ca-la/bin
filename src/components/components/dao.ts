@@ -3,9 +3,13 @@ import uuid from "node-uuid";
 import { pick } from "lodash";
 
 import db from "../../services/db";
+import Component, {
+  ComponentRow,
+  dataAdapter,
+  isComponentRow,
+} from "./domain-object";
 import first from "../../services/first";
-import { Component, ComponentRow } from "./types";
-import adapter from "./adapter";
+import { validate, validateEvery } from "../../services/validate-from-db";
 
 const TABLE_NAME = "components";
 
@@ -19,7 +23,6 @@ const INSERTABLE_PROPERTIES = [
   "material_id",
   "artwork_id",
   "sketch_id",
-  "asset_page_number",
 ];
 
 export async function create(
@@ -27,12 +30,11 @@ export async function create(
   trx?: Knex.Transaction
 ): Promise<Component> {
   const rowData = pick(
-    adapter.toDb({
+    dataAdapter.forInsertion({
       id: uuid.v4(),
-      createdAt: new Date(),
       ...data,
       deletedAt: null,
-    } as Component),
+    }),
     INSERTABLE_PROPERTIES
   );
 
@@ -49,7 +51,12 @@ export async function create(
     throw new Error("Failed to create rows");
   }
 
-  return adapter.fromDb(created);
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    created
+  );
 }
 
 export async function update(
@@ -57,11 +64,11 @@ export async function update(
   data: Unsaved<Component>
 ): Promise<Component> {
   const rowData = pick(
-    adapter.toDbPartial({
+    dataAdapter.forInsertion({
       ...data,
       deletedAt: null,
       id,
-    } as Component),
+    }),
     INSERTABLE_PROPERTIES
   );
   const updated = await db(TABLE_NAME)
@@ -73,7 +80,12 @@ export async function update(
     throw new Error("Failed to update rows");
   }
 
-  return adapter.fromDb(updated);
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    updated
+  );
 }
 
 export async function del(id: string): Promise<Component> {
@@ -86,7 +98,12 @@ export async function del(id: string): Promise<Component> {
     throw new Error("Failed to delete rows");
   }
 
-  return adapter.fromDb(deleted);
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    deleted
+  );
 }
 
 export async function findById(id: string): Promise<Component | null> {
@@ -100,11 +117,16 @@ export async function findById(id: string): Promise<Component | null> {
     return null;
   }
 
-  return adapter.fromDb(component);
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    component
+  );
 }
 
 export async function findAllByCanvasId(id: string): Promise<Component[]> {
-  const rows: ComponentRow[] = await db(TABLE_NAME)
+  const components: ComponentRow[] = await db(TABLE_NAME)
     .select("components.*")
     .from(TABLE_NAME)
     .innerJoin(
@@ -114,7 +136,12 @@ export async function findAllByCanvasId(id: string): Promise<Component[]> {
     )
     .where({ "product_design_canvases.id": id, "components.deleted_at": null });
 
-  return adapter.fromDbArray(rows);
+  return validateEvery<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    components
+  );
 }
 
 /*
@@ -143,5 +170,10 @@ WITH RECURSIVE parent_components AS (
     throw new Error(`Cannot find root component for component ${id}`);
   }
 
-  return adapter.fromDb(rootComponent);
+  return validate<ComponentRow, Component>(
+    TABLE_NAME,
+    isComponentRow,
+    dataAdapter,
+    rootComponent
+  );
 }

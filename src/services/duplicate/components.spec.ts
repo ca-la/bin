@@ -6,10 +6,49 @@ import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
 import createUser = require("../../test-helpers/create-user");
 
-import { ComponentType } from "../../components/components/types";
+import { ComponentType } from "../../components/components/domain-object";
 import { create as createComponent } from "../../components/components/dao";
 import { findAndDuplicateComponent } from "./components";
 import generateAsset from "../../test-helpers/factories/asset";
+
+test("findAndDuplicateComponent without sub-resources", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+  const componentId = uuid.v4();
+  const componentData = {
+    artworkId: null,
+    createdBy: user.id,
+    id: componentId,
+    materialId: null,
+    parentId: null,
+    sketchId: null,
+    type: ComponentType.Sketch,
+  };
+  await createComponent(componentData);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const duplicateComponent = await findAndDuplicateComponent(
+      componentId,
+      null,
+      trx
+    );
+    t.deepEqual(
+      {
+        artworkId: duplicateComponent.artworkId,
+        createdBy: duplicateComponent.createdBy,
+        id: duplicateComponent.id,
+        materialId: duplicateComponent.materialId,
+        parentId: duplicateComponent.parentId,
+        sketchId: duplicateComponent.sketchId,
+        type: duplicateComponent.type,
+      },
+      {
+        ...componentData,
+        id: duplicateComponent.id,
+      },
+      "Duplicating a component returns the same component but with a new id"
+    );
+  });
+});
 
 test("findAndDuplicateComponent with sub-resources", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -34,7 +73,6 @@ test("findAndDuplicateComponent with sub-resources", async (t: tape.Test) => {
     parentId: null,
     sketchId: imageId,
     type: ComponentType.Sketch,
-    assetPageNumber: null,
   };
   await createComponent(componentData);
 
@@ -53,7 +91,6 @@ test("findAndDuplicateComponent with sub-resources", async (t: tape.Test) => {
         parentId: duplicateComponent.parentId,
         sketchId: duplicateComponent.sketchId,
         type: duplicateComponent.type,
-        assetPageNumber: null,
       },
       {
         ...componentData,

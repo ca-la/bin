@@ -4,7 +4,7 @@ import { test } from "../../test-helpers/fresh";
 import generateProcess from "../../test-helpers/factories/process";
 import createUser = require("../../test-helpers/create-user");
 import API from "../../test-helpers/http";
-import { ComponentType } from "../components/types";
+import { ComponentType } from "../components/domain-object";
 
 test("GET /processes returns all processes", async (t: tape.Test) => {
   const { session } = await createUser();

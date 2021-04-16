@@ -1,6 +1,6 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-import { ComponentType } from "../components/types";
+import { ComponentType } from "../components/domain-object";
 
 /**
  * A way in which two components can be connected.
