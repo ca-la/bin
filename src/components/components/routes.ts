@@ -1,9 +1,10 @@
 import Router from "koa-router";
 
 import * as ComponentsDAO from "./dao";
-import Component, { isUnsavedComponent } from "./domain-object";
+import { Component, serializedComponentSchema } from "./types";
 import requireAuth = require("../../middleware/require-auth");
 import { addAssetLink } from "../../services/attach-asset-links";
+import { logClientError } from "../../services/logger";
 
 const router = new Router();
 
@@ -19,11 +20,15 @@ function* create(this: AuthedContext): Iterator<any, any, any> {
     this.request.body,
     this.state.userId
   );
-  if (!this.request.body || !isUnsavedComponent(body)) {
-    this.throw(400, "Request does not match Component");
+
+  const safeBody = serializedComponentSchema.safeParse(body);
+
+  if (!safeBody.success) {
+    logClientError(safeBody.error);
+    return this.throw(400, "Invalid component");
   }
 
-  const component = yield ComponentsDAO.create(body);
+  const component = yield ComponentsDAO.create(safeBody.data);
   this.status = 201;
   this.body = component;
 }
@@ -33,11 +38,17 @@ function* update(this: AuthedContext): Iterator<any, any, any> {
     this.request.body,
     this.state.userId
   );
-  if (!this.request.body || !isUnsavedComponent(body)) {
-    this.throw(400, "Request does not match Component");
+  const safeBody = serializedComponentSchema.safeParse(body);
+
+  if (!safeBody.success) {
+    logClientError(safeBody.error);
+    return this.throw(400, "Invalid component");
   }
 
-  const component = yield ComponentsDAO.update(this.params.componentId, body);
+  const component = yield ComponentsDAO.update(
+    this.params.componentId,
+    safeBody.data
+  );
   this.status = 200;
   this.body = component;
 }
@@ -82,12 +93,12 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
   this.body = yield Promise.all(components.map(addAssetLink));
 }
 
+router.get("/", requireAuth, getList);
 router.post("/", requireAuth, create);
+
 router.put("/:componentId", requireAuth, create);
 router.patch("/:componentId", requireAuth, update);
 router.del("/:componentId", requireAuth, del);
-
-router.get("/", requireAuth, getList);
 router.get("/:componentId", requireAuth, getById);
 
 export default router.routes();

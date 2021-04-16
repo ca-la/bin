@@ -2,7 +2,7 @@ import { escape as escapeHtml } from "lodash";
 import qs from "querystring";
 
 import { STUDIO_HOST } from "../../config";
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 import normalizeTitle from "../../services/normalize-title";
 
 interface Links {

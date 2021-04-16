@@ -1,7 +1,7 @@
 import Knex from "knex";
 
 import * as ComponentsDAO from "../../components/components/dao";
-import Component from "../../components/components/domain-object";
+import { Component } from "../../components/components/types";
 import prepareForDuplication from "./prepare-for-duplication";
 import { findAndDuplicateOption } from "./options";
 
@@ -15,11 +15,7 @@ export async function findAndDuplicateComponent(
   trx: Knex.Transaction
 ): Promise<Component> {
   const component = await ComponentsDAO.findById(componentId);
-  const additionalFields: {
-    artworkId?: string;
-    materialId?: string;
-    sketchId?: string;
-  } = {};
+  const additionalFields: Partial<Component> = {};
 
   if (!component) {
     throw new Error(`Component ${componentId} does not exist!`);
@@ -34,7 +30,7 @@ export async function findAndDuplicateComponent(
   }
 
   return ComponentsDAO.create(
-    prepareForDuplication(component, {
+    prepareForDuplication<Component>(component, {
       ...additionalFields,
       parentId: newParentId,
     }),

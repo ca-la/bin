@@ -1,6 +1,7 @@
 import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { USER_UPLOADS_IMGIX_URL } from "../../config";
 import * as Fetch from "../fetch";
-import { purgeImage } from ".";
+import { purgeImage, getPageCount } from ".";
 
 test("purgeImage makes purge request", async (t: Test) => {
   const fetchStub = sandbox()
@@ -31,5 +32,29 @@ test("purgeImage makes purge request", async (t: Test) => {
       },
     },
     "request body is correct"
+  );
+});
+
+test("getPageCount counts pages", async (t: Test) => {
+  const fetchStub = sandbox()
+    .stub(Fetch, "fetch")
+    .resolves({
+      json: (): Promise<object> =>
+        Promise.resolve({
+          PDF: {
+            PageCount: 2,
+          },
+        }),
+      headers: {
+        get: (): string => "application/json",
+      },
+    });
+
+  const pages = await getPageCount("asset-id");
+  t.equal(pages, 2);
+
+  t.deepEqual(
+    fetchStub.firstCall.args[0],
+    `${USER_UPLOADS_IMGIX_URL}/asset-id?fm=json`
   );
 });

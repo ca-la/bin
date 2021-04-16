@@ -9,7 +9,7 @@ import ProductDesignsDAO from "../../components/product-designs/dao";
 import createDesign from "../../services/create-design";
 import * as ComponentsDAO from "../../components/components/dao";
 import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
-import Component from "../../components/components/domain-object";
+import { Component } from "../../components/components/types";
 import generateComponent from "./component";
 
 interface ProductDesignCanvasWithResources {

@@ -9,11 +9,9 @@ import {
 } from "./index";
 import { sandbox, test } from "../../test-helpers/fresh";
 
-import Component, {
-  ComponentType,
-} from "../../components/components/domain-object";
+import { Component, ComponentType } from "../../components/components/types";
 import OptionsDAO from "../../dao/product-design-options";
-import * as ImagesDAO from "../../components/assets/dao";
+import * as AssetsDAO from "../../components/assets/dao";
 import Asset from "../../components/assets/types";
 
 function stubUrls(): void {
@@ -39,9 +37,10 @@ test("addAssetLink returns only the download link for non-previewable assets", a
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
 
-  sandbox().stub(ImagesDAO, "findById").resolves({
+  sandbox().stub(AssetsDAO, "findById").resolves({
     id: sketchId,
     mimeType: "text/csv",
     uploadCompletedAt: new Date(),
@@ -72,9 +71,10 @@ test("addAssetLink returns aws link when component is of type sketch", async (t:
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
 
-  sandbox().stub(ImagesDAO, "findById").resolves({
+  sandbox().stub(AssetsDAO, "findById").resolves({
     id: sketchId,
     mimeType: "image/png",
     uploadCompletedAt: new Date(),
@@ -115,9 +115,10 @@ test("addAssetLink returns link when component is of type artwork", async (t: ta
     parentId: null,
     sketchId: null,
     type: ComponentType.Artwork,
+    assetPageNumber: null,
   };
 
-  sandbox().stub(ImagesDAO, "findById").resolves({
+  sandbox().stub(AssetsDAO, "findById").resolves({
     id: artworkId,
     mimeType: "image/heic",
     uploadCompletedAt: new Date(),
@@ -159,13 +160,14 @@ test("addAssetLink returns link when component is of type material", async (t: t
     parentId: null,
     sketchId: null,
     type: ComponentType.Material,
+    assetPageNumber: null,
   };
 
   sandbox().stub(OptionsDAO, "findById").resolves({
     previewImageId: materialImageId,
     uploadCompletedAt: new Date(),
   });
-  sandbox().stub(ImagesDAO, "findById").resolves({
+  sandbox().stub(AssetsDAO, "findById").resolves({
     id: materialImageId,
     mimeType: "image/vnd.adobe.photoshop",
     uploadCompletedAt: new Date(),
@@ -192,7 +194,7 @@ test("addAssetLink returns link when component is of type material", async (t: t
   t.equal(enrichedComponent.assetId, materialImageId);
 });
 
-test("addAssetLink returns link when component is of type material", async (t: tape.Test) => {
+test("generatePreviewLinks", async (t: tape.Test) => {
   stubUrls();
   const imageId = uuid.v4();
   const imageIdTwo = uuid.v4();
@@ -215,7 +217,7 @@ test("addAssetLink returns link when component is of type material", async (t: t
   );
 });
 
-test("addAssetLink returns link when component is of type material", async (t: tape.Test) => {
+test("constructAttachmentAssetLinks", async (t: tape.Test) => {
   stubUrls();
   const imageId = uuid.v4();
   const attachmentAssetLinks = constructAttachmentAssetLinks({
@@ -229,5 +231,52 @@ test("addAssetLink returns link when component is of type material", async (t: t
   t.equal(
     attachmentAssetLinks.downloadLink,
     `https://user-uploads.example.com/${imageId}`
+  );
+});
+
+test("addAssetLink returns paginated links for components with pages", async (t: tape.Test) => {
+  stubUrls();
+  const id = uuid.v4();
+  const materialId = uuid.v4();
+  const materialImageId = uuid.v4();
+  const component: Component = {
+    artworkId: null,
+    createdAt: new Date(),
+    createdBy: "test",
+    deletedAt: new Date(),
+    id,
+    materialId,
+    parentId: null,
+    sketchId: null,
+    type: ComponentType.Material,
+    assetPageNumber: 2,
+  };
+
+  sandbox().stub(OptionsDAO, "findById").resolves({
+    previewImageId: materialImageId,
+    uploadCompletedAt: new Date(),
+  });
+  sandbox().stub(AssetsDAO, "findById").resolves({
+    id: materialImageId,
+    mimeType: "application/pdf",
+    uploadCompletedAt: new Date(),
+  });
+
+  const enrichedComponent = await addAssetLink(component);
+  t.equal(
+    enrichedComponent.downloadLink,
+    `https://user-uploads.example.com/${materialImageId}`
+  );
+  t.equal(
+    enrichedComponent.assetLink,
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=max&page=2`
+  );
+  t.equal(
+    enrichedComponent.thumbnailLink,
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&page=2`
+  );
+  t.equal(
+    enrichedComponent.thumbnail2xLink,
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&dpr=2&page=2`
   );
 });

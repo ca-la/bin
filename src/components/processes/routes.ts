@@ -3,7 +3,7 @@ import Router from "koa-router";
 import requireAuth = require("../../middleware/require-auth");
 
 import * as ProcessesDAO from "./dao";
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 
 const router = new Router();
 

@@ -7,7 +7,8 @@ import * as ProductDesignImagesDAO from "../assets/dao";
 import ProductDesignOptionsDAO from "../../dao/product-design-options";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as ComponentsDAO from "../components/dao";
-import Component, { ComponentType } from "../components/domain-object";
+import * as CanvasSplitService from "./services/split";
+import { Component, ComponentType } from "../components/types";
 
 import createUser = require("../../test-helpers/create-user");
 import {
@@ -174,6 +175,7 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
     parentId: null,
     sketchId: sketch.id,
     type: "Sketch",
+    assetPageNumber: null,
   };
 
   const data = [
@@ -294,6 +296,7 @@ test("PUT /product-design-canvases/:id creates a canvas, component and image", a
           parentId: null,
           sketchId: imageId,
           type: ComponentType.Sketch,
+          assetPageNumber: null,
         },
       ],
       createdAt: new Date().toISOString(),
@@ -381,6 +384,7 @@ test("PUT /product-design-canvases/:id creates canvas, component, image, and opt
           parentId: null,
           sketchId: null,
           type: ComponentType.Material,
+          assetPageNumber: null,
         },
       ],
       createdAt: new Date().toISOString(),
@@ -606,6 +610,15 @@ test("PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
     x: 0,
     y: 0,
   });
+  const { asset: sketch } = await generateAsset({
+    description: "",
+    id: uuid.v4(),
+    mimeType: "image/png",
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: "",
+    userId: user.id,
+  });
   const data = {
     artworkId: null,
     assetLink: "https://ca.la/images/my-cool-image",
@@ -615,8 +628,9 @@ test("PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
     id: uuid.v4(),
     materialId: null,
     parentId: null,
-    sketchId: null,
+    sketchId: sketch.id,
     type: "Sketch",
+    assetPageNumber: null,
   };
 
   const [response, body] = await put(
@@ -655,6 +669,15 @@ pre-existing preview image`, async (t: tape.Test) => {
     x: 0,
     y: 0,
   });
+  const { asset: sketch } = await generateAsset({
+    description: "",
+    id: uuid.v4(),
+    mimeType: "image/png",
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: "",
+    userId: user.id,
+  });
   const data = {
     artworkId: null,
     assetLink: "https://ca.la/images/my-cool-image",
@@ -664,8 +687,9 @@ pre-existing preview image`, async (t: tape.Test) => {
     id: uuid.v4(),
     materialId: null,
     parentId: null,
-    sketchId: null,
+    sketchId: sketch.id,
     type: "Sketch",
+    assetPageNumber: null,
   };
 
   const [response, body] = await put(
@@ -717,4 +741,38 @@ test("GET /:canvasId/changes returns a list of changes", async (t: tape.Test) =>
     changes[1]
   );
   t.deepEqual(gatherStub.args[0], [canvas.id]);
+});
+
+test("POST /:canvasId/split-pages splits pages", async (t: tape.Test) => {
+  sandbox()
+    .stub(CanvasSplitService, "splitCanvas")
+    .resolves([
+      { canvas: { id: "canvas1" }, components: [{ id: "component1" }] },
+      { canvas: { id: "canvas2" }, components: [{ id: "component2" }] },
+    ]);
+
+  sandbox()
+    .stub(EnrichmentService, "addAssetLink")
+    .callsFake(
+      async (component: Component): Promise<any> => {
+        return component;
+      }
+    );
+
+  const { session, user } = await createUser();
+  const { canvas } = await generateCanvas({ createdBy: user.id });
+
+  const [response, body] = await post(
+    `/product-design-canvases/${canvas.id}/split-pages`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+
+  t.equal(response.status, 201);
+  t.equal(body.length, 2);
+  t.deepEqual(body[0].id, "canvas1");
+  t.deepEqual(body[0].components[0].id, "component1");
+  t.deepEqual(body[1].id, "canvas2");
+  t.deepEqual(body[1].components[0].id, "component2");
 });

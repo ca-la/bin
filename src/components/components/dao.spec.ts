@@ -11,7 +11,7 @@ import {
   findRoot,
   update,
 } from "./dao";
-import { ComponentType } from "./domain-object";
+import { ComponentType } from "./types";
 import { create as createDesign } from "../product-designs/dao";
 import createUser = require("../../test-helpers/create-user");
 import generateComponent from "../../test-helpers/factories/component";
@@ -34,14 +34,15 @@ test("Components DAO supports creation/retrieval", async (t: tape.Test) => {
   };
   const data = {
     artworkId: null,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     createdBy: userId,
-    deletedAt: new Date().toISOString(),
+    deletedAt: new Date(),
     id,
     materialId: null,
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   await generateAsset(imageData);
   const inserted = await create(data);
@@ -62,6 +63,7 @@ test("Components DAO supports creation/retrieval", async (t: tape.Test) => {
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const secondInsert = await create(secondComponent);
   t.deepEqual(
@@ -87,14 +89,15 @@ test("Components DAO supports update", async (t: tape.Test) => {
   };
   const data = {
     artworkId: null,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     createdBy: userId,
-    deletedAt: new Date().toISOString(),
+    deletedAt: new Date(),
     id: componentId,
     materialId: null,
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   await generateAsset(imageData);
   const { id, createdAt, deletedAt, ...first } = await create(data);
@@ -124,16 +127,19 @@ test("Components DAO supports delete", async (t: tape.Test) => {
   const userData = await createUser();
   const userId = userData.user.id;
   const id = uuid.v4();
+  const { asset } = await generateAsset();
+
   const data = {
     artworkId: null,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     createdBy: userId,
-    deletedAt: new Date().toISOString(),
+    deletedAt: new Date(),
     id,
     materialId: null,
     parentId: null,
-    sketchId: null,
+    sketchId: asset.id,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   await create(data);
   await del(id);
@@ -173,14 +179,15 @@ test("Components DAO supports retrieval by canvasId", async (t: tape.Test) => {
   };
   const data = {
     artworkId: null,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(),
     createdBy: userId,
-    deletedAt: new Date().toISOString(),
+    deletedAt: new Date(),
     id,
     materialId: null,
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   await generateAsset(imageData);
   const inserted = await create(data);
