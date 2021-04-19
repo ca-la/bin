@@ -308,6 +308,28 @@ test("POST /team-users: payment required when not enought seats in plan", async 
   );
 });
 
+test("POST /team-users: CALA admin can add TEAM_PARTNER", async (t: Test) => {
+  const { addStripeSeatStub, createStub } = setup({
+    role: "ADMIN",
+  });
+  const [response] = await post(`/team-users`, {
+    headers: authHeader("a-session-id"),
+    body: {
+      teamId: "a-team-id",
+      userEmail: "teampartner@example.com",
+      role: Role.TEAM_PARTNER,
+    },
+  });
+
+  t.equal(response.status, 201, "Response with a success status");
+  t.equal(createStub.callCount, 1, "Calls the standard create method");
+  t.equal(
+    addStripeSeatStub.callCount,
+    0,
+    "Does not call stripe add seat function for free type"
+  );
+});
+
 test("POST /team-users: that we cannot add team users above the restriction (team-users lock) if team has a capacity and we send multiple concurrent requests", async (t: Test) => {
   const { user: teamUser, session: teamUserSession } = await createUser({
     role: "PARTNER",
@@ -1359,9 +1381,14 @@ test("/team-users end-to-end", async (t: Test) => {
   sandbox()
     .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
     .resolves(true);
+  const addSeatChargeStub = sandbox()
+    .stub(StripeService, "addSeatCharge")
+    .resolves();
 
+  const calaAdmin = await createUser({ role: "ADMIN" });
   const teamAdmin = await createUser();
   const teamMember = await createUser();
+  const teamPartner = await createUser();
   const notAMember = await createUser();
 
   const trx = await db.transaction();
@@ -1448,19 +1475,45 @@ test("/team-users end-to-end", async (t: Test) => {
     "Returns TeamUser with User"
   );
 
+  await post("/team-users", {
+    headers: authHeader(calaAdmin.session.id),
+    body: {
+      teamId,
+      userEmail: teamPartner.user.email,
+      role: Role.TEAM_PARTNER,
+    },
+  });
+
+  t.equal(
+    addSeatChargeStub.callCount,
+    0,
+    "does not attempt to charge when adding free role types"
+  );
+
   const [, teamMembers] = await get(`/team-users?teamId=${teamId}`, {
     headers: authHeader(teamAdmin.session.id),
   });
 
-  for (const member of teamMembers) {
-    const memberUser =
-      teamAdmin.user.id === member.user.id ? teamAdmin.user : teamMember.user;
-    t.deepEqual(
-      JSON.parse(JSON.stringify(memberUser)),
-      member.user,
-      "attaches the correct user"
-    );
-  }
+  t.deepEqual(
+    teamMembers.find((member: any) => member.userId === teamAdmin.user.id)!
+      .user,
+    JSON.parse(JSON.stringify(teamAdmin.user)),
+    "attaches teamAdmin user"
+  );
+
+  t.deepEqual(
+    teamMembers.find((member: any) => member.userId === teamMember.user.id)!
+      .user,
+    JSON.parse(JSON.stringify(teamMember.user)),
+    "attaches teamMember user"
+  );
+
+  t.deepEqual(
+    teamMembers.find((member: any) => member.userId === teamPartner.user.id)!
+      .user,
+    JSON.parse(JSON.stringify(teamPartner.user)),
+    "attaches teamPartner user"
+  );
 
   const [unauthorized] = await get(`/team-users?teamId=${teamId}`, {
     headers: authHeader(notAMember.session.id),

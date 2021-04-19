@@ -298,7 +298,7 @@ export async function createTeamUser(
     throw new Error("Could not find created user");
   }
 
-  if (role !== TeamUserRole.VIEWER) {
+  if (!isRoleFree) {
     await addStripeSeatCharge(trx, teamId);
   }
 
