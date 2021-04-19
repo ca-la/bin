@@ -1,12 +1,9 @@
 import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from "../../config";
-import Component, {
-  ComponentType,
-} from "../../components/components/domain-object";
-import OptionsDAO from "../../dao/product-design-options";
-import * as ImagesDAO from "../../components/assets/dao";
+import { Component } from "../../components/components/types";
 import { isPreviewable } from "../../services/is-previewable";
 import { getExtension } from "../../services/get-extension";
 import Asset, { AssetLinks } from "../../components/assets/types";
+import getAsset from "../../components/components/get-asset";
 
 const DESIGN_PREVIEW_TOOL_FORMAT = "?fm=jpg&fit=max";
 const DESIGN_PREVIEW_TOOL_FORMAT_3X = "?fm=jpg&fit=max&dpr=3";
@@ -17,23 +14,29 @@ const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + "&dpr=2";
 const ATTACHMENT_PREVIEW = "?fm=jpg&fit=fill&h=106&w=128";
 const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + "&dpr=2";
 
-function constructAssetLinks(asset: Asset): AssetLinks {
+function constructAssetLinks(
+  asset: Asset,
+  pageNumber: number | null
+): AssetLinks {
+  const pageSuffix = pageNumber === null ? "" : `&page=${pageNumber}`;
+
   const hasPreview = isPreviewable(asset.mimeType);
+
   return {
     assetId: asset.id,
     assetLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}${pageSuffix}`
       : null,
     asset3xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}${pageSuffix}`
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
     fileType: getExtension(asset.mimeType) || "Unknown",
     thumbnailLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL}${pageSuffix}`
       : null,
     thumbnail2xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL_2X}`
+      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL_2X}${pageSuffix}`
       : null,
     originalWidthPx: asset.originalWidthPx,
     originalHeightPx: asset.originalHeightPx,
@@ -42,7 +45,7 @@ function constructAssetLinks(asset: Asset): AssetLinks {
 
 export function getLinksForAsset(asset: Asset): AssetLinks | null {
   if (asset.uploadCompletedAt) {
-    return constructAssetLinks(asset);
+    return constructAssetLinks(asset, null);
   }
 
   return null;
@@ -52,42 +55,9 @@ export function getLinksForAsset(asset: Asset): AssetLinks | null {
  * Adds in image links based off the given component.
  */
 async function getLink(component: Component): Promise<AssetLinks> {
-  switch (component.type) {
-    case ComponentType.Artwork: {
-      if (!component.artworkId) {
-        throw new Error(`Component ${component.id} has no artwork_id.`);
-      }
-
-      const artworkImage = await ImagesDAO.findById(component.artworkId);
-      if (!artworkImage || !artworkImage.uploadCompletedAt) {
-        break;
-      }
-
-      return constructAssetLinks(artworkImage);
-    }
-
-    case ComponentType.Sketch: {
-      if (!component.sketchId) {
-        throw new Error(`Component ${component.id} has no sketch_id.`);
-      }
-
-      const sketchImage = await ImagesDAO.findById(component.sketchId);
-      if (!sketchImage || !sketchImage.uploadCompletedAt) {
-        break;
-      }
-
-      return constructAssetLinks(sketchImage);
-    }
-
-    case ComponentType.Material: {
-      const option = await OptionsDAO.findById(component.materialId);
-      const materialImage = await ImagesDAO.findById(option.previewImageId);
-      if (!materialImage || !materialImage.uploadCompletedAt) {
-        break;
-      }
-
-      return constructAssetLinks(materialImage);
-    }
+  const asset = await getAsset(component);
+  if (asset && asset.uploadCompletedAt) {
+    return constructAssetLinks(asset, component.assetPageNumber);
   }
 
   return {

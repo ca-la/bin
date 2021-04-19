@@ -14,7 +14,7 @@ import {
 import getLinks, { constructHtmlLink, LinkType } from "./get-links";
 import normalizeTitle from "../../services/normalize-title";
 import Comment from "../../components/comments/types";
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 import { getMentionsFromComment } from "../../services/add-at-mention-details";
 import { generatePreviewLinks } from "../../services/attach-asset-links";
 import User from "../../components/users/domain-object";

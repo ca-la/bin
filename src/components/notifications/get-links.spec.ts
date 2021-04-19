@@ -1,7 +1,7 @@
 import { test, Test } from "../../test-helpers/fresh";
 import getLinks, { LinkType } from "./get-links";
 import { STUDIO_HOST } from "../../config";
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 
 test("getLinks", async () => {
   test("Subscribe with collection ID", async (t: Test) => {

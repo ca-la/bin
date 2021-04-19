@@ -12,7 +12,7 @@ import {
   put,
 } from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
-import { ComponentType } from "./domain-object";
+import { ComponentType } from "./types";
 import { omit } from "lodash";
 
 test("GET /components/:componentId returns Component", async (t: tape.Test) => {
@@ -30,6 +30,7 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const image = {
     createdAt: new Date(),
@@ -68,7 +69,7 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
   );
 });
 
-test("POST /components/ returns a Component", async (t: tape.Test) => {
+test("POST /components returns a Component", async (t: tape.Test) => {
   const { session } = await createUser();
 
   const id = uuid.v4();
@@ -83,6 +84,7 @@ test("POST /components/ returns a Component", async (t: tape.Test) => {
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const image = {
     createdAt: new Date(),
@@ -123,6 +125,7 @@ test("PUT /components/:id returns a Component", async (t: tape.Test) => {
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const image = {
     createdAt: new Date(),
@@ -163,6 +166,7 @@ test("PATCH /components/:componentId returns a Component", async (t: tape.Test) 
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const image = {
     createdAt: new Date(),
@@ -203,6 +207,7 @@ test("DELETE /components/:componentId deletes a Component", async (t: tape.Test)
     parentId: null,
     sketchId,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   };
   const image = {
     createdAt: new Date(),

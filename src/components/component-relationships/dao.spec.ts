@@ -4,7 +4,7 @@ import uuid from "node-uuid";
 import * as ComponentsDAO from "../components/dao";
 import * as ComponentRelationshipsDAO from "./dao";
 
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 import createUser = require("../../test-helpers/create-user");
 import { test } from "../../test-helpers/fresh";
 import generateProcess from "../../test-helpers/factories/process";
@@ -33,6 +33,7 @@ test("ComponentRelationships DAO support creation/retrieval", async (t: tape.Tes
     parentId: null,
     sketchId: sketch.id,
     type: ComponentType.Sketch,
+    assetPageNumber: null,
   });
   const { process } = await generateProcess({ createdBy: userData.user.id });
   const componentRelationshipId = uuid.v4();

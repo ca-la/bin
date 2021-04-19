@@ -3,7 +3,7 @@ import Knex from "knex";
 import * as ComponentsDAO from "../../components/components/dao";
 import * as CanvasesDAO from "../../components/canvases/dao";
 
-import Component from "../../components/components/domain-object";
+import { Component } from "../../components/components/types";
 import Canvas from "../../components/canvases/domain-object";
 
 import { findAndDuplicateComponent } from "./components";

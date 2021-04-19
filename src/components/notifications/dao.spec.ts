@@ -31,7 +31,7 @@ import generateProductDesignStage from "../../test-helpers/factories/product-des
 import generateComment from "../../test-helpers/factories/comment";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
-import { ComponentType } from "../components/domain-object";
+import { ComponentType } from "../components/types";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import { NotificationFilter } from "./types";
@@ -144,6 +144,7 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
     parentId: null,
     type: ComponentType.Material,
     id: uuid.v4(),
+    assetPageNumber: null,
   });
   const { canvas: can1 } = await generateCanvas({ componentId: comp1.id });
 

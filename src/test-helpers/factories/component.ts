@@ -1,8 +1,6 @@
 import uuid from "node-uuid";
 import { create } from "../../components/components/dao";
-import Component, {
-  ComponentType,
-} from "../../components/components/domain-object";
+import { Component, ComponentType } from "../../components/components/types";
 import { findById as findUserById } from "../../components/users/dao";
 import { findById as findAssetById } from "../../components/assets/dao";
 import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
@@ -55,6 +53,7 @@ export default async function generateComponent(
         parentId: options.parentId || null,
         sketchId: asset.id,
         type: ComponentType.Sketch,
+        assetPageNumber: null,
       });
       break;
 
@@ -67,6 +66,7 @@ export default async function generateComponent(
         parentId: options.parentId || null,
         sketchId: null,
         type: ComponentType.Sketch,
+        assetPageNumber: null,
       });
       break;
 
@@ -78,7 +78,8 @@ export default async function generateComponent(
         materialId: options.materialId!,
         parentId: options.parentId || null,
         sketchId: null,
-        type: ComponentType.Sketch,
+        type: ComponentType.Material,
+        assetPageNumber: null,
       });
       break;
     default:
