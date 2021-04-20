@@ -111,6 +111,8 @@ export async function getPageCount(assetId: string): Promise<number> {
     path: `/${assetId}?fm=json`,
   }).catch(
     filterError(ImgixResponseTypeError, (err: ImgixResponseTypeError) => {
+      // Not logging the body, as imgix `fm=json` requests can return the entire
+      // asset payload in some cases
       logServerError(`Asset ID: ${assetId}. Status: ${err.status}`);
       throw err;
     })
