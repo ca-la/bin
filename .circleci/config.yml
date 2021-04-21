@@ -5,7 +5,7 @@ jobs:
       DATABASE_URL: postgres://ubuntu:@127.0.0.1:5432/circle_test
 
     docker:
-      - image: circleci/node:14.16.1
+      - image: circleci/node:10.15.0
       - image: circleci/postgres:10.6-alpine-ram
         environment:
           POSTGRES_USER: ubuntu

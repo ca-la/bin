@@ -4,7 +4,7 @@ const { DATABASE_URL, MAX_DB_CONNECTION_POOL_SIZE } = require("./config");
 
 // Knex configuration. Used by services/db as well as the Knex CLI
 module.exports = {
-  ssl: { rejectUnauthorized: false },
+  ssl: true,
   client: "pg",
   connection: DATABASE_URL,
   pool: {
