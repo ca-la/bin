@@ -45,7 +45,10 @@ app.use(
 const loadTime = Date.now() - beginTime;
 Logger.log(`Loaded ${router.stack.length} routes in ${loadTime}ms`);
 
-if (!module.parent) {
+// See https://nodejs.org/docs/latest/api/deprecations.html#deprecations_dep0144_module_parent
+const isEntrypoint = require.main === module;
+
+if (isEntrypoint) {
   registerMessageBuilders();
   const port = process.env.PORT || 8001;
   app.listen(port);
