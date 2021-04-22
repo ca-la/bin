@@ -60,7 +60,8 @@ export const ADMIN_EMAIL: string;
 export const CALA_OPS_USER_ID: string;
 
 export const DATABASE_URL: string;
-export const MAX_DB_CONNECTION_POOL_SIZE: string;
+export const DATABASE_REQUIRE_SSL: boolean;
+export const MAX_DB_CONNECTION_POOL_SIZE: number;
 
 export const USER_UPLOADS_IMGIX_URL: string;
 

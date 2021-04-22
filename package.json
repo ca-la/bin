@@ -18,7 +18,7 @@
     "@types/node": "^10.17.5",
     "@types/node-fetch": "^2.3.3",
     "@types/node-uuid": "0.0.28",
-    "@types/pg": "^7.4.14",
+    "@types/pg": "^7.14.11",
     "apollo-server-koa": "^2.19.0",
     "aws-sdk": "^2.302.0",
     "bcrypt": "5.0.0",
@@ -40,7 +40,7 @@
     "mime-types": "^2.1.21",
     "node-fetch": "^2.6.1",
     "node-uuid": "1.4.7",
-    "pg": "^7.12.1",
+    "pg": "^8.6.0",
     "pg-rethrow": "1.0.1",
     "probe-image-size": "^4.0.0",
     "promise-events": "^0.1.8",
@@ -75,8 +75,8 @@
     "tape": "4.6.2"
   },
   "engines": {
-    "node": "10.15.0",
-    "npm": "6.4.1"
+    "node": "14.16.1",
+    "npm": "6.14.12"
   },
   "scripts": {
     "start": "bin/start",

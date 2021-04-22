@@ -1,12 +1,23 @@
-"use strict";
-
-const { DATABASE_URL, MAX_DB_CONNECTION_POOL_SIZE } = require("./config");
+import Knex from "knex";
+import {
+  DATABASE_URL,
+  MAX_DB_CONNECTION_POOL_SIZE,
+  DATABASE_REQUIRE_SSL,
+} from "./config";
 
 // Knex configuration. Used by services/db as well as the Knex CLI
-module.exports = {
-  ssl: true,
+const knexConfig: Knex.Config = {
   client: "pg",
-  connection: DATABASE_URL,
+  connection: {
+    ssl: DATABASE_REQUIRE_SSL
+      ? {
+          // Require SSL, but allow self-signed certificates
+          // Heroku uses self-signed certificates
+          rejectUnauthorized: false,
+        }
+      : false,
+    connectionString: DATABASE_URL,
+  },
   pool: {
     min: 2,
 
@@ -24,3 +35,5 @@ module.exports = {
     max: MAX_DB_CONNECTION_POOL_SIZE,
   },
 };
+
+module.exports = knexConfig;

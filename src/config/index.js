@@ -133,6 +133,7 @@ const config = {
     parseInt(process.env.MAX_DB_CONNECTION_POOL_SIZE, 10),
 
   DATABASE_URL: process.env.DATABASE_URL,
+  DATABASE_REQUIRE_SSL: process.env.DATABASE_REQUIRE_SSL === "true",
 
   USER_UPLOADS_IMGIX_URL: process.env.USER_UPLOADS_IMGIX_URL,
 
