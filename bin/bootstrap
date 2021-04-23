@@ -58,36 +58,11 @@ Welcome to the CALA API bootstrapping script.
 First we're going to check that you have the required tools installed.
 "
 
-  ensure_command brew Homebrew "https://brew.sh"
-  ensure_command node node.js "https://nodejs.org/"
-  ensure_command npm npm "https://nodejs.org/"
-  ensure_command heroku "the Heroku CLI" "https://devcenter.heroku.com/articles/heroku-cli"
-  ensure_command psql "psql (PostgreSQL)" "https://postgresapp.com"
-  ensure_command createdb "createdb (PostgreSQL)" "https://postgresapp.com"
-
-  echo -n "Checking for findutils..."
-  if [[ $(xargs --version | grep -o findutils) != "findutils" ]]; then
-    print_blue "It looks like you don't have the \`findutils\` version of \`xargs\` on your \$PATH."
-    echo -n "Installing findutils... "
-    brew install findutils >/dev/null
-    print_green "OK"
-
-    if [[ $(xargs --version | grep -o findutils) != "findutils" ]]; then
-      fail_fatal "Even after installation, we couldn't access findutils. Please ensure that your \$PATH is set up correctly to include Homebrew packages, \
-and \`findutils\` specifically: https://sourabhbajaj.com/mac-setup/Homebrew/README.html
-
-This may require adding a line to your ~/.bash_profile or ~/.zshrc as follows:
-
-export PATH=/usr/local/opt/findutils/libexec/gnubin:\$PATH"
-    fi
-  fi
-  print_green "OK"
-
-  echo -n "Checking node.js and npm versions... "
-  if [[ $(node -v) != "v10.15.0" ]] || [[ $(npm -v) != "6.4.1" ]]; then
-    fail_fatal "CALA applications use node.js version 10.15.0 and npm 6.4.1. \
-Please install these versions and try again. We recommend \
-https://github.com/tj/n for managing different installations."
+  ensure_command nix nix "https://nixos.org"
+  echo -n "Checking that we're running in a nix shell... "
+  if [[ -z $IN_NIX_SHELL ]]; then
+    fail_fatal "Looks like you are not running in a nix shell. Please check out \
+the nix repo and follow the instructions for launching a nix shell there."
   fi
   print_green "OK"
 
@@ -114,13 +89,13 @@ parse your local .env file, please make sure it's formatted correctly"
 
 
   echo -n "Checking npm access... "
-  npm info @cala/ts-lib &>/dev/null || fail_fatal "It looks like you don't \
-have access to CALA npm packages. Pleas run \`npm login\`."
+  npm info @cala/api-types &>/dev/null || fail_fatal "It looks like you don't \
+have access to CALA npm packages. Please run \`npm login\`."
   print_green "OK"
 
   echo -n "Checking Heroku access... "
   heroku ps -a cala-api-stg >/dev/null || fail_fatal "It looks like you don't \
-have access to the CALA apps. Run \`heroku login\` to sign in as a user with access."
+have access to the CALA apps. Please run \`heroku login\` to sign in as a user with access."
   print_green "OK"
 
   echo -n "Installing dependencies... "
@@ -158,6 +133,24 @@ have access to the CALA apps. Run \`heroku login\` to sign in as a user with acc
   psql -d cala-test -f $TMPDIR/staging-pricing.sql >/dev/null
   print_green "OK"
 
+  echo -n "Downloading plan data from Staging... "
+  pg_dump \
+    --table=plans \
+    $(heroku config:get DATABASE_URL -a cala-api-stg) \
+    > $TMPDIR/staging-plans.sql
+  pg_dump \
+    --table=plan_stripe_prices \
+    $(heroku config:get DATABASE_URL -a cala-api-stg) \
+    > $TMPDIR/staging-plan-prices.sql
+  print_green "OK"
+
+  echo -n "Inserting Staging plan data... "
+  psql -d cala -f $TMPDIR/staging-plans.sql >/dev/null
+  psql -d cala-test -f $TMPDIR/staging-plans.sql >/dev/null
+  psql -d cala -f $TMPDIR/staging-plan-prices.sql >/dev/null
+  psql -d cala-test -f $TMPDIR/staging-plan-prices.sql >/dev/null
+  print_green "OK"
+
   echo -n "Creating your first user... "
   psql cala -c "
     insert into users
@@ -181,33 +174,19 @@ have access to the CALA apps. Run \`heroku login\` to sign in as a user with acc
         'n/a',
         '\$2b\$10\$vuU2RiNa77I2GPUqjFd2euCurgZHMZkKkCA1EaadRXYGEnMMWkn9S'
       );
-
-    insert into plans (
-      id,
-      monthly_cost_cents,
-      stripe_plan_id,
-      title,
-      is_default,
-      billing_interval,
-      revenue_share_basis_points,
-      cost_of_goods_share_basis_points,
-      is_public,
-      description,
-      ordering
-    ) values (
-      'efe2b18d-6669-4cd6-99a1-5e5ee43db597',
-      10000,
-      'plan_FdS0kUdIfGxLoG',
-      'Test Plan',
-      true,
-      'MONTHLY',
-      0,
-      0,
-      true,
-      'Everything you need.',
-      0
-    );
       " >/dev/null
+  print_green "OK"
+
+  echo -n "Creating user teams... "
+  bin/run local src/scripts/backfill-user-teams.ts >/dev/null
+  print_green "OK"
+
+  echo -n "Creating user team subscriptions... "
+  bin/run local src/scripts/backfill-team-subscriptions.ts >/dev/null
+  print_green "OK"
+
+  echo -n "Creating user team subscriptions in Stripe... "
+  bin/run local src/scripts/one-off/2021-02-03-backfill-subscriptions-with-stripe-subscriptions.ts
   print_green "OK"
 
   print_green "🎉 You're up and running!

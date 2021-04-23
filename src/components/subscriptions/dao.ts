@@ -16,25 +16,38 @@ import { validate, validateEvery } from "../../services/validate-from-db";
 
 const TABLE_NAME = "subscriptions";
 
-export async function create(
-  data: Uninserted<Subscription>,
-  trx: Knex.Transaction
-): Promise<Subscription> {
-  const rowData = dataAdapter.forInsertion({
-    ...data,
-    id: uuid.v4(),
-  });
+export async function createAll(
+  trx: Knex.Transaction,
+  data: Uninserted<Subscription>[]
+): Promise<Subscription[]> {
+  const rowData = data.map((sub: Uninserted<Subscription>) =>
+    dataAdapter.forInsertion({
+      ...sub,
+      id: uuid.v4(),
+    })
+  );
 
-  const res = await trx(TABLE_NAME)
-    .insert(rowData, "*")
-    .then((rows: SubscriptionRow[]) => first(rows));
+  const res = await trx(TABLE_NAME).insert(rowData, "*");
 
-  return validate<SubscriptionRow, Subscription>(
+  return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,
     isSubscriptionRow,
     dataAdapter,
     res
   );
+}
+
+export async function create(
+  data: Uninserted<Subscription>,
+  trx: Knex.Transaction
+): Promise<Subscription> {
+  const all = await createAll(trx, [data]);
+
+  if (all.length !== 1) {
+    throw new Error("Could not create subscription");
+  }
+
+  return all[0];
 }
 
 export async function findForUser(
