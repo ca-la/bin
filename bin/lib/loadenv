@@ -32,7 +32,6 @@ function loadenv_heroku() {
   set -o allexport
   envvars=$(heroku config -s -a $1 | xargs -d "\n")
   eval $envvars
-  DATABASE_URL=$(heroku config:get DATABASE_URL -a $1)?ssl=true
   set +o allexport
 }
 
