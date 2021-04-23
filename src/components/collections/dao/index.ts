@@ -23,9 +23,8 @@ import {
   MetaCollectionRow,
 } from "../meta-domain-object";
 import {
-  ADMIN_PERMISSIONS,
+  calculateCollectionPermissions,
   calculateTeamCollectionPermissions,
-  getPermissionsFromDesign,
 } from "../../../services/get-permissions";
 import { Roles } from "../../collaborators/types";
 import { TeamUserRole } from "../../team-users";
@@ -136,9 +135,17 @@ export async function findByUser(
       ktx.raw("array_remove(array_agg(team_users.role), null) as team_roles")
     )
     .groupBy("collections.id")
-    .leftJoin("collaborators", "collaborators.collection_id", "collections.id")
+    .leftJoin("collaborators", (collaboratorsJoin: Knex.JoinClause) => {
+      collaboratorsJoin
+        .on("collaborators.collection_id", "=", "collections.id")
+        .andOn("collaborators.user_id", ktx.raw("?", [options.userId]));
+    })
     .leftJoin("teams", "teams.id", "collections.team_id")
-    .leftJoin("team_users", "team_users.team_id", "teams.id")
+    .leftJoin("team_users", (teamUsersJoin: Knex.JoinClause) => {
+      teamUsersJoin
+        .andOn("team_users.team_id", "=", "teams.id")
+        .andOn("team_users.user_id", ktx.raw("?", [options.userId]));
+    })
     .leftJoin("users", "users.id", "team_users.user_id")
     .modify((query: Knex.QueryBuilder): void => {
       if (options.search) {
@@ -147,21 +154,24 @@ export async function findByUser(
     })
     .where({
       "collections.deleted_at": null,
+      "team_users.deleted_at": null,
     })
     .andWhereRaw(
+      ktx.raw(
+        "(collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())"
+      )
+    )
+    .andWhereRaw(
       `
-((
+(
   collaborators.user_id = :userId
-  AND (collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())
-) OR (
+ OR
   team_users.user_id = :userId
-  AND team_users.deleted_at IS NULL
-))`,
+)`,
       { userId: options.userId }
     )
     .modify(limitOrOffset(options.limit, options.offset))
-    .orderBy("collections.created_at", "desc")
-    .catch(rethrow);
+    .orderBy("collections.created_at", "desc");
 
   const collectionDbs: CollectionDb[] = validateEvery<
     CollectionDbRow,
@@ -170,20 +180,13 @@ export async function findByUser(
 
   return collectionDbs.map((collection: CollectionDb, index: number) => ({
     ...collection,
-    permissions:
-      options.sessionRole === "ADMIN"
-        ? ADMIN_PERMISSIONS
-        : collection.teamId !== null
-        ? calculateTeamCollectionPermissions(collectionRows[index].team_roles)
-        : getPermissionsFromDesign({
-            collaboratorRoles:
-              collection.createdBy === options.userId
-                ? [...collectionRows[index].collaborator_roles, "EDIT"]
-                : collectionRows[index].collaborator_roles,
-            isCheckedOut: true,
-            sessionRole: options.sessionRole,
-            sessionUserId: options.userId,
-          }),
+    permissions: calculateCollectionPermissions({
+      collection,
+      sessionRole: options.sessionRole,
+      sessionUserId: options.userId,
+      collaboratorRoles: collectionRows[index].collaborator_roles,
+      teamUserRoles: collectionRows[index].team_roles || [],
+    }),
   }));
 }
 
@@ -211,15 +214,29 @@ export async function findDirectlySharedWithUser(
         query.where(db.raw("(collections.title ~* ?)", options.search));
       }
     })
-    .where({
-      "collections.deleted_at": null,
-      "collaborators.user_id": options.userId,
-    })
+    .where("collections.deleted_at", null)
     .andWhereRaw(
       `
-  collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now()
-`
+  collaborators.user_id = :userId
+  AND (collaborators.cancelled_at IS NULL OR collaborators.cancelled_at > now())
+`,
+      { userId: options.userId }
     )
+    .andWhere((query: Knex.QueryBuilder) => {
+      query
+        .whereNotIn("collections.team_id", (subquery: Knex.QueryBuilder) => {
+          subquery
+            .select("teams.id")
+            .from("teams")
+            .innerJoin("team_users", "team_users.team_id", "teams.id")
+            .where("team_users.user_id", options.userId)
+            .andWhere({
+              "team_users.deleted_at": null,
+              "teams.deleted_at": null,
+            });
+        })
+        .orWhere("collections.team_id", null);
+    })
     .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
@@ -231,18 +248,15 @@ export async function findDirectlySharedWithUser(
 
   return collectionDbs.map((collection: CollectionDb, index: number) => ({
     ...collection,
-    permissions:
-      options.sessionRole === "ADMIN"
-        ? ADMIN_PERMISSIONS
-        : getPermissionsFromDesign({
-            collaboratorRoles:
-              collection.createdBy === options.userId
-                ? [...collectionRows[index].collaborator_roles, "EDIT"]
-                : collectionRows[index].collaborator_roles,
-            isCheckedOut: true,
-            sessionRole: options.sessionRole,
-            sessionUserId: options.userId,
-          }),
+    permissions: calculateCollectionPermissions({
+      collection,
+      sessionRole: options.sessionRole,
+      sessionUserId: options.userId,
+      collaboratorRoles: collectionRows[index].collaborator_roles,
+      // fine to not lean on team roles
+      // because we exclude collections, those user has an access to as a team user
+      teamUserRoles: [],
+    }),
   }));
 }
 

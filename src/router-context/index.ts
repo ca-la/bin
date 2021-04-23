@@ -1,6 +1,6 @@
 import { Request, Context, DefaultState } from "koa";
 
-interface UnknownRequest extends Request {
+export interface UnknownRequest extends Request {
   body: unknown;
   query: unknown;
 }

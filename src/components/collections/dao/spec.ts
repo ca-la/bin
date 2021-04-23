@@ -25,7 +25,7 @@ import {
 import { deleteById } from "../../../test-helpers/designs";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { generateTeam } from "../../../test-helpers/factories/team";
-import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
+import { generateTeamUser } from "../../../test-helpers/factories/team-user";
 import { Role as TeamUserRole } from "../../team-users/types";
 
 test("CollectionsDAO#create creates a collection", async (t: Test) => {
@@ -152,20 +152,21 @@ async function findSetup() {
   const { user: user1 } = await createUser({ withSession: false });
   const { user: user2 } = await createUser({ withSession: false });
   const { user: user3 } = await createUser({ withSession: false });
-  const { team } = await generateTeam(user1.id);
-  await db.transaction((trx: Knex.Transaction) =>
-    RawTeamUsersDAO.create(trx, {
-      id: uuid.v4(),
-      teamId: team.id,
-      userId: user3.id,
-      userEmail: null,
-      role: TeamUserRole.VIEWER,
-      label: null,
-      createdAt: new Date(),
-      deletedAt: new Date(),
-      updatedAt: new Date(),
-    })
-  );
+  const teamOwner = await createUser({ withSession: false });
+  const { team } = await generateTeam(teamOwner.user.id);
+  await generateTeamUser({
+    userId: user1.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  await generateTeamUser({
+    userId: user3.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+    createdAt: new Date(),
+    deletedAt: new Date(),
+    updatedAt: new Date(),
+  });
 
   const id1 = uuid.v4();
   const id2 = uuid.v4();
@@ -221,11 +222,32 @@ async function findSetup() {
   });
   await generateCollaborator({
     collectionId: collection2.id,
+    cancelledAt: new Date("2018-04-20"),
     designId: null,
     invitationMessage: null,
     role: "EDIT",
     userEmail: null,
     userId: user1.id,
+  });
+  await generateCollaborator({
+    collectionId: collection2.id,
+    cancelledAt: null,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: user1.id,
+  });
+  // additional collaborator for collection
+  // as it used to affect the permissions for the findByUser for user1.id
+  const { user: userCol1 } = await createUser({ withSession: false });
+  await generateCollaborator({
+    collectionId: collection2.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: userCol1.id,
   });
   await generateCollaborator({
     cancelledAt: new Date("2018-04-20"),
@@ -269,9 +291,10 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
 
   const permissions = {
     canComment: true,
-    canDelete: true,
+    canDelete: false,
     canEdit: true,
-    canEditVariants: false,
+    canEditTitle: true,
+    canEditVariants: true,
     canSubmit: true,
     canView: true,
   };
@@ -289,7 +312,11 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
       [
         {
           ...collection5,
-          permissions: { ...permissions, canEditVariants: true },
+          // as a team owner
+          permissions: {
+            ...permissions,
+            canDelete: true,
+          },
         },
         { ...collection2, permissions },
         { ...collection1, permissions },
@@ -330,19 +357,40 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
 });
 
 test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches", async (t: Test) => {
-  const { user1, collection1, collection2, collection4 } = await findSetup();
+  const {
+    user1,
+    collection1,
+    collection2,
+    collection4,
+    collection5,
+  } = await findSetup();
 
   const permissions = {
     canComment: true,
-    canDelete: true,
+    canDelete: false,
     canEdit: true,
-    canEditVariants: false,
+    canEditTitle: true,
+    canEditVariants: true,
     canSubmit: true,
     canView: true,
   };
 
   return db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection4.id);
+
+    // collection 5 is within the user1 team
+    // should be excluded even though user is now a collaborator
+    await generateCollaborator(
+      {
+        collectionId: collection5.id,
+        designId: null,
+        invitationMessage: null,
+        role: "EDIT",
+        userEmail: null,
+        userId: user1.id,
+      },
+      trx
+    );
 
     const collections = await CollectionsDAO.findDirectlySharedWithUser(trx, {
       userId: user1.id,

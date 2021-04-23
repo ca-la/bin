@@ -14,15 +14,6 @@ const validSession: Partial<Session> = {
   userId: "a-user-id",
 };
 
-const fullPermissions: PermissionsService.Permissions = {
-  canComment: true,
-  canDelete: true,
-  canEdit: true,
-  canEditVariants: true,
-  canSubmit: true,
-  canView: true,
-};
-
 const collaboratorParticipant: Participant = {
   type: MentionType.COLLABORATOR,
   id: "a-collaborator-id",
@@ -59,7 +50,7 @@ test("GET /participants?designId", async (t: Test) => {
     .resolves(validSession);
   const permissionsStub = sandbox()
     .stub(PermissionsService, "getDesignPermissions")
-    .resolves(fullPermissions);
+    .resolves(PermissionsService.FULL_ACCESS);
 
   sandbox().stub(ProductDesignsDAO, "findById").resolves({});
   sandbox()
@@ -111,6 +102,7 @@ test("GET /participants?designId", async (t: Test) => {
     canComment: false,
     canDelete: false,
     canEdit: false,
+    canEditTitle: false,
     canEditVariants: false,
     canSubmit: false,
     canView: false,
@@ -126,5 +118,5 @@ test("GET /participants?designId", async (t: Test) => {
     "no design permissions / returns a forbidden status"
   );
 
-  permissionsStub.resolves(fullPermissions);
+  permissionsStub.resolves(PermissionsService.FULL_ACCESS);
 });

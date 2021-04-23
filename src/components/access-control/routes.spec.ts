@@ -185,8 +185,9 @@ test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
   t.equal(responseOne.status, 200);
   t.deepEqual(bodyOne, {
     canComment: true,
-    canDelete: true,
+    canDelete: false,
     canEdit: true,
+    canEditTitle: true,
     canEditVariants: true,
     canSubmit: true,
     canView: true,
@@ -219,6 +220,7 @@ test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
     canComment: true,
     canDelete: false,
     canEdit: false,
+    canEditTitle: false,
     canEditVariants: false,
     canSubmit: false,
     canView: true,
@@ -295,7 +297,11 @@ test(`GET ${API_PATH}/collections checks access`, async (t: tape.Test) => {
       headers: API.authHeader(userOne.session.id),
     }
   );
-  t.equal(responseOne.status, 200);
+  t.equal(
+    responseOne.status,
+    200,
+    "collection owner has an access to a collection"
+  );
 
   const [responseTwo] = await API.get(
     `${API_PATH}/collections/${collectionOne.id}`,

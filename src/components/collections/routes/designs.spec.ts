@@ -1,70 +1,21 @@
 import uuid from "node-uuid";
 
 import * as CollaboratorsDAO from "../../collaborators/dao";
+import { CollaboratorRoles } from "../../collaborators/types";
 import * as CollectionsDAO from "../dao";
-import * as CollectionDesignsDAO from "../dao/design";
-import SessionsDAO from "../../../dao/sessions";
 import ProductDesignsDAO from "../../product-designs/dao";
 import API from "../../../test-helpers/http";
 import * as CreateDesignTasksService from "../../../services/create-design-tasks";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
-import createUser = require("../../../test-helpers/create-user");
+import createUser from "../../../test-helpers/create-user";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import generateCollection from "../../../test-helpers/factories/collection";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
-import { TeamUsersDAO } from "../../team-users";
+import { Role as TeamUserRole } from "../../team-users/types";
+import { ROLES } from "../../users/types";
 import { generateTeam } from "../../../test-helpers/factories/team";
-
-const collection = {
-  id: "a-collection-id",
-  createdBy: "a-user-id",
-  teamId: null,
-};
-const ownerCollaborator = {
-  userId: "a-user-id",
-  role: "EDIT",
-};
-const partnerCollaborator = {
-  userId: "a-partner-id",
-  role: "PARTNER",
-};
-
-function setupStubs() {
-  return {
-    sessionStub: sandbox().stub(SessionsDAO, "findById").resolves({
-      role: "USER",
-      userId: "a-user-id",
-    }),
-    findCollectionById: sandbox()
-      .stub(CollectionsDAO, "findById")
-      .resolves(collection),
-    collaboratorStub: sandbox()
-      .stub(CollaboratorsDAO, "findByCollectionAndUser")
-      .resolves([ownerCollaborator]),
-    createCollaboratorStub: sandbox()
-      .stub(CollaboratorsDAO, "create")
-      .resolves(ownerCollaborator),
-    createCollaboratorsStub: sandbox()
-      .stub(CollaboratorsDAO, "createAll")
-      .resolves([ownerCollaborator]),
-    cancelCollaboratorsStub: sandbox()
-      .stub(CollaboratorsDAO, "cancelByDesignsAndRole")
-      .resolves(),
-    moveDesignStub: sandbox()
-      .stub(CollectionDesignsDAO, "moveDesigns")
-      .resolves(1),
-    removeDesignStub: sandbox()
-      .stub(CollectionDesignsDAO, "removeDesigns")
-      .resolves(1),
-    findDesignsByCollectionId: sandbox()
-      .stub(ProductDesignsDAO, "findByCollectionId")
-      .resolves([{ id: "another-design-id" }]),
-    findTeamUsersByCollection: sandbox()
-      .stub(TeamUsersDAO, "findByUserAndCollection")
-      .resolves([]),
-  };
-}
+import { generateTeamUser } from "../../../test-helpers/factories/team-user";
 
 test("PUT + DEL /collections/:id/designs supports moving many designs to from/the collection", async (t: Test) => {
   sandbox().stub(CreateDesignTasksService, "createDesignTasks").resolves();
@@ -134,7 +85,7 @@ test("PUT + DEL /collections/:id/designs supports moving many designs to from/th
   );
 });
 
-test("PUT + DEL /collections/:id/designs without collection-level access", async (t: Test) => {
+test("PUT + DEL /collections/:id/designs is not allowed without team-level access", async (t: Test) => {
   const { user, session } = await createUser();
   const { user: user2 } = await createUser({ withSession: false });
   const { collection: c1 } = await generateCollection({ createdBy: user2.id });
@@ -160,7 +111,11 @@ test("PUT + DEL /collections/:id/designs without collection-level access", async
     }
   );
 
-  t.equal(response1.status, 403);
+  t.equal(
+    response1.status,
+    403,
+    "not a team member can not put designs to the collection"
+  );
   t.equal(body1.message, "You don't have permission to view this collection");
 
   const [response2, body2] = await API.del(
@@ -170,13 +125,500 @@ test("PUT + DEL /collections/:id/designs without collection-level access", async
     }
   );
 
-  t.equal(response2.status, 403);
+  t.equal(
+    response2.status,
+    403,
+    "not a team member can not delete designs from the collection"
+  );
   t.equal(body2.message, "You don't have permission to view this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is not allowed for collection owner without team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection owner without the team permissions can not put designs into collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection owner without the team permissions can not delete own designs form the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is not allowed for collection PARTNER without team-level access", async (t: Test) => {
+  const { user, session } = await createUser({ role: ROLES.PARTNER });
+  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.PARTNER,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection PARTNER without the team permissions can not put designs into collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection PARTNER without the team permissions can not delete own designs form the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is not allowed for collection editor without team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: editCollaboratorUser,
+    session: editCollaboratorSession,
+  } = await createUser();
+  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: editCollaboratorUser.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with EDIT role without the team permissions can not put designs into collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with EDIT role without the team permissions can not delete own designs form the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is not allowed for collection editor with VIEWER team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: editCollaboratorUser,
+    session: editCollaboratorSession,
+  } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: editCollaboratorUser.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: editCollaboratorUser.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with EDIT role with VIEWER team-level access can not put designs into collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with EDIT role with VIEWER team-level access can not delete designs form the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is not allowed for team user with VIEWER team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: teamViewerUser,
+    session: teamViewerSession,
+  } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: teamViewerUser.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(teamViewerSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "team user with VIEWER team-level access can not put designs into collection"
+  );
+  t.equal(body1.message, "You don't have permission to edit this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(teamViewerSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "team user with VIEWER team-level access can not delete designs form the collection"
+  );
+  t.equal(body2.message, "You don't have permission to edit this collection");
+});
+
+test("PUT + DEL /collections/:id/designs is allowed for collection viewer collaborator with EDITOR team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: editCollaboratorUser,
+    session: editCollaboratorSession,
+  } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: editCollaboratorUser.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: editCollaboratorUser.id,
+    role: CollaboratorRoles.VIEW,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    200,
+    "collection collaborator with VIEW role and EDITOR team-level access can put designs into collection"
+  );
+
+  const [response2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    200,
+    "collection collaborator with VIEW role and EDITOR team-level access can delete designs form the collection"
+  );
+});
+
+test("PUT + DEL /collections/:id/designs is allowed for collection editor with EDITOR team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: editCollaboratorUser,
+    session: editCollaboratorSession,
+  } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: editCollaboratorUser.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: editCollaboratorUser.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    200,
+    "collection collaborator with EDIT role and EDITOR team-level access can put designs into collection"
+  );
+
+  const [response2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(editCollaboratorSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    200,
+    "collection collaborator with EDIT role and EDITOR team-level access can delete designs form the collection"
+  );
+});
+
+test("PUT + DEL /collections/:id/designs is allowed for team user with EDITOR team-level access", async (t: Test) => {
+  const { user } = await createUser();
+  const {
+    user: teamEditorUser,
+    session: teamEditorSession,
+  } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: teamEditorUser.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
+    {
+      headers: API.authHeader(teamEditorSession.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    200,
+    "team user with EDITOR team-level access can put designs into collection"
+  );
+
+  const [response2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(teamEditorSession.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    200,
+    "team user with EDITOR team-level access can put designs into collection"
+  );
 });
 
 test("PUT + DEL /collections/:id/designs without designs", async (t: Test) => {
   const { user, session } = await createUser();
-  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  const { team } = await generateTeam(user.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
 
   const [response1, body1] = await API.put(
     `/collections/${c1.id}/designs?designIds=`,
@@ -199,135 +641,486 @@ test("PUT + DEL /collections/:id/designs without designs", async (t: Test) => {
   t.equal(body2.message, "designIds is a required query parameter.");
 });
 
-test("PUT /collections/:id/designs?designIds", async (t: Test) => {
-  const { sessionStub, collaboratorStub } = setupStubs();
-  const ownerRequest = await API.put(
-    `/collections/${collection.id}/designs?designIds=a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
+test("PUT + DEL /collections/:id/designs is allowed for the CALA Admin", async (t: Test) => {
+  const { session: adminSession } = await createUser({ role: ROLES.ADMIN });
+  const { user } = await createUser();
+  const { user: editCollaboratorUser } = await createUser();
 
-  t.equal(ownerRequest[0].status, 200);
-  t.deepEqual(
-    ownerRequest[1],
-    [{ id: "another-design-id" }],
-    "request returns designs in collection"
-  );
+  const { team } = await generateTeam(user.id);
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: editCollaboratorUser.id,
+    role: CollaboratorRoles.VIEW,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+  const d2 = await generateDesign({
+    createdAt: new Date("2019-04-21"),
+    userId: user.id,
+  });
+  const d3 = await generateDesign({
+    createdAt: new Date("2019-04-22"),
+    userId: user.id,
+  });
 
-  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
-  collaboratorStub.resolves([partnerCollaborator]);
-  const partnerRequest = await API.put(
-    `/collections/${collection.id}/designs?designIds=a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(partnerRequest[0].status, 403);
-
-  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
-  collaboratorStub.resolves([]);
-  const adminRequest = await API.put(
-    `/collections/${collection.id}/designs?designIds=a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(adminRequest[0].status, 200);
-});
-
-test("PUT /collections/:id/designs/:id", async (t: Test) => {
-  const { sessionStub, collaboratorStub } = setupStubs();
-
-  const ownerRequest = await API.put(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(ownerRequest[0].status, 200);
-  t.deepEqual(
-    ownerRequest[1],
-    [{ id: "another-design-id" }],
-    "request returns designs in collection"
-  );
-
-  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
-  collaboratorStub.resolves([partnerCollaborator]);
-  const partnerRequest = await API.put(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(partnerRequest[0].status, 403);
-
-  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
-  collaboratorStub.resolves([]);
-  const adminRequest = await API.put(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(adminRequest[0].status, 200);
-});
-
-test("DELETE /collections/:id/designs/:id", async (t: Test) => {
-  const {
-    sessionStub,
-    collaboratorStub,
-    createCollaboratorStub,
-    cancelCollaboratorsStub,
-  } = setupStubs();
-  const ownerRequest = await API.del(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
-  );
-
-  t.equal(ownerRequest[0].status, 200);
-  t.deepEqual(
-    ownerRequest[1],
-    [{ id: "another-design-id" }],
-    "request returns designs in collection"
-  );
-
-  t.deepEqual(
-    cancelCollaboratorsStub.args[0].slice(1),
-    [["a-design-id"], "OWNER"],
-    "deletes existing owner collaborators"
-  );
-
-  t.deepEqual(
-    createCollaboratorStub.args[0][0],
+  const [response1] = await API.put(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d2.id, d3.id].join(
+      ","
+    )}`,
     {
-      cancelledAt: null,
-      collectionId: null,
-      designId: "a-design-id",
-      invitationMessage: null,
-      role: "OWNER",
-      teamId: null,
-      userEmail: null,
-      userId: "a-user-id",
-    },
-    "creates OWNER collaborator for actor"
+      headers: API.authHeader(adminSession.id),
+    }
   );
 
-  sessionStub.resolves({ role: "PARTNER", userId: "a-partner-id" });
-  collaboratorStub.resolves([partnerCollaborator]);
-  const partnerRequest = await API.del(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
+  t.equal(response1.status, 200, "CALA admin can put designs into collection");
+
+  const [response2] = await API.del(
+    `/collections/${c1.id}/designs?designIds=${[d1.id, d3.id].join(",")}`,
+    {
+      headers: API.authHeader(adminSession.id),
+    }
   );
 
-  t.equal(partnerRequest[0].status, 403);
+  t.equal(
+    response2.status,
+    200,
+    "CALA admin can delete designs form the collection"
+  );
+});
 
-  sessionStub.resolves({ role: "ADMIN", userId: "an-admin-id" });
-  collaboratorStub.resolves([]);
-  const adminRequest = await API.del(
-    `/collections/${collection.id}/designs/a-design-id`,
-    { headers: { Authorization: "Token a-session-id" } }
+test("PUT + DEL /collections/:id/designs/:id is not allowed without team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: user2 } = await createUser({ withSession: false });
+  const { collection: c1 } = await generateCollection({ createdBy: user2.id });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
   );
 
-  t.equal(adminRequest[0].status, 200);
+  t.equal(
+    response1.status,
+    403,
+    "not a team member can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to view this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "not a team member can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to view this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for collection owner without team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { collection: c1 } = await generateCollection({ createdBy: user.id });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "even collection owner who is not a team member can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "even collection owner who is not a team member can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for collection viewer without team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionOwner } = await createUser();
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionOwner.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.VIEW,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with VIEW role  who is not a team member can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to edit this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with VIEW role who is not a team member can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to edit this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for collection PARTNER without team-level access", async (t: Test) => {
+  const { user, session } = await createUser({ role: ROLES.PARTNER });
+  const { user: collectionOwner } = await createUser();
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionOwner.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.PARTNER,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with PARTNER role who is not a team member can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with PARTNER role who is not a team member can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for collection EDITOR without team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionOwner } = await createUser();
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionOwner.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with EDIT role  who is not a team member can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with EDIT role who is not a team member can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for team user with VIEWER team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionAndTeamOwner } = await createUser();
+  const { team } = await generateTeam(collectionAndTeamOwner.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionAndTeamOwner.id,
+    teamId: team.id,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "team user with VIEWER role can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to edit this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "team user with VIEWER role can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to edit this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is not allowed for collection editor with VIEWER team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionAndTeamOwner } = await createUser();
+  const { team } = await generateTeam(collectionAndTeamOwner.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionAndTeamOwner.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1, body1] = await API.put(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response1.status,
+    403,
+    "collection collaborator with EDIT role who is a team user with VIEWER role can not put design to the collection"
+  );
+  t.equal(body1.message, "You don't have permission to delete this collection");
+
+  const [response2, body2] = await API.del(
+    `/collections/${c1.id}/designs/${d1.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+
+  t.equal(
+    response2.status,
+    403,
+    "collection collaborator with EDIT role who is a team user with VIEWER role can not delete design from the collection"
+  );
+  t.equal(body2.message, "You don't have permission to delete this collection");
+});
+
+test("PUT + DEL /collections/:id/designs/:id is allowed for team user with EDITOR team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionAndTeamOwner } = await createUser();
+  const { team } = await generateTeam(collectionAndTeamOwner.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionAndTeamOwner.id,
+    teamId: team.id,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(session.id),
+  });
+
+  t.equal(
+    response1.status,
+    200,
+    "team user with EDITOR role can put design to the collection"
+  );
+
+  const [response2] = await API.del(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(session.id),
+  });
+
+  t.equal(
+    response2.status,
+    200,
+    "team user with EDITOR role can delete design from the collection"
+  );
+});
+
+test("PUT + DEL /collections/:id/designs/:id is allowed for collection editor with EDITOR team-level access", async (t: Test) => {
+  const { user, session } = await createUser();
+  const { user: collectionAndTeamOwner } = await createUser();
+  const { team } = await generateTeam(collectionAndTeamOwner.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const { collection: c1 } = await generateCollection({
+    createdBy: collectionAndTeamOwner.id,
+    teamId: team.id,
+  });
+  await generateCollaborator({
+    collectionId: c1.id,
+    userId: user.id,
+    role: CollaboratorRoles.EDIT,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(session.id),
+  });
+
+  t.equal(
+    response1.status,
+    200,
+    "team user with EDITOR role can put design to the collection"
+  );
+
+  const [response2] = await API.del(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(session.id),
+  });
+
+  t.equal(
+    response2.status,
+    200,
+    "team user with EDITOR role can delete design from the collection"
+  );
+});
+
+test("PUT + DEL /collections/:id/designs/:id is allowed for CALA Admin", async (t: Test) => {
+  const { session: adminSession } = await createUser({ role: ROLES.ADMIN });
+  const { user } = await createUser();
+
+  const { team } = await generateTeam(user.id);
+  const { collection: c1 } = await generateCollection({
+    createdBy: user.id,
+    teamId: team.id,
+  });
+  const d1 = await generateDesign({
+    createdAt: new Date("2019-04-20"),
+    userId: user.id,
+  });
+
+  const [response1] = await API.put(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(adminSession.id),
+  });
+
+  t.equal(response1.status, 200, "CALA admin can put design into collection");
+
+  const [response2] = await API.del(`/collections/${c1.id}/designs/${d1.id}`, {
+    headers: API.authHeader(adminSession.id),
+  });
+
+  t.equal(
+    response2.status,
+    200,
+    "CALA admin can delete design form the collection"
+  );
 });
 
 test("GET /collections/:id/designs", async (t: Test) => {
   const { user, session } = await createUser();
 
+  const { team } = await generateTeam(user.id);
   const createdAt = new Date();
   const c1 = await CollectionsDAO.create({
     createdAt,
@@ -335,7 +1128,7 @@ test("GET /collections/:id/designs", async (t: Test) => {
     deletedAt: null,
     description: "Initial commit",
     id: uuid.v4(),
-    teamId: null,
+    teamId: team.id,
     title: "Drop 001/The Early Years",
   });
   const design = await ProductDesignsDAO.create({
@@ -373,11 +1166,12 @@ test("GET /collections/:id/designs", async (t: Test) => {
         canComment: true,
         canDelete: true,
         canEdit: true,
+        canEditTitle: true,
         canEditVariants: true,
         canSubmit: true,
         canView: true,
       },
-      role: "EDIT",
+      role: "OWNER",
     },
     "returns a list of contained designs"
   );

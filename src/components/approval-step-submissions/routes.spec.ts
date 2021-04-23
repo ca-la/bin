@@ -16,6 +16,8 @@ import DesignEventsDAO from "../design-events/dao";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
+import generateCollection from "../../test-helpers/factories/collection";
+import { moveDesign } from "../../test-helpers/collections";
 import { NotificationType } from "../notifications/domain-object";
 import ApprovalStep from "../approval-steps/types";
 import User from "../users/types";
@@ -28,6 +30,8 @@ import * as NotificationService from "../../services/create-notifications";
 import * as IrisService from "../iris/send-message";
 import { templateDesignEventWithMeta } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { generateTeamUser } from "../../test-helpers/factories/team-user";
+import { Role as TeamUserRole } from "../team-users/types";
 
 async function setupSubmission(
   approvalSubmission: Partial<ApprovalStepSubmission> = {}
@@ -705,7 +709,7 @@ test("DELETE /design-approval-step-submissions success for clean submission with
   );
 });
 
-test("DELETE /design-approval-step-submissions success as collaborator with EDIT role", async (t: Test) => {
+test("DELETE /design-approval-step-submissions is not allowed for collaborator with EDIT role outside of the design collection team", async (t: Test) => {
   const { submission, design } = await setupSubmission({
     collaboratorId: null,
     teamUserId: null,
@@ -733,8 +737,140 @@ test("DELETE /design-approval-step-submissions success as collaborator with EDIT
 
   t.equal(
     deleteResponse.status,
+    403,
+    "Does not allow to delete submission for collaborator with edit permissions who is not a part of the team with role EDITOR+"
+  );
+});
+
+test("DELETE /design-approval-step-submissions success as collaborator with EDIT role and team member with EDITOR role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const collabEditor = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabEditor.user.id,
+        role: "EDIT",
+      },
+      trx
+    )
+  );
+
+  const teamOwner = await createUser();
+  const { team } = await generateTeam(teamOwner.user.id);
+  generateTeamUser({
+    userId: collabEditor.user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const { collection } = await generateCollection({
+    createdBy: collabEditor.user.id,
+    title: "Collection1",
+    teamId: team.id,
+  });
+  await moveDesign(collection.id, design.id);
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
     204,
-    "Allow to delete submission for collaborator with edit permissions"
+    "Allow to delete submission for user who is a collaborator with edit permissions and a team user with EDITOR role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions is allowed for team user with EDITOR role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const teamOwner = await createUser();
+  const { team } = await generateTeam(teamOwner.user.id);
+  const teamEditor = await createUser();
+  generateTeamUser({
+    userId: teamEditor.user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const collectionOwner = await createUser();
+  const { collection } = await generateCollection({
+    createdBy: collectionOwner.user.id,
+    title: "Collection1",
+    teamId: team.id,
+  });
+  await moveDesign(collection.id, design.id);
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(teamEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    204,
+    "Allow to delete submission for user who is a team user with EDITOR role"
+  );
+});
+
+test("DELETE /design-approval-step-submissions is not allowed as collaborator with EDIT role and team member with VIEWER role", async (t: Test) => {
+  const { submission, design } = await setupSubmission({
+    collaboratorId: null,
+    teamUserId: null,
+    state: ApprovalStepSubmissionState.UNSUBMITTED,
+  });
+
+  const collabEditor = await createUser();
+  await db.transaction((trx: Knex.Transaction) =>
+    generateCollaborator(
+      {
+        designId: design.id,
+        userId: collabEditor.user.id,
+        role: "EDIT",
+      },
+      trx
+    )
+  );
+
+  const teamOwner = await createUser();
+  const { team } = await generateTeam(teamOwner.user.id);
+  generateTeamUser({
+    userId: collabEditor.user.id,
+    teamId: team.id,
+    role: TeamUserRole.VIEWER,
+  });
+  const { collection } = await generateCollection({
+    createdBy: collabEditor.user.id,
+    title: "Collection1",
+    teamId: team.id,
+  });
+  await moveDesign(collection.id, design.id);
+
+  const [deleteResponse] = await del(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(collabEditor.session.id),
+    }
+  );
+
+  t.equal(
+    deleteResponse.status,
+    403,
+    "Does not allow to delete submission for user who is a collaborator with edit permissions and a team user with VIEWER role"
   );
 });
 

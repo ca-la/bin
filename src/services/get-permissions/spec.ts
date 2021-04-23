@@ -15,70 +15,143 @@ import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { moveDesign } from "../../test-helpers/collections";
 import { TeamUserRole, RawTeamUsersDAO } from "../../components/team-users";
+import { CollaboratorRoles } from "../../components/collaborators/types";
 
-test("getPermissionFromDesign", async (t: tape.Test) => {
+test("calculateDesignPermissions", async (t: tape.Test) => {
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["OWNER"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
+      isOwner: true,
+      collaboratorRoles: [CollaboratorRoles.OWNER],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
     },
-    "valid: owner"
+    "valid: owner but not a team member"
   );
+
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
+      isOwner: true,
+      collaboratorRoles: [CollaboratorRoles.OWNER],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
+      isDraftDesign: true,
     }),
     {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
     },
-    "valid: editor"
+    "valid: owner has full access if design is in draft state"
   );
+
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT"],
-      isCheckedOut: true,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.EDIT],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
+      isDraftDesign: true,
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: not an owner cannot delete the design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: true,
+      collaboratorRoles: [],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: creator but not a collaborator has the EDIT collaborator permissions"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.EDIT],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: editor but not a team member"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.EDIT],
+      teamUserRoles: [],
+      isDesignCheckedOut: true,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
       canEditVariants: false,
       canSubmit: true,
       canView: true,
     },
     "valid: editor on checked out design"
   );
+
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: [],
-      isCheckedOut: true,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "ADMIN",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [],
+      isDesignCheckedOut: true,
     }),
     {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
@@ -86,50 +159,58 @@ test("getPermissionFromDesign", async (t: tape.Test) => {
     "valid: admin on checked out design no collaborator"
   );
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["PARTNER"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "PARTNER",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.PARTNER],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
     }),
     {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
     },
-    "valid: partner"
+    "valid: partner cannot edit the design title"
   );
+
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["PREVIEW"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "PARTNER",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.PREVIEW],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
     }),
     {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
     },
     "valid: preview"
   );
+
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["VIEW"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: ["VIEW"],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
     }),
     {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
@@ -138,21 +219,267 @@ test("getPermissionFromDesign", async (t: tape.Test) => {
   );
 
   t.deepEqual(
-    PermissionsService.getPermissionsFromDesign({
-      collaboratorRoles: ["EDIT", "PREVIEW", "PARTNER", "VIEW"],
-      isCheckedOut: false,
+    PermissionsService.calculateDesignPermissions({
       sessionRole: "USER",
-      sessionUserId: "a-session-user-id",
+      isOwner: false,
+      collaboratorRoles: [
+        CollaboratorRoles.EDIT,
+        CollaboratorRoles.PREVIEW,
+        CollaboratorRoles.PARTNER,
+        CollaboratorRoles.VIEW,
+      ],
+      teamUserRoles: [],
+      isDesignCheckedOut: false,
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
     },
     "valid: multiple roles returns permission for most permissive role"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.VIEWER],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: false,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    },
+    "valid: VIEWER team user"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.TEAM_PARTNER],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    },
+    "valid: TEAM_PARTNER team user cannot edit the design title"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.TEAM_PARTNER],
+      isDesignCheckedOut: true,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: true,
+    },
+    "valid: TEAM_PARTNER team user on checked out design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.EDITOR],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: EDITOR team user"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.EDITOR],
+      isDesignCheckedOut: true,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: false,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: EDITOR team user on checked out design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.ADMIN],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: ADMIN team user"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.ADMIN],
+      isDesignCheckedOut: true,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: false,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: ADMIN team user on checked out design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.OWNER],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: OWNER team user"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [],
+      teamUserRoles: [TeamUserRole.OWNER],
+      isDesignCheckedOut: true,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: false,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: OWNER team user on checked out design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.OWNER],
+      teamUserRoles: [TeamUserRole.VIEWER],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: owner collaborator and VIEWER team member can't delete the design"
+  );
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.OWNER],
+      teamUserRoles: [TeamUserRole.EDITOR],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: owner collaborator and EDITOR team user can delete the design"
+  );
+
+  t.deepEqual(
+    PermissionsService.calculateDesignPermissions({
+      sessionRole: "USER",
+      isOwner: false,
+      collaboratorRoles: [CollaboratorRoles.VIEW, CollaboratorRoles.OWNER],
+      teamUserRoles: [
+        TeamUserRole.VIEWER,
+        TeamUserRole.TEAM_PARTNER,
+        TeamUserRole.EDITOR,
+      ],
+      isDesignCheckedOut: false,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "valid: takes the most permissive role from collaborator and team user roles"
   );
 });
 
@@ -212,6 +539,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     type: "COMMIT_QUOTE",
     actorId: user.id,
   });
+  await moveDesign(collection2.id, design5.id);
 
   await generateCollaborator({
     collectionId: collection1.id,
@@ -246,6 +574,39 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     userId: user.id,
   });
 
+  const draftDesign = await createDesign({
+    productType: "TEE",
+    title: "Draft design",
+    userId: user.id,
+  });
+
+  await generateCollaborator({
+    collectionId: null,
+    designId: draftDesign.id,
+    invitationMessage: null,
+    role: "OWNER",
+    userEmail: null,
+    userId: user.id,
+  });
+
+  t.deepEqual(
+    await PermissionsService.getDesignPermissions({
+      designId: draftDesign.id,
+      sessionRole: session.role,
+      sessionUserId: user.id,
+    }),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "Returns full access permissions for the draft design the user is owner of"
+  );
+
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
       designId: design1.id,
@@ -254,13 +615,14 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
     },
-    "Returns all access permissions for the design the user created."
+    "Returns edit access permissions for the design the user created outside of the collection team."
   );
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
@@ -270,8 +632,9 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: false,
       canSubmit: true,
       canView: true,
@@ -288,6 +651,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
@@ -302,13 +666,14 @@ test("#getDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: true,
+      canDelete: false,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
     },
-    "Returns edit access permissions for the design the user is an edit collaborator on."
+    "Returns edit access permissions for the design the user is an edit collaborator on and not a collection team member."
   );
   t.deepEqual(
     await PermissionsService.getDesignPermissions({
@@ -320,6 +685,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
@@ -336,6 +702,7 @@ test("#getDesignPermissions", async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: false,
@@ -449,6 +816,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
@@ -466,6 +834,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       canComment: true,
       canDelete: true,
       canEdit: true,
+      canEditTitle: true,
       canEditVariants: true,
       canSubmit: true,
       canView: true,
@@ -483,6 +852,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
@@ -500,6 +870,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       canComment: true,
       canDelete: false,
       canEdit: true,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: true,
@@ -517,6 +888,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
       canComment: false,
       canDelete: false,
       canEdit: false,
+      canEditTitle: false,
       canEditVariants: false,
       canSubmit: false,
       canView: false,
@@ -529,7 +901,15 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   const { user, session } = await createUser();
   const { user: user2, session: session2 } = await createUser();
   const { user: user3, session: session3 } = await createUser();
+  const {
+    user: teamViewerUser,
+    session: teamViewerUserSession,
+  } = await createUser();
   const { user: partnerUser, session: partnerSession } = await createUser();
+  const { user: admin, session: adminSession } = await createUser({
+    role: "ADMIN",
+  });
+  const { user: user4, session: session4 } = await createUser();
   const { team } = await generateTeam(user.id);
 
   const collection1 = await CollectionsDAO.create({
@@ -575,7 +955,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     description: null,
     id: uuid.v4(),
     teamId: team.id,
-    title: "C4",
+    title: "C5",
   });
   await generateCollaborator({
     collectionId: collection1.id,
@@ -625,6 +1005,30 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     userEmail: null,
     userId: user2.id,
   });
+  await generateCollaborator({
+    collectionId: collection5.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: user4.id,
+  });
+  await generateCollaborator({
+    collectionId: collection5.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: admin.id,
+  });
+  await generateCollaborator({
+    collectionId: collection5.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: teamViewerUser.id,
+  });
 
   const trx = await db.transaction();
 
@@ -640,19 +1044,44 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
     updatedAt: new Date(),
   });
 
+  await RawTeamUsersDAO.create(trx, {
+    id: uuid.v4(),
+    role: TeamUserRole.EDITOR,
+    label: null,
+    teamId: team.id,
+    userId: user4.id,
+    userEmail: null,
+    createdAt: new Date(),
+    deletedAt: null,
+    updatedAt: new Date(),
+  });
+
+  await RawTeamUsersDAO.create(trx, {
+    id: uuid.v4(),
+    role: TeamUserRole.VIEWER,
+    label: null,
+    teamId: team.id,
+    userId: teamViewerUser.id,
+    userEmail: null,
+    createdAt: new Date(),
+    deletedAt: null,
+    updatedAt: new Date(),
+  });
+
   try {
     t.deepEqual(
       await PermissionsService.getCollectionPermissions(
         trx,
         collection1,
-        session,
+        session.role,
         user.id
       ),
       {
         canComment: true,
-        canDelete: true,
+        canDelete: false,
         canEdit: true,
-        canEditVariants: false,
+        canEditTitle: true,
+        canEditVariants: true,
         canSubmit: true,
         canView: true,
       },
@@ -662,13 +1091,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection1,
-        session2,
+        session2.role,
         user2.id
       ),
       {
         canComment: true,
         canDelete: false,
         canEdit: true,
+        canEditTitle: false,
         canEditVariants: false,
         canSubmit: false,
         canView: true,
@@ -679,13 +1109,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection5,
-        session3,
+        session3.role,
         user3.id
       ),
       {
         canComment: true,
         canDelete: false,
         canEdit: true,
+        canEditTitle: false,
         canEditVariants: false,
         canSubmit: false,
         canView: true,
@@ -696,14 +1127,15 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection2,
-        session,
+        session.role,
         user.id
       ),
       {
         canComment: true,
-        canDelete: true,
+        canDelete: false,
         canEdit: true,
-        canEditVariants: false,
+        canEditTitle: true,
+        canEditVariants: true,
         canSubmit: true,
         canView: true,
       },
@@ -713,13 +1145,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection4,
-        session,
+        session.role,
         user.id
       ),
       {
         canComment: true,
         canDelete: false,
         canEdit: false,
+        canEditTitle: false,
         canEditVariants: false,
         canSubmit: false,
         canView: true,
@@ -730,13 +1163,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection4,
-        partnerSession,
+        partnerSession.role,
         partnerUser.id
       ),
       {
         canComment: true,
         canDelete: false,
         canEdit: true,
+        canEditTitle: false,
         canEditVariants: false,
         canSubmit: false,
         canView: true,
@@ -747,13 +1181,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection3,
-        session,
+        session.role,
         user.id
       ),
       {
         canComment: false,
         canDelete: false,
         canEdit: false,
+        canEditTitle: false,
         canEditVariants: false,
         canSubmit: false,
         canView: false,
@@ -764,18 +1199,73 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       await PermissionsService.getCollectionPermissions(
         trx,
         collection5,
-        session2,
+        session2.role,
         user2.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns edit access permissions for the team collection the user is an edit collaborator on."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection5,
+        session4.role,
+        user4.id
       ),
       {
         canComment: true,
         canDelete: true,
         canEdit: true,
-        canEditVariants: false,
+        canEditTitle: true,
+        canEditVariants: true,
         canSubmit: true,
         canView: true,
       },
-      "Returns edit access permissions for the team collection the user is an edit collaborator on."
+      "Returns edit and delete access permissions for the team collection the user is an edit collaborator on and collection team Editor."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection5,
+        adminSession.role,
+        admin.id
+      ),
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns full access permissions for the team collection the user is an edit collaborator on and CALA admin."
+    );
+    t.deepEqual(
+      await PermissionsService.getCollectionPermissions(
+        trx,
+        collection5,
+        teamViewerUserSession.role,
+        teamViewerUser.id
+      ),
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      "Returns edit access but not delete permissions for the team collection where the user is an edit collaborator on and team viewer"
     );
   } finally {
     await trx.rollback();
@@ -832,50 +1322,316 @@ test("#findMostPermissiveRole", async (t: tape.Test) => {
   );
 });
 
-test("findMostPermissiveTeamRole", async (t: tape.Test) => {
-  interface TestCase {
-    title: string;
-    roles: TeamUserRole[];
-    result: TeamUserRole | null;
-  }
-  const testCases: TestCase[] = [
+test("mergePermissionsOR", async (t: tape.Test) => {
+  t.deepEqual(
+    PermissionsService.mergePermissionsOR(
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      }
+    ),
     {
-      title: "null",
-      roles: [],
-      result: null,
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
     },
-    {
-      title: "Viewer",
-      roles: [TeamUserRole.VIEWER, TeamUserRole.VIEWER],
-      result: TeamUserRole.VIEWER,
-    },
-    {
-      title: "Editor",
-      roles: [TeamUserRole.VIEWER, TeamUserRole.EDITOR],
-      result: TeamUserRole.EDITOR,
-    },
-    {
-      title: "Admin",
-      roles: [TeamUserRole.ADMIN, TeamUserRole.VIEWER, TeamUserRole.EDITOR],
-      result: TeamUserRole.ADMIN,
-    },
-    {
-      title: "Owner",
-      roles: [
-        TeamUserRole.ADMIN,
-        TeamUserRole.OWNER,
-        TeamUserRole.VIEWER,
-        TeamUserRole.EDITOR,
-      ],
-      result: TeamUserRole.OWNER,
-    },
-  ];
+    "permissionsA is not affected by permissionsB false values"
+  );
 
-  for (const testCase of testCases) {
-    t.equal(
-      PermissionsService.findMostPermissiveTeamRole(testCase.roles),
-      testCase.result,
-      testCase.title
-    );
-  }
+  t.deepEqual(
+    PermissionsService.mergePermissionsOR(
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {}
+    ),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "initial true state is not affected by empty permissions"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsOR(
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      },
+      {}
+    ),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    },
+    "initial false state is not affected by empty permissions"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsOR(
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      },
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      }
+    ),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "converts all from false to true"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsOR(
+      {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {
+        canDelete: true,
+      }
+    ),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "converts single element"
+  );
+});
+
+test("mergePermissionsAND", async (t: tape.Test) => {
+  t.deepEqual(
+    PermissionsService.mergePermissionsAND(
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      }
+    ),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    },
+    "set all true to false"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsAND(
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {}
+    ),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "empty second argument does not affects the base permissions"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsAND(
+      {
+        canComment: false,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: false,
+      },
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      }
+    ),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    },
+    "falsy state is not coverted to true"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergePermissionsAND(
+      {
+        canComment: true,
+        canDelete: true,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+      {
+        canEditVariants: false,
+      }
+    ),
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: false,
+      canSubmit: true,
+      canView: true,
+    },
+    "set to false one truthly permission"
+  );
+});
+
+test("mergeRolesPermissions", async (t: tape.Test) => {
+  t.deepEqual(
+    PermissionsService.mergeRolesPermissions([], {}),
+    {
+      canComment: false,
+      canDelete: false,
+      canEdit: false,
+      canEditTitle: false,
+      canEditVariants: false,
+      canSubmit: false,
+      canView: false,
+    },
+    "return no access if no roles provided"
+  );
+
+  t.deepEqual(
+    PermissionsService.mergeRolesPermissions(["VIEWER", "EDITOR"], {
+      VIEWER: {
+        canComment: true,
+        canDelete: false,
+        canEdit: false,
+        canEditTitle: false,
+        canEditVariants: false,
+        canSubmit: false,
+        canView: true,
+      },
+      EDITOR: {
+        canComment: true,
+        canDelete: false,
+        canEdit: true,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
+        canView: true,
+      },
+    }),
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "return true in merged permissions where at least one role has true"
+  );
 });

@@ -4,6 +4,7 @@ import ApprovalStep from "../../approval-steps/domain-object";
 export default interface ProductDesignWithApprovalSteps extends ProductDesign {
   isCheckedOut: boolean;
   collaboratorRoles: string[];
+  teamRoles: string[];
   approvalSteps: ApprovalStep[];
   progress: number | null;
   firstStepCreatedAt: Date | null;

@@ -86,8 +86,8 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
       db.raw(
         `
 (
-  SELECT array_agg(subquery.role) as collaborator_roles, subquery.product_design_id FROM (
-  SELECT c.role, pd2.id as product_design_id
+  SELECT array_agg(subquery.role) as collaborator_roles, array_remove(array_agg(subquery.team_role), null) as team_roles, subquery.product_design_id FROM (
+  SELECT c.role, team_users.role as team_role,  pd2.id as product_design_id
     FROM product_designs AS pd2
     JOIN collaborators AS c ON c.design_id = pd2.id
     LEFT JOIN team_users ON c.team_id = team_users.team_id
@@ -96,7 +96,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
     AND team_users.deleted_at IS NULL
     AND pd2.deleted_at IS NULL
   UNION
-  SELECT c.role, pd3.id as product_design_id
+  SELECT c.role, team_users.role as team_role, pd3.id as product_design_id
     FROM collaborators AS c
     JOIN collections AS co ON co.id = c.collection_id
     JOIN collection_designs AS cd ON cd.collection_id = co.id
@@ -113,7 +113,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
       WHEN tu.role = ANY(:editorRoles) THEN 'EDIT'
       WHEN tu.role = ANY(:viewerRoles) THEN 'VIEW'
       WHEN tu.role = ANY(:partnerRoles) THEN 'PARTNER'
-    END AS role, pd4.id as product_design_id
+    END AS role, tu.role as team_role, pd4.id as product_design_id
     FROM team_users as tu
     JOIN teams ON teams.id = tu.team_id
     JOIN collections ON collections.team_id = teams.id
@@ -141,6 +141,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
         "to_json(design_collaborators.collaborator_roles) as collaborator_roles"
       )
     )
+    .select(db.raw("to_json(design_collaborators.team_roles) as team_roles"))
     .select(
       db.raw(
         `
@@ -154,6 +155,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
     )
     .whereRaw(`product_designs.id in (design_collaborators.product_design_id)`)
     .groupBy("collaborator_roles")
+    .groupBy("team_roles")
     .modify(attachApprovalSteps)
     .modify((query: Knex.QueryBuilder) => {
       if (options.filters && options.filters.length > 0) {

@@ -81,6 +81,7 @@ function setup(role: Role = "ADMIN") {
         canComment: true,
         canDelete: true,
         canEdit: true,
+        canEditTitle: true,
         canEditVariants: true,
         canSubmit: true,
         canView: true,

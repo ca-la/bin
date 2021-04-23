@@ -65,6 +65,7 @@ import ProductDesignWithApprovalSteps from "../domain-objects/product-design-wit
 import generateBid from "../../../test-helpers/factories/bid";
 import * as Aftership from "../../../components/integrations/aftership/service";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import { generateTeamUser } from "../../../test-helpers/factories/team-user";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
@@ -274,12 +275,29 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   });
   await addDesign(collection.id, collectionSharedDesignDeleted.id);
 
+  const designAndCollectionOwner = await createUser();
+  const { team } = await generateTeam(designAndCollectionOwner.user.id);
+  generateTeamUser({
+    userId: user.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const { collection: teamCollection } = await generateCollection({
+    createdBy: designAndCollectionOwner.user.id,
+    teamId: team.id,
+  });
+  const teamDesign1 = await generateDesign({
+    userId: designAndCollectionOwner.user.id,
+    title: "Team Shared Design",
+  });
+  await addDesign(teamCollection.id, teamDesign1.id);
+
   const designs = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
   });
   t.equal(
     designs.length,
-    3,
+    4,
     "returns only the designs the user collaborates on"
   );
   t.deepEqual(
@@ -334,7 +352,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   });
   t.equal(
     designsAgain.length,
-    2,
+    3,
     "returns only the undeleted designs the user collaborates on"
   );
   t.deepEqual(
@@ -353,7 +371,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     userId: user.id,
   });
 
-  t.equal(designsYetAgain.length, 2, "still returns collection design");
+  t.equal(designsYetAgain.length, 3, "still returns collection design");
   t.equals(
     designsYetAgain[0].id,
     collectionSharedDesign.id,
@@ -367,6 +385,16 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     designsYetAgain[1].id,
     designSharedDesign.id,
     "returns design shared by design"
+  );
+  t.deepEqual(
+    designs[2].teamRoles,
+    [],
+    "team shared design / has no team roles attached"
+  );
+  t.deepEqual(
+    designs[3].teamRoles,
+    ["EDITOR"],
+    "team shared design / has team roles attached"
   );
 });
 

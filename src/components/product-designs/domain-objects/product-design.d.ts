@@ -15,6 +15,7 @@ declare class ProductDesign {
   public imageLinks?: ThumbnailAndPreviewLinks[];
   public bidId?: string;
   public collaboratorRoles?: string[];
+  public teamRoles?: string[];
   public isCheckedOut?: boolean;
 
   constructor(data: any);

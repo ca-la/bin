@@ -26,7 +26,7 @@ const {
 const { requireValues } = require("../../../services/require-properties");
 const {
   getDesignPermissions,
-  getPermissionsFromDesign,
+  calculateDesignPermissions,
 } = require("../../../services/get-permissions");
 const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
@@ -131,14 +131,14 @@ function* getDesignsByUser() {
     }
   );
   const designsWithPermissions = designs.map((design) => {
-    const designPermissions = getPermissionsFromDesign({
-      collaboratorRoles: [
-        ...design.collaboratorRoles,
-        ...(userId === design.userId ? ["EDIT"] : []),
-      ],
-      isCheckedOut: design.isCheckedOut,
+    const designPermissions = calculateDesignPermissions({
       sessionRole: role,
       sessionUserId: userId,
+      isOwner: userId === design.userId,
+      isDraftDesign: design.collections && design.collections.length === 0,
+      collaboratorRoles: design.collaboratorRoles,
+      teamUserRoles: design.teamRoles,
+      isDesignCheckedOut: design.isCheckedOut,
     });
     return { ...design, permissions: designPermissions };
   });

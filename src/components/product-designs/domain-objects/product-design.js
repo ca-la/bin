@@ -36,6 +36,7 @@ const keyNamesByColumnName = {
   last_step_due_at: "lastStepDueAt",
   bid_id: "bidId",
   collaborator_roles: "collaboratorRoles",
+  team_roles: "teamRoles",
   is_checked_out: "isCheckedOut",
 };
 

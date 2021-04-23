@@ -98,8 +98,10 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
         role: "OWNER",
         permissions: {
           canComment: true,
-          canDelete: true,
+          // not a team member with EDITOR+ role
+          canDelete: false,
           canEdit: true,
+          canEditTitle: true,
           canEditVariants: true,
           canSubmit: true,
           canView: true,
@@ -174,8 +176,10 @@ test("POST /product-designs/templates/:templateDesignId?isPhidias=true returns a
         role: "OWNER",
         permissions: {
           canComment: true,
+          // can delete as an owner of draft design
           canDelete: true,
           canEdit: true,
+          canEditTitle: true,
           canEditVariants: true,
           canSubmit: true,
           canView: true,

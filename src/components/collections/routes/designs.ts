@@ -130,6 +130,7 @@ export function* getCollectionDesigns(
       designId: collectionDesign.id,
       sessionRole: role,
       sessionUserId: userId,
+      isDraft: false,
     });
     designsWithPermissions.push({ ...collectionDesign, ...permissions });
   }

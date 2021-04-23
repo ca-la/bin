@@ -3,7 +3,9 @@ import compose from "koa-compose";
 
 import {
   getDesignPermissions,
+  mergePermissionsAND,
   Permissions,
+  FULL_ACCESS,
 } from "../../services/get-permissions";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import filterError = require("../../services/filter-error");
@@ -32,14 +34,7 @@ export function* attachAggregateDesignPermissions(
 ): any {
   const { role, userId } = this.state;
 
-  let aggregatePermissions: Permissions = {
-    canComment: true,
-    canDelete: true,
-    canEdit: true,
-    canEditVariants: true,
-    canSubmit: true,
-    canView: true,
-  };
+  let aggregatePermissions: Permissions = FULL_ACCESS;
 
   for (const designId of designIds) {
     const permissions = yield getDesignPermissions({
@@ -48,15 +43,10 @@ export function* attachAggregateDesignPermissions(
       sessionUserId: userId,
     });
 
-    aggregatePermissions = {
-      canComment: aggregatePermissions.canComment && permissions.canComment,
-      canDelete: aggregatePermissions.canDelete && permissions.canDelete,
-      canEdit: aggregatePermissions.canEdit && permissions.canEdit,
-      canEditVariants:
-        aggregatePermissions.canEditVariants && permissions.canEditVariants,
-      canSubmit: aggregatePermissions.canSubmit && permissions.canSubmit,
-      canView: aggregatePermissions.canView && permissions.canView,
-    };
+    aggregatePermissions = mergePermissionsAND(
+      aggregatePermissions,
+      permissions
+    );
   }
 
   this.state.permissions = aggregatePermissions;

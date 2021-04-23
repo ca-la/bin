@@ -8,6 +8,13 @@ const CollectionsDAO = require("../../collections/dao");
 const createUser = require("../../../test-helpers/create-user");
 const DesignEventsDAO = require("../../../components/design-events/dao");
 const createDesign = require("../../../services/create-design").default;
+const generateCollection = require("../../../test-helpers/factories/collection")
+  .default;
+const { generateTeam } = require("../../../test-helpers/factories/team");
+const {
+  generateTeamUser,
+} = require("../../../test-helpers/factories/team-user");
+const TeamUserRole = require("../../team-users/types").Role;
 
 const EmailService = require("../../../services/email");
 const { authHeader, get, patch, post } = require("../../../test-helpers/http");
@@ -228,12 +235,96 @@ test("GET /product-designs allows fetching designs await quotes", async (t) => {
         canComment: true,
         canDelete: true,
         canEdit: true,
+        canEditTitle: true,
         canEditVariants: true,
         canSubmit: true,
         canView: true,
       },
     },
   ]);
+});
+
+test("GET /product-designs allows fetching designs by user and returns correct permissions", async (t) => {
+  const { user, session } = await createUser();
+
+  // draft design without special collection/team
+  await createDesign({
+    userId: user.id,
+    title: "Draft design",
+  });
+
+  // design in the collection user is not a member of
+  const design2 = await createDesign({
+    userId: user.id,
+    title: "Design in the collection user is not a member of",
+  });
+  const { collection: randomCollection } = await generateCollection();
+  await addDesign(randomCollection.id, design2.id);
+
+  // design within the team and user is an EDITOR team member
+  const teamOwner = await createUser();
+  const { team } = await generateTeam(teamOwner.user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
+  await generateTeamUser({
+    teamId: team.id,
+    userId: user.id,
+    role: TeamUserRole.EDITOR,
+  });
+  const design3 = await createDesign({
+    userId: user.id,
+    title: "Bzzt Three",
+  });
+  await addDesign(collection.id, design3.id);
+
+  const [response, body] = await get(
+    `/product-designs?userId=${user.id}&sortBy=created_at:asc`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(
+    body[0].permissions,
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "full owner access to a draft design"
+  );
+
+  t.deepEqual(
+    body[1].permissions,
+    {
+      canComment: true,
+      canDelete: false,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "owner permissions without canDelete as user is not a member of the team"
+  );
+
+  t.deepEqual(
+    body[2].permissions,
+    {
+      canComment: true,
+      canDelete: true,
+      canEdit: true,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
+      canView: true,
+    },
+    "full permissions as user is a member of the team with EDITOR role"
+  );
 });
 
 test("GET /product-designs/:designId/upload-policy/:sectionId", async (t) => {

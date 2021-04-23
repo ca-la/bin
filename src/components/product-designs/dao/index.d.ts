@@ -18,7 +18,7 @@ declare namespace ProductDesignsDAO {
     id: string,
     filters?: object | null,
     options?: { includeDeleted?: boolean; bidUserId?: string | null },
-    trx?: Knex.Transaction
+    trx?: Knex
   ): Promise<
     (ProductDesignWithCollectionId & ProductDesignWithApprovalSteps) | null
   >;

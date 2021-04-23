@@ -1,8 +1,13 @@
-export interface Permissions {
-  canComment: boolean;
-  canDelete: boolean;
-  canEdit: boolean;
-  canEditVariants: boolean;
-  canSubmit: boolean;
-  canView: boolean;
-}
+import { z } from "zod";
+
+const permissionsSchema = z.object({
+  canComment: z.boolean(),
+  canDelete: z.boolean(),
+  canEdit: z.boolean(),
+  canEditTitle: z.boolean(),
+  canEditVariants: z.boolean(),
+  canSubmit: z.boolean(),
+  canView: z.boolean(),
+});
+
+export type Permissions = z.infer<typeof permissionsSchema>;

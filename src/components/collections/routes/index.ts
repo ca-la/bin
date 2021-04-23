@@ -14,8 +14,7 @@ import {
   canSubmitCollection,
   canCheckOutCollection,
 } from "../../../middleware/can-access-collection";
-import canAccessUserResource = require("../../../middleware/can-access-user-resource");
-import requireAuth = require("../../../middleware/require-auth");
+import requireAuth from "../../../middleware/require-auth";
 import requireAdmin = require("../../../middleware/require-admin");
 import useTransaction, {
   TransactionState,
@@ -184,14 +183,16 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.throw(403, "Unable to match query");
   }
 }
+interface DeleteContext extends StrictContext {
+  state: AuthedState;
+  params: { collectionId: string };
+}
 
-function* deleteCollection(this: AuthedContext): Iterator<any, any, any> {
-  const { collectionId } = this.params;
-  const targetCollection = yield CollectionsDAO.findById(collectionId);
-  canAccessUserResource.call(this, targetCollection.createdBy);
+async function deleteCollection(ctx: DeleteContext) {
+  const { collectionId } = ctx.params;
 
-  yield deleteCollectionAndRemoveDesigns(collectionId);
-  this.status = 204;
+  await deleteCollectionAndRemoveDesigns(collectionId);
+  ctx.status = 204;
 }
 
 function* getCollection(this: AuthedContext): Iterator<any, any, any> {
@@ -294,8 +295,7 @@ router.del(
   requireAuth,
   canAccessCollectionInParam,
   canDeleteCollection,
-  useTransaction,
-  deleteCollection
+  convert.back(deleteCollection)
 );
 router.get(
   "/:collectionId",
@@ -366,6 +366,8 @@ router.del(
   "/:collectionId/designs",
   requireAuth,
   canAccessCollectionInParam,
+  canEditCollection,
+  canMoveCollectionDesigns,
   deleteDesigns
 );
 router.del(
