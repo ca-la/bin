@@ -12,12 +12,11 @@ import * as ProductDesignsDAO from "../../components/product-designs/dao";
 import { isQuoteCommitted } from "../../components/design-events/service";
 import CollectionDb from "../../components/collections/domain-object";
 import { Permissions } from "../../components/permissions/types";
+import { TeamUser, TeamUsersDAO } from "../../components/team-users";
 import {
-  TeamUser,
-  TeamUserRole,
-  TeamUsersDAO,
-} from "../../components/team-users";
-import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../components/team-users/types";
+  TEAM_USER_ROLE_TO_COLLABORATOR_ROLE,
+  Role as TeamUserRole,
+} from "../../components/team-users/types";
 
 export { Permissions };
 
