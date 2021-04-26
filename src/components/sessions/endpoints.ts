@@ -21,7 +21,7 @@ const login: GraphQLEndpoint<
   Session,
   GraphQLContextBase<Session>
 > = {
-  endpointType: "MUTATION",
+  endpointType: "Mutation",
   name: "login",
   types: [GraphQLTypes.Session],
   signature:

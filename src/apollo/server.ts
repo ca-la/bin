@@ -13,10 +13,7 @@ import { extractSortedTypes, buildTypes, isClientError } from "./services";
 import { logServerError } from "../services/logger";
 
 function extractResolvers() {
-  const resolvers: Record<"Query" | "Mutation", IResolvers> = {
-    Query: {},
-    Mutation: {},
-  };
+  const resolvers: Record<string, IResolvers> = {};
 
   for (const endpoint of endpoints) {
     const wrappedResolver = endpoint.middleware
@@ -37,11 +34,11 @@ function extractResolvers() {
           return resolver(parent, args, processedContext, info);
         }) as () => any)
       : (endpoint.resolver as () => any);
-    if (endpoint.endpointType === "QUERY") {
-      resolvers.Query[endpoint.name] = wrappedResolver;
-    } else {
-      resolvers.Mutation[endpoint.name] = wrappedResolver;
+
+    if (!resolvers[endpoint.endpointType]) {
+      resolvers[endpoint.endpointType] = {};
     }
+    resolvers[endpoint.endpointType][endpoint.name] = wrappedResolver;
   }
   return resolvers;
 }
@@ -51,13 +48,13 @@ function extractSchema() {
 ${buildTypes(extractSortedTypes(endpoints))}
 type Query {
   ${endpoints
-    .filter((endpoint: Endpoint) => endpoint.endpointType === "QUERY")
+    .filter((endpoint: Endpoint) => endpoint.endpointType === "Query")
     .map((endpoint: Endpoint) => `${endpoint.name}${endpoint.signature}`)
     .join("\n  ")}
 }
 type Mutation {
   ${endpoints
-    .filter((endpoint: Endpoint) => endpoint.endpointType === "MUTATION")
+    .filter((endpoint: Endpoint) => endpoint.endpointType === "Mutation")
     .map((endpoint: Endpoint) => `${endpoint.name}${endpoint.signature}`)
     .join("\n  ")}
 }

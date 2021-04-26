@@ -36,8 +36,6 @@ export type Resolver<
   info: GraphQLResolveInfo
 ) => Promise<Result>;
 
-export type GraphQLEndpointType = "QUERY" | "MUTATION";
-
 export interface TypesContainer {
   types?: GraphQLType[];
 }
@@ -49,7 +47,7 @@ export interface GraphQLEndpoint<
     Result
   >
 > {
-  endpointType: GraphQLEndpointType;
+  endpointType: string;
   types?: GraphQLType[];
   name: string;
   signature: string;

@@ -300,7 +300,7 @@ export function buildFindEndpoint<
   }
 
   return {
-    endpointType: "QUERY",
+    endpointType: "Query",
     types,
     name: `Find${pluralizeModelTypeName(modelTypeName)}`,
     signature: `(${signatureParts.join(", ")}): ${listType.name}`,
@@ -364,7 +364,7 @@ export function buildCreateEndpoint<
   const types: GraphQLType[] = [modelType, inputType];
 
   return {
-    endpointType: "MUTATION",
+    endpointType: "Mutation",
     types,
     name: `Create${modelTypeName}`,
     signature: `(data: ${inputType.name}): ${modelType.name}`,

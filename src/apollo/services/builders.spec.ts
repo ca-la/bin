@@ -140,7 +140,7 @@ test("buildFindEndpoint", async (t: Test) => {
   });
 
   t.deepEqual(omit(endpoint, "resolver"), {
-    endpointType: "QUERY",
+    endpointType: "Query",
     types: [
       {
         name: "DesignEvent",

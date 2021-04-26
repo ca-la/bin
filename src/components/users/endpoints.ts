@@ -19,7 +19,7 @@ const user: GraphQLEndpoint<
   User,
   GraphQLContextAuthenticated<User>
 > = {
-  endpointType: "QUERY",
+  endpointType: "Query",
   types: [GraphQLTypes.Role, GraphQLTypes.User],
   name: "user",
   signature: "(id: String!): User!",

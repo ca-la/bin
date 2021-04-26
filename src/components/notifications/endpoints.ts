@@ -31,7 +31,7 @@ const notificationMessages: GraphQLEndpoint<
   GetNotificationsResult,
   GraphQLContextAuthenticated<GetNotificationsResult>
 > = {
-  endpointType: "QUERY",
+  endpointType: "Query",
   types: [
     GraphQLTypes.BreadCrumb,
     GraphQLTypes.Mention,
@@ -87,7 +87,7 @@ const archiveNotifications: GraphQLEndpoint<
   number,
   GraphQLContextAuthenticated<number>
 > = {
-  endpointType: "MUTATION",
+  endpointType: "Mutation",
   name: "archiveNotifications",
   signature: "(id: String!, inboxOnly: Boolean = false): Int!",
   middleware: requireAuth,
@@ -125,7 +125,7 @@ const updateNotificaion: GraphQLEndpoint<
   NotificationMessageForGraphQL,
   GraphQLContextAuthenticated<NotificationMessageForGraphQL>
 > = {
-  endpointType: "MUTATION",
+  endpointType: "Mutation",
   name: "updateNotification",
   signature: "(id: String!, archivedAt: GraphQLDateTime): NotificationMessage!",
   middleware: requireAuth,
@@ -176,7 +176,7 @@ const readNotifications: GraphQLEndpoint<
   ReadNotification[],
   GraphQLContextAuthenticated<ReadNotification[]>
 > = {
-  endpointType: "MUTATION",
+  endpointType: "Mutation",
   name: "readNotifications",
   signature: "(ids: [String]!): [NotificationMessage]!",
   middleware: requireAuth,
