@@ -1,4 +1,6 @@
 import Router from "koa-router";
+import convert from "koa-convert";
+import { z } from "zod";
 
 import db from "../../services/db";
 import Annotation from "./domain-object";
@@ -10,13 +12,21 @@ import {
   update,
   findAllWithCommentsByDesign,
 } from "./dao";
-import { hasOnlyProperties } from "../../services/require-properties";
 import * as AnnotationCommentDAO from "../../components/annotation-comments/dao";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAuth = require("../../middleware/require-auth");
 import filterError = require("../../services/filter-error");
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
+import { StrictContext } from "../../router-context";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
 
 const router = new Router();
 
@@ -26,19 +36,6 @@ interface GetListQuery {
   hasComments?: string;
 }
 
-function isAnnotation(candidate: object): candidate is Annotation {
-  return hasOnlyProperties(
-    candidate,
-    "canvasId",
-    "createdAt",
-    "createdBy",
-    "deletedAt",
-    "id",
-    "x",
-    "y"
-  );
-}
-
 const annotationFromIO = (request: Annotation, userId: string): Annotation => {
   return {
     ...request,
@@ -46,82 +43,113 @@ const annotationFromIO = (request: Annotation, userId: string): Annotation => {
   };
 };
 
-function* createAnnotation(this: AuthedContext): Iterator<any, any, any> {
-  const body = this.request.body;
-  if (body && isAnnotation(body)) {
-    const annotation = yield create(annotationFromIO(body, this.state.userId));
-    this.status = 201;
-    this.body = annotation;
-  } else {
-    this.throw(400, "Request does not match Canvas");
-  }
+const createOrUpdateAnnotationRequestSchema = z.object({
+  canvasId: z.string(),
+  createdAt: dateStringToDate,
+  createdBy: z.string(),
+  deletedAt: nullableDateStringToNullableDate,
+  id: z.string(),
+  x: z.number(),
+  y: z.number(),
+});
+type CreateOrUpdateAnnotationRequest = z.infer<
+  typeof createOrUpdateAnnotationRequestSchema
+>;
+
+interface CreateOrUpdateAnnotationContext extends StrictContext<Annotation> {
+  state: AuthedState & SafeBodyState<CreateOrUpdateAnnotationRequest>;
 }
 
-function* updateAnnotation(this: AuthedContext): Iterator<any, any, any> {
-  const body = this.request.body;
-  if (body && isAnnotation(body)) {
-    const annotation = yield update(this.params.annotationId, body);
-    this.status = 200;
-    this.body = annotation;
-  } else {
-    this.throw(400, "Request does not match ProductDesignCanvasAnnotation");
-  }
+async function createAnnotation(ctx: CreateOrUpdateAnnotationContext) {
+  const { safeBody } = ctx.state;
+  const annotation = await create(annotationFromIO(safeBody, ctx.state.userId));
+  ctx.status = 201;
+  ctx.body = annotation;
 }
 
-function* deleteAnnotation(this: AuthedContext): Iterator<any, any, any> {
-  yield deleteById(this.params.annotationId).catch(
+async function updateAnnotation(
+  ctx: CreateOrUpdateAnnotationContext & { params: { annotationId: string } }
+) {
+  const { safeBody } = ctx.state;
+  const annotation = await update(ctx.params.annotationId, safeBody);
+  ctx.status = 200;
+  ctx.body = annotation;
+}
+
+async function deleteAnnotation(
+  ctx: StrictContext & { params: { annotationId: string } }
+) {
+  await deleteById(ctx.params.annotationId).catch(
     filterError(ResourceNotFoundError, () => {
-      this.throw(404, "Annotation not found");
+      ctx.throw(404, "Annotation not found");
     })
   );
 
-  this.status = 204;
+  ctx.status = 204;
 }
 
-function* getList(this: AuthedContext): Iterator<any, any, any> {
-  const query: GetListQuery = this.query;
+async function getList(ctx: AuthedContext) {
+  const query: GetListQuery = ctx.query;
 
   let annotations = [];
 
   if (query.canvasId && query.hasComments) {
-    annotations = yield findAllWithCommentsByCanvasId(db, query.canvasId);
+    annotations = await findAllWithCommentsByCanvasId(db, query.canvasId);
   } else if (query.canvasId) {
-    annotations = yield findAllByCanvasId(db, query.canvasId);
+    annotations = await findAllByCanvasId(db, query.canvasId);
   } else if (query.designId) {
-    annotations = yield findAllWithCommentsByDesign(db, query.designId);
+    annotations = await findAllWithCommentsByDesign(db, query.designId);
   } else {
-    this.throw(
+    ctx.throw(
       400,
       "Must provide either a canvasId or designId query parameter"
     );
   }
 
-  this.status = 200;
-  this.body = annotations;
+  ctx.status = 200;
+  ctx.body = annotations;
 }
 
-function* getAnnotationComments(this: AuthedContext): Iterator<any, any, any> {
-  const comments = yield AnnotationCommentDAO.findByAnnotationId(
-    this.params.annotationId,
+async function getAnnotationComments(ctx: AuthedContext) {
+  const comments = await AnnotationCommentDAO.findByAnnotationId(
+    ctx.params.annotationId,
     db
   );
   if (comments) {
-    const commentsWithMentions = yield addAtMentionDetails(db, comments);
+    const commentsWithMentions = await addAtMentionDetails(db, comments);
     const commentsWithAttachments = commentsWithMentions.map(
       addAttachmentLinks
     );
-    this.status = 200;
-    this.body = commentsWithAttachments;
+    ctx.status = 200;
+    ctx.body = commentsWithAttachments;
   } else {
-    this.throw(404);
+    ctx.throw(404);
   }
 }
 
-router.get("/", requireAuth, getList);
-router.put("/:annotationId", requireAuth, createAnnotation);
-router.patch("/:annotationId", requireAuth, updateAnnotation);
-router.del("/:annotationId", requireAuth, deleteAnnotation);
+router.get("/", requireAuth, convert.back(getList));
+router.put(
+  "/:annotationId",
+  requireAuth,
+  typeGuardFromSchema<CreateOrUpdateAnnotationRequest>(
+    createOrUpdateAnnotationRequestSchema
+  ),
+  convert.back(createAnnotation)
+);
+router.patch(
+  "/:annotationId",
+  requireAuth,
+  typeGuardFromSchema<CreateOrUpdateAnnotationRequest>(
+    createOrUpdateAnnotationRequestSchema
+  ),
+  convert.back(updateAnnotation)
+);
+router.del("/:annotationId", requireAuth, convert.back(deleteAnnotation));
 
-router.get("/:annotationId/comments", requireAuth, getAnnotationComments);
+router.get(
+  "/:annotationId/comments",
+  requireAuth,
+  convert.back(getAnnotationComments)
+);
 
 export default router.routes();

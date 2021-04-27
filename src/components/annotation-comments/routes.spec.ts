@@ -11,6 +11,7 @@ import * as AnnounceCommentService from "../iris/messages/annotation-comment";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import { addDesign } from "../../test-helpers/collections";
 import * as AssetLinkAttachment from "../../services/attach-asset-links";
+import { SerializedCreateCommentWithResources } from "../comments/types";
 
 const API_PATH = "/product-design-canvas-annotations";
 
@@ -74,7 +75,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     deletedAt: null,
   };
 
-  const commentBody = {
+  const commentBody: SerializedCreateCommentWithResources = {
     createdAt: date1.toISOString(),
     deletedAt: null,
     id: commentId,
@@ -85,9 +86,11 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     userEmail: "cool@me.me",
     userId: "purposefully incorrect",
     userName: "Somebody cool",
+    userRole: "USER",
+    attachments: [],
   };
 
-  const commentWithMentionBody = {
+  const commentWithMentionBody: SerializedCreateCommentWithResources = {
     createdAt: date2.toISOString(),
     deletedAt: null,
     id: commentWithMentionId,
@@ -100,6 +103,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     userEmail: "cool@me.me",
     userId: "purposefully incorrect",
     userName: "Somebody cool",
+    userRole: "USER",
     attachments: [attachment],
   };
 
@@ -209,7 +213,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     "Attachment asset links are generated for the created comment"
   );
   t.equal(
-    announcementStub.args[1][2].attachments[0].downloadLink,
+    announcementStub.args[1][1].attachments[0].downloadLink,
     "a-very-download",
     "Attachments links are attached to the created comment"
   );

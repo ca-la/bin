@@ -1,42 +1,49 @@
 import Router from "koa-router";
-import { pick } from "lodash";
 
-import {
-  BASE_COMMENT_PROPERTIES,
-  isBaseComment,
-} from "../comments/domain-object";
 import * as AnnotationCommentDAO from "../annotation-comments/dao";
 import sendCreationNotifications from "./send-creation-notifications";
 import requireAuth = require("../../middleware/require-auth");
-import useTransaction from "../../middleware/use-transaction";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 import { announceAnnotationCommentCreation } from "../iris/messages/annotation-comment";
 import Asset from "../assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
-import { BaseComment, CommentWithMentions } from "../comments/types";
+import {
+  CommentWithResources,
+  CreateCommentWithResources,
+  createCommentWithResourcesSchema,
+} from "../comments/types";
+import convert from "koa-convert";
+import { StrictContext } from "../../router-context";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
 
 const router = new Router();
 
-function* createAnnotationComment(
-  this: TrxContext<AuthedContext<BaseComment & { attachments: Asset[] }>>
-): Iterator<any, any, any> {
-  const { userId, trx } = this.state;
-  const { annotationId } = this.params;
+interface CreateCommentContext extends StrictContext<CommentWithResources> {
+  state: AuthedState &
+    TransactionState &
+    SafeBodyState<CreateCommentWithResources>;
+  params: { annotationId: string };
+}
 
-  const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
-  const attachments: Asset[] = this.request.body.attachments || [];
+async function createAnnotationComment(ctx: CreateCommentContext) {
+  const { userId, trx } = ctx.state;
+  const { annotationId } = ctx.params;
 
-  if (!body || !isBaseComment(body) || !annotationId) {
-    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
-  }
+  const attachments: Asset[] = ctx.state.safeBody.attachments || [];
 
-  const comment = yield createCommentWithAttachments(trx, {
-    comment: body,
+  const comment = await createCommentWithAttachments(trx, {
+    comment: ctx.state.safeBody,
     attachments,
     userId,
   });
 
-  const annotationComment = yield AnnotationCommentDAO.create(
+  const annotationComment = await AnnotationCommentDAO.create(
     {
       annotationId,
       commentId: comment.id,
@@ -44,21 +51,33 @@ function* createAnnotationComment(
     trx
   );
 
-  yield announceAnnotationCommentCreation(trx, annotationComment, comment);
-  yield sendCreationNotifications(trx, {
-    actorUserId: this.state.userId,
+  const commentWithResources = (await addAtMentionDetailsForComment(
+    trx,
+    comment
+  )) as CommentWithResources;
+
+  await announceAnnotationCommentCreation(
+    annotationComment,
+    commentWithResources
+  );
+  await sendCreationNotifications(trx, {
+    actorUserId: ctx.state.userId,
     annotationId,
     comment,
   });
-  const commentWithMentions: CommentWithMentions = yield addAtMentionDetailsForComment(
-    trx,
-    comment
-  );
 
-  this.status = 201;
-  this.body = commentWithMentions;
+  ctx.status = 201;
+  ctx.body = commentWithResources;
 }
 
-router.put("/:commentId", requireAuth, useTransaction, createAnnotationComment);
+router.put(
+  "/:commentId",
+  requireAuth,
+  typeGuardFromSchema<CreateCommentWithResources>(
+    createCommentWithResourcesSchema
+  ),
+  useTransaction,
+  convert.back(createAnnotationComment)
+);
 
 export default router.routes();

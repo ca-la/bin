@@ -1,6 +1,10 @@
 import * as z from "zod";
 import { userRoleSchema } from "../users/types";
 import { assetLinksSchema, assetSchema } from "../assets/types";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
 
 export const baseCommentSchema = z.object({
   id: z.string(),
@@ -46,9 +50,41 @@ export const commentWithMentionsSchema = commentSchema.extend({
 export type CommentWithMentions = z.infer<typeof commentWithMentionsSchema>;
 
 export const commentWithResourcesSchema = commentWithMentionsSchema.extend({
-  attachments: z.array(z.intersection(assetSchema, assetLinksSchema.partial())),
+  attachments: z.array(z.intersection(assetSchema, assetLinksSchema)),
 });
 export type CommentWithResources = z.infer<typeof commentWithResourcesSchema>;
+
+export const createCommentWithResourcesSchema = commentWithResourcesSchema.extend(
+  {
+    createdAt: dateStringToDate,
+    attachments: z.array(
+      assetSchema.extend({
+        createdAt: dateStringToDate,
+        uploadCompletedAt: nullableDateStringToNullableDate,
+      })
+    ),
+  }
+);
+
+export type CreateCommentWithResources = z.infer<
+  typeof createCommentWithResourcesSchema
+>;
+
+export const serializedCreateCommentWithResourcesSchema = commentWithResourcesSchema.extend(
+  {
+    createdAt: z.string(),
+    attachments: z.array(
+      assetSchema.extend({
+        createdAt: z.string(),
+        uploadCompletedAt: z.string().nullable(),
+      })
+    ),
+  }
+);
+
+export type SerializedCreateCommentWithResources = z.infer<
+  typeof serializedCreateCommentWithResourcesSchema
+>;
 
 export enum MentionType {
   COLLABORATOR = "collaborator",

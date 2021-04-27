@@ -1,10 +1,5 @@
-import { pick } from "lodash";
 import Router from "koa-router";
 
-import {
-  BASE_COMMENT_PROPERTIES,
-  isBaseComment,
-} from "../comments/domain-object";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import * as ApprovalStepCommentDAO from "./dao";
 import * as NotificationsService from "../../services/create-notifications";
@@ -14,31 +9,43 @@ import {
   getThreadUserIdsFromCommentThread,
 } from "../../services/add-at-mention-details";
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
-import useTransaction from "../../middleware/use-transaction";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 import { Asset } from "../assets/types";
-import { BaseComment } from "../comments/types";
+import {
+  CommentWithResources,
+  CreateCommentWithResources,
+  createCommentWithResourcesSchema,
+} from "../comments/types";
+import convert from "koa-convert";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
+import { StrictContext } from "../../router-context";
 
 const router = new Router();
 
-function* createApprovalStepComment(
-  this: TrxContext<AuthedContext<BaseComment & { attachments: Asset[] }>>
-): Iterator<any, any, any> {
-  const { trx, userId } = this.state;
-  const body = pick(this.request.body, BASE_COMMENT_PROPERTIES);
-  const attachments: Asset[] = this.request.body.attachments || [];
-  const { approvalStepId } = this.params;
+interface CreateCommentContext extends StrictContext<CommentWithResources> {
+  state: AuthedState &
+    TransactionState &
+    SafeBodyState<CreateCommentWithResources>;
+  params: { approvalStepId: string };
+}
 
-  if (!body || !isBaseComment(body)) {
-    this.throw(400, `Request does not match model: ${Object.keys(body)}`);
-  }
+async function createApprovalStepComment(ctx: CreateCommentContext) {
+  const { trx, userId } = ctx.state;
+  const attachments: Asset[] = ctx.state.safeBody.attachments || [];
+  const { approvalStepId } = ctx.params;
 
-  const comment = yield createCommentWithAttachments(trx, {
-    comment: body,
+  const comment = await createCommentWithAttachments(trx, {
+    comment: ctx.state.safeBody,
     attachments,
     userId,
   });
 
-  const approvalStepComment = yield ApprovalStepCommentDAO.create(trx, {
+  const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
     approvalStepId,
     commentId: comment.id,
   });
@@ -46,10 +53,10 @@ function* createApprovalStepComment(
   const {
     mentionedUserIds,
     idNameMap,
-  } = yield getCollaboratorsFromCommentMentions(trx, comment.text);
+  } = await getCollaboratorsFromCommentMentions(trx, comment.text);
 
   for (const mentionedUserId of mentionedUserIds) {
-    yield NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
+    await NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
       approvalStepId,
       commentId: comment.id,
       actorId: userId,
@@ -59,11 +66,11 @@ function* createApprovalStepComment(
 
   const threadUserIds: string[] =
     comment.parentCommentId && mentionedUserIds.length === 0
-      ? yield getThreadUserIdsFromCommentThread(trx, comment.parentCommentId)
+      ? await getThreadUserIdsFromCommentThread(trx, comment.parentCommentId)
       : [];
 
   for (const threadUserId of threadUserIds) {
-    yield NotificationsService.sendApprovalStepCommentReplyNotification(trx, {
+    await NotificationsService.sendApprovalStepCommentReplyNotification(trx, {
       approvalStepId,
       commentId: comment.id,
       actorId: userId,
@@ -71,7 +78,7 @@ function* createApprovalStepComment(
     });
   }
 
-  yield NotificationsService.sendDesignOwnerApprovalStepCommentCreateNotification(
+  await NotificationsService.sendDesignOwnerApprovalStepCommentCreateNotification(
     trx,
     approvalStepId,
     comment.id,
@@ -80,22 +87,24 @@ function* createApprovalStepComment(
     threadUserIds
   );
 
-  const commentWithMentions = { ...comment, mentions: idNameMap };
-  yield announceApprovalStepCommentCreation(
-    trx,
+  const commentWithResources = { ...comment, mentions: idNameMap };
+  await announceApprovalStepCommentCreation(
     approvalStepComment,
-    commentWithMentions
+    commentWithResources
   );
 
-  this.status = 201;
-  this.body = commentWithMentions;
+  ctx.status = 201;
+  ctx.body = commentWithResources;
 }
 
 router.post(
   "/:approvalStepId",
   requireAuth,
+  typeGuardFromSchema<CreateCommentWithResources>(
+    createCommentWithResourcesSchema
+  ),
   useTransaction,
-  createApprovalStepComment
+  convert.back(createApprovalStepComment)
 );
 
 export default router.routes();

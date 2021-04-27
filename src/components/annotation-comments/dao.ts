@@ -64,7 +64,7 @@ export async function findByAnnotationId(
   );
 }
 
-interface AnnotationToCommentsWithMentions {
+export interface AnnotationToCommentsWithMentions {
   [annotationId: string]: CommentWithMentions[];
 }
 

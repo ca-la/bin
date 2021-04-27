@@ -48,11 +48,15 @@ export { CommentService };
 import * as SessionsGraphQLTypes from "../components/sessions/graphql-types";
 import * as UsersGraphQLTypes from "../components/users/graphql-types";
 import * as NotificationsGraphQLTypes from "../components/notifications/graphql-types";
+import * as CommentsGraphQLTypes from "../components/comments/graphql-types";
+import * as AssetsGraphQLTypes from "../components/assets/graphql-types";
 
 export const GraphQLTypes = {
   ...SessionsGraphQLTypes,
   ...UsersGraphQLTypes,
   ...NotificationsGraphQLTypes,
+  ...CommentsGraphQLTypes,
+  ...AssetsGraphQLTypes,
 };
 
 export { z } from "zod";

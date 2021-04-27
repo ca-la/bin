@@ -17,6 +17,7 @@ import * as CreateNotifications from "../../services/create-notifications";
 import * as AnnounceCommentService from "../iris/messages/approval-step-comment";
 
 import generateCollaborator from "../../test-helpers/factories/collaborator";
+import { SerializedCreateCommentWithResources } from "../comments/types";
 
 test("POST /design-approval-step-comments/:stepId creates a comment", async (t: tape.Test) => {
   sandbox()
@@ -49,14 +50,19 @@ test("POST /design-approval-step-comments/:stepId creates a comment", async (t: 
     ApprovalStepsDAO.createAll(trx, [approvalStep])
   );
 
-  const comment = {
-    createdAt: new Date(),
+  const comment: SerializedCreateCommentWithResources = {
+    createdAt: new Date().toISOString(),
     deletedAt: null,
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
     text: "test comment",
     userId: user.id,
+    userRole: user.role,
+    userEmail: user.email,
+    userName: user.name,
+    mentions: {},
+    attachments: [],
   };
 
   const [response, body] = await post(
@@ -108,14 +114,21 @@ test("POST /design-approval-step-comments/:stepId sends @mention notifications",
     ApprovalStepsDAO.createAll(trx, [approvalStep])
   );
 
-  const comment = {
-    createdAt: new Date(),
+  const comment: SerializedCreateCommentWithResources = {
+    createdAt: new Date().toISOString(),
     deletedAt: null,
     id: uuid.v4(),
     isPinned: false,
     parentCommentId: null,
     text: `@<${collaborator.id}|collaborator> Hey`,
     userId: user.id,
+    userRole: user.role,
+    userEmail: user.email,
+    userName: user.name,
+    mentions: {
+      [collaborator.id]: user.name,
+    },
+    attachments: [],
   };
 
   await post(`/design-approval-step-comments/${approvalStep.id}`, {

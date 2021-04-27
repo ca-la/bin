@@ -1,4 +1,5 @@
 import Router from "koa-router";
+import convert from "koa-convert";
 
 import db from "../../services/db";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
@@ -8,69 +9,77 @@ import { announceAnnotationCommentDeletion } from "../iris/messages/annotation-c
 import { announceTaskCommentDeletion } from "../iris/messages/task-comment";
 import { announceApprovalStepCommentDeletion } from "../iris/messages/approval-step-comment";
 import { requireQueryParam } from "../../middleware/require-query-param";
+import { StrictContext } from "../../router-context";
 
 const router = new Router();
 
-interface GetListQuery {
-  annotationIds: string[];
+interface GetListContext
+  extends StrictContext<
+    AnnotationCommentsDAO.AnnotationToCommentsWithMentions
+  > {
+  query: { annotationIds: string[] };
 }
 
-function* getList(
-  this: AuthedContext<{}, {}, GetListQuery>
-): Iterator<any, any, any> {
-  const { annotationIds } = this.query;
+async function getList(ctx: GetListContext) {
+  const { annotationIds } = ctx.query;
 
   const idList = Array.isArray(annotationIds) ? annotationIds : [annotationIds];
 
-  const commentsByAnnotation = yield AnnotationCommentsDAO.findByAnnotationIds(
+  const commentsByAnnotation = await AnnotationCommentsDAO.findByAnnotationIds(
     db,
     idList
   );
 
-  this.body = commentsByAnnotation;
-  this.status = 200;
+  ctx.body = commentsByAnnotation;
+  ctx.status = 200;
 }
 
-interface DeleteCommentQuery {
-  annotationId?: string;
-  taskId?: string;
-  approvalStepId?: string;
+interface DeleteCommentContext extends StrictContext {
+  query: {
+    annotationId?: string;
+    taskId?: string;
+    approvalStepId?: string;
+  };
+  params: {
+    commentId: string;
+  };
 }
 
-function* deleteComment(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.state;
-  const {
-    annotationId,
-    taskId,
-    approvalStepId,
-  }: DeleteCommentQuery = this.query;
-  const { commentId } = this.params;
-  const comment = yield CommentDAO.findById(commentId);
+async function deleteComment(ctx: DeleteCommentContext) {
+  const { userId } = ctx.state;
+  const { annotationId, taskId, approvalStepId } = ctx.query;
+  const { commentId } = ctx.params;
+  const comment = await CommentDAO.findById(commentId);
 
-  this.assert(comment, 404);
+  ctx.assert(comment, 404);
 
-  yield CommentDAO.deleteById(commentId);
+  await CommentDAO.deleteById(commentId);
 
   if (annotationId) {
-    yield announceAnnotationCommentDeletion({
+    await announceAnnotationCommentDeletion({
       actorId: userId,
       annotationId,
       commentId,
     });
   } else if (taskId) {
-    yield announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
+    await announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
   } else if (approvalStepId) {
-    yield announceApprovalStepCommentDeletion({
+    await announceApprovalStepCommentDeletion({
       actorId: userId,
       approvalStepId,
       commentId,
     });
   }
 
-  this.status = 204;
+  ctx.status = 204;
 }
 
-router.get("/", requireAuth, requireQueryParam("annotationIds"), getList);
-router.del("/:commentId", requireAuth, deleteComment);
+router.get(
+  "/",
+  requireAuth,
+  requireQueryParam("annotationIds"),
+  convert.back(getList)
+);
+router.del("/:commentId", requireAuth, convert.back(deleteComment));
 
 export default router.routes();

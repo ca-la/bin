@@ -2,26 +2,22 @@ import {
   RealtimeAnnotationComment,
   RealtimeAnnotationCommentDeletion,
 } from "@cala/ts-lib";
-import Knex from "knex";
+
 import { sendMessage } from "../../send-message";
 import AnnotationComment from "../../../annotation-comments/domain-object";
-import addAtMentionDetails from "../../../../services/add-at-mention-details";
-import { CommentWithAttachmentLinks } from "../../../../services/add-attachments-links";
+import { CommentWithResources } from "../../../comments/types";
 
 /**
  * Publishes an annotation comment to the Iris SQS.
  */
 export async function announceAnnotationCommentCreation(
-  trx: Knex.Transaction,
   annotationComment: AnnotationComment,
-  comment: CommentWithAttachmentLinks
+  comment: CommentWithResources
 ): Promise<RealtimeAnnotationComment> {
-  const commentWithMentions = await addAtMentionDetails(trx, [comment]);
-
   const realtimeAnnotationComment: RealtimeAnnotationComment = {
     actorId: comment.userId,
     annotationId: annotationComment.annotationId,
-    resource: commentWithMentions[0],
+    resource: comment,
     type: "annotation-comment",
   };
   await sendMessage(realtimeAnnotationComment);
