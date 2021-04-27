@@ -8,14 +8,13 @@ import {
 import { NotificationMessage, NotificationType } from "./types";
 
 import db from "../../services/db";
-import DesignsDAO from "../product-designs/dao";
 import { generateTeam } from "../../test-helpers/factories/team";
 import generateCollection from "../../test-helpers/factories/collection";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import { moveDesign } from "../../test-helpers/collections";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role as TeamUserRole } from "../team-users/types";
 import createUser from "../../test-helpers/create-user";
+import createDesign from "../../services/create-design";
 
 test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
   const notificationMessage: NotificationMessage = {
@@ -127,12 +126,12 @@ test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
       createdBy: collectionAndDesignOwner.id,
     });
     // create a design.
-    const design1 = await DesignsDAO.create({
+    const design1 = await createDesign({
       productType: "TEE",
       title: "My Tee",
       userId: collectionAndDesignOwner.id,
+      collectionIds: [collection.id],
     });
-    await moveDesign(collection.id, design1.id);
 
     const { user: userCollaborator1 } = await createUser({
       withSession: false,

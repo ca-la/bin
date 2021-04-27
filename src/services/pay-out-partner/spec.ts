@@ -1,7 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import * as EmailService from "../email";
 import generateCollection from "../../test-helpers/factories/collection";
 import PartnerPayoutAccountsDAO = require("../../dao/partner-payout-accounts");
@@ -10,10 +10,9 @@ import StripeService = require("../stripe");
 import db from "../db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import generateBid from "../../test-helpers/factories/bid";
-import { addDesign } from "../../test-helpers/collections";
 import { payOutPartner } from ".";
-import ProductDesignsDAO from "../../components/product-designs/dao";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
+import createDesign from "../create-design";
 
 test("payOutPartner", async (t: Test) => {
   const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
@@ -29,16 +28,15 @@ test("payOutPartner", async (t: Test) => {
     withSession: false,
   });
 
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
-  });
-
   const { collection } = await generateCollection({
     createdBy: regularUser.id,
   });
-  await addDesign(collection.id, design.id);
+  const design = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: regularUser.id,
+    collectionIds: [collection.id],
+  });
 
   const { bid } = await generateBid({
     bidOptions: { bidPriceCents: 1000 },
@@ -89,7 +87,7 @@ test("payOutPartner requires payout account if payout is not manual", async (t: 
   });
   const { user: regularUser } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: regularUser.id,
@@ -129,7 +127,7 @@ test("payOutPartner with manual payment", async (t: Test) => {
   });
   const { user: regularUser } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: regularUser.id,
@@ -178,16 +176,15 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
     withSession: false,
   });
 
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
-  });
-
   const { collection } = await generateCollection({
     createdBy: regularUser.id,
   });
-  await addDesign(collection.id, design.id);
+  const design = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: regularUser.id,
+    collectionIds: [collection.id],
+  });
 
   const { bid } = await generateBid({
     bidOptions: { bidPriceCents: 1000 },

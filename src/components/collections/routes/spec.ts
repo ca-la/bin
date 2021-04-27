@@ -22,14 +22,14 @@ import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import * as SubmissionStatusService from "../services/determine-submission-status";
 import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
-import generateApprovalStep from "../../../test-helpers/factories/design-approval-step";
+import ApprovalStepsDAO from "../../approval-steps/dao";
 import createDesign from "../../../services/create-design";
-import * as ProductDesignsDAO from "../../product-designs/dao";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
 import * as TeamsService from "../../teams/service";
 import * as TeamUsersService from "../../team-users/service";
+import { ApprovalStepType } from "../../approval-steps/types";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -836,33 +836,20 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     userEmail: null,
     userId: collaborator.user.id,
   });
-  const designOne = await ProductDesignsDAO.create({
+  const designOne = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: owner.user.id,
+    collectionIds: [collection.id],
   });
-  const designTwo = await ProductDesignsDAO.create({
+  const designTwo = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt Two",
     userId: owner.user.id,
+    collectionIds: [collection.id],
   });
-
-  const [approvalStepOne, approvalStepTwo] = await db.transaction(
-    async (trx: Knex.Transaction) => {
-      const { approvalStep: one } = await generateApprovalStep(trx, {
-        designId: designOne.id,
-      });
-      const { approvalStep: two } = await generateApprovalStep(trx, {
-        designId: designTwo.id,
-      });
-      return [one, two];
-    }
-  );
-
-  await moveDesign(collection.id, designOne.id);
-  await moveDesign(collection.id, designTwo.id);
 
   const notificationStub = sandbox()
     .stub(CreateNotifications, "sendDesignerSubmitCollection")
@@ -923,16 +910,24 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     "SUBMIT_DESIGN",
     "Submitted the design to CALA"
   );
-  t.deepEqual(
-    designOneEvents[0].approvalStepId,
-    approvalStepOne.id,
-    "Submission is associated with the right step"
-  );
-  t.deepEqual(
-    designTwoEvents[0].approvalStepId,
-    approvalStepTwo.id,
-    "Submission is associated with the right step"
-  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    t.deepEqual(
+      (await ApprovalStepsDAO.findById(
+        trx,
+        designOneEvents[0].approvalStepId!
+      ))!.type,
+      ApprovalStepType.CHECKOUT,
+      "Submission is associated with the checkout step"
+    );
+    t.deepEqual(
+      (await ApprovalStepsDAO.findById(
+        trx,
+        designTwoEvents[0].approvalStepId!
+      ))!.type,
+      ApprovalStepType.CHECKOUT,
+      "Submission is associated with the checkout step"
+    );
+  });
 
   const collaboratorPost = await API.post(
     `/collections/${collection.id}/submissions`,

@@ -4,9 +4,9 @@ const pick = require("lodash/pick");
 const createUser = require("../../test-helpers/create-user");
 const ProductDesignFeaturePlacementsDAO = require("./index");
 const generateAsset = require("../../test-helpers/factories/asset").default;
-const ProductDesignsDAO = require("../../components/product-designs/dao");
 const ProductDesignSectionsDAO = require("../product-design-sections");
 const { test } = require("../../test-helpers/fresh");
+const createDesign = require("../../services/create-design").default;
 
 function getPlacementData(imageId, iteration = 0) {
   return [
@@ -60,7 +60,7 @@ test("ProductDesignFeaturePlacementsDAO.replaceForSection creates pathData place
 
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
+      return createDesign({
         title: "Plain White Tee",
         productType: "TEESHIRT",
         userId: user.id,
@@ -99,7 +99,7 @@ test("ProductDesignFeaturePlacementsDAO.replaceForSection creates and updates pl
           originalHeightPx: 768,
           mimeType: "image/jpeg",
         }),
-        ProductDesignsDAO.create({
+        createDesign({
           title: "Plain White Tee",
           productType: "TEESHIRT",
           userId: user.id,

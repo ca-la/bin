@@ -3,13 +3,12 @@ import uuid from "node-uuid";
 import { HermesMessageType, ProviderName } from "@cala/ts-lib";
 import * as HermesService from "../../components/hermes/send-message";
 import * as CollectionsDAO from "../../components/collections/dao";
-import * as ProductDesignsDAO from "../../components/product-designs/dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { createStorefront } from "../create-storefront";
-import { addDesign } from "../../test-helpers/collections";
 import db from "../db";
 import { createShopifyProductsForCollection } from ".";
+import createDesign from "../create-design";
 
 test("createShopifyProductsForCollection creates a Hermes message for each design", async (t: Test) => {
   const sendMessageStub = sandbox()
@@ -34,19 +33,19 @@ test("createShopifyProductsForCollection creates a Hermes message for each desig
     teamId: null,
     title: "Drop 001/The Early Years",
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design.id);
 
-  const design2 = await ProductDesignsDAO.create({
+  const design2 = await createDesign({
     productType: "A product type",
     title: "A design 2",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design2.id);
   await db.transaction((trx: Knex.Transaction) =>
     createShopifyProductsForCollection(trx, user.id, collection.id)
   );

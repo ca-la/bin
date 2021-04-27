@@ -3,7 +3,6 @@ import Knex from "knex";
 
 import { test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
-import ProductDesignsDAO from "../product-designs/dao";
 import * as PricingCostInputsDAO from "./dao";
 import PricingCostInput from "./domain-object";
 import { omit } from "lodash";
@@ -16,7 +15,7 @@ import { Process } from "../../domain-objects/pricing";
 test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "DRESS",
     title: "A design",
     userId: user.id,
@@ -68,7 +67,7 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
 test("supports creation without processes", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "DRESS",
     title: "A design",
     userId: user.id,
@@ -132,7 +131,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
   yesterday.setDate(yesterday.getDate() - 1);
 
   const { user } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "DRESS",
     title: "A design",
     userId: user.id,

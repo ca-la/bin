@@ -3,7 +3,6 @@ import tape from "tape";
 import uuid from "node-uuid";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as NotificationsDAO from "./dao";
-import DesignsDAO from "../product-designs/dao";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import { Notification, NotificationType } from "./domain-object";
@@ -36,6 +35,7 @@ import generateAsset from "../../test-helpers/factories/asset";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import { NotificationFilter } from "./types";
 import * as PushNotificationService from "../../services/push-notifications";
+import createDesign from "../../services/create-design";
 
 test("Notifications DAO supports creation", async (t: tape.Test) => {
   sandbox()
@@ -85,7 +85,7 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
 
-  const d1 = await DesignsDAO.create({
+  const d1 = await createDesign({
     productType: "HOODIE",
     title: "Raf Simons x Sterling Ruby Hoodie",
     userId: userOne.id,
@@ -116,8 +116,8 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
     design: d,
   } = await generateNotification({
     actorUserId: userOne.id,
-    recipientUserId: c1.userId,
-    collaboratorId: c1.id,
+    recipientUserId: c1!.userId,
+    collaboratorId: c1!.id,
     type: NotificationType.INVITE_COLLABORATOR,
   });
   await generateNotification({
@@ -507,7 +507,7 @@ test("Notifications DAO supports marking a row as deleted", async (t: tape.Test)
   const { user: userOne } = await createUser({ withSession: false });
   const { user: userTwo } = await createUser({ withSession: false });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Green Tee",
     userId: userTwo.id,
@@ -539,7 +539,7 @@ test("Notifications DAO supports deleting similar notifications", async (t: tape
     role: "ADMIN",
   });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Green Tee",
     userId: userTwo.user.id,

@@ -10,7 +10,7 @@ import * as ComponentsDAO from "../components/dao";
 import * as CanvasSplitService from "./services/split";
 import { Component, ComponentType } from "../components/types";
 
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import {
   authHeader,
   del,
@@ -594,7 +594,7 @@ test("DELETE /product-design-canvases/:canvasId deletes a Canvas", async (t: tap
 
 test("PUT /product-design-canvases/:canvasId/component/:componentId adds a component", async (t: tape.Test) => {
   const { session, user } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Rick Tee",
     userId: user.id,
@@ -652,7 +652,7 @@ test("PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
 test(`PUT /product-design-canvases/:canvasId/component/:componentId adds a component with a
 pre-existing preview image`, async (t: tape.Test) => {
   const { session, user } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     previewImageUrls: ["another-image.png"],
     productType: "TEESHIRT",
     title: "Rick Tee",

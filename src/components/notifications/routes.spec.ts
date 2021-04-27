@@ -2,9 +2,8 @@ import tape from "tape";
 
 import { sandbox, test } from "../../test-helpers/fresh";
 import API from "../../test-helpers/http";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 
-import DesignsDAO from "../product-designs/dao";
 import * as NotificationsDAO from "../notifications/dao";
 import SessionsDAO from "../../dao/sessions";
 import generateNotification, {
@@ -18,6 +17,7 @@ import { NotificationMessage, NotificationFilter } from "./types";
 import { templateNotification } from "./models/base";
 import * as NotificationMessages from "./notification-messages";
 import { generateTeam } from "../../test-helpers/factories/team";
+import createDesign from "../../services/create-design";
 
 const API_PATH = "/notifications";
 
@@ -28,7 +28,7 @@ test(`GET ${API_PATH} returns a list of notificationMessages for the user`, asyn
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const d1 = await DesignsDAO.create({
+  const d1 = await createDesign({
     productType: "HOODIE",
     title: "Raf Simons x Sterling Ruby Hoodie",
     userId: userOne.user.id,
@@ -204,7 +204,7 @@ test(`PATCH ${API_PATH}/read marks notifications as read`, async (t: tape.Test) 
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const d1 = await DesignsDAO.create({
+  const d1 = await createDesign({
     productType: "HOODIE",
     title: "Raf Simons x Sterling Ruby Hoodie",
     userId: userOne.user.id,
@@ -271,7 +271,7 @@ test(`PATCH ${API_PATH}/read returns 403 for wrong user`, async (t: tape.Test) =
   const userOne = await createUser();
   const userTwo = await createUser();
 
-  const d1 = await DesignsDAO.create({
+  const d1 = await createDesign({
     productType: "HOODIE",
     title: "Raf Simons x Sterling Ruby Hoodie",
     userId: userOne.user.id,

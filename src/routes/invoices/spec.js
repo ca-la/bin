@@ -9,12 +9,11 @@ const generateCollection = require("../../test-helpers/factories/collection")
 const { authHeader, get, post } = require("../../test-helpers/http");
 const EmailService = require("../../services/email");
 const StripeService = require("../../services/stripe");
-const ProductDesignsDAO = require("../../components/product-designs/dao");
 const PartnerPayoutLogsDAO = require("../../components/partner-payouts/dao");
 const PartnerPayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 const { sandbox, test } = require("../../test-helpers/fresh");
 const generateInvoice = require("../../test-helpers/factories/invoice").default;
-const { addDesign } = require("../../test-helpers/collections");
+const createDesign = require("../../services/create-design").default;
 
 test("GET /invoices allows admins to list invoices for a collection", async (t) => {
   const { user } = await createUser({ withSession: false });
@@ -80,16 +79,15 @@ test("payout an invoice", async (t) => {
     withSession: false,
   });
 
-  const design = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
-  });
-
   const { collection } = await generateCollection({
     createdBy: regularUser.id,
   });
-  await addDesign(collection.id, design.id);
+  await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: regularUser.id,
+    collectionIds: [collection.id],
+  });
 
   const { invoice } = await generateInvoice({
     collectionId: collection.id,

@@ -2,8 +2,7 @@ import Knex from "knex";
 import * as uuid from "node-uuid";
 
 import { test, Test } from "../../test-helpers/fresh";
-import { staticProductDesign } from "../../test-helpers/factories/product-design";
-import * as ProductDesignsDAO from "../product-designs/dao";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 import db from "../../services/db";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 
@@ -19,9 +18,7 @@ import { findByApprovalStepId } from "../../dao/task-events";
 
 test("ApprovalStepTasksDAO can create multiple tasks and retrieve by step", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
-  );
+  const d1: ProductDesign = await generateDesign({ id: "d1", userId: user.id });
 
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

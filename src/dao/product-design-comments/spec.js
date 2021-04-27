@@ -1,10 +1,10 @@
 "use strict";
 
 const createUser = require("../../test-helpers/create-user");
-const DesignsDAO = require("../../components/product-designs/dao");
 const ProductDesignCommentsDAO = require("./index");
 const SectionsDAO = require("../product-design-sections");
 const { test } = require("../../test-helpers/fresh");
+const createDesign = require("../../services/create-design").default;
 
 const designFactory = (userId) => ({
   title: "My Design",
@@ -28,8 +28,8 @@ const commentFactory = (userId, sectionId) => ({
 test("ProductDesignComments.findByDesign only returns relevant comments", async (t) => {
   const { user } = await createUser({ withSession: false });
 
-  const design1 = await DesignsDAO.create(designFactory(user.id));
-  const design2 = await DesignsDAO.create(designFactory(user.id));
+  const design1 = await createDesign(designFactory(user.id));
+  const design2 = await createDesign(designFactory(user.id));
 
   const section1a = await SectionsDAO.create(sectionFactory(design1.id, 1));
   const section1b = await SectionsDAO.create(sectionFactory(design1.id, 2));

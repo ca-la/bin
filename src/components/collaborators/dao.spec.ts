@@ -5,7 +5,6 @@ import { omit } from "lodash";
 import db from "../../services/db";
 import * as CollaboratorsDAO from "./dao";
 import * as CollectionsDAO from "../collections/dao";
-import ProductDesignsDAO = require("../product-designs/dao");
 import DesignEventsDAO from "../design-events/dao";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 
@@ -556,18 +555,9 @@ test("CollaboratorsDAO.findByCollectionAndUser returns collaborators", async (t:
 test("CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
-    userId: user.id,
-  });
-
-  await generateCollaborator({
-    collectionId: null,
-    designId: design.id,
-    invitationMessage: null,
-    role: "EDIT",
-    userEmail: null,
     userId: user.id,
   });
 
@@ -583,14 +573,17 @@ test("CollaboratorsDAO.deleteByDesignIdAndUserId deletes collaborator", async (t
 
 test("findAllForUserThroughDesign can find user collaborators", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
+  const { team } = await generateTeam(user.id);
 
-  const { collection } = await generateCollection();
-  const design = await ProductDesignsDAO.create({
+  const { collection } = await generateCollection({
+    teamId: team.id,
+  });
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design.id);
 
   const { collaborator: collaboratorOne } = await generateCollaborator({
     collectionId: null,
@@ -670,12 +663,12 @@ test("findAllForUserThroughDesign can find team collaborators", async (t: Test) 
 
   const { collection } = await generateCollection();
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design.id);
 
   const { collaborator } = await generateCollaborator({
     collectionId: null,
@@ -707,7 +700,7 @@ test("cancelForDesignAndPartner cancels the preview role", async (t: Test) => {
     role: "PARTNER",
   });
   const { team } = await generateTeam(partner.id);
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Helmut Lang Shirt",
     userId: designer.id,
@@ -779,7 +772,7 @@ test("cancelForDesignAndPartner cancels the partner role", async (t: Test) => {
     role: "PARTNER",
   });
   const { team } = await generateTeam(partner.id);
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Helmut Lang Shirt",
     userId: designer.id,
@@ -848,7 +841,7 @@ test("CollaboratorsDAO.update", async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
   const { user: friend } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: designer.id,
@@ -887,7 +880,7 @@ test("CollaboratorsDAO.update with the cancelled_at property", async (t: Test) =
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: designer.id,
@@ -919,7 +912,7 @@ test("CollaboratorsDAO.update on a cancelled collaborator", async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
   const { user: partner } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: designer.id,
@@ -947,7 +940,7 @@ test("CollaboratorsDAO.update on a cancelled collaborator", async (t: Test) => {
 test("CollaboratorsDAO.findUnclaimedByEmail", async (t: Test) => {
   const { user: designer } = await createUser({ withSession: false });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: designer.id,
@@ -980,7 +973,7 @@ test("CollaboratorsDAO.findUnclaimedByEmail", async (t: Test) => {
 test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
   const designer = await createUser({ withSession: false });
   const partner = await createUser({ role: "PARTNER" });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: designer.user.id,
@@ -1020,7 +1013,7 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
 
     t.deepEqual([omit(collaborator, ["user"])], found);
 
-    const draftDesign = await ProductDesignsDAO.create({
+    const draftDesign = await createDesign({
       productType: "TEESHIRT",
       title: "A product design",
       userId: designer.user.id,
@@ -1039,10 +1032,12 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
 test("findByDesignAndUser find team", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { team } = await generateTeam(user.id);
-  const design = await ProductDesignsDAO.create({
+  const { collection } = await generateCollection({ teamId: team.id });
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
 
   const { collaborator } = await generateCollaborator({
@@ -1066,7 +1061,7 @@ test("findByDesignAndUser find team", async (t: Test) => {
 test("findByDesignAndTeam", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { team } = await generateTeam(user.id);
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "A product design",
     userId: user.id,
@@ -1113,7 +1108,7 @@ test("findAllForUserThroughDesign team permissions", async (t: Test) => {
       updatedAt: new Date(),
     });
 
-    const design = await ProductDesignsDAO.create(
+    const design = await createDesign(
       {
         productType: "TEESHIRT",
         title: "A product design",
@@ -1205,7 +1200,7 @@ test("findByDesignAndUser team permissions", async (t: Test) => {
       updatedAt: new Date(),
     });
 
-    const design = await ProductDesignsDAO.create(
+    const design = await createDesign(
       {
         productType: "TEESHIRT",
         title: "A product design",

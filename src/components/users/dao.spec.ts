@@ -1,13 +1,12 @@
 import uuid from "node-uuid";
 import Knex from "knex";
 
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import * as UsersDAO from "./dao";
 import DesignEventsDAO from "../design-events/dao";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import createBid from "../../test-helpers/factories/bid";
-import ProductDesignsDAO from "../product-designs/dao";
 import User, { ROLES, UserIO } from "./domain-object";
 import { validatePassword } from "./services/validate-password";
 import db from "../../services/db";
@@ -16,8 +15,8 @@ import generateDesignEvent from "../../test-helpers/factories/design-event";
 import * as PayoutAccountsDAO from "../../dao/partner-payout-accounts";
 import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import generateCollection from "../../test-helpers/factories/collection";
-import { addDesign } from "../../test-helpers/collections";
 import { templateDesignEvent } from "../design-events/types";
+import createDesign from "../../services/create-design";
 
 const USER_DATA: UserIO = Object.freeze({
   email: "USER@example.com",
@@ -286,7 +285,7 @@ test("UsersDAO.completeSmsPreregistration completes a user", (t: Test) => {
 test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) => {
   const { user: partner } = await createUser();
   const { user: designer } = await createUser();
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: designer.id,
@@ -311,14 +310,14 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
   const { user: designer } = await createUser();
   const { user: unpaidPartner } = await createUser({ role: "PARTNER" });
 
-  const design = await ProductDesignsDAO.create({
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: designer.id,
+    collectionIds: [collection.id],
   });
 
-  const { collection } = await generateCollection({ createdBy: designer.id });
-  await addDesign(collection.id, design.id);
   const { bid, user: admin } = await createBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
@@ -347,15 +346,15 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
   const { user: designer2 } = await createUser();
   const { user: paidPartner } = await createUser({ role: "PARTNER" });
 
-  const design2 = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer2.id,
-  });
   const { collection: collection2 } = await generateCollection({
     createdBy: designer.id,
   });
-  await addDesign(collection2.id, design2.id);
+  const design2 = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: designer2.id,
+    collectionIds: [collection2.id],
+  });
   const { bid: bid2, user: admin2 } = await createBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design2.id,
@@ -416,14 +415,14 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
   const { user: designer } = await createUser();
   const { user: unpaidPartner } = await createUser({ role: "PARTNER" });
 
-  const design = await ProductDesignsDAO.create({
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: designer.id,
+    collectionIds: [collection.id],
   });
 
-  const { collection } = await generateCollection({ createdBy: designer.id });
-  await addDesign(collection.id, design.id);
   const { bid, user: admin } = await createBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
@@ -452,15 +451,15 @@ test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids
   const { user: designer2 } = await createUser();
   const { user: paidPartner } = await createUser({ role: "PARTNER" });
 
-  const design2 = await ProductDesignsDAO.create({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer2.id,
-  });
   const { collection: collection2 } = await generateCollection({
     createdBy: designer.id,
   });
-  await addDesign(collection2.id, design2.id);
+  const design2 = await createDesign({
+    productType: "TEESHIRT",
+    title: "Plain White Tee",
+    userId: designer2.id,
+    collectionIds: [collection2.id],
+  });
   const { bid: bid2, user: admin2 } = await createBid({
     bidOptions: { bidPriceCents: 1000 },
     designId: design2.id,

@@ -9,6 +9,7 @@ import ProductDesign = require("../../components/product-designs/domain-objects/
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import Knex from "knex";
 import db from "../../services/db";
+import createDesign from "../../services/create-design";
 
 interface DesignEventWithResources {
   designEvent: DesignEvent;
@@ -24,7 +25,7 @@ export default async function generateDesignEvent(
     : await createUser({ withSession: false });
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)
-    : await ProductDesignsDAO.create({
+    : await createDesign({
         productType: "SWEATER",
         title: "Mohair Wool Sweater",
         userId: actor.id,

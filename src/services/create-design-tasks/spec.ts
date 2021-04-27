@@ -10,13 +10,12 @@ import * as CollectionsDAO from "../../components/collections/dao";
 import createDesignTasks from "./index";
 import createUser = require("../../test-helpers/create-user");
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
-import ProductDesignsDAO = require("../../components/product-designs/dao");
 import User from "../../components/users/domain-object";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createCollaborator from "../../test-helpers/factories/collaborator";
 import Collaborator from "../../components/collaborators/types";
 import { getTemplatesFor, taskTypes } from "../../components/tasks/templates";
-import { moveDesign } from "../../test-helpers/collections";
+import createDesign from "../create-design";
 
 async function createResources(): Promise<{
   user: User;
@@ -35,14 +34,14 @@ async function createResources(): Promise<{
     title: "Season 1",
   });
 
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     description: "Shirt",
     productType: "Teeshirt",
     title: "Tee",
     userId: designer.user.id,
+    collectionIds: [collection.id],
   });
 
-  await moveDesign(collection.id, design.id);
   const { collaborator } = await createCollaborator({
     collectionId: collection.id,
     role: "EDIT",

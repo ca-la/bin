@@ -2,13 +2,13 @@ import tape from "tape";
 import { test } from "../../test-helpers/fresh";
 import createUser = require("../../test-helpers/create-user");
 import API from "../../test-helpers/http";
-import DesignsDAO from "../../components/product-designs/dao";
+import createDesign from "../../services/create-design";
 
 test("canDeleteDesign middleware", async (t: tape.Test) => {
   const { user } = await createUser();
   const { session: session2 } = await createUser();
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "HOODIE",
     title: "Robert Mapplethorpe Hoodie",
     userId: user.id,

@@ -1,15 +1,15 @@
 "use strict";
 
 const createUser = require("../../test-helpers/create-user");
-const ProductDesignsDAO = require("../../components/product-designs/dao");
 const ProductDesignSectionsDAO = require("./index");
 const generateAsset = require("../../test-helpers/factories/asset").default;
 const { test } = require("../../test-helpers/fresh");
+const createDesign = require("../../services/create-design").default;
 
 test("ProductDesignSectionsDAO.create creates a section", (t) => {
   return createUser({ withSession: false })
     .then(({ user }) => {
-      return ProductDesignsDAO.create({
+      return createDesign({
         title: "Plain White Tee",
         productType: "TEESHIRT",
         userId: user.id,
@@ -49,7 +49,7 @@ test("ProductDesignSectionsDAO.update updates a section", (t) => {
           mimeType: "image/jpeg",
           userId: user.id,
         }),
-        ProductDesignsDAO.create({
+        createDesign({
           title: "Plain White Tee",
           productType: "TEESHIRT",
           userId: user.id,

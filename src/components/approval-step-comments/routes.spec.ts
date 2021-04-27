@@ -6,8 +6,7 @@ import ApprovalStep, {
   ApprovalStepType,
 } from "../approval-steps/domain-object";
 import uuid from "node-uuid";
-import ProductDesignsDAO from "../product-designs/dao";
-import { staticProductDesign } from "../../test-helpers/factories/product-design";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 import Knex from "knex";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import db from "../../services/db";
@@ -28,9 +27,10 @@ test("POST /design-approval-step-comments/:stepId creates a comment", async (t: 
     .resolves({});
   const { session, user } = await createUser({});
 
-  const design: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
-  );
+  const design: ProductDesign = await generateDesign({
+    id: "d1",
+    userId: user.id,
+  });
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
     id: uuid.v4(),
@@ -87,9 +87,10 @@ test("POST /design-approval-step-comments/:stepId sends @mention notifications",
   const { session, user } = await createUser({});
   const { user: collaboratorUser } = await createUser();
 
-  const design: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
-  );
+  const design: ProductDesign = await generateDesign({
+    id: "d1",
+    userId: user.id,
+  });
   const { collaborator } = await generateCollaborator({
     designId: design.id,
     userId: collaboratorUser.id,

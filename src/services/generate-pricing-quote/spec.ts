@@ -14,14 +14,13 @@ import db from "../db";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
-import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
-import ProductDesignsDAO from "../../components/product-designs/dao";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { PricingCostInput } from "../../components/pricing-cost-inputs/types";
 import { generateDesign } from "../../test-helpers/factories/product-design";
 import { ApprovalStepType } from "../../published-types";
 import InvalidDataError from "../../errors/invalid-data";
 import * as QuoteValuesService from "../../services/generate-pricing-quote/quote-values";
+import createDesign from "../create-design";
 
 const quoteRequestOne: PricingCostInput = {
   createdAt: new Date(),
@@ -503,30 +502,18 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
 test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
   const { user } = await createUser();
   await generatePricingValues();
-  const designOne = await ProductDesignsDAO.create({
+  const designOne = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: user.id,
   });
-  const designTwo = await ProductDesignsDAO.create({
+  const designTwo = await createDesign({
     description: "Generic Shirt",
     productType: "TEESHIRT",
     title: "T-Shirt Two",
     userId: user.id,
   });
-
-  const [approvalStepOne, approvalStepTwo] = await db.transaction(
-    async (trx: Knex.Transaction) => {
-      const { approvalStep: one } = await generateApprovalStep(trx, {
-        designId: designOne.id,
-      });
-      const { approvalStep: two } = await generateApprovalStep(trx, {
-        designId: designTwo.id,
-      });
-      return [one, two];
-    }
-  );
 
   const payload = [
     { designId: designOne.id, units: 10 },
@@ -571,16 +558,24 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
     await DesignEventsDAO.find(trx, { designId: designTwo.id }),
   ]);
 
-  t.deepEqual(
-    designOneEvents[0].approvalStepId,
-    approvalStepOne.id,
-    "Submission is associated with the right step"
-  );
-  t.deepEqual(
-    designTwoEvents[0].approvalStepId,
-    approvalStepTwo.id,
-    "Submission is associated with the right step"
-  );
+  await db.transaction(async (trx: Knex.Transaction) => {
+    t.deepEqual(
+      (await ApprovalStepsDAO.findById(
+        trx,
+        designOneEvents[0].approvalStepId!
+      ))!.type,
+      ApprovalStepType.CHECKOUT,
+      "Submission is associated with the checkout step"
+    );
+    t.deepEqual(
+      (await ApprovalStepsDAO.findById(
+        trx,
+        designTwoEvents[0].approvalStepId!
+      ))!.type,
+      ApprovalStepType.CHECKOUT,
+      "Submission is associated with the checkout step"
+    );
+  });
 });
 
 test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {

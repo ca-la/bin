@@ -3,8 +3,7 @@ import * as uuid from "node-uuid";
 import { isEqual } from "lodash";
 
 import { test, Test } from "../../test-helpers/fresh";
-import { staticProductDesign } from "../../test-helpers/factories/product-design";
-import * as ProductDesignsDAO from "../product-designs/dao";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 import db from "../../services/db";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 import createUser from "../../test-helpers/create-user";
@@ -25,9 +24,7 @@ import * as ApprovalStepSubmissionsDAO from "./dao";
 
 test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step and id", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
-  );
+  const d1: ProductDesign = await generateDesign({ id: "d1", userId: user.id });
 
   const as1: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

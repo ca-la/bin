@@ -20,7 +20,6 @@ import * as TaskCommentsDAO from "../../components/task-comments/dao";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as ApprovalStepCommentDAO from "../../components/approval-step-comments/dao";
-import DesignsDAO from "../../components/product-designs/dao";
 import * as EmailService from "../../services/email";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
@@ -52,7 +51,7 @@ test("sendDesignOwnerAnnotationCommentCreateNotification", async (t: tape.Test) 
   const { user: user } = await createUser({ withSession: false });
   const { user: owner } = await createUser({ withSession: false });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,
@@ -174,7 +173,7 @@ test("sendAnnotationCommentMentionNotification", async (t: tape.Test) => {
     role: "ADMIN",
   });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,
@@ -244,7 +243,7 @@ test("sendAnnotationCommentReplyNotification", async (t: tape.Test) => {
     role: "ADMIN",
   });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,
@@ -313,7 +312,7 @@ test("sendDesignOwnerMeasurementCreateNotification", async (t: tape.Test) => {
   const { user: owner } = await createUser({ withSession: false });
 
   const { collection } = await generateCollection({ createdBy: owner.id });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,
@@ -415,7 +414,7 @@ test("sendTaskCommentCreateNotification", async (t: tape.Test) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: userOne.user.id,
@@ -524,7 +523,7 @@ test("sendTaskCommentMentionNotification", async (t: tape.Test) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: userOne.user.id,
@@ -631,7 +630,7 @@ test("sendTaskCommentReplyNotification", async (t: tape.Test) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: userOne.user.id,
@@ -751,7 +750,7 @@ test("sendTaskAssignmentNotification", async (t: tape.Test) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: userOne.user.id,
@@ -837,7 +836,7 @@ test("sendTaskAssignmentNotification does not send if assigned to self", async (
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
@@ -906,7 +905,7 @@ test("sendTaskAssignmentNotification does not send if assigned to collaborator w
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
@@ -987,7 +986,7 @@ test("sendTaskCompletionNotification", async (t: tape.Test) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: userOne.user.id,
@@ -1263,7 +1262,7 @@ test("sendApprovalStepCommentReplyNotification", async (t: tape.Test) => {
     role: "ADMIN",
   });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,
@@ -1332,7 +1331,7 @@ test("sendDesignOwnerAnnotationCommentCreateNotification", async (t: tape.Test) 
     role: "ADMIN",
   });
 
-  const design = await DesignsDAO.create({
+  const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: owner.id,

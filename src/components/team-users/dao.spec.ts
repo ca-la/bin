@@ -5,7 +5,6 @@ import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as CollectionsDAO from "../collections/dao";
-import DesignsDAO from "../product-designs/dao";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import TeamsDAO from "../teams/dao";
 import { TeamType } from "../teams/types";
@@ -13,8 +12,8 @@ import { Role } from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { TeamUserRole } from ".";
-import { moveDesign } from "../../test-helpers/collections";
 import ConflictError from "../../errors/conflict";
+import createDesign from "../../services/create-design";
 
 const testDate = new Date(2012, 11, 25);
 
@@ -471,21 +470,27 @@ test("TeamUsersDAO.findByUserAndDesign", async (t: Test) => {
       updatedAt: new Date(),
     });
 
-    const collection = await CollectionsDAO.create({
-      createdAt: new Date(),
-      createdBy: owner.id,
-      deletedAt: null,
-      description: null,
-      id: uuid.v4(),
-      teamId: team.id,
-      title: "C1",
-    });
-    const design1 = await DesignsDAO.create({
-      productType: "TEE",
-      title: "My Tee",
-      userId: owner.id,
-    });
-    await moveDesign(collection.id, design1.id);
+    const collection = await CollectionsDAO.create(
+      {
+        createdAt: new Date(),
+        createdBy: owner.id,
+        deletedAt: null,
+        description: null,
+        id: uuid.v4(),
+        teamId: team.id,
+        title: "C1",
+      },
+      trx
+    );
+    const design1 = await createDesign(
+      {
+        productType: "TEE",
+        title: "My Tee",
+        userId: owner.id,
+        collectionIds: [collection.id],
+      },
+      trx
+    );
 
     t.deepEqual(
       await TeamUsersDAO.findByUserAndDesign(trx, user1.id, design1.id),
@@ -806,12 +811,12 @@ test("TeamUsersDAO.findByDesign", async (t: Test) => {
       teamId: team.id,
       title: "C1",
     });
-    const design1 = await DesignsDAO.create({
+    const design1 = await createDesign({
       productType: "TEE",
       title: "My Tee",
       userId: owner.id,
+      collectionIds: [collection.id],
     });
-    await moveDesign(collection.id, design1.id);
 
     t.deepEqual(
       await TeamUsersDAO.findByDesign(trx, uuid.v4()),
