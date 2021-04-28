@@ -49,68 +49,83 @@ ${buildTypes(extractSortedTypes(endpoints))}
 type Query {
   ${endpoints
     .filter((endpoint: Endpoint) => endpoint.endpointType === "Query")
-    .map((endpoint: Endpoint) => `${endpoint.name}${endpoint.signature}`)
+    .map((endpoint: Endpoint) => {
+      if (!endpoint.signature) {
+        throw new Error(
+          `Missing signature for root-level endpoint "${endpoint.name}"`
+        );
+      }
+      return `${endpoint.name}${endpoint.signature}`;
+    })
     .join("\n  ")}
 }
 type Mutation {
   ${endpoints
     .filter((endpoint: Endpoint) => endpoint.endpointType === "Mutation")
-    .map((endpoint: Endpoint) => `${endpoint.name}${endpoint.signature}`)
+    .map((endpoint: Endpoint) => {
+      if (!endpoint.signature) {
+        throw new Error(
+          `Missing signature for root-level endpoint "${endpoint.name}"`
+        );
+      }
+      return `${endpoint.name}${endpoint.signature}`;
+    })
     .join("\n  ")}
 }
   `;
 }
 
-const typeDefs = `
+export function getApolloServer() {
+  const typeDefs = `
 scalar GraphQLDateTime
 scalar Date
 type ListMeta {
   total: Int!
 }
-${extractSchema()}
-`;
+${extractSchema()}`;
 
-export const apolloServer = new ApolloServer({
-  context,
-  debug: false,
-  resolvers: {
-    GraphQLDateTime,
-    ...extractResolvers(),
-  },
-  formatError: (error: GraphQLError): Error => {
-    if (isClientError(error)) {
-      return error;
-    }
-
-    logServerError(error);
-    return new Error(
-      "Something went wrong! Please try again, or email hi@ca.la if this message persists."
-    );
-  },
-  typeDefs,
-  playground: ENABLE_APOLLO_PLAYGROUND,
-  plugins: [
-    {
-      requestDidStart() {
-        return {
-          didEncounterErrors: async (
-            requestContext: GraphQLRequestContextDidEncounterErrors<
-              GraphQLContextBase<null>
-            >
-          ) => {
-            await requestContext.context.trx.rollback();
-          },
-          willSendResponse: async (
-            requestContext: GraphQLRequestContextWillSendResponse<
-              GraphQLContextBase<null>
-            >
-          ) => {
-            if (!requestContext.context.trx.isCompleted()) {
-              await requestContext.context.trx.commit();
-            }
-          },
-        };
-      },
+  return new ApolloServer({
+    context,
+    debug: false,
+    resolvers: {
+      GraphQLDateTime,
+      ...extractResolvers(),
     },
-  ],
-});
+    formatError: (error: GraphQLError): Error => {
+      if (isClientError(error)) {
+        return error;
+      }
+
+      logServerError(error);
+      return new Error(
+        "Something went wrong! Please try again, or email hi@ca.la if this message persists."
+      );
+    },
+    typeDefs,
+    playground: ENABLE_APOLLO_PLAYGROUND,
+    plugins: [
+      {
+        requestDidStart() {
+          return {
+            didEncounterErrors: async (
+              requestContext: GraphQLRequestContextDidEncounterErrors<
+                GraphQLContextBase<null>
+              >
+            ) => {
+              await requestContext.context.trx.rollback();
+            },
+            willSendResponse: async (
+              requestContext: GraphQLRequestContextWillSendResponse<
+                GraphQLContextBase<null>
+              >
+            ) => {
+              if (!requestContext.context.trx.isCompleted()) {
+                await requestContext.context.trx.commit();
+              }
+            },
+          };
+        },
+      },
+    ],
+  });
+}

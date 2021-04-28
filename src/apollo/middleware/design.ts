@@ -13,6 +13,16 @@ const filterWithDesignIdSchema = z.object({
   designId: z.string(),
 });
 
+export async function attachDesignFromDesignId<
+  Args extends { designId: string },
+  Result
+>(args: Args, context: GraphQLContextBase<Result>) {
+  return {
+    ...context,
+    designId: args.designId,
+  };
+}
+
 export async function attachDesignFromFilter<
   Args extends { filter: any },
   Result

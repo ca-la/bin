@@ -7,7 +7,7 @@ import compress = require("koa-compress");
 import koa = require("koa");
 import convert, { V2Middleware } from "koa-convert";
 
-import { apolloServer } from "./apollo";
+import { getApolloServer } from "./apollo";
 import attachSession = require("./middleware/attach-session");
 import errors from "./middleware/errors";
 import headers = require("./middleware/headers");
@@ -36,9 +36,9 @@ app.use(convert.back(shopifyAuth()));
 app.use(router.routes());
 app.use(
   convert.back(
-    (apolloServer.getMiddleware({ path: "/v2" }) as unknown) as V2Middleware<
-      any
-    >
+    (getApolloServer().getMiddleware({
+      path: "/v2",
+    }) as unknown) as V2Middleware<any>
   )
 );
 

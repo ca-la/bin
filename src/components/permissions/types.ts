@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const permissionsSchema = z.object({
+export const permissionsSchema = z.object({
   canComment: z.boolean(),
   canDelete: z.boolean(),
   canEdit: z.boolean(),

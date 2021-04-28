@@ -30,6 +30,8 @@ import {
 } from "../../approval-steps/types";
 import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../team-users/types";
 import { Roles } from "../../../published-types";
+import { BaseProductDesign } from "../types";
+import { baseAdapter } from "../adapter";
 
 export const TABLE_NAME = "product_designs";
 
@@ -627,4 +629,20 @@ export async function findMinimalByIds(
   }
 
   return result;
+}
+
+export async function findBaseById(
+  ktx: Knex,
+  id: string
+): Promise<BaseProductDesign> {
+  const row = await ktx(TABLE_NAME).select("*").where("id", id).first();
+
+  if (!row) {
+    throw new ResourceNotFoundError(`Design #${id} not found`);
+  }
+
+  return baseAdapter.fromDb({
+    ...row,
+    preview_image_urls: row.preview_image_urls || [],
+  });
 }

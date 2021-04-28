@@ -10,6 +10,7 @@ export * from "../components/plan-stripe-price/types";
 export * from "../components/permissions/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
+export * from "../components/product-designs/types";
 export * from "../components/notifications/types";
 export * from "../components/users/types";
 export * from "../components/collaborators/types";

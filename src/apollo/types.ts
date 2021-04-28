@@ -28,9 +28,10 @@ export type MiddlewareComponent<
 export type Resolver<
   Args,
   Result,
-  ResolverContext extends GraphQLContextBase<Result>
+  ResolverContext extends GraphQLContextBase<Result>,
+  Parent = any
 > = (
-  parent: any,
+  parent: Parent,
   args: Args,
   context: ResolverContext,
   info: GraphQLResolveInfo
@@ -45,12 +46,13 @@ export interface GraphQLEndpoint<
   Result,
   ResolverContext extends GraphQLContextBase<Result> = GraphQLContextBase<
     Result
-  >
+  >,
+  Parent = any
 > {
   endpointType: string;
   types?: GraphQLType[];
   name: string;
-  signature: string;
+  signature?: string;
   middleware?: Middleware<Args, ResolverContext, Result>;
-  resolver: Resolver<Args, Result, ResolverContext>;
+  resolver: Resolver<Args, Result, ResolverContext, Parent>;
 }

@@ -17,10 +17,12 @@ export function schemaToGraphQLType(
     depTypes,
     type = "type",
     isUninserted = false,
+    bodyPatch = {},
   }: {
     depTypes?: Record<any, GraphQLType>;
     type?: "type" | "input";
     isUninserted?: boolean;
+    bodyPatch?: Record<string, string>;
   } = {}
 ): GraphQLType {
   const shape = isUninserted
@@ -93,13 +95,16 @@ export function schemaToGraphQLType(
 
       return acc;
     },
-    { body: isUninserted ? { id: "String" } : {}, requires: [] }
+    {
+      body: isUninserted ? { id: "String" } : {},
+      requires: [],
+    }
   );
 
   return {
     name,
     type,
-    body,
+    body: { ...body, ...bodyPatch },
     requires,
   };
 }

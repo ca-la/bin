@@ -298,15 +298,10 @@ export async function findByTeamWithPermissionsByRole(
 
 export async function findById(
   id: string,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<CollectionDb | null> {
-  const collection = await db(TABLE_NAME)
+  const collection = await ktx(TABLE_NAME)
     .where({ id, deleted_at: null })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
     .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
     .catch(rethrow);
 
@@ -324,21 +319,15 @@ export async function findById(
 
 export async function findByDesign(
   designId: string,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<CollectionDb[]> {
-  const collectionDesigns: CollectionDesignRow[] = await db(
+  const collectionDesigns: CollectionDesignRow[] = await ktx(
     "collection_designs"
-  )
-    .where({ design_id: designId })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+  ).where({ design_id: designId });
   const maybeCollections = await Promise.all(
     collectionDesigns.map(
       (collectionDesign: CollectionDesignRow): Promise<CollectionDb | null> =>
-        findById(collectionDesign.collection_id, trx)
+        findById(collectionDesign.collection_id, ktx)
     )
   );
   const collections = maybeCollections.filter(

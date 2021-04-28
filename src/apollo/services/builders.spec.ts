@@ -45,6 +45,9 @@ test("schemaToGraphQLType", async (t: Test) => {
         body: {},
       },
     },
+    bodyPatch: {
+      injectedField: "String",
+    },
   });
 
   t.deepEqual(type, {
@@ -58,6 +61,7 @@ test("schemaToGraphQLType", async (t: Test) => {
       ref2: "Image",
       num1: "Int!",
       enum1: "String",
+      injectedField: "String",
     },
     requires: ["Design", "Image"],
   });

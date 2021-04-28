@@ -16,7 +16,9 @@ import {
   findIdByQuoteId,
   findPaidDesigns,
   findMinimalByIds,
+  findBaseById,
 } from "./dao";
+
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as CollectionsDAO from "../../collections/dao";
@@ -69,6 +71,7 @@ import { generateTeamUser } from "../../../test-helpers/factories/team-user";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
+import ProductDesign = require("../domain-objects/product-design");
 
 test("ProductDesignsDAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -1931,6 +1934,35 @@ test("findMinimalByIds", async (t: Test) => {
     t.deepEqual(
       err,
       new Error("Query returned different number of rows than requested"),
+      "throws correct error"
+    );
+  }
+});
+
+test("findBaseById", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const design = await generateDesign(({
+    userId: user.id,
+    previewImageUrls: null,
+  } as unknown) as Partial<ProductDesign>);
+
+  t.deepEqual(
+    await findBaseById(db, design.id),
+    {
+      ...omit(design, "collectionIds", "collections", "imageIds", "imageLinks"),
+      previewImageUrls: [],
+    },
+    "finds existing design"
+  );
+
+  const wrongId = uuid.v4();
+  try {
+    await findBaseById(db, wrongId);
+    t.fail("should not get here");
+  } catch (err) {
+    t.deepEqual(
+      err,
+      new ResourceNotFoundError(`Design #${wrongId} not found`),
       "throws correct error"
     );
   }
