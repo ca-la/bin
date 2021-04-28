@@ -1,22 +1,29 @@
 import Router from "koa-router";
-import Knex from "knex";
 
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
-import PaymentMethods = require("./dao");
+import PaymentMethods from "./dao";
 import requireAuth = require("../../middleware/require-auth");
 import db from "../../services/db";
 import createPaymentMethod from "./create-payment-method";
+import convert from "koa-convert";
+import { StrictContext } from "../../router-context";
+import { PaymentMethod } from "./types";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 
 const router = new Router();
 
-function* getPaymentMethods(this: AuthedContext): Iterator<any, any, any> {
-  const { userId } = this.query;
-  this.assert(userId, 400, "User ID must be provided");
-  canAccessUserResource.call(this, userId);
+async function getPaymentMethods(
+  ctx: StrictContext<PaymentMethod[]> & { query: { userId?: string } }
+) {
+  const { userId } = ctx.query;
+  ctx.assert(userId, 400, "User ID must be provided");
+  canAccessUserResource.call(ctx, userId);
 
-  const methods = yield PaymentMethods.findByUserId(userId);
-  this.body = methods;
-  this.status = 200;
+  const methods = await PaymentMethods.findByUserId(db, userId);
+  ctx.body = methods;
+  ctx.status = 200;
 }
 
 interface AddBody {
@@ -27,28 +34,28 @@ function isAddBody(obj: any): obj is AddBody {
   return typeof obj.stripeCardToken === "string";
 }
 
-function* addPaymentMethod(this: AuthedContext): Iterator<any, any, any> {
-  const { body } = this.request;
+async function addPaymentMethod(
+  ctx: StrictContext<PaymentMethod> & { state: {} & TransactionState }
+) {
+  const { body } = ctx.request;
   if (!isAddBody(body)) {
-    this.throw(400, "Missing required information");
+    ctx.throw(400, "Missing required information");
   }
 
   const { stripeCardToken } = body;
-  const { userId } = this.state;
+  const { userId } = ctx.state;
 
-  yield db.transaction(async (trx: Knex.Transaction) => {
-    const method = await createPaymentMethod({
-      token: stripeCardToken,
-      userId,
-      trx,
-    });
-
-    this.body = method;
-    this.status = 201;
+  const method = await createPaymentMethod({
+    token: stripeCardToken,
+    userId,
+    trx: ctx.state.trx,
   });
+
+  ctx.body = method;
+  ctx.status = 201;
 }
 
-router.get("/", requireAuth, getPaymentMethods);
-router.post("/", requireAuth, addPaymentMethod);
+router.get("/", requireAuth, convert.back(getPaymentMethods));
+router.post("/", requireAuth, useTransaction, convert.back(addPaymentMethod));
 
 export default router.routes();

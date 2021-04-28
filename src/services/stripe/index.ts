@@ -97,8 +97,8 @@ export async function findOrCreateCustomerId(
   trx: Knex.Transaction
 ): Promise<string> {
   const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(
-    userId,
-    trx
+    trx,
+    userId
   );
   if (existingPaymentMethods.length > 0) {
     return existingPaymentMethods[0].stripeCustomerId;

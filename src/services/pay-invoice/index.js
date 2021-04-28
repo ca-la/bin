@@ -5,7 +5,7 @@ const InvalidDataError = require("../../errors/invalid-data");
 const db = require("../../services/db");
 const InvoicePaymentsDAO = require("../../components/invoice-payments/dao");
 const InvoicesDAO = require("../../dao/invoices");
-const PaymentMethods = require("../../components/payment-methods/dao");
+const PaymentMethods = require("../../components/payment-methods/dao").default;
 const spendCredit = require("../../components/credits/spend-credit").default;
 
 const Stripe = require("../stripe");
@@ -20,7 +20,7 @@ async function transactInvoice(invoiceId, paymentMethodId, userId, trx) {
 
   let invoice = await InvoicesDAO.findByIdTrx(trx, invoiceId);
 
-  const paymentMethod = await PaymentMethods.findById(paymentMethodId, trx);
+  const paymentMethod = await PaymentMethods.findById(trx, paymentMethodId);
 
   if (invoice.isPaid) {
     throw new InvalidDataError("This invoice is already paid");

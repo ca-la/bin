@@ -1,9 +1,10 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 
 import PaymentMethodsDAO from "./dao";
-import PaymentMethod = require("./domain-object");
 import attachSource from "../../services/stripe/attach-source";
 import { findOrCreateCustomerId } from "../../services/stripe";
+import { PaymentMethod } from "./types";
 interface Options {
   token: string;
   userId: string;
@@ -21,15 +22,16 @@ export default async function createPaymentMethod(
     customerId: stripeCustomerId,
   });
 
-  const method = await PaymentMethodsDAO.create(
-    {
-      lastFourDigits: source.last4,
-      stripeCustomerId,
-      stripeSourceId: source.id,
-      userId,
-    },
-    trx
-  );
+  const method = await PaymentMethodsDAO.create(trx, {
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
+    lastFourDigits: source.last4,
+    stripeCustomerId,
+    stripeSourceId: source.id,
+    userId,
+    teamId: null,
+  });
 
   if (!method) {
     throw new Error("Unable to create payment method");

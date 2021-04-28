@@ -1,20 +1,28 @@
 "use strict";
 
+const uuid = require("node-uuid");
 const db = require("../../services/db");
 const createUser = require("../create-user");
 const generateCollection = require("./collection").default;
-const PaymentMethodsDAO = require("../../components/payment-methods/dao");
+const PaymentMethodsDAO = require("../../components/payment-methods/dao")
+  .default;
 const InvoicesDAO = require("../../dao/invoices");
 const InvoicePaymentsDAO = require("../../components/invoice-payments/dao");
 
 async function createInvoicesWithPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = await PaymentMethodsDAO.create({
-    userId: user.id,
-    stripeCustomerId: "stripe-test-user",
-    stripeSourceId: "stripe-test-source",
-    lastFourDigits: 1111,
-  });
+  const paymentMethod = await db.transaction((trx) =>
+    PaymentMethodsDAO.create(trx, {
+      id: uuid.v4(),
+      userId: user.id,
+      stripeCustomerId: "stripe-test-user",
+      stripeSourceId: "stripe-test-source",
+      lastFourDigits: "1111",
+      createdAt: new Date(),
+      deletedAt: null,
+      teamId: null,
+    })
+  );
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();
 
@@ -79,12 +87,18 @@ async function createInvoicesWithPayments() {
 
 async function createInvoicesWithOverPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = await PaymentMethodsDAO.create({
-    userId: user.id,
-    stripeCustomerId: "stripe-test-user",
-    stripeSourceId: "stripe-test-source",
-    lastFourDigits: 1111,
-  });
+  const paymentMethod = db.transaction((trx) =>
+    PaymentMethodsDAO.create(trx, {
+      id: uuid.v4(),
+      userId: user.id,
+      stripeCustomerId: "stripe-test-user",
+      stripeSourceId: "stripe-test-source",
+      lastFourDigits: "1111",
+      createdAt: new Date(),
+      deletedAt: null,
+      teamId: null,
+    })
+  );
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();
 

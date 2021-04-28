@@ -7,7 +7,7 @@ import * as createStripeSubscription from "../../services/stripe/create-subscrip
 import * as SubscriptionsDAO from "./dao";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
-import PaymentMethodsDAO = require("../payment-methods/dao");
+import PaymentMethodsDAO from "../payment-methods/dao";
 import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User, { Role } from "../users/domain-object";
@@ -73,11 +73,15 @@ test("GET /subscriptions lists current subscriptions", async (t: Test) => {
   const { plan, user, session } = await setup();
 
   const id = await db.transaction(async (trx: Knex.Transaction) => {
-    const paymentMethod = await PaymentMethodsDAO.create({
+    const paymentMethod = await PaymentMethodsDAO.create(trx, {
+      id: uuid.v4(),
       userId: user.id,
       stripeCustomerId: "customer1",
       stripeSourceId: "source1",
       lastFourDigits: "1234",
+      createdAt: new Date(),
+      deletedAt: null,
+      teamId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
