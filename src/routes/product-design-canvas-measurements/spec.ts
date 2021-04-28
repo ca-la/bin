@@ -2,21 +2,20 @@ import tape from "tape";
 import uuid from "node-uuid";
 import sinon from "sinon";
 
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
 import * as MeasurementDAO from "../../dao/product-design-canvas-measurements";
-import { create as createDesign } from "../../components/product-designs/dao";
 import * as CreateNotifications from "../../services/create-notifications";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import createDesign from "../../services/create-design";
 
 test("PUT /:measurementId creates a Measurement", async (t: tape.Test) => {
   const { session, user } = await createUser();
   const measurementId = uuid.v4();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -101,7 +100,6 @@ test("PATCH /:measurementId updates a Measurement", async (t: tape.Test) => {
   const measurementId = uuid.v4();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -160,7 +158,6 @@ test("PATCH /:measurementId returns 400 if canvasid is invalid", async (t: tape.
   const measurementId = uuid.v4();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -390,7 +387,6 @@ test("GET /label?canvasId= gets the next label to use", async (t: tape.Test) => 
   const { session, user } = await createUser();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });

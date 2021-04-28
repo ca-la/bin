@@ -1,6 +1,5 @@
 "use strict";
 
-const uuid = require("node-uuid");
 const rethrow = require("pg-rethrow");
 const { omit } = require("lodash");
 
@@ -22,28 +21,6 @@ const maybeInstantiate = (data) => (data && new ProductDesign(data)) || null;
 const { dataMapper } = ProductDesign;
 
 const TABLE_NAME = "product_designs";
-
-function create(data, trx) {
-  const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
-    id: uuid.v4(),
-    preview_image_urls: JSON.stringify(data.previewImageUrls),
-  });
-
-  return db(TABLE_NAME)
-    .insert(rowData, "id")
-    .modify((query) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
-    .catch(rethrow)
-    .then((ids) =>
-      queryWithCollectionMeta(db, trx).where({ "product_designs.id": ids[0] })
-    )
-    .catch(rethrow)
-    .then(first)
-    .then(instantiate);
-}
 
 function update(productDesignId, data) {
   const rowData = Object.assign({}, dataMapper.userDataToRowData(data), {
@@ -212,7 +189,6 @@ function findByQuoteId(ktx, quoteId) {
 }
 
 module.exports = {
-  create,
   update,
   findAll,
   findById,

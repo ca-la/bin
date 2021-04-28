@@ -3,9 +3,9 @@ import tape from "tape";
 import uuid from "node-uuid";
 import { VariantDb } from "../../components/product-design-variants/types";
 
-import createUser = require("../../test-helpers/create-user");
-import { create as createDesign } from "../../components/product-designs/dao";
+import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
+import createDesign from "../create-design";
 import { test } from "../../test-helpers/fresh";
 
 import * as VariantsDAO from "../../components/product-design-variants/dao";
@@ -16,7 +16,6 @@ test("findAndDuplicateVariants for a design with no variants", async (t: tape.Te
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: user.id,
   });
@@ -34,12 +33,10 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: user.id,
   });
   const newDesign = await createDesign({
-    productType: "TEESHIRT",
     title: "Black Striped Oversize Tee",
     userId: user.id,
   });

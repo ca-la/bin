@@ -2,8 +2,7 @@ import Knex from "knex";
 import * as uuid from "node-uuid";
 
 import { test, Test } from "../../test-helpers/fresh";
-import { staticProductDesign } from "../../test-helpers/factories/product-design";
-import * as ProductDesignsDAO from "../product-designs/dao";
+import * as ProductDesignsDAO from "../product-designs/dao/dao";
 import db from "../../services/db";
 import ProductDesign from "../product-designs/domain-objects/product-design";
 
@@ -16,11 +15,11 @@ import createUser from "../../test-helpers/create-user";
 
 test("ApprovalStepsDAO can create multiple steps and retrieve by design", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
-  );
-  const d2: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d2", userId: user.id })
+  const [d1, d2] = await db.transaction((trx: Knex.Transaction) =>
+    Promise.all([
+      ProductDesignsDAO.create(trx, "Design One", user.id),
+      ProductDesignsDAO.create(trx, "Design Two", user.id),
+    ])
   );
 
   const as1: ApprovalStep = {
@@ -99,8 +98,8 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
 
 test("ApprovalStepsDAO can retrieve by step id", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await ProductDesignsDAO.create(
-    staticProductDesign({ id: "d1", userId: user.id })
+  const d1: ProductDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Design One", user.id)
   );
   const as1: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

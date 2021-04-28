@@ -2,16 +2,15 @@ import tape from "tape";
 import { test } from "../../test-helpers/fresh";
 import { create, createAll, findAllByDesignId, findById } from "./index";
 import { create as createTask } from "../tasks";
-import { create as createDesign } from "../../components/product-designs/dao";
 import { create as createDesignStage } from "../product-design-stages";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
+import createDesign from "../../services/create-design";
 
 test("ProductDesign Stage Task DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();
 
   const task = await createTask();
   const design = await createDesign({
-    productType: "test",
     title: "test",
     userId: user.id,
   });
@@ -32,7 +31,6 @@ test("ProductDesign Stage Task DAO supports retrieval by designId", async (t: ta
 
   const task = await createTask();
   const design = await createDesign({
-    productType: "test",
     title: "test",
     userId: user.id,
   });
@@ -54,7 +52,6 @@ test("ProductDesign Stage Task DAO supports create all", async (t: tape.Test) =>
   const task = await createTask();
   const task2 = await createTask();
   const design = await createDesign({
-    productType: "test",
     title: "test",
     userId: user.id,
   });

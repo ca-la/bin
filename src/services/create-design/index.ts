@@ -1,23 +1,30 @@
 import Knex from "knex";
 import db from "../db";
-import { omit } from "lodash";
 
 import CollaboratorsDAO = require("../../components/collaborators/dao");
 import * as CreateDesignTasksService from "../create-design-tasks";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
-import ProductDesignsDAO = require("../../components/product-designs/dao");
+import * as ProductDesignsDAO from "../../components/product-designs/dao/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { moveDesigns } from "../../components/collections/dao/design";
 import createDesignApproval from "../create-design-approval";
 
+export interface UnsavedDesign {
+  title: string;
+  userId: string;
+  /** @deprecated */
+  productType?: string | null;
+}
+
+export interface UnsavedDesignWithCollections extends UnsavedDesign {
+  collectionIds?: string[] | null;
+}
+
 async function createInTransaction(
   trx: Knex.Transaction,
-  data: Unsaved<ProductDesign>
+  data: UnsavedDesignWithCollections
 ): Promise<ProductDesign> {
-  const design = await ProductDesignsDAO.create(
-    omit(data, "collectionIds"),
-    trx
-  );
+  const design = await ProductDesignsDAO.create(trx, data.title, data.userId);
   if (data.collectionIds && data.collectionIds.length > 1) {
     throw new Error(
       "Could not put design into multiple collections on creation"
@@ -64,7 +71,7 @@ async function createInTransaction(
 }
 
 async function createDesign(
-  data: Unsaved<ProductDesign>,
+  data: UnsavedDesignWithCollections,
   trx?: Knex.Transaction
 ): Promise<ProductDesign> {
   if (trx) {

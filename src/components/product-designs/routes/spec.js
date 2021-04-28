@@ -59,7 +59,7 @@ test("PATCH /product-designs/:id allows certain params, rejects others", (t) => 
       return post("/product-designs", {
         headers: authHeader(sessionId),
         body: {
-          productType: "TEESHIRT",
+          title: "Unchanged",
         },
       });
     })
@@ -70,6 +70,7 @@ test("PATCH /product-designs/:id allows certain params, rejects others", (t) => 
         headers: authHeader(sessionId),
         body: {
           title: "Fizz Buzz",
+          productType: "TEESHIRT",
           showPricingBreakdown: true,
         },
       });

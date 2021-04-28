@@ -2,6 +2,7 @@
 
 const pick = require("lodash/pick");
 const Router = require("koa-router");
+const convert = require("koa-convert");
 
 const canAccessUserResource = require("../../../middleware/can-access-user-resource");
 const CollaboratorsDAO = require("../../collaborators/dao");
@@ -13,7 +14,6 @@ const ProductDesignsDaoTs = require("../dao/dao");
 const TaskEventsDAO = require("../../../dao/task-events");
 const ProductDesignStagesDAO = require("../../../dao/product-design-stages");
 const requireAuth = require("../../../middleware/require-auth");
-const createDesign = require("../../../services/create-design").default;
 const User = require("../../users/domain-object");
 const UsersDAO = require("../../users/dao");
 const TeamUsersDAO = require("../../team-users/dao").default;
@@ -31,6 +31,7 @@ const {
 const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
 const useTransaction = require("../../../middleware/use-transaction").default;
+const { typeGuardFromSchema } = require("../../../middleware/type-guard");
 
 const {
   getDesignUploadPolicy,
@@ -40,6 +41,7 @@ const { getPaidDesigns } = require("./paid");
 const { updateAllNodes } = require("./phidias");
 const { findAllDesignsThroughCollaboratorAndTeam } = require("../dao/dao");
 const { createFromTemplate } = require("./templates");
+const { create, createBodySchema } = require("./create");
 
 const router = new Router();
 
@@ -273,30 +275,6 @@ function* getDesignCollections() {
   this.status = 200;
 }
 
-function* create() {
-  const { role, userId } = this.state;
-  const userData = pick(this.request.body, ALLOWED_DESIGN_PARAMS);
-  const data = { ...userData, userId };
-
-  let design = yield createDesign(data).catch(
-    filterError(InvalidDataError, (err) => this.throw(400, err))
-  );
-  const designPermissions = yield getDesignPermissions({
-    designId: design.id,
-    sessionRole: role,
-    sessionUserId: userId,
-  });
-
-  design = yield attachResources({
-    design,
-    requestorId: userId,
-    permissions: designPermissions,
-  });
-
-  this.body = design;
-  this.status = 201;
-}
-
 function* updateDesign() {
   const { permissions, role, userId } = this.state;
   const { designId } = this.params;
@@ -320,7 +298,13 @@ function* updateDesign() {
   this.status = 200;
 }
 
-router.post("/", requireAuth, create);
+router.post(
+  "/",
+  requireAuth,
+  typeGuardFromSchema(createBodySchema),
+  useTransaction,
+  convert.back(create)
+);
 router.get("/", requireAuth, getDesigns);
 router.del(
   "/",

@@ -3,7 +3,6 @@ import uuid from "node-uuid";
 import createUser from "../../test-helpers/create-user";
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import { authHeader, get, post } from "../../test-helpers/http";
-import { create as createDesign } from "../../components/product-designs/dao";
 import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
@@ -12,6 +11,7 @@ import { Dollars } from "../../services/dollars";
 import { checkout } from "../../test-helpers/checkout-collection";
 import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inputs/types";
 import generateBid from "../../test-helpers/factories/bid";
+import createDesign from "../../services/create-design";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -84,7 +84,6 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
   const { user, session } = await createUser({ role: "ADMIN" });
 
   const design = await createDesign({
-    productType: "A product type",
     title: "A design",
     userId: user.id,
   });
@@ -179,7 +178,6 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
   const { user, session } = await createUser({ role: "ADMIN" });
 
   const design = await createDesign({
-    productType: "A product type",
     title: "A design",
     userId: user.id,
   });

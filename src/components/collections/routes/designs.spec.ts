@@ -1,9 +1,11 @@
 import uuid from "node-uuid";
+import Knex from "knex";
 
+import db from "../../../services/db";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import { CollaboratorRoles } from "../../collaborators/types";
 import * as CollectionsDAO from "../dao";
-import ProductDesignsDAO from "../../product-designs/dao";
+import * as ProductDesignsDAO from "../../product-designs/dao/dao";
 import API from "../../../test-helpers/http";
 import * as CreateDesignTasksService from "../../../services/create-design-tasks";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
@@ -1131,12 +1133,9 @@ test("GET /collections/:id/designs", async (t: Test) => {
     teamId: team.id,
     title: "Drop 001/The Early Years",
   });
-  const design = await ProductDesignsDAO.create({
-    description: "Black, bold, beautiful",
-    productType: "HELMET",
-    title: "Vader Mask",
-    userId: user.id,
-  });
+  const design = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Vader Mask", user.id)
+  );
   await generateCollaborator({
     collectionId: null,
     designId: design.id,

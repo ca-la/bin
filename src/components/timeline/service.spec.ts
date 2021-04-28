@@ -4,19 +4,17 @@ import uuid from "node-uuid";
 import * as Service from "./service";
 import { test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
-import { create as createDesign } from "../product-designs/dao";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
+import createDesign from "../../services/create-design";
 
 test("format timelines only returns valid timelines", async (t: tape.Test) => {
-  const { user } = await createUser();
+  const { user } = await createUser({ withSession: false });
   const validDesign = await createDesign({
-    productType: "A product type",
     title: "A newer design",
     userId: user.id,
   });
 
   const invalidDesign = await createDesign({
-    productType: "A product type",
     title: "An older design",
     userId: user.id,
   });

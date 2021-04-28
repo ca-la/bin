@@ -3,7 +3,7 @@ import Knex from "knex";
 
 import * as CollectionsDAO from ".";
 import DesignEventsDAO from "../../design-events/dao";
-import ProductDesignsDAO from "../../product-designs/dao";
+import * as ProductDesignsDAO from "../../product-designs/dao/dao";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
@@ -434,23 +434,13 @@ test("CollectionsDAO#addDesign adds a design to a collection", async (t: Test) =
     teamId: null,
     title: "Drop 001/The Early Years",
   });
-  const createdDesigns = await Promise.all([
-    ProductDesignsDAO.create({
-      productType: "HELMET",
-      title: "Vader Mask",
-      userId: user.id,
-    }),
-    ProductDesignsDAO.create({
-      productType: "HELMET",
-      title: "Stormtrooper Helmet",
-      userId: user.id,
-    }),
-    ProductDesignsDAO.create({
-      productType: "TEESHIRT",
-      title: "Cat T-shirt",
-      userId: user.id,
-    }),
-  ]);
+  const createdDesigns = await db.transaction((trx: Knex.Transaction) =>
+    Promise.all([
+      ProductDesignsDAO.create(trx, "Vader Mask", user.id),
+      ProductDesignsDAO.create(trx, "Stormtrooper Helmt", user.id),
+      ProductDesignsDAO.create(trx, "Cat T-shirt", user.id),
+    ])
+  );
   await addDesign(createdCollection.id, createdDesigns[0].id);
   const collectionDesigns = await addDesign(
     createdCollection.id,
@@ -487,12 +477,9 @@ test("CollectionsDAO#moveDesign moves designs to different collections", async (
     teamId: null,
     title: "Hypebeast",
   });
-  const createdDesign = await ProductDesignsDAO.create({
-    description: "Blade Runner x Raf",
-    productType: "PARKA",
-    title: "Raf Simons Replicant Parka",
-    userId: user.id,
-  });
+  const createdDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Raf Simons Replicant Parka", user.id)
+  );
 
   const collectionDesigns = await moveDesign(
     createdCollectionOne.id,
@@ -528,12 +515,9 @@ test("CollectionsDAO#removeDesign removes a design from a collection", async (t:
     teamId: null,
     title: "Raf Raf Raf",
   });
-  const createdDesign = await ProductDesignsDAO.create({
-    description: "Black, bold, beautiful",
-    productType: "HELMET",
-    title: "Vader Mask",
-    userId: user.id,
-  });
+  const createdDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Vader Mask", user.id)
+  );
   const collectionDesigns = await addDesign(
     createdCollection.id,
     createdDesign.id

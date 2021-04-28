@@ -188,7 +188,9 @@ test("POST /product-designs end-to-end", async (t: tape.Test) => {
 
   const [response, design] = await post(`/product-designs?userId=${user.id}`, {
     headers: authHeader(session.id),
-    body: {},
+    body: {
+      title: "A title",
+    },
   });
 
   t.equal(response.status, 201);

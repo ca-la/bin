@@ -1,12 +1,12 @@
 import tape from "tape";
 import uuid from "node-uuid";
 import Knex from "knex";
+import { omit } from "lodash";
 
 import db from "../../services/db";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
-import { create as createDesign } from "../../components/product-designs/dao";
-import { omit } from "lodash";
+import createDesign from "../../services/create-design";
 import { test } from "../../test-helpers/fresh";
 import {
   create,
@@ -22,7 +22,6 @@ import {
 test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();
   const d0 = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -216,7 +215,6 @@ test("MeasurementsDAO.create supports trx statements", async (t: tape.Test) => {
 test("ProductDesignCanvasMeasurement DAO supports updating", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -274,7 +272,6 @@ test("ProductDesignCanvasMeasurement DAO supports updating", async (t: tape.Test
 test("ProductDesignCanvasMeasurement DAO throws an appopriate error when canvas id is invalid", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -330,7 +327,6 @@ test("ProductDesignCanvasMeasurement DAO throws an appopriate error when canvas 
 test("ProductDesignCanvasMeasurement DAO supports deletion", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -405,7 +401,6 @@ test("ProductDesignCanvasMeasurement DAO throws MeasurementNotFoundError when up
 test("ProductDesignCanvasMeasurement DAO supports getting latest label", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });

@@ -2,8 +2,7 @@ import uuid from "node-uuid";
 import { VariantDb } from "../../components/product-design-variants/types";
 import Knex from "knex";
 
-import { create as createDesign } from "../../components/product-designs/dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import { test, Test } from "../../test-helpers/fresh";
 
 import {
@@ -14,12 +13,12 @@ import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";
 import createUPCsForCollection from ".";
 import db from "../db";
+import createDesign from "../create-design";
 
 async function createPrerequisites(): Promise<any> {
   const { user } = await createUser({ withSession: false });
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: user.id,
   });

@@ -20,16 +20,14 @@ import { stubFetchUncostedWithLabels } from "../../../test-helpers/stubs/collect
 import CollectionDb from "../domain-object";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import * as SubmissionStatusService from "../services/determine-submission-status";
-import { moveDesign } from "../../../test-helpers/collections";
 import db from "../../../services/db";
 import ApprovalStepsDAO from "../../approval-steps/dao";
-import createDesign from "../../../services/create-design";
-import { generateDesign } from "../../../test-helpers/factories/product-design";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
 import * as TeamsService from "../../teams/service";
 import * as TeamUsersService from "../../team-users/service";
 import { ApprovalStepType } from "../../approval-steps/types";
+import createDesign from "../../../services/create-design";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -726,19 +724,15 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
   });
 
   const designOne = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: user.id,
+    collectionIds: [mine.id],
   });
   const designTwo = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt Two",
     userId: user.id,
+    collectionIds: [mine.id],
   });
-  await moveDesign(mine.id, designOne.id);
-  await moveDesign(mine.id, designTwo.id);
 
   const [deleteResponse] = await API.del(`/collections/${mine.id}`, {
     headers: API.authHeader(session.id),
@@ -754,21 +748,27 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
     'DELETE on unowned collection returns "403 Forbidden" status'
   );
 
-  const [, draftDesignOne] = await API.get(`/product-designs/${designOne.id}`, {
-    headers: API.authHeader(session.id),
-  });
-  t.deepEqual(
-    draftDesignOne.collectionIds,
-    [],
-    "Collection designs are removed from collection"
+  const [unauthorizedResponseOne] = await API.get(
+    `/product-designs/${designOne.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
   );
-  const [, draftDesignTwo] = await API.get(`/product-designs/${designTwo.id}`, {
-    headers: API.authHeader(session.id),
-  });
   t.deepEqual(
-    draftDesignTwo.collectionIds,
-    [],
-    "Collection designs are removed from collection"
+    unauthorizedResponseOne.status,
+    403,
+    "Collection designs are inaccessible after deleting collection"
+  );
+  const [unauthorizedResponseTwo] = await API.get(
+    `/product-designs/${designTwo.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+  t.deepEqual(
+    unauthorizedResponseTwo.status,
+    403,
+    "Collection designs are inaccessible after deleting collection"
   );
 });
 
@@ -858,15 +858,11 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     userId: collaborator.user.id,
   });
   const designOne = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: owner.user.id,
     collectionIds: [collection.id],
   });
   const designTwo = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt Two",
     userId: owner.user.id,
     collectionIds: [collection.id],
@@ -973,13 +969,11 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     "Collaborators can submit collections"
   );
 
-  const designThree = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
+  await createDesign({
     title: "T-Shirt Two",
     userId: owner.user.id,
+    collectionIds: [collection.id],
   });
-  await moveDesign(collection.id, designThree.id);
 
   const secondSubmission = await API.post(
     `/collections/${collection.id}/submissions`,
@@ -1096,20 +1090,16 @@ test("POST /collections/:collectionId/cost-inputs", async (t: tape.Test) => {
     teamId: null,
     title: "Yohji Yamamoto SS19",
   });
-  const designOne = await generateDesign({
-    description: "Oversize Placket Shirt",
-    productType: "SHIRT",
+  const designOne = await createDesign({
     title: "Cozy Shirt",
     userId: designer.user.id,
+    collectionIds: [collectionOne.id],
   });
-  const designTwo = await generateDesign({
-    description: "Gabardine Wool Pant",
-    productType: "PANT",
+  const designTwo = await createDesign({
     title: "Balloon Pants",
     userId: designer.user.id,
+    collectionIds: [collectionOne.id],
   });
-  await moveDesign(collectionOne.id, designOne.id);
-  await moveDesign(collectionOne.id, designTwo.id);
 
   const notificationStub = sandbox()
     .stub(CreateNotifications, "immediatelySendFullyCostedCollection")

@@ -8,7 +8,7 @@ import * as FindTaskTypeCollaborators from "../find-task-type-collaborators";
 import CollectionDb from "../../components/collections/domain-object";
 import * as CollectionsDAO from "../../components/collections/dao";
 import createDesignTasks from "./index";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 import User from "../../components/users/domain-object";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -35,8 +35,6 @@ async function createResources(): Promise<{
   });
 
   const design = await createDesign({
-    description: "Shirt",
-    productType: "Teeshirt",
     title: "Tee",
     userId: designer.user.id,
     collectionIds: [collection.id],

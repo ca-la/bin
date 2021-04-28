@@ -12,11 +12,11 @@ import {
   update,
 } from "./dao";
 import { ComponentType } from "./types";
-import { create as createDesign } from "../product-designs/dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import generateComponent from "../../test-helpers/factories/component";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAsset from "../../test-helpers/factories/asset";
+import createDesign from "../../services/create-design";
 
 test("Components DAO supports creation/retrieval", async (t: tape.Test) => {
   const userData = await createUser();
@@ -153,7 +153,6 @@ test("Components DAO supports retrieval by canvasId", async (t: tape.Test) => {
   const id = uuid.v4();
   const sketchId = uuid.v4();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Plain White Tee",
     userId,
   });

@@ -5,19 +5,18 @@ import Knex from "knex";
 import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
 import * as AnnotationsDAO from "./dao";
-import createUser = require("../../test-helpers/create-user");
-import { create as createDesign } from "../product-designs/dao";
+import createUser from "../../test-helpers/create-user";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import * as AnnotationCommentsDAO from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
 import generateComment from "../../test-helpers/factories/comment";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import createDesign from "../../services/create-design";
 
 test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -110,7 +109,6 @@ test("findAllWithCommentsByDesign with comments", async (t: tape.Test) => {
 test("findAllWithCommentsByCanvasId with no comments", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -206,7 +204,6 @@ test("findAllWithCommentsByCanvasId with deletions", async (t: tape.Test) => {
 test("ProductDesignCanvasAnnotation DAO supports updating", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -252,7 +249,6 @@ test("ProductDesignCanvasAnnotation DAO supports updating", async (t: tape.Test)
 test("ProductDesignCanvasAnnotation DAO supports deletion", async (t: tape.Test) => {
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });

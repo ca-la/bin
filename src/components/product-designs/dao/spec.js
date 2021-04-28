@@ -7,107 +7,20 @@ const {
   default: generatePricingQuote,
 } = require("../../../services/generate-pricing-quote");
 const {
-  default: generateCanvas,
-} = require("../../../test-helpers/factories/product-design-canvas");
-const {
-  default: generateComponent,
-} = require("../../../test-helpers/factories/component");
-const {
-  default: generateAsset,
-} = require("../../../test-helpers/factories/asset");
-const {
   default: generatePricingValues,
 } = require("../../../test-helpers/factories/pricing-values");
 const CollectionsDAO = require("../../collections/dao");
-const DesignEventsDAO = require("../../../components/design-events/dao");
+const DesignEventsDAO = require("../../design-events/dao");
 const { test } = require("../../../test-helpers/fresh");
 const createUser = require("../../../test-helpers/create-user");
+const createDesign = require("../../../services/create-design").default;
 const { moveDesign } = require("../../../test-helpers/collections");
 const { deleteById } = require("../../../test-helpers/designs");
 const db = require("../../../services/db");
 
-test("ProductDesignsDAO.create creates a design", async (t) => {
-  const { user } = await createUser({ withSession: false });
-  const forCreation = {
-    title: "Plain White Tee",
-    productType: "TEESHIRT",
-    userId: user.id,
-    previewImageUrls: ["abcd", "efgh"],
-    metadata: {
-      "dipped drawstrings": "yes please",
-    },
-  };
-  const design = await ProductDesignsDAO.create(forCreation);
-  const { asset: image1 } = await generateAsset();
-  const { component: c1 } = await generateComponent({ sketchId: image1.id });
-  await generateCanvas({
-    createdBy: user.id,
-    designId: design.id,
-    componentId: c1.id,
-    ordering: 1,
-  });
-  const { asset: image2 } = await generateAsset();
-  const { component: c2 } = await generateComponent({ sketchId: image2.id });
-  await generateCanvas({
-    createdBy: user.id,
-    designId: design.id,
-    componentId: c2.id,
-    ordering: 0,
-  });
-
-  const { asset: image3 } = await generateAsset();
-  const { component: c3 } = await generateComponent({ sketchId: image3.id });
-  await generateCanvas({
-    createdBy: user.id,
-    designId: design.id,
-    componentId: c3.id,
-    ordering: 3,
-  });
-
-  const { asset: image4 } = await generateAsset();
-  const { component: c4 } = await generateComponent({ sketchId: image4.id });
-  await generateCanvas({
-    archivedAt: new Date(),
-    createdBy: user.id,
-    designId: design.id,
-    componentId: c4.id,
-    ordering: 2,
-  });
-
-  const returned = await ProductDesignsDAO.findById(design.id);
-
-  t.deepEqual(
-    returned,
-    {
-      ...forCreation,
-      id: design.id,
-      computedPricingTable: null,
-      createdAt: design.createdAt,
-      deletedAt: null,
-      description: null,
-      dueDate: null,
-      expectedCostCents: null,
-      imageIds: [image2.id, image1.id, image3.id],
-      imageLinks: returned.imageLinks,
-      previewImageUrls: returned.previewImageUrls,
-      overridePricingTable: null,
-      retailPriceCents: null,
-      showPricingBreakdown: true,
-      status: "DRAFT",
-      collectionIds: [],
-      collections: [],
-      approvalSteps: null,
-      progress: null,
-      firstStepCreatedAt: null,
-      lastStepDueAt: null,
-    },
-    "adds the collections and default/nullable values"
-  );
-});
-
 test("ProductDesignsDAO.update updates a design", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -121,7 +34,7 @@ test("ProductDesignsDAO.update updates a design", async (t) => {
 
 test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const { id } = await ProductDesignsDAO.create({
+  const { id } = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -134,7 +47,7 @@ test("ProductDesignsDAO.findById doesn't include deleted designs", async (t) => 
 
 test("ProductDesignsDAO.findById includes deleted designs when specified", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const { id } = await ProductDesignsDAO.create({
+  const { id } = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -149,12 +62,12 @@ test("ProductDesignsDAO.findById includes deleted designs when specified", async
 
 test("ProductDesignsDAO.findByIds includes several designs", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
   });
-  const design2 = await ProductDesignsDAO.create({
+  const design2 = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -166,7 +79,7 @@ test("ProductDesignsDAO.findByIds includes several designs", async (t) => {
 
 test("ProductDesignsDAO.findByUserId", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -187,7 +100,7 @@ test("ProductDesignsDAO.findByCollectionId", async (t) => {
     teamId: null,
     title: "AW19",
   });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -218,7 +131,7 @@ test("ProductDesignsDAO.findByCollectionId", async (t) => {
 
 test("ProductDesignsDAO.findAll with needsQuote query", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,
@@ -284,7 +197,7 @@ test("ProductDesignsDAO.findAll with needsQuote query", async (t) => {
 
 test("ProductDesignsDAO.findByQuoteId", async (t) => {
   const { user } = await createUser({ withSession: false });
-  const design = await ProductDesignsDAO.create({
+  const design = await createDesign({
     title: "Plain White Tee",
     productType: "TEESHIRT",
     userId: user.id,

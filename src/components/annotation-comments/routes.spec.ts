@@ -3,7 +3,6 @@ import uuid from "node-uuid";
 import createUser from "../../test-helpers/create-user";
 import { authHeader, get, put } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { create as createDesign } from "../product-designs/dao";
 import * as CreateNotifications from "../../services/create-notifications";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
@@ -12,6 +11,7 @@ import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import { addDesign } from "../../test-helpers/collections";
 import * as AssetLinkAttachment from "../../services/attach-asset-links";
 import { SerializedCreateCommentWithResources } from "../comments/types";
+import createDesign from "../../services/create-design";
 
 const API_PATH = "/product-design-canvas-annotations";
 

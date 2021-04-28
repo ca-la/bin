@@ -653,8 +653,6 @@ test(`PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
 pre-existing preview image`, async (t: tape.Test) => {
   const { session, user } = await createUser();
   const design = await createDesign({
-    previewImageUrls: ["another-image.png"],
-    productType: "TEESHIRT",
     title: "Rick Tee",
     userId: user.id,
   });

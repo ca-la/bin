@@ -16,8 +16,10 @@ import {
   findIdByQuoteId,
   findPaidDesigns,
   findMinimalByIds,
+  create,
   findBaseById,
 } from "./dao";
+import * as ProductDesignsDAO from "../../product-designs/dao/dao";
 
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -211,11 +213,9 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   const { user } = await createUser();
   const { user: notUser } = await createUser();
 
-  const ownDesign = await createDesign({
-    productType: "test",
-    title: "design",
-    userId: user.id,
-  });
+  const ownDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Own Design", user.id)
+  );
   // ensure that the design has no collaborators to simulate v1 product designs.
   const existingCollaborators = await CollaboratorsDAO.findByDesign(
     ownDesign.id
@@ -228,11 +228,9 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     )
   );
 
-  const designSharedDesign = await createDesign({
-    productType: "test",
-    title: "design",
-    userId: notUser.id,
-  });
+  const designSharedDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Design Shared Design", notUser.id)
+  );
   await generateCollaborator({
     collectionId: null,
     designId: designSharedDesign.id,
@@ -242,11 +240,9 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     userId: user.id,
   });
 
-  const collectionSharedDesign = await createDesign({
-    productType: "test",
-    title: "design",
-    userId: notUser.id,
-  });
+  const collectionSharedDesign = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Collection Shared Design", notUser.id)
+  );
   const { collection } = await generateCollection({ createdBy: notUser.id });
   await addDesign(collection.id, collectionSharedDesign.id);
   await generateCollaborator({
@@ -272,11 +268,10 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   });
 
   const collectionSharedDesignDeleted = await createDesign({
-    productType: "test",
-    title: "design",
+    title: "Collection Shared Design Deleted",
     userId: notUser.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, collectionSharedDesignDeleted.id);
 
   const designAndCollectionOwner = await createUser();
   const { team } = await generateTeam(designAndCollectionOwner.user.id);
@@ -289,11 +284,11 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     createdBy: designAndCollectionOwner.user.id,
     teamId: team.id,
   });
-  const teamDesign1 = await generateDesign({
+  const teamSharedDesign = await createDesign({
     userId: designAndCollectionOwner.user.id,
     title: "Team Shared Design",
+    collectionIds: [teamCollection.id],
   });
-  await addDesign(teamCollection.id, teamDesign1.id);
 
   const designs = await findAllDesignsThroughCollaboratorAndTeam({
     userId: user.id,
@@ -305,45 +300,60 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   );
   t.deepEqual(
     designs[0].id,
-    collectionSharedDesignDeleted.id,
-    "collection shared design / should match ids"
+    teamSharedDesign.id,
+    "team shared design / should match ids"
   );
   t.deepEqual(
     designs[0].collaboratorRoles,
-    ["VIEW"],
-    "collection shared design / has collaborator roles attached"
+    ["EDIT"],
+    "team shared design / has collaborator roles attached"
   );
   t.deepEqual(
     designs[0].isCheckedOut,
     false,
-    "collection shared design / shows checked-out status"
+    "team shared design / shows checked-out status"
   );
   t.deepEqual(
     designs[1].id,
+    collectionSharedDesignDeleted.id,
+    "collection shared design / should match ids"
+  );
+  t.deepEqual(
+    designs[1].collaboratorRoles,
+    ["VIEW"],
+    "collection shared design / has collaborator roles attached"
+  );
+  t.deepEqual(
+    designs[1].isCheckedOut,
+    false,
+    "collection shared design / shows checked-out status"
+  );
+  t.deepEqual(
+    designs[2].id,
     collectionSharedDesign.id,
     "collection+design shared design / should match ids"
   );
   t.true(
-    isEqual(new Set(designs[1].collaboratorRoles), new Set(["VIEW", "EDIT"])),
+    isEqual(new Set(designs[2].collaboratorRoles), new Set(["VIEW", "EDIT"])),
     "collection+design shared design / has both collaborator roles attached"
   );
   t.deepEqual(
-    designs[1].isCheckedOut,
+    designs[2].isCheckedOut,
     true,
     "collection+design shared design / shows checked-out status"
   );
   t.deepEqual(
-    designs[2].id,
+    designs[3].id,
     designSharedDesign.id,
     "design shared design / should match ids"
   );
   t.deepEqual(
-    designs[2].collaboratorRoles,
+    designs[3].collaboratorRoles,
     ["EDIT"],
     "design shared design / has collaborator roles attached"
   );
   t.deepEqual(
-    designs[2].isCheckedOut,
+    designs[3].isCheckedOut,
     false,
     "design shared design / shows checked-out status"
   );
@@ -359,12 +369,12 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
     "returns only the undeleted designs the user collaborates on"
   );
   t.deepEqual(
-    designsAgain[0].id,
+    designsAgain[1].id,
     collectionSharedDesign.id,
     "should match ids"
   );
-  t.deepEqual(designsAgain[0].collectionIds, [collection.id]);
-  t.deepEqual(designsAgain[1].id, designSharedDesign.id, "should match ids");
+  t.deepEqual(designsAgain[1].collectionIds, [collection.id]);
+  t.deepEqual(designsAgain[2].id, designSharedDesign.id, "should match ids");
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await CollectionsDAO.deleteById(trx, collection.id);
@@ -376,26 +386,26 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
 
   t.equal(designsYetAgain.length, 3, "still returns collection design");
   t.equals(
-    designsYetAgain[0].id,
+    designsYetAgain[1].id,
     collectionSharedDesign.id,
     "returns design shared by design in the deleted collection"
   );
   t.true(
-    isEqual(new Set(designsYetAgain[0].collaboratorRoles), new Set(["EDIT"])),
+    isEqual(new Set(designsYetAgain[1].collaboratorRoles), new Set(["EDIT"])),
     "does not include collection role"
   );
   t.equals(
-    designsYetAgain[1].id,
+    designsYetAgain[2].id,
     designSharedDesign.id,
     "returns design shared by design"
   );
   t.deepEqual(
-    designs[2].teamRoles,
+    designs[3].teamRoles,
     [],
     "team shared design / has no team roles attached"
   );
   t.deepEqual(
-    designs[3].teamRoles,
+    designs[0].teamRoles,
     ["EDITOR"],
     "team shared design / has team roles attached"
   );
@@ -404,7 +414,6 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
 test("findAllDesignsThroughCollaboratorAndTeam does not double product design images", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
-    productType: "test",
     title: "design",
     userId: user.id,
   });
@@ -1847,15 +1856,15 @@ test("findPaidDesigns", async (t: Test) => {
   );
 
   t.equal(paid.length, 2, "Returns paid designs");
-  t.equal(paid[0].id, design0.id, "Returns paid designs in descending order");
-  t.equal(paid[1].id, design1.id, "Returns paid designs in descending order");
+  t.equal(paid[0].id, design1.id, "Returns paid designs in descending order");
+  t.equal(paid[1].id, design0.id, "Returns paid designs in descending order");
 
   const limitOffset = await db.transaction((trx: Knex.Transaction) =>
     findPaidDesigns(trx, { limit: 1, offset: 1 })
   );
 
   t.equal(limitOffset.length, 1, "Limits results");
-  t.equal(limitOffset[0].id, design1.id, "Offsets results");
+  t.equal(limitOffset[0].id, design0.id, "Offsets results");
 });
 
 test("findPaidDesigns allows filtering by product type", async (t: Test) => {
@@ -1936,6 +1945,19 @@ test("findMinimalByIds", async (t: Test) => {
       new Error("Query returned different number of rows than requested"),
       "throws correct error"
     );
+  }
+});
+
+test("create", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const trx = await db.transaction();
+  try {
+    const created = await create(trx, "A design", user.id);
+
+    t.equal(created.title, "A design", "sets the title");
+    t.equal(created.userId, user.id, "sets the userId");
+  } finally {
+    await trx.rollback();
   }
 });
 

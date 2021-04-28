@@ -9,12 +9,12 @@ import {
   deleteById as deleteComment,
 } from "../comments/dao";
 import { create, findByAnnotationId, findByAnnotationIds } from "./dao";
-import { create as createDesign } from "../product-designs/dao";
 import createUser from "../../test-helpers/create-user";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateComment from "../../test-helpers/factories/comment";
 import db from "../../services/db";
+import createDesign from "../../services/create-design";
 
 test("ProductDesignCanvasAnnotationComment DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });

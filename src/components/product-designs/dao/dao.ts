@@ -1,5 +1,7 @@
 import Knex from "knex";
 import { omit } from "lodash";
+import uuid from "node-uuid";
+
 import db from "../../../services/db";
 import ProductDesign = require("../../../components/product-designs/domain-objects/product-design");
 import ProductDesignWithApprovalSteps from "../domain-objects/product-design-with-approval-steps";
@@ -629,6 +631,33 @@ export async function findMinimalByIds(
   }
 
   return result;
+}
+
+export async function create(
+  trx: Knex.Transaction,
+  title: string,
+  userId: string
+): Promise<ProductDesign> {
+  const ids = await trx<{ id: string; title: string; user_id: string }>(
+    TABLE_NAME
+  ).insert(
+    {
+      title,
+      user_id: userId,
+      id: uuid.v4(),
+    },
+    "id"
+  );
+
+  if (ids.length !== 1) {
+    throw new Error("Could not create new ProductDesign");
+  }
+
+  const created = await queryWithCollectionMeta(trx)
+    .where({ "product_designs.id": ids[0] })
+    .first();
+
+  return new ProductDesign(created);
 }
 
 export async function findBaseById(

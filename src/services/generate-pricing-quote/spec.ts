@@ -503,14 +503,10 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
   const { user } = await createUser();
   await generatePricingValues();
   const designOne = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt One",
     userId: user.id,
   });
   const designTwo = await createDesign({
-    description: "Generic Shirt",
-    productType: "TEESHIRT",
     title: "T-Shirt Two",
     userId: user.id,
   });

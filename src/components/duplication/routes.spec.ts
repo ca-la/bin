@@ -1,7 +1,7 @@
 import API from "../../test-helpers/http";
-import createUser = require("../../test-helpers/create-user");
-import { create as createDesign } from "../product-designs/dao";
+import createUser from "../../test-helpers/create-user";
 import { test, Test } from "../../test-helpers/fresh";
+import createDesign from "../../services/create-design";
 
 test("POST /duplication/designs returns 400 with bad body", async (t: Test) => {
   const { session } = await createUser();
@@ -54,7 +54,6 @@ test("POST /duplication/designs duplicates designs", async (t: Test) => {
   const { session, user } = await createUser();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });

@@ -6,8 +6,8 @@ import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as AnnotationDAO from "./dao";
-import { create as createDesign } from "../product-designs/dao";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
+import createDesign from "../../services/create-design";
 
 const API_PATH = "/product-design-canvas-annotations";
 
@@ -53,7 +53,6 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
   const annotationId = uuid.v4();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });
@@ -91,7 +90,6 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
   const annotationId = uuid.v4();
 
   const design = await createDesign({
-    productType: "TEESHIRT",
     title: "Green Tee",
     userId: user.id,
   });

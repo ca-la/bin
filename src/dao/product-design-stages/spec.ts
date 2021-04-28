@@ -1,4 +1,6 @@
 import tape from "tape";
+import Knex from "knex";
+
 import { test } from "../../test-helpers/fresh";
 import {
   create,
@@ -7,17 +9,16 @@ import {
   findAllTitles,
   findById,
 } from "./index";
-import { create as createProductDesign } from "../../components/product-designs/dao";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
+import * as ProductDesignsDAO from "../../components/product-designs/dao/dao";
+import db from "../../services/db";
 
 test("ProductDesign Stage DAO supports creation/retrieval", async (t: tape.Test) => {
-  const { user } = await createUser();
+  const { user } = await createUser({ withSession: false });
 
-  const design = await createProductDesign({
-    productType: "test",
-    title: "test",
-    userId: user.id,
-  });
+  const design = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Test", user.id)
+  );
   const stage = await create({
     description: "",
     designId: design.id,
@@ -30,13 +31,11 @@ test("ProductDesign Stage DAO supports creation/retrieval", async (t: tape.Test)
 });
 
 test("ProductDesign Stage DAO supports retrieval by designId", async (t: tape.Test) => {
-  const { user } = await createUser();
+  const { user } = await createUser({ withSession: false });
 
-  const design = await createProductDesign({
-    productType: "test",
-    title: "test",
-    userId: user.id,
-  });
+  const design = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Test", user.id)
+  );
   const stage = await create({
     description: "",
     designId: design.id,
@@ -63,13 +62,11 @@ test("ProductDesign Stage DAO supports retrieval by designId", async (t: tape.Te
 });
 
 test("ProductDesignStagesDAO.findAllTitles", async (t: tape.Test) => {
-  const { user } = await createUser();
+  const { user } = await createUser({ withSession: false });
 
-  const design = await createProductDesign({
-    productType: "test",
-    title: "test",
-    userId: user.id,
-  });
+  const design = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Test", user.id)
+  );
   await create({
     description: "",
     designId: design.id,
@@ -101,13 +98,11 @@ test("ProductDesignStagesDAO.findAllTitles", async (t: tape.Test) => {
 });
 
 test("ProductDesign Stage DAO supports create all", async (t: tape.Test) => {
-  const { user } = await createUser();
+  const { user } = await createUser({ withSession: false });
 
-  const design = await createProductDesign({
-    productType: "test",
-    title: "test",
-    userId: user.id,
-  });
+  const design = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.create(trx, "Test", user.id)
+  );
   const stages = await createAll([
     {
       description: "",

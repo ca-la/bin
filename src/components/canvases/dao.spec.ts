@@ -13,9 +13,9 @@ import {
   update,
 } from "./dao";
 import createUser from "../../test-helpers/create-user";
-import { create as createDesign } from "../product-designs/dao";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import db from "../../services/db";
+import createDesign from "../../services/create-design";
 
 test("ProductDesignCanvases DAO supports creation/retrieval", async (t: tape.Test) => {
   const userData = await createUser();
