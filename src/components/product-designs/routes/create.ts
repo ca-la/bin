@@ -1,7 +1,13 @@
 import { z } from "zod";
+import convert from "koa-convert";
 
-import { SafeBodyState } from "../../../middleware/type-guard";
-import { TransactionState } from "../../../middleware/use-transaction";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../../middleware/type-guard";
+import useTransaction, {
+  TransactionState,
+} from "../../../middleware/use-transaction";
 import { StrictContext } from "../../../router-context";
 import createDesign from "../../../services/create-design";
 import {
@@ -9,8 +15,16 @@ import {
   Permissions,
 } from "../../../services/get-permissions";
 import { User } from "../../users/types";
+import { Role as TeamUserRole } from "../../team-users/types";
 import ProductDesign from "../domain-objects/product-design";
 import * as UsersDAO from "../../users/dao";
+import requireAuth from "../../../middleware/require-auth";
+import {
+  requireTeamRoles,
+  RequireTeamRolesContext,
+} from "../../team-users/service";
+import * as CollectionsDAO from "../../collections/dao";
+import ResourceNotFoundError from "../../../errors/resource-not-found";
 
 export const createBodySchema = z.object({
   title: z.string(),
@@ -50,3 +64,39 @@ export async function create(ctx: CreateContext) {
     owner,
   };
 }
+
+interface CreateDesignRequireTeamRolesContext extends RequireTeamRolesContext {
+  state: RequireTeamRolesContext["state"] & SafeBodyState<CreateBody>;
+}
+
+export const routeMiddlewareStack = [
+  requireAuth,
+  typeGuardFromSchema(createBodySchema),
+  useTransaction,
+  requireTeamRoles(
+    [
+      TeamUserRole.OWNER,
+      TeamUserRole.ADMIN,
+      TeamUserRole.EDITOR,
+      TeamUserRole.TEAM_PARTNER,
+    ],
+    async (ctx: CreateDesignRequireTeamRolesContext) => {
+      const { collectionIds } = ctx.state.safeBody;
+      if (!collectionIds || collectionIds.length === 0) {
+        return null;
+      }
+
+      const collectionId = collectionIds[0];
+      const collection = await CollectionsDAO.findById(collectionId);
+      if (!collection) {
+        throw new ResourceNotFoundError(
+          `Could not find collection with ID ${collectionId}`
+        );
+      }
+
+      return collection.teamId;
+    },
+    { allowNoTeam: true }
+  ),
+  convert.back(create),
+];

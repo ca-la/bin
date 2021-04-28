@@ -2,7 +2,6 @@
 
 const pick = require("lodash/pick");
 const Router = require("koa-router");
-const convert = require("koa-convert");
 
 const canAccessUserResource = require("../../../middleware/can-access-user-resource");
 const CollaboratorsDAO = require("../../collaborators/dao");
@@ -31,7 +30,6 @@ const {
 const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
 const useTransaction = require("../../../middleware/use-transaction").default;
-const { typeGuardFromSchema } = require("../../../middleware/type-guard");
 
 const {
   getDesignUploadPolicy,
@@ -41,7 +39,9 @@ const { getPaidDesigns } = require("./paid");
 const { updateAllNodes } = require("./phidias");
 const { findAllDesignsThroughCollaboratorAndTeam } = require("../dao/dao");
 const { createFromTemplate } = require("./templates");
-const { create, createBodySchema } = require("./create");
+const {
+  routeMiddlewareStack: createRouteMiddlewareStack,
+} = require("./create");
 
 const router = new Router();
 
@@ -298,13 +298,7 @@ function* updateDesign() {
   this.status = 200;
 }
 
-router.post(
-  "/",
-  requireAuth,
-  typeGuardFromSchema(createBodySchema),
-  useTransaction,
-  convert.back(create)
-);
+router.post("/", ...createRouteMiddlewareStack);
 router.get("/", requireAuth, getDesigns);
 router.del(
   "/",
