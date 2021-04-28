@@ -285,7 +285,13 @@ test("PATCH /collections/:collectionId supports partial updates to a collection"
   );
 });
 
-test("PATCH /collections/:collectionId request doesn not match type", async (t: tape.Test) => {
+test("PATCH /collections/:collectionId request with not expected fields are allowed but not used later in the update", async (t: tape.Test) => {
+  const originalUpdate = CollectionsDAO.update;
+  const updateCollectionStub = sandbox()
+    .stub(CollectionsDAO, "update")
+    .callsFake(async (id: string, data: Partial<CollectionDb>) => {
+      return await originalUpdate.apply(CollectionsDAO, [id, data]);
+    });
   const { session, user } = await createUser();
   const { team } = await generateTeam(user.id);
   const body = {
@@ -315,7 +321,19 @@ test("PATCH /collections/:collectionId request doesn not match type", async (t: 
     body: updateBody,
     headers: API.authHeader(session.id),
   });
-  t.equal(updateResponse[0].status, 400, "PATCH request does not match type");
+  t.equal(
+    updateResponse[0].status,
+    200,
+    "PATCH request updates the collection"
+  );
+  t.deepEqual(
+    updateCollectionStub.args[0][1],
+    {
+      description: updateBody.description,
+      title: updateBody.title,
+    },
+    "only expected fields are using in the DAO update"
+  );
 });
 
 test("PATCH /collections/:collectionId doesn't allow move collection to another team when the collection limit exceeded", async (t: tape.Test) => {

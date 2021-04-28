@@ -37,12 +37,10 @@ export interface CollectionSubmissionStatus {
 
 export const collectionUpdateSchema = z
   .object({
-    id: z.string(),
     description: z.string().nullable(),
     title: z.string().nullable(),
     teamId: z.string(),
   })
-  .partial()
-  .strict();
+  .partial();
 
 export type CollectionUpdate = z.infer<typeof collectionUpdateSchema>;
