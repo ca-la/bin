@@ -874,10 +874,10 @@ export async function createNotificationMessage(
         location: [],
         title: `${normalizeTitle(
           collection
-        )} has been submitted, and will be review by our team`,
+        )} has been submitted, and will be reviewed by our team`,
         text: `${normalizeTitle(
           collection
-        )} has been submitted, and will be review by our team`,
+        )} has been submitted, and will be reviewed by our team`,
       };
     }
 
