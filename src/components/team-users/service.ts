@@ -390,7 +390,8 @@ export async function removeTeamUser(
 
   const deleted = await TeamUsersDAO.deleteById(trx, teamUser.id);
 
-  if (teamUser.role !== TeamUserRole.VIEWER) {
+  const isRoleFree = FREE_TEAM_USER_ROLES.includes(teamUser.role);
+  if (!isRoleFree) {
     await removeStripeSeatCharge(trx, teamUser.teamId);
   }
 

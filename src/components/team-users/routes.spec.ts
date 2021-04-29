@@ -1276,6 +1276,49 @@ test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {
   );
 });
 
+test("DEL /team-users/:id allows admins to delete team partners", async (t: Test) => {
+  const {
+    deleteStub,
+    removeStripeSeatStub,
+    irisStub,
+    findTeamUserByIdStub,
+  } = setup();
+  findTeamUserByIdStub.resolves({
+    ...tu1,
+    role: TeamUserRole.TEAM_PARTNER,
+  });
+  const [response] = await del(`/team-users/${tu1.id}`, {
+    headers: authHeader("a-session-id"),
+  });
+  t.equal(response.status, 204, "Allows deletion");
+  t.equal(deleteStub.args[0][1], tu1.id);
+  t.equal(
+    removeStripeSeatStub.callCount,
+    0,
+    "Does not remove free seat from Stripe"
+  );
+  t.deepEqual(
+    irisStub.args,
+    [
+      [
+        {
+          channels: ["updates/a-user-id"],
+          resource: [{ id: "a-team-id" }],
+          type: "team-list/updated",
+        },
+      ],
+      [
+        {
+          channels: ["teams/a-team-id"],
+          resource: [tu1],
+          type: "team-users-list/updated",
+        },
+      ],
+    ],
+    "realtime updates for team users list and new teams"
+  );
+});
+
 test("DEL /team-users/:id not allowed as non-admin ", async (t: Test) => {
   const { deleteStub, findActorTeamUserStub, removeStripeSeatStub } = setup();
   findActorTeamUserStub.resolves({
