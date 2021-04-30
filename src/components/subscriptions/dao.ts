@@ -77,7 +77,8 @@ export async function findActive(
       builder.where({ "s.user_id": userId }).orWhere({ "tu.user_id": userId });
     })
     .andWhereRaw("(cancelled_at is null or cancelled_at > now())")
-    .select("s.*");
+    .select("s.*")
+    .orderBy("s.created_at", "asc");
 
   return validateEvery<SubscriptionRow, Subscription>(
     TABLE_NAME,
