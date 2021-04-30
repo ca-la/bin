@@ -2,7 +2,6 @@ import Router from "koa-router";
 import convert from "koa-convert";
 
 import requireAuth from "../../middleware/require-auth";
-import useTransaction from "../../middleware/use-transaction";
 import { canAccessAnnotationInParams } from "../../middleware/can-access-annotation";
 import { canAccessTaskInParams } from "../../middleware/can-access-task";
 import { canAccessDesignInParam } from "../../middleware/can-access-design";
@@ -157,7 +156,6 @@ interface GetTeamAccessRequireTeamRolesContext extends RequireTeamRolesContext {
 router.get(
   "/teams/:teamId",
   requireAuth,
-  useTransaction,
   requireTeamRoles(
     Object.values(TeamUserRole),
     async (context: GetTeamAccessRequireTeamRolesContext) =>
