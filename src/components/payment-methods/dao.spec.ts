@@ -17,7 +17,6 @@ test("PaymentMethodsDAO.findByUserId", async (t: Test) => {
       lastFourDigits: "1234",
       deletedAt: null,
       createdAt: new Date(),
-      teamId: null,
     });
 
     const methods = await PaymentMethodsDAO.findByUserId(trx, user.id);

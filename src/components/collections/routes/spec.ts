@@ -810,7 +810,6 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
     await SubscriptionsDAO.create(
       {

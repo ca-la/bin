@@ -45,7 +45,6 @@ test("createPaymentMethod", async (t: Test) => {
     lastFourDigits: "1234",
     stripeCustomerId: "cus_123",
     stripeSourceId: "source-123",
-    teamId: null,
     userId: "user-123",
   });
 });

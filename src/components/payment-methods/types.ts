@@ -8,7 +8,6 @@ export const paymentMethodRowSchema = z.object({
   stripe_customer_id: z.string(),
   stripe_source_id: z.string(),
   last_four_digits: z.string(),
-  team_id: z.string().nullable(),
 });
 export type PaymentMethodRow = z.infer<typeof paymentMethodRowSchema>;
 
@@ -20,6 +19,5 @@ export const paymentMethodSchema = z.object({
   stripeCustomerId: z.string(),
   stripeSourceId: z.string(),
   lastFourDigits: z.string(),
-  teamId: z.string().nullable(),
 });
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;

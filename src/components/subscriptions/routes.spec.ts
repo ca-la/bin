@@ -81,7 +81,6 @@ test("GET /subscriptions lists current subscriptions", async (t: Test) => {
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(

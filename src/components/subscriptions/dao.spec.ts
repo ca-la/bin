@@ -24,7 +24,6 @@ test("SubscriptionsDAO supports creation and retrieval", async (t: tape.Test) =>
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
     const plan = await generatePlan(trx, {
       id: uuid.v4(),
@@ -127,7 +126,6 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
     const plan = await generatePlan(trx, {
       id: uuid.v4(),
@@ -265,7 +263,6 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
 
     const pm2 = await PaymentMethodsDAO.create(trx, {
@@ -276,7 +273,6 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
 
     const plan = await generatePlan(trx, {
@@ -362,7 +358,6 @@ test("findForTeamWithPlans", async (t: tape.Test) => {
       lastFourDigits: "1234",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(
