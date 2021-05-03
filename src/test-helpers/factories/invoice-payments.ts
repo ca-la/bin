@@ -1,17 +1,16 @@
-"use strict";
+import uuid from "node-uuid";
+import Knex from "knex";
 
-const uuid = require("node-uuid");
-const db = require("../../services/db");
-const createUser = require("../create-user");
-const generateCollection = require("./collection").default;
-const PaymentMethodsDAO = require("../../components/payment-methods/dao")
-  .default;
-const InvoicesDAO = require("../../dao/invoices");
-const InvoicePaymentsDAO = require("../../components/invoice-payments/dao");
+import db from "../../services/db";
+import createUser from "../create-user";
+import generateCollection from "./collection";
+import PaymentMethodsDAO from "../../components/payment-methods/dao";
+import InvoicesDAO from "../../dao/invoices";
+import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
 
 async function createInvoicesWithPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = await db.transaction((trx) =>
+  const paymentMethod = await db.transaction((trx: Knex.Transaction) =>
     PaymentMethodsDAO.create(trx, {
       id: uuid.v4(),
       userId: user.id,
@@ -20,7 +19,6 @@ async function createInvoicesWithPayments() {
       lastFourDigits: "1111",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     })
   );
   const { collection } = await generateCollection();
@@ -31,7 +29,7 @@ async function createInvoicesWithPayments() {
   let createdInvoices;
   let createdPayments;
 
-  await db.transaction(async (trx) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
@@ -66,12 +64,20 @@ async function createInvoicesWithPayments() {
         totalCents: createdInvoices[0].totalCents,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge",
+        creditUserId: null,
+        deletedAt: null,
+        resolvePaymentId: "test",
+        rumbleshipPurchaseHash: null,
       }),
       InvoicePaymentsDAO.createTrx(trx, {
         invoiceId: createdInvoices[1].id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge-2",
+        creditUserId: null,
+        deletedAt: null,
+        resolvePaymentId: "test",
+        rumbleshipPurchaseHash: null,
       }),
     ]);
   });
@@ -87,7 +93,7 @@ async function createInvoicesWithPayments() {
 
 async function createInvoicesWithOverPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = db.transaction((trx) =>
+  const paymentMethod = await db.transaction((trx: Knex.Transaction) =>
     PaymentMethodsDAO.create(trx, {
       id: uuid.v4(),
       userId: user.id,
@@ -96,7 +102,6 @@ async function createInvoicesWithOverPayments() {
       lastFourDigits: "1111",
       createdAt: new Date(),
       deletedAt: null,
-      teamId: null,
     })
   );
   const { collection } = await generateCollection();
@@ -107,7 +112,7 @@ async function createInvoicesWithOverPayments() {
   let createdInvoices;
   let createdPayments;
 
-  await db.transaction(async (trx) => {
+  await db.transaction(async (trx: Knex.Transaction) => {
     createdInvoices = await Promise.all([
       InvoicesDAO.createTrx(trx, {
         collectionId: collection.id,
@@ -142,12 +147,20 @@ async function createInvoicesWithOverPayments() {
         totalCents: createdInvoices[0].totalCents + 1000,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge",
+        creditUserId: null,
+        deletedAt: null,
+        resolvePaymentId: "test",
+        rumbleshipPurchaseHash: null,
       }),
       InvoicePaymentsDAO.createTrx(trx, {
         invoiceId: createdInvoices[1].id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge-2",
+        creditUserId: null,
+        deletedAt: null,
+        resolvePaymentId: "test",
+        rumbleshipPurchaseHash: null,
       }),
     ]);
   });
