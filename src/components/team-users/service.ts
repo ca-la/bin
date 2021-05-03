@@ -311,6 +311,7 @@ export async function updateTeamUser(
     before,
     teamId,
     teamUserId,
+    actorUserId,
     actorTeamRole,
     actorSessionRole,
     patch,
@@ -318,6 +319,7 @@ export async function updateTeamUser(
     before: TeamUser;
     teamId: string;
     teamUserId: string;
+    actorUserId: string;
     actorTeamRole: TeamUserRole;
     actorSessionRole: string;
     patch: TeamUserUpdate;
@@ -363,7 +365,9 @@ export async function updateTeamUser(
       }
     }
   } else if (check(teamUserUpdateLabelSchema, patch)) {
+    const isSelfUpdate = actorUserId === before.userId;
     if (
+      !isSelfUpdate &&
       !allowedRolesMap[actorTeamRole].includes(before.role) &&
       actorSessionRole !== "ADMIN"
     ) {

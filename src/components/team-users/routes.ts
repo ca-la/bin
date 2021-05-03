@@ -147,6 +147,7 @@ async function update(ctx: UpdateContext) {
       before,
       teamId: before.teamId,
       teamUserId,
+      actorUserId,
       actorTeamRole,
       actorSessionRole: role,
       patch: safeBody,
@@ -214,7 +215,8 @@ interface GetListRequireTeamRolesContext extends RequireTeamRolesContext {
   query: { teamId: string };
 }
 
-interface DeleteRequireTeamRolesContext extends RequireTeamRolesContext {
+interface TeamUserIdParamRequireTeamRolesContext
+  extends RequireTeamRolesContext {
   params: { teamUserId: string };
 }
 
@@ -255,7 +257,13 @@ export default {
         requireTeamUserByTeamUserId,
         requireTeamRoles(
           [TeamUserRole.OWNER, TeamUserRole.ADMIN, TeamUserRole.EDITOR],
-          findTeamByTeamUser
+          findTeamByTeamUser,
+          {
+            allowSelf: async (
+              context: TeamUserIdParamRequireTeamRolesContext,
+              actorTeamUserId: string | null
+            ) => context.params.teamUserId === actorTeamUserId,
+          }
         ),
         requireActiveSubscription(findTeamByTeamUser),
         useTransaction,
@@ -269,7 +277,7 @@ export default {
           findTeamByTeamUser,
           {
             allowSelf: async (
-              context: DeleteRequireTeamRolesContext,
+              context: TeamUserIdParamRequireTeamRolesContext,
               actorTeamUserId: string | null
             ) => context.params.teamUserId === actorTeamUserId,
           }

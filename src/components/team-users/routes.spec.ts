@@ -1026,10 +1026,33 @@ interface TeamUsersPatchLabelTestCase {
 const teamUsersPatchLabelTestCases: TeamUsersPatchLabelTestCase[] = [
   {
     title:
-      "PATCH /team-users/:id: update label is forbidden for a team user with role VIEWER",
+      "PATCH /team-users/:id: update label of other team member is forbidden for a team user with role VIEWER",
     userRole: "USER",
     actorTeamUser: { role: TeamUserRole.VIEWER },
     responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: self update label is allowed for a team user with role VIEWER",
+    userRole: "USER",
+    actorTeamUser: { ...tu1, role: TeamUserRole.VIEWER },
+    teamUserToUpdate: { ...tu1, role: TeamUserRole.VIEWER },
+    responseStatus: 200,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: update label of other team member is forbidden for a team user with role TEAM_PARTNER",
+    userRole: "USER",
+    actorTeamUser: { role: TeamUserRole.TEAM_PARTNER },
+    responseStatus: 403,
+  },
+  {
+    title:
+      "PATCH /team-users/:id: self update label is allowed for a team user with role TEAM_PARTNER",
+    userRole: "USER",
+    actorTeamUser: { ...tu1, role: TeamUserRole.TEAM_PARTNER },
+    teamUserToUpdate: { ...tu1, role: TeamUserRole.TEAM_PARTNER },
+    responseStatus: 200,
   },
   {
     title:
@@ -1172,12 +1195,16 @@ for (const testCase of teamUsersPatchLabelTestCases) {
 
     const actorTeamUser = {
       ...tu1,
+      id: "actor-team-user-id",
+      userId: "actor-user-id",
       ...testCase.actorTeamUser,
     };
     findActorTeamUserStub.resolves(actorTeamUser);
 
     const teamUserToUpdate = {
       ...tu1,
+      id: "team-user-to-update-id",
+      userId: "to-update-user-id",
       ...(testCase.teamUserToUpdate || {}),
     };
     findTeamUserByIdStub.resolves(teamUserToUpdate);
