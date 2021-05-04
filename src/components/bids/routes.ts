@@ -417,7 +417,13 @@ const postPayoutBodySchema = z.object({
   message: z.string().nonempty(),
   isManual: z.boolean(),
   bidId: z.string().nullable(),
-  stripeSourceType: z.string().optional(),
+  stripeSourceType: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((nullishString: string | null | undefined) =>
+      nullishString === null ? undefined : nullishString
+    ),
 });
 type PostPayoutBody = z.infer<typeof postPayoutBodySchema>;
 

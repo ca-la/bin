@@ -917,6 +917,7 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   const [manualPayout] = await post(`/bids/${bid.id}/pay-out-to-partner`, {
     headers: authHeader(admin.session.id),
     body: {
+      stripeSourceType: null,
       payoutAccountId: null,
       message: "Money 4 u",
       bidId: bid.id,
