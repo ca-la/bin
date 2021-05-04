@@ -64,6 +64,7 @@ test("payOutPartner", async (t: Test) => {
       payoutAmountCents: 222,
       bidId: bid.id,
       isManual: false,
+      deletedAt: null,
     });
 
     const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(
@@ -107,6 +108,7 @@ test("payOutPartner requires payout account if payout is not manual", async (t: 
       payoutAmountCents: 222,
       bidId: bid.id,
       isManual: false,
+      deletedAt: null,
     });
     t.fail(
       "non-manual payout does not fail when no payout account is provided"
@@ -151,6 +153,7 @@ test("payOutPartner with manual payment", async (t: Test) => {
       payoutAmountCents: 222,
       bidId: bid.id,
       isManual: true,
+      deletedAt: null,
     });
     const logs = await PartnerPayoutLogsDAO.findByBidId(trx, bid.id);
     t.equal(logs.length, 1);
@@ -208,6 +211,7 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
       payoutAmountCents: 1235,
       bidId: bid.id,
       isManual: false,
+      deletedAt: null,
     });
     const logs = await PartnerPayoutLogsDAO.findByPayoutAccountId(
       trx,

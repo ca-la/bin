@@ -67,6 +67,7 @@ test("TeamsDAO.findUnpaidTeams: finds unpaid teams", async (t: Test) => {
       initiatorUserId: designer.id,
       bidId: bid.id,
       isManual: true,
+      deletedAt: null,
     });
 
     t.deepEquals(
@@ -75,7 +76,7 @@ test("TeamsDAO.findUnpaidTeams: finds unpaid teams", async (t: Test) => {
       "Returns teams that have recieved partial payment"
     );
 
-    await PartnerPayoutsDAO.create(trx, {
+    const payout = await PartnerPayoutsDAO.create(trx, {
       invoiceId: null,
       payoutAccountId: null,
       payoutAmountCents: 5000,
@@ -83,12 +84,21 @@ test("TeamsDAO.findUnpaidTeams: finds unpaid teams", async (t: Test) => {
       initiatorUserId: designer.id,
       bidId: bid.id,
       isManual: true,
+      deletedAt: null,
     });
 
     t.deepEquals(
       await TeamsDAO.findUnpaidTeams(trx),
       [],
       "Does not return paid teams"
+    );
+
+    await PartnerPayoutsDAO.deleteById(trx, payout.id);
+
+    t.deepEquals(
+      await TeamsDAO.findUnpaidTeams(trx),
+      [team],
+      "Does not consider deleted payouts"
     );
   } finally {
     await trx.rollback();

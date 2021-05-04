@@ -454,6 +454,7 @@ async function postPayOut(ctx: PostPayoutContext) {
     payoutAmountCents,
     bidId,
     initiatorUserId: userId,
+    deletedAt: null,
   };
 
   await payOutPartner(trx, payoutLog, stripeSourceType);

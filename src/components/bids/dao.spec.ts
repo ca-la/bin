@@ -337,6 +337,7 @@ async function payPartner({
       initiatorUserId,
       bidId,
       isManual: !payoutAccountId,
+      deletedAt: null,
     })
   );
 }
@@ -858,6 +859,60 @@ test("Bids DAO does not return unpaid bids the partner has been removed from", a
   t.equal(bids.length, 0);
 });
 
+test("Bids DAO does not consider deleted payout logs", async (t: Test) => {
+  sandbox().useFakeTimers(new Date(2020, 2, 1));
+  const { user: designer } = await createUser();
+  const { user: partner } = await createUser({ role: "PARTNER" });
+
+  const payoutAccount = await PayoutAccountsDAO.create({
+    id: uuid.v4(),
+    createdAt: new Date(),
+    deletedAt: null,
+    userId: partner.id,
+    stripeAccessToken: "stripe-access-one",
+    stripeRefreshToken: "stripe-refresh-one",
+    stripePublishableKey: "stripe-publish-one",
+    stripeUserId: "stripe-user-one",
+  });
+
+  const design = await generateDesign({
+    userId: designer.id,
+  });
+
+  const { collection } = await generateCollection({ createdBy: designer.id });
+  await addDesign(collection.id, design.id);
+  const { bid, user: admin } = await generateBid({
+    bidOptions: {
+      bidPriceCents: 5678,
+      assignee: {
+        type: "USER",
+        id: partner.id,
+      },
+    },
+    designId: design.id,
+  });
+
+  await generateDesignEvent({
+    type: "ACCEPT_SERVICE_BID",
+    bidId: bid.id,
+    actorId: partner.id,
+    designId: design.id,
+    createdAt: new Date(2020, 1, 1),
+  });
+  const payout = await payPartner({
+    payoutAccountId: payoutAccount.id,
+    payoutAmountCents: 5678,
+    bidId: bid.id,
+    initiatorUserId: admin.id,
+  });
+
+  const bids = await db.transaction(async (trx: Knex.Transaction) => {
+    await PartnerPayoutsDAO.deleteById(trx, payout.id);
+    return findUnpaidByUserId(trx, partner.id);
+  });
+  t.equal(bids.length, 1);
+});
+
 test("findUnpaidByTeamId", async () => {
   test("finds unpaid bids", async (t: Test) => {
     const {
@@ -926,7 +981,7 @@ test("findUnpaidByTeamId", async () => {
       )
     );
 
-    await payPartner({
+    const payout = await payPartner({
       payoutAccountId: null,
       payoutAmountCents: bid!.bidPriceCents / 2,
       initiatorUserId: admin.id,
@@ -939,6 +994,29 @@ test("findUnpaidByTeamId", async () => {
         [],
         "Does not return paid bids"
       )
+    );
+
+    const afterDeleteBids = await db.transaction(
+      async (trx: Knex.Transaction) => {
+        await PartnerPayoutsDAO.deleteById(trx, payout.id);
+        return findUnpaidByTeamId(trx, team.id);
+      }
+    );
+
+    t.deepEquals(
+      afterDeleteBids,
+      [
+        {
+          ...bid,
+          acceptedAt,
+          assignee: {
+            id: team.id,
+            name: team.title,
+            type: "TEAM",
+          },
+        },
+      ],
+      "starts returning bids again after deleting one of the payments"
     );
   });
 

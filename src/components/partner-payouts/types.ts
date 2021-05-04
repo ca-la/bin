@@ -11,6 +11,7 @@ export const partnerPayoutLogDbSchema = z.object({
   shortId: z.string().nullable(),
   bidId: z.string().nullable(),
   isManual: z.boolean(),
+  deletedAt: z.date().nullable(),
 });
 export type PartnerPayoutLogDb = z.infer<typeof partnerPayoutLogDbSchema>;
 
@@ -25,6 +26,7 @@ export const partnerPayoutLogDbRowSchema = z.object({
   short_id: partnerPayoutLogDbSchema.shape.shortId,
   bid_id: partnerPayoutLogDbSchema.shape.bidId,
   is_manual: partnerPayoutLogDbSchema.shape.isManual,
+  deleted_at: z.date().nullable(),
 });
 export type PartnerPayoutLogDbRow = z.infer<typeof partnerPayoutLogDbRowSchema>;
 

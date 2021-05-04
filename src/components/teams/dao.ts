@@ -45,10 +45,10 @@ async function findUnpaidTeams(
     .select("teams.*")
     .join("design_events", "teams.id", "design_events.target_team_id")
     .join("pricing_bids", "design_events.bid_id", "pricing_bids.id")
-    .leftJoin(
-      "partner_payout_logs",
-      "pricing_bids.id",
-      "partner_payout_logs.bid_id"
+    .leftJoin("partner_payout_logs", (join: Knex.JoinClause) =>
+      join
+        .on("pricing_bids.id", "=", "partner_payout_logs.bid_id")
+        .andOn(ktx.raw("partner_payout_logs.deleted_at IS NULL"))
     )
     .where({ "design_events.type": "ACCEPT_SERVICE_BID" })
     .whereNotIn(
@@ -56,6 +56,7 @@ async function findUnpaidTeams(
       ktx("design_events").select("bid_id").where({ type: "REMOVE_PARTNER" })
     )
     .groupBy(["pricing_bids.id", "teams.id", "pricing_bids.bid_price_cents"])
+    .orderBy("teams.created_at", "asc")
     .having(
       ktx.raw(
         "pricing_bids.bid_price_cents > coalesce(sum(partner_payout_logs.payout_amount_cents), 0)"

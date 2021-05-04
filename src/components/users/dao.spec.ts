@@ -391,23 +391,32 @@ test("UsersDAO.findAllUnpaidPartners returns all unpaid partners", async (t: Tes
     stripeUserId: "stripe-user-one",
   });
 
-  const data = {
-    id: uuid.v4(),
-    invoiceId: null,
-    payoutAccountId: payoutAccount.id,
-    payoutAmountCents: 1000,
-    message: "Get yo money",
-    initiatorUserId: admin.id,
-    bidId: bid2.id,
-    isManual: false,
-  };
-  await db.transaction((trx: Knex.Transaction) =>
-    PartnerPayoutsDAO.create(trx, data)
+  const payout = await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.create(trx, {
+      invoiceId: null,
+      payoutAccountId: payoutAccount.id,
+      payoutAmountCents: 1000,
+      message: "Get yo money",
+      initiatorUserId: admin.id,
+      bidId: bid2.id,
+      isManual: false,
+      deletedAt: null,
+    })
   );
 
   const users = await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 });
 
   t.deepEqual(users, [unpaidPartner]);
+
+  await db.transaction((trx: Knex.Transaction) =>
+    PartnerPayoutsDAO.deleteById(trx, payout.id)
+  );
+
+  t.deepEqual(
+    await UsersDAO.findAllUnpaidPartners({ limit: 20, offset: 0 }),
+    [unpaidPartner, paidPartner],
+    "removes deleted payouts from consideration"
+  );
 });
 
 test("UsersDAO.findAllUnpaidPartners does not include partners removed from bids", async (t: Test) => {

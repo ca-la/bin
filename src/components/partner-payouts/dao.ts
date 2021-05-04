@@ -6,6 +6,7 @@ import { PartnerPayoutLogDb, PartnerPayoutLog } from "./types";
 import adapter, { rawAdapter } from "./adapter";
 import { computeUniqueShortId } from "../../services/short-id";
 import first from "../../services/first";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const TABLE_NAME = "partner_payout_logs";
 const ACCOUNTS_TABLE_NAME = "partner_payout_accounts";
@@ -41,6 +42,7 @@ export async function findByPayoutAccountId(
   const result = await ktx(TABLE_NAME)
     .where({
       payout_account_id: accountId,
+      deleted_at: null,
     })
     .orderBy("created_at", "desc")
     .catch(rethrow);
@@ -87,6 +89,9 @@ export async function findByUserId(
       "design_events.actor_id": userId,
       "design_events.type": "ACCEPT_SERVICE_BID",
     })
+    .andWhere({
+      "partner_payout_logs.deleted_at": null,
+    })
     .orderByRaw(`${TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 
@@ -124,9 +129,29 @@ export async function findByBidId(
     .where({
       "pricing_bids.id": bidId,
       "design_events.type": "ACCEPT_SERVICE_BID",
+      "partner_payout_logs.deleted_at": null,
     })
     .orderBy("created_at", "DESC")
     .catch(rethrow);
 
   return adapter.fromDbArray(logs);
+}
+
+export async function deleteById(
+  trx: Knex.Transaction,
+  id: string
+): Promise<number> {
+  const updatedIds = await trx
+    .from(TABLE_NAME)
+    .where({ id, deleted_at: null })
+    .update({ deleted_at: new Date() }, "id")
+    .catch(rethrow);
+
+  if (updatedIds.length === 0) {
+    throw new ResourceNotFoundError(
+      `Could not find PartnerPayoutLog with id ${id}`
+    );
+  }
+
+  return updatedIds.length;
 }

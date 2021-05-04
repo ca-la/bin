@@ -224,7 +224,11 @@ export async function findUnpaidByUserId(
     .join("product_designs as d", "design_events.design_id", "d.id")
     .join("collection_designs as c", "d.id", "c.design_id")
     .join("pricing_bids", "design_events.bid_id", "pricing_bids.id")
-    .leftJoin("partner_payout_logs as l", "pricing_bids.id", "l.bid_id")
+    .leftJoin("partner_payout_logs as l", (join: Knex.JoinClause) =>
+      join
+        .on("pricing_bids.id", "=", "l.bid_id")
+        .andOn(ktx.raw("l.deleted_at IS NULL"))
+    )
     .where({ "design_events.type": "ACCEPT_SERVICE_BID", "users.id": userId })
     .andWhere("design_events.created_at", ">", new Date(BID_CUTOFF_DATE))
     .whereNotIn("pricing_bids.id", (subquery: Knex.QueryBuilder) =>
@@ -256,7 +260,11 @@ export async function findUnpaidByTeamId(
     .join("product_designs as d", "design_events.design_id", "d.id")
     .join("collection_designs as c", "d.id", "c.design_id")
     .join("pricing_bids", "design_events.bid_id", "pricing_bids.id")
-    .leftJoin("partner_payout_logs as l", "pricing_bids.id", "l.bid_id")
+    .leftJoin("partner_payout_logs as l", (join: Knex.JoinClause) =>
+      join
+        .on("pricing_bids.id", "=", "l.bid_id")
+        .andOn(ktx.raw("l.deleted_at IS NULL"))
+    )
     .where({
       "design_events.type": "ACCEPT_SERVICE_BID",
       "design_events.target_team_id": teamId,

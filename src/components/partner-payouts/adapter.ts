@@ -24,6 +24,7 @@ export const rawAdapter = fromSchema({
     payoutAccountId: row.payout_account_id,
     payoutAmountCents: row.payout_amount_cents,
     shortId: row.short_id,
+    deletedAt: row.deleted_at,
   }),
 });
 
@@ -44,5 +45,6 @@ export default fromSchema({
     collectionId: row.collection_id,
     collectionTitle: row.collection_title,
     payoutAccountUserId: row.payout_account_user_id,
+    deletedAt: row.deleted_at,
   }),
 });

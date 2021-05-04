@@ -420,7 +420,9 @@ export async function findAllUnpaidPartners({
     .select("users.*")
     .join("design_events as de", "users.id", "de.actor_id")
     .join("pricing_bids as b", "de.bid_id", "b.id")
-    .leftJoin("partner_payout_logs as l", "b.id", "l.bid_id")
+    .leftJoin("partner_payout_logs as l", (join: Knex.JoinClause) =>
+      join.on("b.id", "=", "l.bid_id").andOn(db.raw("l.deleted_at IS NULL"))
+    )
     .where({ "de.type": "ACCEPT_SERVICE_BID" })
     .andWhere("de.created_at", ">", new Date(BID_CUTOFF_DATE))
     .whereNotIn("b.id", (subquery: Knex.QueryBuilder) =>
@@ -434,6 +436,7 @@ export async function findAllUnpaidPartners({
     .having(
       db.raw("b.bid_price_cents > coalesce(sum(l.payout_amount_cents), 0)")
     )
+    .orderBy("users.created_at", "asc")
     .catch(rethrow)
     .catch(
       filterError(rethrow.ERRORS.InvalidRegularExpression, () => {
