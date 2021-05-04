@@ -2,7 +2,7 @@ import Knex from "knex";
 import * as EmailService from "../email";
 import * as StripeService from "../stripe";
 import * as PartnerPayoutAccountsDAO from "../../dao/partner-payout-accounts";
-import { PartnerPayoutLogDb } from "../../components/partner-payouts/domain-object";
+import { PartnerPayoutLogDb } from "../../components/partner-payouts/types";
 import InvalidDataError from "../../errors/invalid-data";
 import { ADMIN_EMAIL } from "../../config";
 import { findById as findUserById } from "../../components/users/dao";

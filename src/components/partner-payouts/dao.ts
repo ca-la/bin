@@ -2,19 +2,10 @@ import Knex from "knex";
 import rethrow = require("pg-rethrow");
 import uuid from "node-uuid";
 
-import {
-  dataAdapterDb,
-  dataAdapter,
-  isPartnerPayoutLogDbRow,
-  isPartnerPayoutLogRow,
-  PartnerPayoutLogDb,
-  PartnerPayoutLogDbRow,
-  PartnerPayoutLog,
-  PartnerPayoutLogRow,
-} from "./domain-object";
-import first from "../../services/first";
-import { validate, validateEvery } from "../../services/validate-from-db";
+import { PartnerPayoutLogDb, PartnerPayoutLog } from "./types";
+import adapter, { rawAdapter } from "./adapter";
 import { computeUniqueShortId } from "../../services/short-id";
+import first from "../../services/first";
 
 const TABLE_NAME = "partner_payout_logs";
 const ACCOUNTS_TABLE_NAME = "partner_payout_accounts";
@@ -24,27 +15,23 @@ export async function create(
   data: UninsertedWithoutShortId<PartnerPayoutLogDb>
 ): Promise<PartnerPayoutLogDb> {
   const shortId = await computeUniqueShortId();
-  const rowData = dataAdapterDb.forInsertion({
+  const rowData = rawAdapter.forInsertion({
     shortId,
     ...data,
     id: uuid.v4(),
+    createdAt: new Date(),
   });
 
   const result = await trx(TABLE_NAME)
     .insert({ ...rowData, created_at: new Date() }, "*")
-    .then((rows: PartnerPayoutLogDbRow[]) => first(rows))
+    .then(first)
     .catch(rethrow);
 
   if (!result) {
     throw new Error("Unable to create a new partner payout.");
   }
 
-  return validate<PartnerPayoutLogDbRow, PartnerPayoutLogDb>(
-    TABLE_NAME,
-    isPartnerPayoutLogDbRow,
-    dataAdapterDb,
-    result
-  );
+  return rawAdapter.fromDb(result);
 }
 
 export async function findByPayoutAccountId(
@@ -58,12 +45,7 @@ export async function findByPayoutAccountId(
     .orderBy("created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogDbRow, PartnerPayoutLogDb>(
-    TABLE_NAME,
-    isPartnerPayoutLogDbRow,
-    dataAdapterDb,
-    result
-  );
+  return rawAdapter.fromDbArray(result);
 }
 
 export async function findByUserId(
@@ -108,12 +90,7 @@ export async function findByUserId(
     .orderByRaw(`${TABLE_NAME}.created_at DESC`)
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
-    TABLE_NAME,
-    isPartnerPayoutLogRow,
-    dataAdapter,
-    result
-  );
+  return adapter.fromDbArray(result);
 }
 
 export async function findByBidId(
@@ -151,10 +128,5 @@ export async function findByBidId(
     .orderBy("created_at", "DESC")
     .catch(rethrow);
 
-  return validateEvery<PartnerPayoutLogRow, PartnerPayoutLog>(
-    TABLE_NAME,
-    isPartnerPayoutLogRow,
-    dataAdapter,
-    logs
-  );
+  return adapter.fromDbArray(logs);
 }

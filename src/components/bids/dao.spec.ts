@@ -330,7 +330,6 @@ async function payPartner({
 }) {
   return await db.transaction((trx: Knex.Transaction) =>
     PartnerPayoutsDAO.create(trx, {
-      id: uuid.v4(),
       invoiceId: null,
       payoutAccountId,
       payoutAmountCents,

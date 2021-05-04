@@ -57,7 +57,6 @@ test("payOutPartner", async (t: Test) => {
   const trx = await db.transaction();
   try {
     await payOutPartner(trx, {
-      id: uuid.v4(),
       initiatorUserId: adminUser.id,
       invoiceId: null,
       message: "Nice job!",
@@ -101,7 +100,6 @@ test("payOutPartner requires payout account if payout is not manual", async (t: 
   const trx = await db.transaction();
   try {
     await payOutPartner(trx, {
-      id: uuid.v4(),
       initiatorUserId: adminUser.id,
       invoiceId: null,
       message: "Nice job!",
@@ -146,7 +144,6 @@ test("payOutPartner with manual payment", async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await payOutPartner(trx, {
-      id: uuid.v4(),
       initiatorUserId: adminUser.id,
       invoiceId: null,
       message: "Nice job!",
@@ -204,7 +201,6 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await payOutPartner(trx, {
-      id: uuid.v4(),
       initiatorUserId: adminUser.id,
       invoiceId: null,
       message: "Nice job!",

@@ -1,7 +1,8 @@
 import Router from "koa-router";
 import uuid from "node-uuid";
-import { omit } from "lodash";
 import Knex from "knex";
+import { z } from "zod";
+import convert from "koa-convert";
 
 import {
   Bid,
@@ -23,24 +24,28 @@ import { DuplicateAcceptRejectError } from "../design-events/errors";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import requireAdmin = require("../../middleware/require-admin");
 import requireAuth = require("../../middleware/require-auth");
-import useTransaction from "../../middleware/use-transaction";
-import { typeGuard } from "../../middleware/type-guard";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
+import {
+  SafeBodyState,
+  typeGuard,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
 import * as NotificationsService from "../../services/create-notifications";
 import { isExpired } from "./services/is-expired";
 import { createBid } from "../../services/create-bid";
 import { BidRejection } from "../bid-rejections/domain-object";
-import {
-  hasProperties,
-  hasOnlyProperties,
-} from "../../services/require-properties";
+import { hasOnlyProperties } from "../../services/require-properties";
 import db from "../../services/db";
-import { PartnerPayoutLogDb } from "../partner-payouts/domain-object";
+import { PartnerPayoutLogDb } from "../partner-payouts/types";
 import { payOutPartner } from "../../services/pay-out-partner";
 import filterError = require("../../services/filter-error");
 import { templateDesignEvent } from "../design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
 import ConflictError from "../../errors/conflict";
 import createQuoteLock from "../../services/create-bid/create-quote-lock";
+import { StrictContext } from "../../router-context";
 
 const router = new Router();
 
@@ -406,60 +411,48 @@ function* getById(this: GetByIdContext): Iterator<any, any, any> {
   }
 }
 
-interface PayOutPartnerContext extends AuthedContext {
-  params: {
-    bidId: string;
-  };
+const postPayoutBodySchema = z.object({
+  payoutAccountId: z.string().nullable(),
+  payoutAmountCents: z.number(),
+  message: z.string().nonempty(),
+  isManual: z.boolean(),
+  bidId: z.string().nullable(),
+  stripeSourceType: z.string().optional(),
+});
+type PostPayoutBody = z.infer<typeof postPayoutBodySchema>;
+
+interface PostPayoutContext extends StrictContext {
+  state: AuthedState & TransactionState & SafeBodyState<PostPayoutBody>;
+  params: { bidId: string };
 }
 
-type UninsertedPayoutLog = Omit<
-  UninsertedWithoutShortId<PartnerPayoutLogDb>,
-  "initiatorUserId"
->;
-
-interface PayoutRequest extends UninsertedPayoutLog {
-  stripeSourceType?: string;
-}
-
-export function isPayoutRequest(data: object): data is PayoutRequest {
-  return hasProperties(
-    data,
-    "payoutAmountCents",
-    "message",
-    "isManual",
-    "bidId"
-  );
-}
-
-function* postPayOut(
-  this: TrxContext<PayOutPartnerContext>
-): Iterator<any, any, any> {
-  const { bidId } = this.params;
-  if (!isPayoutRequest(this.request.body)) {
-    this.throw(400, "Request does not match Payout Request");
-  }
-
+async function postPayOut(ctx: PostPayoutContext) {
+  const { bidId } = ctx.params;
   const {
+    payoutAmountCents,
     payoutAccountId,
     isManual,
     message,
     stripeSourceType,
-  } = this.request.body;
-  const { trx } = this.state;
+  } = ctx.state.safeBody;
+  const { trx, userId } = ctx.state;
 
-  this.assert(message, 400, "Message is required");
   if (!isManual) {
-    this.assert(payoutAccountId, 400, "Missing payout account ID");
+    ctx.assert(payoutAccountId, 400, "Missing payout account ID");
   }
   const payoutLog: UninsertedWithoutShortId<PartnerPayoutLogDb> = {
-    ...omit(this.request.body, "stripeSourceType"),
+    invoiceId: null,
+    isManual,
+    message,
+    payoutAccountId,
+    payoutAmountCents,
     bidId,
-    initiatorUserId: this.state.userId,
+    initiatorUserId: userId,
   };
 
-  yield payOutPartner(trx, payoutLog, stripeSourceType);
+  await payOutPartner(trx, payoutLog, stripeSourceType);
 
-  this.status = 204;
+  ctx.status = 204;
 }
 
 function* getUnpaidBids(this: AuthedContext): Iterator<any, any, any> {
@@ -502,7 +495,8 @@ router.post(
   "/:bidId/pay-out-to-partner",
   requireAdmin,
   useTransaction,
-  postPayOut
+  typeGuardFromSchema(postPayoutBodySchema),
+  convert.back(postPayOut)
 );
 
 export default router.routes();

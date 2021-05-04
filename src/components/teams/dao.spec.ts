@@ -60,7 +60,6 @@ test("TeamsDAO.findUnpaidTeams: finds unpaid teams", async (t: Test) => {
     );
 
     await PartnerPayoutsDAO.create(trx, {
-      id: uuid.v4(),
       invoiceId: null,
       payoutAccountId: null,
       payoutAmountCents: 5000,
@@ -77,7 +76,6 @@ test("TeamsDAO.findUnpaidTeams: finds unpaid teams", async (t: Test) => {
     );
 
     await PartnerPayoutsDAO.create(trx, {
-      id: uuid.v4(),
       invoiceId: null,
       payoutAccountId: null,
       payoutAmountCents: 5000,

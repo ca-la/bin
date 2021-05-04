@@ -17,7 +17,7 @@ type Uninserted<T extends WithInitialDates> = Omit<
 
 type UninsertedWithoutShortId<T extends WithInitialDates & WithShortId> = Omit<
   T,
-  "created_at" | "createdAt" | "short_id" | "shortId"
+  "created_at" | "createdAt" | "short_id" | "shortId" | "id"
 >;
 
 interface ModelWithMeta {
