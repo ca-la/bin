@@ -6,7 +6,7 @@ import rethrow = require("pg-rethrow");
 import * as UsersDAO from "./dao";
 import applyCode from "../../components/promo-codes/apply-code";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
-import claimDesignInvitations = require("../../services/claim-design-invitations");
+import { claimDesignInvitations } from "../../services/claim-design-invitations";
 import CohortsDAO = require("../../components/cohorts/dao");
 import CohortUsersDAO = require("../../components/cohorts/users/dao");
 import compact from "../../services/compact";
@@ -33,16 +33,9 @@ import {
   InvalidReferralCodeError,
 } from "../../components/referral-redemptions/service";
 import { generateReferralCode } from "../referral-codes/service";
+import convert from "koa-convert";
 
 const router = new Router();
-
-const createBodySchema = z.object({
-  email: z.string(),
-  lastAcceptedDesignerTermsAt: z.string(),
-  planId: z.string(),
-  stripeCardToken: z.string().nullable(),
-});
-type CreateBody = z.infer<typeof createBodySchema>;
 
 const createWithTeamBodySchema = z.object({
   name: z.string(),
@@ -55,11 +48,6 @@ const createWithTeamBodySchema = z.object({
   }),
 });
 type CreateWithTeamBody = z.infer<typeof createWithTeamBodySchema>;
-
-const createRequestSchema = z.union([
-  createBodySchema,
-  createWithTeamBodySchema,
-]);
 
 async function createWithTeam(
   trx: Knex.Transaction,
@@ -108,74 +96,22 @@ async function createWithTeam(
   return user;
 }
 
-async function createWithoutTeam(
-  trx: Knex.Transaction,
-  body: CreateBody
-): Promise<User> {
-  const { email, lastAcceptedDesignerTermsAt, planId, stripeCardToken } = body;
-
-  if (REQUIRE_CALA_EMAIL && !email.match(/@((ca\.la)|(calastg\.com))$/)) {
-    throw new InvalidDataError(
-      "Only @ca.la or @calastg.com emails can sign up on this server. Please visit https://app.ca.la to access the live version of Studio"
-    );
-  }
-
-  const referralCode = await generateReferralCode();
-
-  const user = await UsersDAO.create(
-    {
-      name: null,
-      password: null,
-      email,
-      lastAcceptedDesignerTermsAt: lastAcceptedDesignerTermsAt
-        ? new Date(lastAcceptedDesignerTermsAt)
-        : null,
-      referralCode,
-      role: ROLES.USER,
-    },
-    { requirePassword: false, trx }
-  );
-
-  await createSubscription(trx, {
-    userId: user.id,
-    teamId: null,
-    stripeCardToken,
-    planId,
-    isPaymentWaived: false,
-  });
-
-  await TeamUsersDAO.claimAllByEmail(trx, email, user.id);
-
-  return user;
-}
-
 /**
  * POST /users
  */
-function* createUser(this: PublicContext): Iterator<any, any, any> {
-  const { cohort, initialDesigns, promoCode, referralCode } = this.query;
-  const { body } = this.request;
+async function createUser(ctx: PublicContext) {
+  const { cohort, initialDesigns, promoCode, referralCode } = ctx.query;
+  const { body } = ctx.request;
 
-  if (!check(createRequestSchema, body)) {
-    this.throw(
+  if (!check(createWithTeamBodySchema, body)) {
+    ctx.throw(
       400,
       "Must provide email, lastAcceptedDesignerTermsAt, planId, and stripeCardToken"
     );
   }
 
-  const user = yield db.transaction(async (trx: Knex.Transaction) => {
-    const newUser = await (check<CreateWithTeamBody>(
-      createWithTeamBodySchema,
-      body
-    )
-      ? createWithTeam(trx, body)
-      : createWithoutTeam(trx, body)
-    ).catch(
-      filterError(InvalidDataError, (err: InvalidDataError) =>
-        this.throw(400, err)
-      )
-    );
-
+  const user = await db.transaction(async (trx: Knex.Transaction) => {
+    const newUser = await createWithTeam(trx, body);
     if (referralCode) {
       await redeemReferralCode({
         trx,
@@ -183,7 +119,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
         referralCode,
       }).catch(
         filterError(InvalidReferralCodeError, (err: InvalidReferralCodeError) =>
-          this.throw(400, err.message)
+          ctx.throw(400, err.message)
         )
       );
     }
@@ -193,10 +129,10 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
 
   let targetCohort = null;
   if (cohort) {
-    targetCohort = yield CohortsDAO.findBySlug(cohort);
+    targetCohort = await CohortsDAO.findBySlug(cohort);
 
     if (targetCohort) {
-      yield CohortUsersDAO.create({
+      await CohortUsersDAO.create({
         cohortId: targetCohort.id,
         userId: user.id,
       });
@@ -204,7 +140,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
   }
 
   if (promoCode) {
-    yield applyCode(user.id, promoCode);
+    await applyCode(user.id, promoCode);
   }
 
   // Previously we had this *before* the user creation in the DB, effectively
@@ -212,7 +148,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
   // we attempt to subscribe lots of invalid and duplicate emails whenever
   // someone makes a mistake signing up.
   try {
-    yield MailChimp.subscribeToUsers({
+    await MailChimp.subscribeToUsers({
       cohort: targetCohort && targetCohort.slug,
       email: user.email,
       name: user.name || "",
@@ -224,7 +160,7 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
     logServerError(`Failed to sign up user to Mailchimp: ${user.email}`);
   }
 
-  yield claimDesignInvitations(user.email, user.id);
+  await claimDesignInvitations(body.email, user.id);
 
   if (
     initialDesigns &&
@@ -232,26 +168,26 @@ function* createUser(this: PublicContext): Iterator<any, any, any> {
     initialDesigns.length > 0
   ) {
     // Intentionally not checking ownership permissions - TODO reconsider security model
-    yield DuplicationService.duplicateDesigns(user.id, initialDesigns);
+    await DuplicationService.duplicateDesigns(user.id, initialDesigns);
   } else {
     // This will start off the user with any number of 'default' designs that
     // will automatically show in their drafts when they first log in.
     const defaultDesignIds = DEFAULT_DESIGN_IDS.split(",");
-    yield DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
+    await DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
   }
 
   // Allow `?returnValue=session` on the end of the URL to return a session (with
   // attached user) rather than just a user.
   // Not the most RESTful thing in the world... but much nicer from a client
   // perspective.
-  if (this.query.returnValue === "session") {
-    const session = yield SessionsDAO.createForUser(user);
-    this.body = session;
+  if (ctx.query.returnValue === "session") {
+    const session = await SessionsDAO.createForUser(user);
+    ctx.body = session;
   } else {
-    this.body = user;
+    ctx.body = user;
   }
 
-  this.status = 201;
+  ctx.status = 201;
 }
 
 /**
@@ -528,7 +464,7 @@ router.get("/", getList);
 router.get("/:userId", requireAuth, getUser);
 router.get("/email-availability/:email", getEmailAvailability);
 router.get("/unpaid-partners", getUnpaidPartners);
-router.post("/", createUser);
+router.post("/", convert.back(createUser));
 router.post("/:userId/accept-designer-terms", requireAuth, acceptDesignerTerms);
 router.post("/:userId/accept-partner-terms", requireAuth, acceptPartnerTerms);
 router.put("/:userId", requireAuth, updateUser); // TODO: deprecate

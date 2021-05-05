@@ -1,6 +1,5 @@
-"use strict";
-
-const CollaboratorsDAO = require("../../components/collaborators/dao");
+import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import { Collaborator } from "../../published-types";
 
 /**
  * Find any outstanding product design collaboration invitations for a new user,
@@ -8,11 +7,14 @@ const CollaboratorsDAO = require("../../components/collaborators/dao");
  * @param {String} userEmail
  * @param {uuid} userId
  */
-async function claimDesignInvitations(userEmail, userId) {
+export async function claimDesignInvitations(
+  userEmail: string,
+  userId: string
+) {
   const invitations = await CollaboratorsDAO.findUnclaimedByEmail(userEmail);
 
   await Promise.all(
-    invitations.map((invitation) =>
+    invitations.map((invitation: Collaborator) =>
       CollaboratorsDAO.update(invitation.id, {
         userEmail: null,
         userId,
@@ -20,5 +22,3 @@ async function claimDesignInvitations(userEmail, userId) {
     )
   );
 }
-
-module.exports = claimDesignInvitations;

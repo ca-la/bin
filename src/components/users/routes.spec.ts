@@ -26,8 +26,13 @@ import { sandbox, Test, test } from "../../test-helpers/fresh";
 const createBody = {
   email: "user@example.com",
   lastAcceptedDesignerTermsAt: new Date().toISOString(),
-  planId: "a-plan-id",
-  stripeCardToken: "a-stripe-card-token",
+  name: "A Name",
+  password: "a-password",
+  teamTitle: "My Cool Friends",
+  subscription: {
+    planId: "a-plan-id",
+    stripeCardToken: "a-stripe-card-token",
+  },
 };
 
 function stubUserDependencies() {
@@ -76,25 +81,6 @@ test("POST /users returns a 400 if user creation fails", async (t: Test) => {
 
   t.equal(response.status, 400, "status=400");
   t.equal(body.message, "Bad email");
-});
-
-test("POST /users with non-team creation request", async (t: Test) => {
-  stubUserDependencies();
-
-  const [response, body] = await post("/users", {
-    body: createBody,
-  });
-
-  t.equal(response.status, 201, "status=201");
-  t.equal(body.name, null);
-  t.equal(body.email, "user@example.com");
-  t.equal(body.phone, null);
-  t.equal(body.password, undefined);
-  t.equal(body.passwordHash, undefined);
-  t.equal(
-    body.lastAcceptedDesignerTermsAt,
-    createBody.lastAcceptedDesignerTermsAt
-  );
 });
 
 test("POST /users does not allow private values to be set", async (t: Test) => {
@@ -479,7 +465,7 @@ test("POST /users?cohort allows registration + adding a cohort user", async (t: 
     {
       cohort: "moma-demo-june-2020",
       email: newUser.email,
-      name: "",
+      name: createBody.name,
       referralCode: "FOOBAR",
     },
     "Expect the correct tags for Mailchimp subscription"
@@ -591,12 +577,11 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   t.equal(teamUsersStub.firstCall.args[2], body.id);
 
   t.equal(createSubscriptionStub.args[0][1].planId, "a-plan-id");
+  t.equal(createSubscriptionStub.args[0][1].teamId, "a-team-id");
   t.equal(
     createSubscriptionStub.args[0][1].stripeCardToken,
     "a-stripe-card-token"
   );
-  t.equal(createSubscriptionStub.args[0][1].teamId, null);
-  t.equal(createSubscriptionStub.args[0][1].userId, body.id);
 
   t.deepEqual(
     mailchimpStub.args,
@@ -605,34 +590,13 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
         {
           cohort: null,
           email: body.email,
-          name: "",
+          name: createBody.name,
           referralCode: "FOOBAR",
         },
       ],
     ],
     "Calls Mailchimp stub with valid data"
   );
-
-  const [, teamBody] = await post("/users", {
-    body: {
-      name: "A Name",
-      email: "user2@example.com",
-      password: "a-password",
-      teamTitle: "My Cool Friends",
-      subscription: {
-        planId: "a-plan-id",
-        stripeCardToken: "a-stripe-card-token",
-      },
-    },
-  });
-
-  t.equal(createSubscriptionStub.args[1][1].planId, "a-plan-id");
-  t.equal(
-    createSubscriptionStub.args[1][1].stripeCardToken,
-    "a-stripe-card-token"
-  );
-  t.equal(createSubscriptionStub.args[1][1].teamId, "a-team-id");
-  t.equal(createSubscriptionStub.args[1][1].userId, teamBody.id);
 });
 
 test("POST /users allows subscribing to a free plan without a token", async (t: Test) => {
@@ -641,7 +605,10 @@ test("POST /users allows subscribing to a free plan without a token", async (t: 
   const [response] = await post("/users", {
     body: {
       ...createBody,
-      stripeCardToken: null,
+      subscription: {
+        planId: "a-plan-id",
+        stripeCardToken: null,
+      },
     },
   });
 

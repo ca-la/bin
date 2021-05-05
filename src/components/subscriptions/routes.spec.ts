@@ -10,7 +10,7 @@ import db from "../../services/db";
 import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User, { Role } from "../users/domain-object";
-import { authHeader, get, patch, post } from "../../test-helpers/http";
+import { authHeader, get, patch } from "../../test-helpers/http";
 import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import generatePlan from "../../test-helpers/factories/plan";
@@ -154,87 +154,6 @@ test("GET /subscriptions?teamId denies access to non-admins", async (t: Test) =>
   });
 
   t.equal(res.status, 403, "Non-admin cannot get list of team subscriptions");
-});
-
-test("POST /subscriptions creates a subscription", async (t: Test) => {
-  const { plan, session } = await setup();
-
-  const [res, body] = await post("/subscriptions", {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-      stripeCardToken: "tok_123",
-    },
-  });
-
-  t.equal(res.status, 201);
-  t.equal(body.planId, plan.id);
-  t.notEqual(body.paymentMethodId, null);
-});
-
-test("POST /subscriptions does not allow waiving payment on subscriptions for non-admins", async (t: Test) => {
-  const { plan, session } = await setup();
-
-  const [failedPaymentWaiving] = await post("/subscriptions", {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-      stripeCardToken: "123",
-      isPaymentWaived: true,
-    },
-  });
-
-  t.equal(failedPaymentWaiving.status, 403);
-
-  const [missingStripeToken] = await post("/subscriptions", {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-    },
-  });
-  t.equal(missingStripeToken.status, 400);
-});
-
-test("POST /subscriptions allows omitting stripe info if the plan is free", async (t: Test) => {
-  const { plan, session } = await setup({
-    planOptions: {
-      baseCostPerBillingIntervalCents: 0,
-      perSeatCostPerBillingIntervalCents: 0,
-    },
-    role: "USER",
-  });
-  const [res, body] = await post("/subscriptions", {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-    },
-  });
-
-  t.equal(res.status, 201);
-  t.equal(body.planId, plan.id);
-  t.equal(body.paymentMethodId, null);
-  t.equal(body.isPaymentWaived, false);
-});
-
-test("POST /subscriptions allows waiving payment on subscrixptions by admins", async (t: Test) => {
-  const { plan, user } = await setup();
-
-  const { session } = await createUser({ role: "ADMIN" });
-
-  const [res, body] = await post("/subscriptions", {
-    headers: authHeader(session.id),
-    body: {
-      planId: plan.id,
-      isPaymentWaived: true,
-      userId: user.id,
-    },
-  });
-
-  t.equal(res.status, 201);
-  t.equal(body.planId, plan.id);
-  t.equal(body.userId, user.id);
-  t.equal(body.paymentMethodId, null);
-  t.equal(body.isPaymentWaived, true);
 });
 
 test("PATCH /subscriptions/:id cancels a subscription", async (t: Test) => {
