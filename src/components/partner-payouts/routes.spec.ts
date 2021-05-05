@@ -1,9 +1,10 @@
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, get } from "../../test-helpers/http";
+import { authHeader, get, del } from "../../test-helpers/http";
 import createUser = require("../../test-helpers/create-user");
 import SessionsDAO from "../../dao/sessions";
 import * as PayoutsDAO from "./dao";
 import PartnerPayoutAccounts = require("../../dao/partner-payout-accounts");
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const API_PATH = "/partner-payout-logs";
 
@@ -67,4 +68,43 @@ test(`GET ${API_PATH}/?bidId returns the payout history of the bid`, async (t: T
   });
 
   t.equal(forbidden.status, 403, "Responds with Forbidden status");
+});
+
+test(`DELETE ${API_PATH}/:logId`, async (t: Test) => {
+  const sessionsStub = sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ role: "ADMIN", userId: "a-user-id" });
+  const deleteStub = sandbox().stub(PayoutsDAO, "deleteById").resolves(1);
+
+  const [response] = await del(`${API_PATH}/a-payout-log-id`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response.status, 204, "responds with no content");
+
+  sessionsStub.resolves({ role: "USER", userId: "a-user-id" });
+
+  const [forbidden] = await del(`${API_PATH}/a-payout-log-id`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(forbidden.status, 403, "responds with forbidden");
+
+  sessionsStub.resolves({ role: "ADMIN", userId: "a-user-id" });
+  deleteStub.rejects(
+    new ResourceNotFoundError(
+      "Could not find PartnerPayoutLog with id a-payout-log-id"
+    )
+  );
+
+  const [missing, body] = await del(`${API_PATH}/a-payout-log-id`, {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(missing.status, 404, "responds with not found");
+  t.equal(
+    body.message,
+    "Could not find PartnerPayoutLog with id a-payout-log-id",
+    "returns the error message in the body"
+  );
 });
