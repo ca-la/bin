@@ -10,6 +10,7 @@ function encode(row: PaymentMethodRow): PaymentMethod {
     stripeCustomerId: row.stripe_customer_id,
     stripeSourceId: row.stripe_source_id,
     lastFourDigits: row.last_four_digits,
+    customerId: row.customer_id,
   };
 }
 
@@ -22,6 +23,7 @@ function decode(data: PaymentMethod): PaymentMethodRow {
     stripe_customer_id: data.stripeCustomerId,
     stripe_source_id: data.stripeSourceId,
     last_four_digits: data.lastFourDigits,
+    customer_id: data.customerId,
   };
 }
 

@@ -1,25 +1,18 @@
-import uuid from "node-uuid";
 import Knex from "knex";
 
 import db from "../../services/db";
 import createUser from "../create-user";
 import generateCollection from "./collection";
-import PaymentMethodsDAO from "../../components/payment-methods/dao";
 import InvoicesDAO from "../../dao/invoices";
 import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
+import { generatePaymentMethod } from "./payment-method";
 
 async function createInvoicesWithPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = await db.transaction((trx: Knex.Transaction) =>
-    PaymentMethodsDAO.create(trx, {
-      id: uuid.v4(),
-      userId: user.id,
-      stripeCustomerId: "stripe-test-user",
-      stripeSourceId: "stripe-test-source",
-      lastFourDigits: "1111",
-      createdAt: new Date(),
-      deletedAt: null,
-    })
+  const {
+    paymentMethod,
+  } = await db.transaction(async (trx: Knex.Transaction) =>
+    generatePaymentMethod(trx, { userId: user.id, teamId: null })
   );
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();
@@ -93,16 +86,10 @@ async function createInvoicesWithPayments() {
 
 async function createInvoicesWithOverPayments() {
   const { user } = await createUser({ withSession: false });
-  const paymentMethod = await db.transaction((trx: Knex.Transaction) =>
-    PaymentMethodsDAO.create(trx, {
-      id: uuid.v4(),
-      userId: user.id,
-      stripeCustomerId: "stripe-test-user",
-      stripeSourceId: "stripe-test-source",
-      lastFourDigits: "1111",
-      createdAt: new Date(),
-      deletedAt: null,
-    })
+  const {
+    paymentMethod,
+  } = await db.transaction(async (trx: Knex.Transaction) =>
+    generatePaymentMethod(trx, { userId: user.id, teamId: null })
   );
   const { collection } = await generateCollection();
   const { collection: collection2 } = await generateCollection();

@@ -46,5 +46,6 @@ test("createPaymentMethod", async (t: Test) => {
     stripeCustomerId: "cus_123",
     stripeSourceId: "source-123",
     userId: "user-123",
+    customerId: null,
   });
 });

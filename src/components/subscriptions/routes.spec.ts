@@ -7,7 +7,6 @@ import * as createStripeSubscription from "../../services/stripe/create-subscrip
 import * as SubscriptionsDAO from "./dao";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
-import PaymentMethodsDAO from "../payment-methods/dao";
 import Session = require("../../domain-objects/session");
 import Stripe = require("../../services/stripe");
 import User, { Role } from "../users/domain-object";
@@ -15,6 +14,7 @@ import { authHeader, get, patch, post } from "../../test-helpers/http";
 import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import generatePlan from "../../test-helpers/factories/plan";
+import { generatePaymentMethod } from "../../test-helpers/factories/payment-method";
 
 interface SetupOptions {
   planOptions?: Partial<Uninserted<Plan>>;
@@ -73,14 +73,9 @@ test("GET /subscriptions lists current subscriptions", async (t: Test) => {
   const { plan, user, session } = await setup();
 
   const id = await db.transaction(async (trx: Knex.Transaction) => {
-    const paymentMethod = await PaymentMethodsDAO.create(trx, {
-      id: uuid.v4(),
+    const { paymentMethod } = await generatePaymentMethod(trx, {
       userId: user.id,
-      stripeCustomerId: "customer1",
-      stripeSourceId: "source1",
-      lastFourDigits: "1234",
-      createdAt: new Date(),
-      deletedAt: null,
+      teamId: null,
     });
 
     const subscription = await SubscriptionsDAO.create(

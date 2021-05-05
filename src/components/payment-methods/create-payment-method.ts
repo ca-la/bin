@@ -30,6 +30,7 @@ export default async function createPaymentMethod(
     stripeCustomerId,
     stripeSourceId: source.id,
     userId,
+    customerId: null,
   });
 
   if (!method) {
