@@ -255,6 +255,7 @@ test("addSeatCharge", async (t: Test) => {
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
     latest_invoice: null,
+    customer: "cus_123456789",
     items: {
       object: "list",
       data: [
@@ -460,6 +461,7 @@ test("addSeatCharge: failed payment", async (t: Test) => {
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
     latest_invoice: null,
+    customer: "cus_123456789",
     items: {
       object: "list",
       data: [
@@ -629,6 +631,7 @@ test("removeSeatCharge", async (t: Test) => {
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
     latest_invoice: null,
+    customer: "cus_123456789",
     items: {
       object: "list",
       data: [
@@ -834,6 +837,7 @@ test("removeSeatCharge: failed payment", async (t: Test) => {
   makeRequestStub.onFirstCall().resolves({
     id: "a-stripe-subscription-id",
     latest_invoice: null,
+    customer: "cus_123456789",
     items: {
       object: "list",
       data: [

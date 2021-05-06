@@ -74,6 +74,7 @@ async function setup({
   const stripeSubscriptionToUpdate: StripeSubscription = {
     id: stripeSubscriptionId,
     latest_invoice: null,
+    customer: "cus_123456789",
     items: {
       object: "list",
       data: subscriptionItems,
@@ -102,6 +103,7 @@ async function setup({
       return {
         id: "a-stripe-subscription-id",
         latest_invoice: null,
+        customer: "cus_123456789",
         items: {
           object: "list",
           data: [
