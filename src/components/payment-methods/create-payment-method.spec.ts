@@ -7,6 +7,7 @@ import Stripe = require("../../services/stripe");
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { omit } from "lodash";
+import { customerTestBlank } from "../customers/types";
 
 const testTime = new Date();
 
@@ -17,7 +18,9 @@ test("createPaymentMethod", async (t: Test) => {
     last4: "1234",
   });
 
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("cus_123");
+  sandbox()
+    .stub(Stripe, "findOrCreateCustomer")
+    .resolves({ ...customerTestBlank, customerId: "cus_123" });
   const createStub = sandbox()
     .stub(PaymentMethodsDAO, "create")
     .resolves({ id: "1234" });
@@ -25,7 +28,8 @@ test("createPaymentMethod", async (t: Test) => {
   await db.transaction(async (trx: Knex.Transaction) => {
     const method = await createPaymentMethod({
       token: "tok_123",
-      userId: "user-123",
+      userId: null,
+      teamId: "a-team-id",
       trx,
     });
 
@@ -45,7 +49,7 @@ test("createPaymentMethod", async (t: Test) => {
     lastFourDigits: "1234",
     stripeCustomerId: "cus_123",
     stripeSourceId: "source-123",
-    userId: "user-123",
-    customerId: null,
+    userId: null,
+    customerId: "customer-id",
   });
 });

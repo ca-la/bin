@@ -66,3 +66,14 @@ export type CustomerTeam = z.infer<typeof customerTeamSchema>;
 export const customerSchema = z.union([customerUserSchema, customerTeamSchema]);
 
 export type Customer = z.infer<typeof customerSchema>;
+
+export const customerTestBlank: Customer = {
+  id: "customer-id",
+  createdAt: new Date(2020, 0, 1),
+  updatedAt: new Date(2020, 0, 1),
+  deletedAt: null,
+  customerId: "a-stripe-customer-id",
+  provider: "STRIPE",
+  userId: null,
+  teamId: "a-team-id",
+};

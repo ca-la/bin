@@ -39,7 +39,6 @@ const mockedCalaSubscription = {
   paymentMethodId: "a-payment-method-id",
   planId: "an-old-plan-id",
   stripeSubscriptionId: "a-stripe-subscription-id",
-  userId: null,
   teamId: "a-team-id",
 };
 
@@ -108,7 +107,6 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
-      userId: "a-user-id",
       stripeCardToken: "a-stripe-card-token",
     });
     t.fail("should not succeed");
@@ -121,7 +119,7 @@ test("upgradeTeamSubscription: throws error if plan doesn't exists", async (t: T
     );
     t.equal(
       loggerStub.args[0][0],
-      "Plan on which we want to upgrade to is not found with id: a-plan-id | team id: a-team-id | userId: a-user-id",
+      "Plan on which we want to upgrade to is not found with id: a-plan-id | team id: a-team-id",
       "log correct server error message when plan is not found"
     );
   }
@@ -177,7 +175,6 @@ test("upgradeTeamSubscription: throws error when tries to downgrade from paid pl
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
-      userId: "a-user-id",
       stripeCardToken: "a-stripe-card-token",
     });
     t.fail("should not succeed");
@@ -252,7 +249,6 @@ test("upgradeTeamSubscription: upgrade from free plan to a free plan without str
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
-      userId: "a-user-id",
       stripeCardToken: null,
     });
   } catch (err) {
@@ -324,7 +320,6 @@ test("upgradeTeamSubscription: throws error if plan doesn't have stripe prices",
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
-      userId: "a-user-id",
       stripeCardToken: "a-stripe-card-token",
     });
     t.fail("should not succeed");
@@ -372,7 +367,6 @@ test("upgradeTeamSubscription: creates subscription if there is no active team s
   const createdSubscription = await upgradeTeamSubscription(trxStub, {
     planId: "a-plan-id",
     teamId: "a-team-id",
-    userId: "a-user-id",
     stripeCardToken: "a-stripe-card-token",
   });
 
@@ -385,7 +379,6 @@ test("upgradeTeamSubscription: creates subscription if there is no active team s
         {
           planId: "a-plan-id",
           teamId: "a-team-id",
-          userId: "a-user-id",
           stripeCardToken: "a-stripe-card-token",
           isPaymentWaived: false,
         },
@@ -425,7 +418,6 @@ test("upgradeTeamSubscription: throws an error when tries to upgrade to a paid p
     await upgradeTeamSubscription(trxStub, {
       planId: "a-plan-id",
       teamId: "a-team-id",
-      userId: "a-user-id",
       stripeCardToken: null,
     });
     t.fail("should not succeed");
@@ -486,7 +478,6 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
   const newSubscription = await upgradeTeamSubscription(trxStub, {
     planId: "a-plan-id",
     teamId: "a-team-id",
-    userId: "a-user-id",
     stripeCardToken: "a-stripe-card-token",
   });
 
@@ -514,7 +505,16 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
   );
   t.deepEqual(
     createPaymentMethodStub.args,
-    [[{ trx: trxStub, userId: "a-user-id", token: "a-stripe-card-token" }]],
+    [
+      [
+        {
+          trx: trxStub,
+          userId: null,
+          teamId: "a-team-id",
+          token: "a-stripe-card-token",
+        },
+      ],
+    ],
     "calls create payment method  with correct args"
   );
   t.deepEqual(

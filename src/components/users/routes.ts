@@ -84,7 +84,6 @@ async function createWithTeam(
   const team = await createTeamWithOwner(trx, teamTitle, user.id);
 
   await createSubscription(trx, {
-    userId: user.id,
     teamId: team.id,
     stripeCardToken,
     planId,

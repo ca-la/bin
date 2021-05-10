@@ -133,20 +133,37 @@ export function findCustomersByEmail(request: FindCustomerRequest) {
   });
 }
 
-const createCustomerRequestSchema = z.object({
-  description: z.string(),
+const createOrUpdateCustomerRequestSchema = z.object({
+  description: z.string().optional(),
   email: z.string(),
 });
 
-type CreateCustomerRequest = z.infer<typeof createCustomerRequestSchema>;
+type CreateOrUpdateCustomerRequest = z.infer<
+  typeof createOrUpdateCustomerRequestSchema
+>;
 
-export function createCustomer(request: CreateCustomerRequest) {
+export function createCustomer(request: CreateOrUpdateCustomerRequest) {
   return safeRequest({
-    inputSchema: createCustomerRequestSchema,
+    inputSchema: createOrUpdateCustomerRequestSchema,
     outputSchema: customerSchema,
     options: {
       method: "post",
       path: "/customers",
+    },
+    request,
+  });
+}
+
+export function updateCustomer(
+  id: string,
+  request: CreateOrUpdateCustomerRequest
+) {
+  return safeRequest({
+    inputSchema: createOrUpdateCustomerRequestSchema,
+    outputSchema: customerSchema,
+    options: {
+      method: "post",
+      path: `/customers/${id}`,
     },
     request,
   });

@@ -15,6 +15,7 @@ import { Plan, BillingInterval } from "../plans/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import generatePlan from "../../test-helpers/factories/plan";
 import { generatePaymentMethod } from "../../test-helpers/factories/payment-method";
+import { customerTestBlank } from "../customers/types";
 
 interface SetupOptions {
   planOptions?: Partial<Uninserted<Plan>>;
@@ -36,7 +37,7 @@ async function setup(
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
 
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
+  sandbox().stub(Stripe, "findOrCreateCustomer").resolves(customerTestBlank);
 
   const { planOptions } = options;
   const { session, user } = await createUser();

@@ -70,7 +70,6 @@ function* createTeam(this: TrxContext<AuthedContext>) {
     yield createSubscription(trx, {
       teamId: created.id,
       planId: freeDefaultPlan.id,
-      userId: actorId,
       stripeCardToken: null,
       isPaymentWaived: false,
     });
@@ -247,12 +246,11 @@ const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
 function* upgradeTeamSubscriptionRouteHandler(
   this: TrxContext<AuthedContext<TeamSubscriptionUpgrade>>
 ): Iterator<any, any, any> {
-  const { trx, userId } = this.state;
+  const { trx } = this.state;
   const { id: teamId } = this.params;
   const { planId, stripeCardToken } = this.request.body;
 
   const upgradedSubscription = yield upgradeTeamSubscription(trx, {
-    userId,
     teamId,
     planId,
     stripeCardToken: stripeCardToken || null,

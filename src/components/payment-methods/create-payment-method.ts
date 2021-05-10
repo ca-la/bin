@@ -1,22 +1,36 @@
 import Knex from "knex";
 import uuid from "node-uuid";
+import { omit } from "lodash";
 
 import PaymentMethodsDAO from "./dao";
 import attachSource from "../../services/stripe/attach-source";
-import { findOrCreateCustomerId } from "../../services/stripe";
+import { findOrCreateCustomer } from "../../services/stripe";
 import { PaymentMethod } from "./types";
-interface Options {
-  token: string;
-  userId: string;
-  trx: Knex.Transaction;
-}
+
+type Options =
+  | {
+      token: string;
+      userId: string;
+      teamId: null;
+      trx: Knex.Transaction;
+    }
+  | {
+      token: string;
+      userId: null;
+      teamId: string;
+      trx: Knex.Transaction;
+    };
 
 export default async function createPaymentMethod(
   options: Options
 ): Promise<PaymentMethod> {
   const { token, userId, trx } = options;
 
-  const stripeCustomerId = await findOrCreateCustomerId(userId, trx);
+  const {
+    id: customerId,
+    customerId: stripeCustomerId,
+  } = await findOrCreateCustomer(trx, omit(options, "trx", "token"));
+
   const source = await attachSource({
     cardToken: token,
     customerId: stripeCustomerId,
@@ -29,8 +43,8 @@ export default async function createPaymentMethod(
     lastFourDigits: source.last4,
     stripeCustomerId,
     stripeSourceId: source.id,
+    customerId,
     userId,
-    customerId: null,
   });
 
   if (!method) {

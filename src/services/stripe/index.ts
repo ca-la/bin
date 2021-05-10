@@ -1,8 +1,11 @@
 import Knex from "knex";
+import uuid from "node-uuid";
+
 import { insecureHash } from "../insecure-hash";
-import PaymentMethodsDAO from "../../components/payment-methods/dao";
 import * as UsersDAO from "../../components/users/dao";
 import TeamUsersDAO from "../../components/team-users/dao";
+import { standardDao as TeamsDAO } from "../../components/teams/dao";
+import CustomersDAO from "../../components/customers/dao";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import {
   PlanStripePrice,
@@ -12,12 +15,14 @@ import {
 import {
   Charge,
   ConnectAccount,
-  Customer,
+  Customer as StripeCustomer,
   SourceTypes,
   SubscriptionItem,
   Transfer,
 } from "./types";
 import * as StripeAPI from "./api";
+import { TeamUserRole } from "../../components/team-users";
+import { Customer } from "../../components/customers/types";
 
 export * from "./types";
 export * from "./service";
@@ -82,7 +87,9 @@ export async function sendTransfer(
   });
 }
 
-export async function findCustomer(email: string): Promise<Customer | null> {
+export async function findCustomer(
+  email: string
+): Promise<StripeCustomer | null> {
   const found = await StripeAPI.findCustomersByEmail({ email, limit: 1 });
 
   if (found.data.length === 0) {
@@ -92,18 +99,39 @@ export async function findCustomer(email: string): Promise<Customer | null> {
   return found.data[0];
 }
 
-export async function findOrCreateCustomerId(
-  userId: string,
-  trx: Knex.Transaction
-): Promise<string> {
-  const existingPaymentMethods = await PaymentMethodsDAO.findByUserId(
-    trx,
-    userId
-  );
-  if (existingPaymentMethods.length > 0) {
-    return existingPaymentMethods[0].stripeCustomerId;
+async function findOrCreateTeamCustomer(trx: Knex.Transaction, teamId: string) {
+  const team = await TeamsDAO.findById(trx, teamId);
+  if (!team) {
+    throw new Error(`Could not find team ${teamId}`);
   }
 
+  const owner = await TeamUsersDAO.findOne(trx, {
+    teamId,
+    role: TeamUserRole.OWNER,
+  });
+
+  if (!owner || !owner.user || !owner.user.email) {
+    throw new Error(`Could not find a valid owner for team ${teamId}`);
+  }
+
+  const stripeCustomer = await StripeAPI.createCustomer({
+    description: `TEAM: ${team.title}`,
+    email: owner.user.email,
+  });
+
+  return CustomersDAO.create(trx, {
+    id: uuid.v4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    provider: "STRIPE",
+    customerId: stripeCustomer.id,
+    teamId,
+    userId: null,
+  });
+}
+
+async function findOrCreateUserCustomer(trx: Knex.Transaction, userId: string) {
   const user = await UsersDAO.findById(userId, trx);
 
   if (!user) {
@@ -115,17 +143,43 @@ export async function findOrCreateCustomerId(
     );
   }
 
-  const existingCustomer = await findCustomer(user.email);
-
-  if (existingCustomer) {
-    return existingCustomer.id;
-  }
-
-  const customer = await StripeAPI.createCustomer({
-    description: user.name || "",
+  const stripeCustomer = await StripeAPI.createCustomer({
+    description: `USER: ${user.name || ""}`,
     email: user.email,
   });
-  return customer.id;
+
+  return CustomersDAO.create(trx, {
+    id: uuid.v4(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+    provider: "STRIPE",
+    customerId: stripeCustomer.id,
+    userId,
+    teamId: null,
+  });
+}
+
+export async function findOrCreateCustomer(
+  trx: Knex.Transaction,
+  options: { teamId: null; userId: string } | { teamId: string; userId: null }
+): Promise<Customer> {
+  const { teamId, userId } = options;
+
+  const customer = await CustomersDAO.findOne(trx, options);
+  if (customer) {
+    return customer;
+  }
+
+  if (teamId) {
+    return findOrCreateTeamCustomer(trx, teamId);
+  }
+
+  if (userId) {
+    return findOrCreateUserCustomer(trx, userId);
+  }
+
+  throw new Error("Must provide a userId or teamId");
 }
 
 // https://stripe.com/docs/connect/express-accounts#token-request

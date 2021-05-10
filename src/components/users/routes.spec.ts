@@ -22,6 +22,7 @@ import TeamUsersDAO from "../../components/team-users/dao";
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
 import { baseUser } from "./types";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
+import { customerTestBlank } from "../customers/types";
 
 const createBody = {
   email: "user@example.com",
@@ -564,7 +565,7 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
     id: "sub_123",
   });
 
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
+  sandbox().stub(Stripe, "findOrCreateCustomer").resolves(customerTestBlank);
 
   const [response, body] = await post("/users", {
     body: createBody,

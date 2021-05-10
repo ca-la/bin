@@ -17,6 +17,7 @@ import {
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
+import CustomersDAO from "../customers/dao";
 import createTeamUserLock from "./create-team-user-lock";
 import UnauthorizedError from "../../errors/unauthorized";
 import InsufficientPlanError from "../../errors/insufficient-plan";
@@ -28,6 +29,7 @@ import {
   addSeatCharge as addStripeSeatCharge,
   removeSeatCharge as removeStripeSeatCharge,
 } from "../../services/stripe/index";
+import { updateCustomer } from "../../services/stripe/api";
 import { check } from "../../services/check";
 import { StrictContext } from "../../router-context";
 import { SubscriptionWithPlan } from "../subscriptions";
@@ -350,7 +352,10 @@ export async function updateTeamUser(
     }
 
     if (role === TeamUserRole.OWNER) {
-      await TeamUsersDAO.transferOwnership(trx, teamUserId);
+      await transferOwnership(trx, {
+        teamId,
+        teamUserId,
+      });
     } else {
       await RawTeamUsersDAO.update(trx, teamUserId, { role });
     }
@@ -400,4 +405,24 @@ export async function removeTeamUser(
   }
 
   return deleted;
+}
+
+async function transferOwnership(
+  trx: Knex.Transaction,
+  options: { teamUserId: string; teamId: string }
+) {
+  const { teamUserId, teamId } = options;
+  await TeamUsersDAO.transferOwnership(trx, teamUserId);
+  const customer = await CustomersDAO.findOne(trx, { teamId });
+  if (!customer) {
+    throw new Error(`Could not find customer for team ${teamId}`);
+  }
+  const teamUser = await TeamUsersDAO.findById(trx, teamUserId);
+  if (!teamUser || !teamUser.user) {
+    throw new Error(`Could not find user for team user ${teamUserId}`);
+  }
+
+  await updateCustomer(customer.customerId, {
+    email: teamUser.user.email || "",
+  });
 }

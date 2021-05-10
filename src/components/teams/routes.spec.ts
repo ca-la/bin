@@ -167,11 +167,6 @@ test("POST /teams creates subscription with free plan", async (t: Test) => {
     "a-free-plan-id",
     "calls createOrUpdateSubscription with correct planId"
   );
-  t.deepEqual(
-    createSubscriptionStub.args[0][1].userId,
-    "a-user-id",
-    "calls createOrUpdateSubscription with correct userId"
-  );
 });
 
 test("POST /teams creates the team without subscription if plan is not free", async (t: Test) => {
@@ -762,7 +757,6 @@ test("PATH /teams/:id/subscription successfully and upgradeTeamSubscription call
   });
 
   t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
-    userId: "a-user-id",
     teamId: "a-team-id",
     planId: "plan-id",
     stripeCardToken: "a-stripe-card-token",
@@ -793,7 +787,6 @@ test("PATH /teams/:id/subscription catch InvalidDataError and set response statu
   });
 
   t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
-    userId: "a-user-id",
     teamId: "a-team-id",
     planId: "plan-id",
     stripeCardToken: "a-stripe-card-token",
@@ -829,7 +822,6 @@ test("PATH /teams/:id/subscription catch other errors and set response status 50
   });
 
   t.deepEqual(upgradeTeamSubscriptionStub.args[0][1], {
-    userId: "a-user-id",
     teamId: "a-team-id",
     planId: "plan-id",
     stripeCardToken: "a-stripe-card-token",

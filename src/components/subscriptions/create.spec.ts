@@ -10,14 +10,13 @@ import * as StripeService from "../../services/stripe";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import InvalidDataError from "../../errors/invalid-data";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
-
 import { createSubscription } from "./create";
+import { customerTestBlank } from "../customers/types";
 
 const options = {
   planId: "a-free-plan",
   stripeCardToken: null,
-  userId: "a-user-id",
-  teamId: null,
+  teamId: "a-team-id",
   isPaymentWaived: false,
 };
 
@@ -27,8 +26,8 @@ function setup() {
     trx: (sandbox().stub() as unknown) as Knex.Transaction,
     findPlanStub: sandbox().stub(PlansDAO, "findById").resolves(),
     stripeCustomerStub: sandbox()
-      .stub(StripeService, "findOrCreateCustomerId")
-      .resolves("a-stripe-customer-id"),
+      .stub(StripeService, "findOrCreateCustomer")
+      .resolves(customerTestBlank),
     createPaymentStub: sandbox().stub(CreatePaymentMethod, "default").resolves({
       id: "a-payment-method-id",
       stripeSourceId: "a-stripe-source-id",
@@ -75,7 +74,7 @@ test("createSubscription free plan", async (t: Test) => {
 
   t.deepEqual(
     stripeCustomerStub.args,
-    [["a-user-id", trx]],
+    [[trx, { teamId: "a-team-id", userId: null }]],
     "looks up Stripe customer since no payment method is created"
   );
   t.deepEqual(
@@ -91,7 +90,7 @@ test("createSubscription free plan", async (t: Test) => {
         {
           stripeCustomerId: "a-stripe-customer-id",
           stripeSourceId: null,
-          seatCount: null,
+          seatCount: 2,
           stripePrices: [
             {
               planId: "a-free-plan",
@@ -115,8 +114,8 @@ test("createSubscription free plan", async (t: Test) => {
           paymentMethodId: null,
           planId: "a-free-plan",
           stripeSubscriptionId: "a-stripe-subscription-id",
-          userId: "a-user-id",
-          teamId: null,
+          userId: null,
+          teamId: "a-team-id",
         },
         trx,
       ],
@@ -162,7 +161,7 @@ test("createSubscription paid plan but waived payment", async (t: Test) => {
     [
       [
         {
-          seatCount: null,
+          seatCount: 2,
           stripeCustomerId: "a-stripe-customer-id",
           stripeSourceId: null,
           stripePrices: [
@@ -188,103 +187,8 @@ test("createSubscription paid plan but waived payment", async (t: Test) => {
           paymentMethodId: null,
           planId: "a-paid-plan",
           stripeSubscriptionId: "a-stripe-subscription-id",
-          userId: "a-user-id",
-          teamId: null,
-        },
-        trx,
-      ],
-    ],
-    "creates a subscription"
-  );
-});
-
-test("createSubscription paid plan", async (t: Test) => {
-  const {
-    findPlanStub,
-    createStub,
-    createPaymentStub,
-    createStripeSubscriptionStub,
-    stripeCustomerStub,
-    trx,
-  } = setup();
-  findPlanStub.resolves({
-    baseCostPerBillingIntervalCents: 10,
-    perSeatCostPerBillingIntervalCents: 100,
-    stripePrices: [
-      {
-        planId: "a-paid-plan",
-        stripePriceId: "a-stripe-price-id",
-        type: PlanStripePriceType.BASE_COST,
-      },
-    ],
-  });
-
-  try {
-    await createSubscription(trx, {
-      ...options,
-      planId: "a-paid-plan",
-    });
-    t.fail();
-  } catch (err) {
-    t.deepEqual(err, new InvalidDataError("Missing stripe card token"));
-  }
-
-  sandbox().resetHistory();
-
-  await createSubscription(trx, {
-    ...options,
-    planId: "a-paid-plan",
-    stripeCardToken: "a-stripe-card-token",
-  });
-
-  t.deepEqual(
-    findPlanStub.args,
-    [[trx, "a-paid-plan"]],
-    "looks up plan by plan ID"
-  );
-  t.deepEqual(
-    createPaymentStub.args,
-    [[{ token: "a-stripe-card-token", trx, userId: "a-user-id" }]],
-    "creates a payment method"
-  );
-  t.equal(
-    stripeCustomerStub.callCount,
-    0,
-    "Does not lookup customer from stripe when creating a payment method"
-  );
-  t.deepEqual(
-    createStripeSubscriptionStub.args,
-    [
-      [
-        {
-          seatCount: null,
-          stripeCustomerId: "a-stripe-customer-id",
-          stripeSourceId: "a-stripe-source-id",
-          stripePrices: [
-            {
-              planId: "a-paid-plan",
-              stripePriceId: "a-stripe-price-id",
-              type: PlanStripePriceType.BASE_COST,
-            },
-          ],
-        },
-      ],
-    ],
-    "creates a stripe subscription"
-  );
-  t.deepEqual(
-    createStub.args,
-    [
-      [
-        {
-          cancelledAt: null,
-          id: "a-uuid",
-          isPaymentWaived: false,
-          paymentMethodId: "a-payment-method-id",
-          planId: "a-paid-plan",
-          stripeSubscriptionId: "a-stripe-subscription-id",
-          userId: "a-user-id",
-          teamId: null,
+          userId: null,
+          teamId: "a-team-id",
         },
         trx,
       ],
@@ -341,7 +245,16 @@ test("createSubscription paid plan for a team", async (t: Test) => {
   );
   t.deepEqual(
     createPaymentStub.args,
-    [[{ token: "a-stripe-card-token", trx, userId: "a-user-id" }]],
+    [
+      [
+        {
+          token: "a-stripe-card-token",
+          trx,
+          userId: null,
+          teamId: "a-team-id",
+        },
+      ],
+    ],
     "creates a payment method"
   );
   t.equal(

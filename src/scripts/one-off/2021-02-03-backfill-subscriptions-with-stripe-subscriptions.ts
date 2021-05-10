@@ -3,7 +3,7 @@ import process from "process";
 import { log, logServerError } from "../../services/logger";
 import { format, green, red } from "../../services/colors";
 import db from "../../services/db";
-import { findCustomer, findOrCreateCustomerId } from "../../services/stripe";
+import { findCustomer, findOrCreateCustomer } from "../../services/stripe";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import { PlanStripePriceRow } from "../../components/plan-stripe-price/types";
 import TeamUsersDAO from "../../components/team-users/dao";
@@ -100,10 +100,10 @@ ${JSON.stringify(subscriptionsWithPaidPlans, null, 2)}`
         continue;
       }
 
-      const stripeCustomerId = await findOrCreateCustomerId(
-        userId as string,
-        trx
-      );
+      const { customerId: stripeCustomerId } = await findOrCreateCustomer(trx, {
+        userId: userId as string,
+        teamId: null,
+      });
 
       let stripeSubscriptionId = null;
       try {

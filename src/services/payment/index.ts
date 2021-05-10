@@ -141,6 +141,7 @@ export default async function payInvoiceWithNewPaymentMethod(
     const paymentMethod = await createPaymentMethod({
       token: paymentMethodTokenId,
       userId,
+      teamId: null,
       trx,
     });
     timeLog("payInvoiceWithNewPaymentMethod", "createPaymentMethod");

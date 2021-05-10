@@ -9,6 +9,7 @@ import * as UsersDAO from "../users/dao";
 import * as FindTeamPlans from "../plans/find-team-plans";
 import * as TeamUserLockService from "./create-team-user-lock";
 import * as StripeService from "../../services/stripe";
+import * as StripeAPI from "../../services/stripe/api";
 import { baseUser, Role as UserRole } from "../users/domain-object";
 import SessionsDAO from "../../dao/sessions";
 import TeamsDAO from "../teams/dao";
@@ -20,6 +21,8 @@ import * as SubscriptionsDAO from "../subscriptions/dao";
 import { TeamType, TeamUserRole } from "../../published-types";
 import ConflictError from "../../errors/conflict";
 import * as IrisService from "../../components/iris/send-message";
+import CustomersDAO from "../customers/dao";
+import { customerTestBlank } from "../customers/types";
 
 const now = new Date();
 const tuDb1: TeamUserDb = {
@@ -35,7 +38,13 @@ const tuDb1: TeamUserDb = {
 };
 const tu1: TeamUser = {
   ...tuDb1,
-  user: { ...baseUser, createdAt: now, id: "a-user-id", name: "A User" },
+  user: {
+    ...baseUser,
+    createdAt: now,
+    id: "a-user-id",
+    name: "A User",
+    email: "tm@example.com",
+  },
 };
 
 function setup({ role = "USER" }: { role?: UserRole } = {}) {
@@ -75,6 +84,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
     transferOwnershipStub: sandbox()
       .stub(TeamUsersDAO, "transferOwnership")
       .resolves(),
+    findCustomerStub: sandbox()
+      .stub(CustomersDAO, "findOne")
+      .resolves(customerTestBlank),
     deleteStub: sandbox()
       .stub(TeamUsersDAO, "deleteById")
       .resolves({ teamId: "a-team-id", userId: "a-user-id" }),
@@ -93,6 +105,9 @@ function setup({ role = "USER" }: { role?: UserRole } = {}) {
       .resolves(),
     removeStripeSeatStub: sandbox()
       .stub(StripeService, "removeSeatCharge")
+      .resolves(),
+    updateStripeCustomerStub: sandbox()
+      .stub(StripeAPI, "updateCustomer")
       .resolves(),
     findTeamSubscriptionsStub: sandbox()
       .stub(SubscriptionsDAO, "findForTeamWithPlans")
@@ -920,6 +935,7 @@ test("PATCH /team-users/:id: owners can transfer ownership to viewer", async (t:
     findTeamUserByIdStub,
     findActorTeamUserStub,
     transferOwnershipStub,
+    updateStripeCustomerStub,
   } = setup();
   const teamViewer: TeamUser = {
     ...tu1,
@@ -955,6 +971,11 @@ test("PATCH /team-users/:id: owners can transfer ownership to viewer", async (t:
     addStripeSeatStub.callCount,
     1,
     "Calls stripe function to charge for new seat"
+  );
+  t.deepEquals(
+    updateStripeCustomerStub.args,
+    [["a-stripe-customer-id", { email: "tm@example.com" }]],
+    "Updates Stripe with new owners email"
   );
 });
 

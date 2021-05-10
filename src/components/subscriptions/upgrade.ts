@@ -14,18 +14,17 @@ import { logServerError } from "../../services/logger";
 interface UpgradeTeamOptions {
   planId: string;
   teamId: string;
-  userId: string;
   stripeCardToken: string | null;
 }
 
 export async function upgradeTeamSubscription(
   trx: Knex.Transaction,
-  { planId, teamId, userId, stripeCardToken }: UpgradeTeamOptions
+  { planId, teamId, stripeCardToken }: UpgradeTeamOptions
 ): Promise<Subscription> {
   const newPlan = await PlansDAO.findById(trx, planId);
   if (!newPlan) {
     logServerError(
-      `Plan on which we want to upgrade to is not found with id: ${planId} | team id: ${teamId} | userId: ${userId}`
+      `Plan on which we want to upgrade to is not found with id: ${planId} | team id: ${teamId}`
     );
     throw new InvalidDataError(
       `Plan on which we want to upgrade to is not found`
@@ -42,7 +41,6 @@ export async function upgradeTeamSubscription(
     return createSubscription(trx, {
       planId,
       stripeCardToken,
-      userId,
       teamId,
       isPaymentWaived: false,
     });
@@ -87,7 +85,8 @@ export async function upgradeTeamSubscription(
 
     paymentMethod = await createPaymentMethod({
       token: stripeCardToken,
-      userId,
+      userId: null,
+      teamId,
       trx,
     });
   }

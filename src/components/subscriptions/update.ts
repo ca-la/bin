@@ -9,7 +9,7 @@ interface UpdateOptions {
   subscriptionId: string;
   planId: string;
   stripeCardToken: string | null;
-  userId: string;
+  teamId: string;
   isPaymentWaived: boolean;
 }
 
@@ -20,7 +20,7 @@ export async function updateSubscription(
     planId,
     stripeCardToken,
     subscriptionId,
-    userId,
+    teamId,
   }: UpdateOptions
 ) {
   const plan = await PlansDAO.findById(trx, planId);
@@ -40,7 +40,8 @@ export async function updateSubscription(
     }
     paymentMethod = await createPaymentMethod({
       token: stripeCardToken,
-      userId,
+      userId: null,
+      teamId,
       trx,
     });
 

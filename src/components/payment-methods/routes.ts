@@ -48,6 +48,7 @@ async function addPaymentMethod(
   const method = await createPaymentMethod({
     token: stripeCardToken,
     userId,
+    teamId: null,
     trx: ctx.state.trx,
   });
 

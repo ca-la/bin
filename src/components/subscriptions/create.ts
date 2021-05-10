@@ -7,19 +7,18 @@ import TeamUsersDAO from "../team-users/dao";
 import createStripeSubscription from "../../services/stripe/create-subscription";
 import createPaymentMethod from "../payment-methods/create-payment-method";
 import InvalidDataError from "../../errors/invalid-data";
-import { findOrCreateCustomerId } from "../../services/stripe";
+import { findOrCreateCustomer } from "../../services/stripe";
 
 interface CreateOptions {
   planId: string;
   stripeCardToken: string | null;
-  userId: string;
-  teamId: string | null;
+  teamId: string;
   isPaymentWaived: boolean;
 }
 
 export async function createSubscription(
   trx: Knex.Transaction,
-  { planId, stripeCardToken, userId, teamId, isPaymentWaived }: CreateOptions
+  { planId, stripeCardToken, teamId, isPaymentWaived }: CreateOptions
 ) {
   const plan = await PlansDAO.findById(trx, planId);
   if (!plan) {
@@ -43,7 +42,8 @@ export async function createSubscription(
 
     paymentMethod = await createPaymentMethod({
       token: stripeCardToken,
-      userId,
+      userId: null,
+      teamId,
       trx,
     });
   }
@@ -51,7 +51,7 @@ export async function createSubscription(
   const stripeSubscription = await createStripeSubscription({
     stripeCustomerId: paymentMethod
       ? paymentMethod.stripeCustomerId
-      : await findOrCreateCustomerId(userId, trx),
+      : (await findOrCreateCustomer(trx, { userId: null, teamId })).customerId,
     stripeSourceId: paymentMethod ? paymentMethod.stripeSourceId : null,
     stripePrices: plan.stripePrices,
     seatCount,
@@ -67,7 +67,7 @@ export async function createSubscription(
       paymentMethodId,
       planId,
       stripeSubscriptionId: stripeSubscription.id,
-      userId: teamId ? null : userId,
+      userId: null,
       teamId,
     },
     trx

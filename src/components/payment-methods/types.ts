@@ -23,3 +23,14 @@ export const paymentMethodSchema = z.object({
   customerId: z.string().nullable(),
 });
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+
+export const paymentMethodTestBlank = {
+  id: z.string(),
+  createdAt: new Date(2020, 0, 1),
+  deletedAt: null,
+  userId: null,
+  stripeCustomerId: "a-stripe-customer-id",
+  stripeSourceId: "a-stripe-source-id",
+  lastFourDigits: "1234",
+  customerId: "a-customer-id",
+};

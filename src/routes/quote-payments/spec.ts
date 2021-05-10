@@ -30,6 +30,7 @@ import * as CreateShopifyProducts from "../../services/create-shopify-products";
 import { ApprovalStepState } from "../../components/approval-steps/types";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
+import * as RequestService from "../../services/stripe/make-request";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -42,7 +43,9 @@ const ADDRESS_BLANK = {
 };
 
 function setupStubs() {
-  sandbox().stub(Stripe, "findOrCreateCustomerId").resolves("customerId");
+  sandbox()
+    .stub(RequestService, "default")
+    .resolves({ id: "a-stripe-customer-id" }); // POST /customers
   sandbox()
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
