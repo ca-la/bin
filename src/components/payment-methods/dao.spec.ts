@@ -2,26 +2,32 @@ import Knex from "knex";
 import uuid from "node-uuid";
 
 import PaymentMethodsDAO from "./dao";
+import CustomersDAO from "../customers/dao";
 import db from "../../services/db";
 import { test, Test } from "../../test-helpers/fresh";
 import createUser = require("../../test-helpers/create-user");
+import { customerTestBlank } from "../customers/types";
 
-test("PaymentMethodsDAO.findByUserId", async (t: Test) => {
+test("PaymentMethodsDAO supports creation and retrieval", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   await db.transaction(async (trx: Knex.Transaction) => {
-    await PaymentMethodsDAO.create(trx, {
-      id: uuid.v4(),
+    const customer = await CustomersDAO.create(trx, {
+      ...customerTestBlank,
       userId: user.id,
+      teamId: null,
+      id: uuid.v4(),
+    });
+    const created = await PaymentMethodsDAO.create(trx, {
+      id: uuid.v4(),
       stripeCustomerId: "cus_123",
       stripeSourceId: "sou_123",
       lastFourDigits: "1234",
       deletedAt: null,
       createdAt: new Date(),
-      customerId: null,
+      customerId: customer.id,
     });
 
-    const methods = await PaymentMethodsDAO.findByUserId(trx, user.id);
-    t.equal(methods.length, 1);
-    t.equal(methods[0].stripeSourceId, "sou_123");
+    const method = await PaymentMethodsDAO.findById(trx, created.id);
+    t.deepEquals(method, created, "Created matches fetched PaymentMethod");
   });
 });
