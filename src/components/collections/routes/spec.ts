@@ -8,6 +8,7 @@ import * as CollaboratorsDAO from "../../collaborators/dao";
 import createUser from "../../../test-helpers/create-user";
 import DesignEventsDAO from "../../design-events/dao";
 import * as SubscriptionsDAO from "../../subscriptions/dao";
+import PaymentMethodsDAO from "../../payment-methods/dao";
 import { BillingInterval } from "../../plans/types";
 import generatePlan from "../../../test-helpers/factories/plan";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
@@ -27,7 +28,6 @@ import * as TeamsService from "../../teams/service";
 import * as TeamUsersService from "../../team-users/service";
 import { ApprovalStepType } from "../../approval-steps/types";
 import createDesign from "../../../services/create-design";
-import { generatePaymentMethod } from "../../../test-helpers/factories/payment-method";
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();
@@ -802,9 +802,15 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
   );
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const { paymentMethod } = await generatePaymentMethod(trx, {
+    const paymentMethod = await PaymentMethodsDAO.create(trx, {
+      id: uuid.v4(),
       userId: owner.user.id,
-      teamId: null,
+      stripeCustomerId: "customer1",
+      stripeSourceId: "source1",
+      lastFourDigits: "1234",
+      createdAt: new Date(),
+      deletedAt: null,
+      customerId: null,
     });
     await SubscriptionsDAO.create(
       {

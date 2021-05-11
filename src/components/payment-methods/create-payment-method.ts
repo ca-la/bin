@@ -24,7 +24,7 @@ type Options =
 export default async function createPaymentMethod(
   options: Options
 ): Promise<PaymentMethod> {
-  const { token, trx } = options;
+  const { token, userId, trx } = options;
 
   const {
     id: customerId,
@@ -44,6 +44,7 @@ export default async function createPaymentMethod(
     stripeCustomerId,
     stripeSourceId: source.id,
     customerId,
+    userId,
   });
 
   if (!method) {
