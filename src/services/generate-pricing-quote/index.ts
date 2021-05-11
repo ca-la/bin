@@ -1,9 +1,8 @@
 import Knex from "knex";
 import uuid from "node-uuid";
-import { map } from "lodash";
+import { map, sum } from "lodash";
 
 import PricingProcess from "../../domain-objects/pricing-process";
-import sum from "../sum";
 import {
   create,
   createPricingProcesses,
@@ -36,6 +35,8 @@ import {
   getQuoteValuesFromPool,
   QuoteValuesPool,
 } from "./quote-values";
+import { FINANCING_MARGIN } from "../../config";
+import addTimeBuffer from "../add-time-buffer";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -374,4 +375,27 @@ export async function generateFromPayloadAndUser(
   }
 
   return quotes;
+}
+
+export function calculateAmounts(
+  quote: UnsavedQuote
+): {
+  payNowTotalCents: number;
+  payLaterTotalCents: number;
+  timeTotalMs: number;
+} {
+  const payNowTotalCents = quote.units * quote.unitCostCents;
+  const payLaterTotalCents = addMargin(payNowTotalCents, FINANCING_MARGIN);
+  const timeTotalMsWithoutBuffer = sum([
+    quote.creationTimeMs,
+    quote.specificationTimeMs,
+    quote.sourcingTimeMs,
+    quote.samplingTimeMs,
+    quote.preProductionTimeMs,
+    quote.processTimeMs,
+    quote.productionTimeMs,
+    quote.fulfillmentTimeMs,
+  ]);
+  const timeTotalMs = addTimeBuffer(timeTotalMsWithoutBuffer);
+  return { payNowTotalCents, payLaterTotalCents, timeTotalMs };
 }

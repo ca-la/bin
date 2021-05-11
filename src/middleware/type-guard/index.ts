@@ -1,4 +1,5 @@
 import { ParameterizedContext } from "koa";
+import convert from "koa-convert";
 import { ZodSchema, ZodTypeDef } from "zod";
 
 export function typeGuard<T>(
@@ -48,4 +49,31 @@ export function typeGuardFromSchema<BodyType>(
   }
 
   return middleware;
+}
+
+export interface SafeQueryState<T> {
+  safeQuery: T;
+}
+
+export function safeQuery<BodyType>(
+  schema: ZodSchema<BodyType, ZodTypeDef, any>
+) {
+  return convert.back(
+    async (
+      ctx: ParameterizedContext<SafeQueryState<BodyType>>,
+      next: () => Promise<void>
+    ) => {
+      const { query } = ctx.request;
+
+      const result = schema.safeParse(query);
+
+      if (!result.success) {
+        ctx.throw(400, "Query parameters did not match expected type.");
+      }
+
+      ctx.state.safeQuery = result.data;
+
+      await next();
+    }
+  );
 }
