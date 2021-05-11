@@ -52,7 +52,11 @@ export interface CalaDao<Model> {
     filter: Partial<Model>,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model | null>;
-  findById: (ktx: Knex, id: string) => Promise<Model | null>;
+  findById: (
+    ktx: Knex,
+    id: string,
+    modifier?: (query: QueryBuilder) => QueryBuilder
+  ) => Promise<Model | null>;
   update: (
     trx: Transaction,
     id: string,

@@ -10,6 +10,10 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import db from "../db";
+import { generateTeam } from "../../test-helpers/factories/team";
+import { generateTeamUser } from "../../test-helpers/factories/team-user";
+import { RawTeamUsersDAO } from "../../components/team-users";
+import { Role as TeamUserRole } from "../../components/team-users/types";
 
 test("addAtMentionDetails adds null when there are no at mentions", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -194,4 +198,63 @@ test("addAtMentionDetails adds single detail for multiple at mentions of single 
     1,
     "comments mentions has only 1 value"
   );
+});
+
+test("addAtMentionDetails adds details for deleted and non-registered team users", async (t: tape.Test) => {
+  const { user: adminUser } = await createUser({ withSession: false });
+
+  const { team, teamUser: adminTeamUser } = await generateTeam(adminUser.id);
+  const {
+    teamUser: deletedTeamUser,
+    user: deletedUser,
+  } = await generateTeamUser({
+    teamId: team.id,
+    deletedAt: new Date(),
+  });
+
+  const trx = await db.transaction();
+  try {
+    const nonRegisteredTeamUser = await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      role: TeamUserRole.ADMIN,
+      label: null,
+      userEmail: "testing@example.com",
+      userId: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+      teamId: team.id,
+    });
+
+    const comment = await create({
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      isPinned: false,
+      parentCommentId: null,
+      text: `Me: @<${adminTeamUser.id}|teamUser>. Deleted: @<${deletedTeamUser.id}|teamUser>. Unregistered: @<${nonRegisteredTeamUser.id}|teamUser>!`,
+      userId: adminUser.id,
+    });
+
+    const result = await addAtMentionDetails(trx, [comment]);
+    const { mentions } = result[0];
+
+    t.deepEqual(
+      mentions[adminTeamUser.id],
+      adminUser.name,
+      "attaches valid team user"
+    );
+    t.deepEqual(
+      mentions[deletedTeamUser.id],
+      deletedUser!.user.name,
+      "attaches deleted team user name"
+    );
+    t.deepEqual(
+      mentions[nonRegisteredTeamUser.id],
+      "testing@example.com",
+      "attaches unregistered team user email"
+    );
+  } finally {
+    trx.rollback();
+  }
 });

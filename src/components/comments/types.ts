@@ -45,7 +45,7 @@ export const commentRowSchema = baseCommentRowSchema.extend({
 export type CommentRow = z.infer<typeof commentRowSchema>;
 
 export const commentWithMentionsSchema = commentSchema.extend({
-  mentions: z.record(z.string()),
+  mentions: z.record(z.string().optional()),
 });
 export type CommentWithMentions = z.infer<typeof commentWithMentionsSchema>;
 

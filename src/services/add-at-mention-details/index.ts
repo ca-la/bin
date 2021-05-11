@@ -36,11 +36,11 @@ export async function getCollaboratorsFromCommentMentions(
   ktx: Knex,
   commentText: string
 ): Promise<{
-  idNameMap: { [id: string]: string };
+  idNameMap: Record<string, string | undefined>;
   mentionedUserIds: string[];
 }> {
   const mentions = parseAtMentions(commentText);
-  const idNameMap: { [key: string]: string } = {};
+  const idNameMap: Record<string, string | undefined> = {};
   const mentionedUserIds = [];
 
   for (const mention of mentions) {
@@ -61,8 +61,16 @@ export async function getCollaboratorsFromCommentMentions(
       }
 
       case MentionType.TEAM_USER: {
-        const teamUser = await TeamUsersDAO.findById(ktx, mention.id);
-        if (!teamUser || !teamUser.user) {
+        const teamUser = await TeamUsersDAO.findById(
+          ktx,
+          mention.id,
+          (query: Knex.QueryBuilder) =>
+            query.orWhereRaw("team_users.id = ? and deleted_at is not null", [
+              mention.id,
+            ])
+        );
+
+        if (!teamUser) {
           continue;
         }
 
@@ -81,7 +89,7 @@ export async function getCollaboratorsFromCommentMentions(
 export async function getMentionsFromComment(
   ktx: Knex,
   commentText: string
-): Promise<Record<string, string>> {
+): Promise<Record<string, string | undefined>> {
   const { idNameMap } = await getCollaboratorsFromCommentMentions(
     ktx,
     commentText
