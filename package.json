@@ -36,7 +36,7 @@
     "koa-multer": "0.0.2",
     "koa-proxy": "^1.0.0-alpha.3",
     "koa-router": "5.4.0",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.21",
     "mime-types": "^2.1.21",
     "node-fetch": "^2.6.1",
     "node-uuid": "1.4.7",
