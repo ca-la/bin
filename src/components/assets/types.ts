@@ -61,6 +61,8 @@ export interface FileType {
 export const SUPPORTED_FILE_TYPES: FileType[] = [
   { extension: "psd", mimeType: "application/x-photoshop" },
   { extension: "dxf", mimeType: "application/dxf" },
+  { extension: "zip", mimeType: "application/x-zip" },
+  { extension: "zip", mimeType: "application/x-zip-compressed" },
 ];
 
 /**

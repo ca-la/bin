@@ -10,6 +10,9 @@ test("getExtension will return an extension for a supported mimeType", async (t:
   t.equal(getExtension("application/x-photoshop"), "psd");
   t.equal(getExtension("application/pdf"), "pdf");
 
+  t.equal(getExtension("application/x-zip"), "zip");
+  t.equal(getExtension("application/x-zip-compressed"), "zip");
+
   t.equal(getExtension("text/csv"), "csv");
   t.equal(getExtension("fooooo/bar"), null);
 });
