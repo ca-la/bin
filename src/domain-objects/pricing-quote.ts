@@ -80,6 +80,59 @@ export interface PricingQuoteRow {
   fulfillment_time_ms: number | null;
 }
 
+function encode(row: PricingQuoteRow): PricingQuote {
+  return {
+    baseCostCents: row.base_cost_cents,
+    createdAt: row.created_at,
+    creationTimeMs: row.creation_time_ms,
+    designId: row.design_id,
+    fulfillmentTimeMs: row.fulfillment_time_ms,
+    id: row.id,
+    materialBudgetCents: row.material_budget_cents,
+    materialCategory: row.material_category,
+    materialCostCents: row.material_cost_cents,
+    preProductionTimeMs: row.pre_production_time_ms,
+    pricingQuoteInputId: row.pricing_quote_input_id,
+    processCostCents: row.process_cost_cents,
+    processTimeMs: row.process_time_ms,
+    processes: [],
+    productComplexity: row.product_complexity,
+    productType: row.product_type,
+    productionTimeMs: row.production_time_ms,
+    samplingTimeMs: row.sampling_time_ms,
+    sourcingTimeMs: row.sourcing_time_ms,
+    specificationTimeMs: row.specification_time_ms,
+    unitCostCents: row.unit_cost_cents,
+    units: row.units,
+  };
+}
+
+function decode(data: PricingQuote): PricingQuoteRow {
+  return {
+    base_cost_cents: data.baseCostCents,
+    created_at: data.createdAt,
+    creation_time_ms: data.creationTimeMs,
+    design_id: data.designId,
+    fulfillment_time_ms: data.fulfillmentTimeMs,
+    id: data.id,
+    material_budget_cents: data.materialBudgetCents,
+    material_category: data.materialCategory,
+    material_cost_cents: data.materialCostCents,
+    pre_production_time_ms: data.preProductionTimeMs,
+    pricing_quote_input_id: data.pricingQuoteInputId,
+    process_cost_cents: data.processCostCents,
+    process_time_ms: data.processTimeMs,
+    product_complexity: data.productComplexity,
+    product_type: data.productType,
+    production_time_ms: data.productionTimeMs,
+    sampling_time_ms: data.samplingTimeMs,
+    sourcing_time_ms: data.sourcingTimeMs,
+    specification_time_ms: data.specificationTimeMs,
+    unit_cost_cents: data.unitCostCents,
+    units: data.units,
+  };
+}
+
 export interface PricingProcessQuoteRow {
   id: string;
   pricing_quote_id: string;
@@ -110,7 +163,10 @@ export interface PricingQuoteValues
   careLabel: PricingCareLabel;
 }
 
-export const dataAdapter = new DataAdapter<PricingQuoteRow, PricingQuote>();
+export const dataAdapter = new DataAdapter<PricingQuoteRow, PricingQuote>(
+  encode,
+  decode
+);
 
 export function isPricingQuoteRequest(
   candidate: object
