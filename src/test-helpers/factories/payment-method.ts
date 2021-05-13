@@ -24,7 +24,6 @@ export async function generatePaymentMethod(
   } as any);
   const paymentMethod = await PaymentMethodsDAO.create(trx, {
     id: uuid.v4(),
-    userId,
     stripeCustomerId: "customer1",
     stripeSourceId: "source1",
     lastFourDigits: "1234",
