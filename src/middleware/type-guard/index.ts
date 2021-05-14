@@ -1,3 +1,4 @@
+import "koa-bodyparser";
 import { ParameterizedContext } from "koa";
 import convert from "koa-convert";
 import { ZodSchema, ZodTypeDef } from "zod";
