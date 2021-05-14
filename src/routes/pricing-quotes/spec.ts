@@ -37,48 +37,6 @@ test("/pricing-quotes?designId retrieves the set of quotes for a design", async 
   );
 });
 
-test("GET /pricing-quotes?designId&units returns unsaved quote", async (t: Test) => {
-  const {
-    user: { designer },
-    collectionDesigns: [design],
-  } = await checkout();
-
-  const [response, unsavedQuote] = await get(
-    `/pricing-quotes?designId=${design.id}&units=100`,
-    {
-      headers: authHeader(designer.session.id),
-    }
-  );
-
-  t.equal(response.status, 200);
-  t.deepEqual(unsavedQuote, {
-    designId: design.id,
-    payLaterTotalCents: 527660,
-    payNowTotalCents: 496000,
-    timeTotalMs: 1219764706,
-    units: 100,
-    minimumOrderQuantity: 1,
-  });
-});
-
-test("GET /pricing-quotes?designId&units with very large quantity", async (t: Test) => {
-  const {
-    user: { designer },
-    collectionDesigns: [design],
-  } = await checkout();
-
-  const [response, unsavedQuote] = await get(
-    `/pricing-quotes?designId=${design.id}&units=100000`,
-    {
-      headers: authHeader(designer.session.id),
-    }
-  );
-
-  t.equal(response.status, 200);
-  t.equal(unsavedQuote.payLaterTotalCents > 0, true);
-  t.equal(unsavedQuote.payNowTotalCents, 177700000);
-});
-
 test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted cost", async (t: Test) => {
   await generatePricingValues();
   const { user, session } = await createUser({ role: "ADMIN" });

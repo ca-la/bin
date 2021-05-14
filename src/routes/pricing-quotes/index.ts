@@ -1,7 +1,9 @@
 import Router from "koa-router";
+import convert from "koa-convert";
+import { z } from "zod";
+
 import db from "../../services/db";
 
-import requireAuth = require("../../middleware/require-auth");
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -16,6 +18,9 @@ import {
   CreatePricingCostInputRequest,
   isCreatePricingCostInputRequest,
 } from "../../components/pricing-cost-inputs/types";
+import { StrictContext } from "../../router-context";
+import { safeQuery, SafeQueryState } from "../../middleware/type-guard";
+import { PricingQuote } from "../../domain-objects/pricing-quote";
 
 const router = new Router();
 
@@ -29,24 +34,23 @@ function* getQuote(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-function* getQuotes(this: AuthedContext): Iterator<any, any, any> {
-  const { designId, units } = this.query;
-  const unitsNumber = Number(units);
+const getQuotesQuerySchema = z.object({
+  designId: z.string(),
+});
 
-  if (!designId) {
-    this.throw(400, "You must pass a design ID");
-  } else if (unitsNumber) {
-    this.redirect(`/design-quotes?designId=${designId}&units=${unitsNumber}`);
-  } else {
-    if (this.state.role !== "ADMIN") {
-      this.throw(403, "Only admins can retrieve saved quotes");
-    }
+type GetQuotesQuery = z.infer<typeof getQuotesQuerySchema>;
 
-    const quotes = yield findByDesignId(designId);
+interface GetQuotesContext extends StrictContext<PricingQuote[] | null> {
+  state: SafeQueryState<GetQuotesQuery>;
+}
 
-    this.body = quotes;
-    this.status = 200;
-  }
+async function getQuotes(ctx: GetQuotesContext) {
+  const { designId } = ctx.state.safeQuery;
+
+  const quotes = await findByDesignId(designId);
+
+  ctx.body = quotes;
+  ctx.status = 200;
 }
 
 interface PreviewQuoteBody {
@@ -128,7 +132,12 @@ function* getBidsForQuote(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.get("/", requireAuth, getQuotes);
+router.get(
+  "/",
+  requireAdmin,
+  safeQuery<GetQuotesQuery>(getQuotesQuerySchema),
+  convert.back(getQuotes)
+);
 router.get("/:quoteId", getQuote);
 
 router.post("/preview", requireAdmin, previewQuote);
