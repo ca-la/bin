@@ -173,25 +173,14 @@ export async function transitionCheckoutState(
   const designs = await ProductDesignsDAO.findByCollectionId(collectionId, trx);
 
   for (const design of designs) {
-    const steps = await ApprovalStepsDAO.findByDesign(trx, design.id);
-
-    const checkoutStep = steps.find(
-      (step: ApprovalStep): boolean => step.type === ApprovalStepType.CHECKOUT
-    );
-    const technicalDesignStep = steps.find(
-      (step: ApprovalStep): boolean =>
-        step.type === ApprovalStepType.TECHNICAL_DESIGN
-    );
+    const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
+      designId: design.id,
+      type: ApprovalStepType.CHECKOUT,
+    });
 
     if (!checkoutStep) {
       throw new Error(
         `Unable to find checkout approval step for design "${design.id}"`
-      );
-    }
-
-    if (!technicalDesignStep) {
-      throw new Error(
-        `Unable to find technical design approval step for design "${design.id}"`
       );
     }
 
