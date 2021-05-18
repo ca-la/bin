@@ -11,3 +11,10 @@ export default function addMargin(base: number, margin: number): number {
 
   return Math.ceil(base / (1 - margin));
 }
+
+export function calculateBasisPoints(
+  cents: number,
+  basisPoints: number
+): number {
+  return Math.round((basisPoints / 10000) * cents);
+}

@@ -21,6 +21,8 @@ import { ApprovalStepType } from "../../published-types";
 import InvalidDataError from "../../errors/invalid-data";
 import * as QuoteValuesService from "../../services/generate-pricing-quote/quote-values";
 import createDesign from "../create-design";
+import generateCollection from "../../test-helpers/factories/collection";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 const quoteRequestOne: PricingCostInput = {
   createdAt: new Date(),
@@ -56,7 +58,7 @@ test("generateUnsavedQuote failure", async (t: Test) => {
   sandbox().stub(PricingQuotesDAO, "findLatestValuesForRequest").throws();
 
   try {
-    await generateUnsavedQuote(quoteRequestOne, 100000);
+    await generateUnsavedQuote(quoteRequestOne, 100000, 0);
     t.fail("Should not have succeeded!");
   } catch {
     t.ok("Fails to generate an unsaved quote");
@@ -215,7 +217,7 @@ test("generateUnsavedQuote", async (t: Test) => {
     .stub(PricingQuotesDAO, "findVersionValuesForRequest")
     .resolves(latestValues);
 
-  const unsavedQuote = await generateUnsavedQuote(quoteRequestOne, 100000);
+  const unsavedQuote = await generateUnsavedQuote(quoteRequestOne, 100000, 200);
 
   t.equal(unsavedQuote.baseCostCents, 386, "calculates base cost correctly");
   t.equal(
@@ -227,6 +229,12 @@ test("generateUnsavedQuote", async (t: Test) => {
     unsavedQuote.unitCostCents,
     1777,
     "calculates total unit cost correctly"
+  );
+
+  t.equal(
+    unsavedQuote.productionFeeCents,
+    36,
+    "calculates the production fee cents correctly"
   );
 });
 
@@ -357,7 +365,8 @@ test("generateUnsavedQuote for blank", async (t: Test) => {
       constantsVersion: 0,
       careLabelsVersion: 0,
     },
-    100
+    100,
+    0
   );
 
   t.equal(unsavedQuote.baseCostCents, 310, "calculates base cost correctly");
@@ -483,7 +492,8 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
       constantsVersion: 0,
       careLabelsVersion: 0,
     },
-    1
+    1,
+    0
   );
 
   t.equal(unsavedQuote.baseCostCents, 0, "calculates base cost correctly");
@@ -501,14 +511,18 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
 
 test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
   const { user } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
   await generatePricingValues();
   const designOne = await createDesign({
     title: "T-Shirt One",
     userId: user.id,
+    collectionIds: [collection.id],
   });
   const designTwo = await createDesign({
     title: "T-Shirt Two",
     userId: user.id,
+    collectionIds: [collection.id],
   });
 
   const payload = [

@@ -12,6 +12,7 @@ import { TeamType } from "../teams/types";
 import generateCollection from "../../test-helpers/factories/collection";
 import createUser from "../../test-helpers/create-user";
 import { PlanStripePriceType } from "../plan-stripe-price/types";
+import { generateDesign } from "../../test-helpers/factories/product-design";
 
 test("PlansDAO supports creation and retrieval", async (t: Test) => {
   const trx = await db.transaction();
@@ -481,6 +482,73 @@ test("PlansDAO.findCollectionTeamPlans", async (t: Test) => {
     );
     t.equal(teamPlans.length, 1);
     t.deepEqual(teamPlans[0], teamPlan);
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("PlansDAO.findLatestDesignPlan", async (t: Test) => {
+  const trx = await db.transaction();
+
+  try {
+    const team = await TeamsDAO.create(trx, {
+      createdAt: new Date(),
+      deletedAt: null,
+      id: uuid.v4(),
+      title: "A team",
+      type: TeamType.DESIGNER,
+    });
+
+    const { collection, createdBy } = await generateCollection(
+      {
+        teamId: team.id,
+      },
+      trx
+    );
+    const design = await generateDesign(
+      {
+        userId: createdBy.id,
+        collectionIds: [collection.id],
+      },
+      trx
+    );
+
+    t.equal(
+      await PlansDAO.findLatestDesignTeamPlan(trx, design.id),
+      null,
+      "does not find a plan without a subscrirption"
+    );
+
+    const teamPlan = await generatePlan(trx, { title: "Team Plan" });
+
+    const teamSubscription = await SubscriptionsDAO.create(
+      {
+        id: uuid.v4(),
+        cancelledAt: null,
+        planId: teamPlan.id,
+        paymentMethodId: null,
+        stripeSubscriptionId: "123",
+        userId: null,
+        teamId: team.id,
+        isPaymentWaived: false,
+      },
+      trx
+    );
+
+    const found = await PlansDAO.findLatestDesignTeamPlan(trx, design.id);
+    t.deepEqual(found, teamPlan);
+
+    await SubscriptionsDAO.update(
+      teamSubscription.id,
+      { cancelledAt: new Date() },
+      trx
+    );
+
+    t.equal(
+      await PlansDAO.findLatestDesignTeamPlan(trx, design.id),
+      null,
+      "does not find a plan when subscription is cancelled"
+    );
   } finally {
     await trx.rollback();
   }

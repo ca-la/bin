@@ -1,4 +1,6 @@
+// Needed for running ts-node due to import ordering
 import "koa-bodyparser";
+
 import { ParameterizedContext } from "koa";
 import convert from "koa-convert";
 import { ZodSchema, ZodTypeDef } from "zod";
@@ -29,11 +31,11 @@ export interface SafeBodyState<T> {
 export function typeGuardFromSchema<BodyType>(
   schema: ZodSchema<BodyType, ZodTypeDef, any>
 ): (
-  this: ParameterizedContext & SafeBodyContext<BodyType>,
+  this: ParameterizedContext<SafeBodyState<BodyType>>,
   next: any
 ) => Iterator<any, any, any> {
   function* middleware(
-    this: ParameterizedContext & SafeBodyContext<BodyType>,
+    this: ParameterizedContext<SafeBodyState<BodyType>>,
     next: any
   ): Iterator<any, any, any> {
     const { body } = this.request;

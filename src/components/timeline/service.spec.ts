@@ -33,6 +33,7 @@ test("format timelines only returns valid timelines", async (t: tape.Test) => {
     materialCostCents: 0,
     processCostCents: 0,
     unitCostCents: 0,
+    productionFeeCents: 0,
     designId: "",
     creationTimeMs: 0,
     specificationTimeMs: 0,
