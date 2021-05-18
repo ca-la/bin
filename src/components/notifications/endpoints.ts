@@ -7,16 +7,12 @@ import {
   UserInputError,
   ForbiddenError,
 } from "../../apollo";
-import {
-  NotificationFilter,
-  NotificationMessage,
-  NotificationMessageForGraphQL,
-} from "./types";
+import { NotificationFilter, NotificationMessageForGraphQL } from "./types";
 import * as NotificationsDAO from "./dao";
 import * as GraphQLTypes from "./graphql-types";
 import { createNotificationMessage } from "./notification-messages";
 import { transformNotificationMessageToGraphQL } from "./service";
-import { FullNotification, Notification } from "./domain-object";
+import { Notification } from "./domain-object";
 
 interface GetNotificationsArgs {
   limit: number;
@@ -67,13 +63,15 @@ const notificationMessages: GraphQLEndpoint<
       offset: offset || 0,
       filter,
     });
-    const messages: (NotificationMessage | null)[] = await Promise.all(
-      notifications.map((n: FullNotification) => createNotificationMessage(n))
-    );
 
-    return (messages.filter(
-      (message: NotificationMessage | null) => message !== null
-    ) as NotificationMessage[]).map(transformNotificationMessageToGraphQL);
+    const messages: NotificationMessageForGraphQL[] = [];
+    for (const notification of notifications) {
+      const maybeMessage = await createNotificationMessage(notification);
+      if (maybeMessage) {
+        messages.push(transformNotificationMessageToGraphQL(maybeMessage));
+      }
+    }
+    return messages;
   },
 };
 

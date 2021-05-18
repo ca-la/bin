@@ -47,7 +47,7 @@ async function getList(ctx: AuthedContext) {
         })
       )
   );
-  const messages = await trackTime<(NotificationMessage | null)[]>(
+  const messages = await trackTime<(NotificationMessage | null | undefined)[]>(
     ctx,
     `${trackEventPrefix}/createNotificationMessage`,
     () =>
@@ -59,9 +59,7 @@ async function getList(ctx: AuthedContext) {
   );
 
   ctx.status = 200;
-  ctx.body = messages.filter(
-    (message: NotificationMessage | null) => message !== null
-  );
+  ctx.body = messages.filter(Boolean);
 }
 
 function* getUnreadCount(this: AuthedContext): Iterator<any, any, any> {

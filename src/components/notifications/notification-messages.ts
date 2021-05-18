@@ -288,7 +288,7 @@ export async function getNonUserInvitationMessage(options: {
 
 export async function createNotificationMessage(
   notification: FullNotification
-): Promise<NotificationMessage | null> {
+): Promise<NotificationMessage | null | undefined> {
   if (DEPRECATED_NOTIFICATION_TYPES.includes(notification.type)) {
     return null;
   }
