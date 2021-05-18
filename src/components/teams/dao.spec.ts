@@ -17,7 +17,6 @@ import generateDesignEvent from "../../test-helpers/factories/design-event";
 import generatePlan from "../../test-helpers/factories/plan";
 import { SubscriptionWithPlan } from "../subscriptions/domain-object";
 import * as CancelSubscriptionService from "../../services/stripe/cancel-subscription";
-import generateCollection from "../../test-helpers/factories/collection";
 
 async function setup() {
   const { user } = await createUser();
@@ -37,11 +36,7 @@ async function setup() {
       updatedAt: new Date(),
     })
   );
-  const { collection } = await generateCollection({ teamId: team.id });
-  const design = await generateDesign({
-    userId: designer.id,
-    collectionIds: [collection.id],
-  });
+  const design = await generateDesign({ userId: designer.id });
   const { bid } = await generateBid({ bidOptions: { bidPriceCents: 10000 } });
 
   await generateDesignEvent({
@@ -363,25 +358,6 @@ test("TeamsDAO.deleteTeam", async (t: Test) => {
         `${testCase.title}: update subscription`
       );
     }
-  } finally {
-    await trx.rollback();
-  }
-});
-
-test("TeamsDAO.findByDesign", async (t: Test) => {
-  const { team, design } = await setup();
-  const trx = await db.transaction();
-  try {
-    const found = await TeamsDAO.findByDesign(trx, design.id);
-
-    t.equal(found!.id, team.id, "finds the correct team");
-
-    const notFound = await TeamsDAO.findByDesign(trx, uuid.v4());
-    t.equal(
-      notFound,
-      null,
-      "does not find a team for a random design that doesn't exist"
-    );
   } finally {
     await trx.rollback();
   }

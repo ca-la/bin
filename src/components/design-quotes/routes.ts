@@ -1,18 +1,21 @@
 import { z } from "zod";
 import Router from "koa-router";
-import convert from "koa-convert";
 
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { safeQuery, SafeQueryState } from "../../middleware/type-guard";
-import requireAuth from "../../middleware/require-auth";
 import { StrictContext } from "../../router-context";
 import filterError from "../../services/filter-error";
+import {
+  generateUnsavedQuote,
+  calculateAmounts,
+} from "../../services/generate-pricing-quote";
 import { numberStringToNumber } from "../../services/zod-helpers";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import { PricingCostInput } from "../pricing-cost-inputs/types";
 
 import { DesignQuote } from "./types";
-import { calculateDesignQuote } from "./service";
+import requireAuth from "../../middleware/require-auth";
+import convert from "koa-convert";
 
 const router = new Router();
 
@@ -39,13 +42,26 @@ async function getQuoteForDesign(ctx: GetQuotesContext) {
 
   const latestInput = costInputs[0];
 
-  const designQuote = await calculateDesignQuote(latestInput, units).catch(
+  const unsavedQuote = await generateUnsavedQuote(latestInput, units).catch(
     filterError(ResourceNotFoundError, (err: ResourceNotFoundError) =>
       ctx.throw(404, err.message)
     )
   );
 
-  ctx.body = designQuote;
+  const {
+    payLaterTotalCents,
+    payNowTotalCents,
+    timeTotalMs,
+  } = calculateAmounts(unsavedQuote);
+
+  ctx.body = {
+    designId,
+    payLaterTotalCents,
+    payNowTotalCents,
+    timeTotalMs,
+    units: unsavedQuote.units,
+    minimumOrderQuantity: latestInput.minimumOrderQuantity,
+  };
   ctx.status = 200;
 }
 

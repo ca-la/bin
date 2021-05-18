@@ -18,7 +18,6 @@ import {
   CreatePricingCostInputRequest,
   isCreatePricingCostInputRequest,
 } from "../../components/pricing-cost-inputs/types";
-import { getDesignProductionFeeBasisPoints } from "../../components/design-quotes/service";
 import { StrictContext } from "../../router-context";
 import { safeQuery, SafeQueryState } from "../../middleware/type-guard";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
@@ -89,9 +88,6 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
     uncommittedCostInput: { minimumOrderQuantity = 1, ...uncommittedCostInput },
   } = body;
 
-  const productionFeeBasisPoints = yield getDesignProductionFeeBasisPoints(
-    uncommittedCostInput.designId
-  );
   const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
     {
       minimumOrderQuantity,
@@ -102,8 +98,7 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
       productComplexity: uncommittedCostInput.productComplexity,
       productType: uncommittedCostInput.productType,
     },
-    units,
-    productionFeeBasisPoints
+    units
   ).catch(
     filterError(ResourceNotFoundError, (err: InvalidDataError) =>
       this.throw(400, err.message)

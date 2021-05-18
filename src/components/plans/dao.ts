@@ -109,39 +109,11 @@ export function findCollectionTeamPlans(
   );
 }
 
-export function findLatestDesignTeamPlan(
-  ktx: Knex,
-  designId: string
-): Promise<Plan | null> {
-  return dao.findOne(ktx, {}, (query: Knex.QueryBuilder) =>
-    query
-      .join("subscriptions", "plans.id", "subscriptions.plan_id")
-      .join("collections", "subscriptions.team_id", "collections.team_id")
-      .join(
-        "collection_designs",
-        "collection_designs.collection_id",
-        "collections.id"
-      )
-      .join(
-        "product_designs",
-        "product_designs.id",
-        "collection_designs.design_id"
-      )
-      .whereRaw(
-        `
-       product_designs.id = ? and
-       product_designs.deleted_at is null and (
-         subscriptions.cancelled_at is null or
-         subscriptions.cancelled_at > ?
-       )
-          `,
-        [designId, new Date()]
-      )
-  );
-}
-
-export function findTeamPlans(ktx: Knex, teamId: string): Promise<Plan[]> {
-  return dao.find(ktx, {}, (query: Knex.QueryBuilder) =>
+export function findTeamPlans(
+  trx: Knex.Transaction,
+  teamId: string
+): Promise<Plan[]> {
+  return dao.find(trx, {}, (query: Knex.QueryBuilder) =>
     query.join("subscriptions", "plans.id", "subscriptions.plan_id").whereRaw(
       `
         subscriptions.team_id = ? and (
