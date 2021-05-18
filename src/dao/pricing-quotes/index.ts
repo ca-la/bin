@@ -85,6 +85,7 @@ const encodeNormalizedPricingQuote = (
   materialCostCents: row.material_cost_cents,
   processCostCents: row.process_cost_cents,
   unitCostCents: row.unit_cost_cents,
+  productionFeeCents: row.production_fee_cents,
   designId: row.design_id,
   creationTimeMs: Number(row.creation_time_ms),
   specificationTimeMs: Number(row.specification_time_ms),

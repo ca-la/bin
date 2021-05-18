@@ -37,6 +37,7 @@ export interface PricingQuoteCalculated {
   materialCostCents: number;
   processCostCents: number;
   unitCostCents: number;
+  productionFeeCents: number;
   creationTimeMs: number | null;
   specificationTimeMs: number | null;
   sourcingTimeMs: number | null;
@@ -69,6 +70,7 @@ export interface PricingQuoteRow {
   material_cost_cents: number;
   process_cost_cents: number;
   unit_cost_cents: number;
+  production_fee_cents: number;
   design_id: string | null;
   creation_time_ms: number | null;
   specification_time_ms: number | null;
@@ -98,6 +100,7 @@ function encode(row: PricingQuoteRow): PricingQuote {
     processes: [],
     productComplexity: row.product_complexity,
     productType: row.product_type,
+    productionFeeCents: row.production_fee_cents,
     productionTimeMs: row.production_time_ms,
     samplingTimeMs: row.sampling_time_ms,
     sourcingTimeMs: row.sourcing_time_ms,
@@ -124,6 +127,7 @@ function decode(data: PricingQuote): PricingQuoteRow {
     process_time_ms: data.processTimeMs,
     product_complexity: data.productComplexity,
     product_type: data.productType,
+    production_fee_cents: data.productionFeeCents,
     production_time_ms: data.productionTimeMs,
     sampling_time_ms: data.samplingTimeMs,
     sourcing_time_ms: data.sourcingTimeMs,
@@ -206,7 +210,8 @@ export function isPricingQuote(candidate: object): candidate is PricingQuote {
     "samplingTimeMs",
     "pre_productionTimeMs",
     "productionTimeMs",
-    "fulfillmentTimeMs"
+    "fulfillmentTimeMs",
+    "productionFeeCents"
   );
 }
 

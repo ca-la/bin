@@ -108,9 +108,31 @@ async function deleteById(
   return updated;
 }
 
+async function findByDesign(ktx: Knex, designId: string) {
+  return standardDao.findOne(ktx, {}, (query: Knex.QueryBuilder) =>
+    query
+      .join("collections", "collections.team_id", "teams.id")
+      .join(
+        "collection_designs",
+        "collection_designs.collection_id",
+        "collections.id"
+      )
+      .join(
+        "product_designs",
+        "product_designs.id",
+        "collection_designs.design_id"
+      )
+      .where({
+        "product_designs.id": designId,
+        "product_designs.deleted_at": null,
+      })
+  );
+}
+
 export default {
   findUnpaidTeams,
   findByUser,
+  findByDesign,
   deleteById,
   ...standardDao,
 };
