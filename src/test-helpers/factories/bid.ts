@@ -6,6 +6,7 @@ import generatePricingQuote from "../../services/generate-pricing-quote";
 
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
+import * as CollectionsDAO from "../../components/collections/dao";
 import { Bid, BidCreationPayload } from "../../components/bids/types";
 import { createBid } from "../../services/create-bid";
 import createUser from "../create-user";
@@ -19,6 +20,7 @@ import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
 import { templateDesignEvent } from "../../components/design-events/types";
 import { generateDesign } from "./product-design";
 import { BidTaskTypeId } from "../../components/bid-task-types/types";
+import generateCollection from "./collection";
 
 interface BidInterface {
   user: User;
@@ -33,6 +35,7 @@ interface GenerateBidInputs {
   generatePricing: boolean;
   userId: string | null;
   taskTypeIds: string[];
+  collectionId: string;
 }
 
 export default async function generateBid({
@@ -42,18 +45,30 @@ export default async function generateBid({
   generatePricing = true,
   userId = null,
   taskTypeIds = [],
+  collectionId,
 }: Partial<GenerateBidInputs> = {}): Promise<BidInterface> {
   if (generatePricing) {
     await generatePricingValues();
   }
   const { user } = await createUser({ role: "ADMIN", withSession: false });
 
+  const { collection } = collectionId
+    ? { collection: await CollectionsDAO.findById(collectionId) }
+    : await generateCollection();
+
+  if (!collection) {
+    throw new Error("Could not find or create collection for design");
+  }
+
   let design;
   const found = designId ? await ProductDesignsDAO.findById(designId) : null;
   if (found) {
     design = found;
   } else {
-    design = await generateDesign({ userId: user.id });
+    design = await generateDesign({
+      userId: user.id,
+      collectionIds: [collection.id],
+    });
   }
 
   const createdBy = userId || user.id;

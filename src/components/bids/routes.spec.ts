@@ -31,6 +31,7 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 import { taskTypes } from "../tasks/templates";
 import * as CreateBidService from "../../services/create-bid";
 import { generateTeam } from "../../test-helpers/factories/team";
+import generateCollection from "../../test-helpers/factories/collection";
 
 const b1: Partial<Bid> = {
   id: "a-bid-id",
@@ -842,10 +843,12 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
     stripeUserId: "stripe-user-one",
   });
 
+  const { collection } = await generateCollection();
   const design = await createDesign({
     productType: "TEESHIRT",
     title: "Plain White Tee",
     userId: user.id,
+    collectionIds: [collection.id],
   });
 
   const { bid } = await generateBid({

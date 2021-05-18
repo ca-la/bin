@@ -20,6 +20,7 @@ import { addDesign, removeDesign } from "../../test-helpers/collections";
 import { templateDesignEvent } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { TeamUserRole } from "../../published-types";
+import { checkout } from "../../test-helpers/checkout-collection";
 
 test("Collaborators DAO can find all collaborators with a list of ids", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
@@ -971,14 +972,14 @@ test("CollaboratorsDAO.findUnclaimedByEmail", async (t: Test) => {
 });
 
 test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
-  const designer = await createUser({ withSession: false });
+  const {
+    user: { designer },
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
   const partner = await createUser({ role: "PARTNER" });
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "A product design",
-    userId: designer.user.id,
-  });
-  const { bid, quote } = await generateBid({
+  const { bid } = await generateBid({
+    quoteId: quote.id,
     designId: design.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
   });

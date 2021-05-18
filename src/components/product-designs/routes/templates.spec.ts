@@ -18,6 +18,7 @@ import {
 } from "../../nodes/dao";
 import * as CreationService from "../../templates/services/create-from-design-template";
 import * as CreateDesignTasksService from "../../../services/create-design-tasks";
+import { generateTeam } from "../../../test-helpers/factories/team";
 
 test("POST /product-designs/templates/:templateDesignId returns a 401 if not logged in", async (t: Test) => {
   const templateDesignId = uuid.v4();
@@ -55,7 +56,8 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
 
   sandbox().stub(CreateDesignTasksService, "createDesignTasks");
 
-  const { collection } = await generateCollection();
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
   const design = await db.transaction(
     async (trx: Knex.Transaction): Promise<ProductDesign> => {
       const newDesign = await createDesign(
@@ -87,7 +89,7 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
   t.equal(response.status, 201);
   t.equal(body.hasOwnProperty("permissions"), true, "permissions are attached");
   t.equal(body.hasOwnProperty("owner"), true, "owner is attached");
-  t.equal(body.hasOwnProperty("role"), true, "role is attached");
+  t.equal(body.hasOwnProperty("role"), false, "role is not attached");
   t.deepEqual(
     omit(body, "createdAt", "id", "owner.createdAt"),
     omit(
@@ -95,11 +97,10 @@ test("POST /product-designs/templates/:templateDesignId returns a duplicate prev
         ...design,
         userId: user.id,
         owner: user,
-        role: "OWNER",
         permissions: {
           canComment: true,
-          // not a team member with EDITOR+ role
-          canDelete: false,
+          // a team member with EDITOR+ role
+          canDelete: true,
           canEdit: true,
           canEditTitle: true,
           canEditVariants: true,

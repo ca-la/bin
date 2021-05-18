@@ -25,6 +25,7 @@ import {
   actualizeDesignStepsAfterBidAcceptance,
   updateTechnicalDesignStepForDesign,
 } from "./";
+import generateCollection from "../../test-helpers/factories/collection";
 
 interface TestCase {
   title: string;
@@ -32,30 +33,10 @@ interface TestCase {
   isBlank: boolean;
   stepStates: { [key in ApprovalStepType]: ApprovalStepState };
   createdDesignEvents: Partial<DesignEvent>[];
-  teamId?: string;
   sendNotificationCallCount: number;
 }
 
-const teamId = uuid.v4();
 const testCases: TestCase[] = [
-  {
-    title: "Technical Design bid",
-    taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
-    isBlank: false,
-    stepStates: {
-      [ApprovalStepType.CHECKOUT]: ApprovalStepState.COMPLETED,
-      [ApprovalStepType.TECHNICAL_DESIGN]: ApprovalStepState.CURRENT,
-      [ApprovalStepType.SAMPLE]: ApprovalStepState.BLOCKED,
-      [ApprovalStepType.PRODUCTION]: ApprovalStepState.UNSTARTED,
-    },
-    createdDesignEvents: [
-      {
-        taskTypeId: taskTypes.TECHNICAL_DESIGN.id,
-        type: "STEP_PARTNER_PAIRING",
-      },
-    ],
-    sendNotificationCallCount: 1,
-  },
   {
     title: "Technical Design bid with team",
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
@@ -70,11 +51,9 @@ const testCases: TestCase[] = [
       {
         taskTypeId: taskTypes.TECHNICAL_DESIGN.id,
         type: "STEP_PARTNER_PAIRING",
-        targetTeamId: teamId,
       },
     ],
     sendNotificationCallCount: 1,
-    teamId,
   },
   {
     title: "Production bid",
@@ -121,12 +100,15 @@ const testCases: TestCase[] = [
 for (const testCase of testCases) {
   test(testCase.title, async (t: Test) => {
     const { user } = await createUser({ withSession: false });
-    if (testCase.teamId) {
-      await generateTeam(user.id, { id: testCase.teamId });
-    }
+    const { user: partner } = await createUser({ withSession: false });
+    const { team } = await generateTeam(user.id);
 
+    const { collection } = await generateCollection({
+      teamId: team.id,
+    });
     const design = await generateDesign({
       userId: user.id,
+      collectionIds: [collection.id],
     });
     const { bid } = await generateBid({
       designId: design.id,
@@ -152,7 +134,8 @@ for (const testCase of testCases) {
       const event: DesignEvent = {
         ...templateDesignEvent,
         actorId: user.id,
-        targetTeamId: testCase.teamId || null,
+        targetTeamId: null,
+        targetId: partner.id,
         bidId: bid.id,
         createdAt: new Date(),
         designId: design.id,

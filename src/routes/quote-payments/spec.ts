@@ -3,9 +3,8 @@ import uuid from "node-uuid";
 import { omit } from "lodash";
 
 import StripeError = require("../../errors/stripe");
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import * as attachSource from "../../services/stripe/attach-source";
-import * as CollectionsDAO from "../../components/collections/dao";
 import { CreditsDAO, CreditType } from "../../components/credits";
 import * as InvoicesDAO from "../../dao/invoices";
 import { create as createAddress } from "../../dao/addresses";
@@ -23,7 +22,6 @@ import Stripe = require("../../services/stripe");
 import { authHeader, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
-import { addDesign } from "../../test-helpers/collections";
 import { createStorefront } from "../../services/create-storefront";
 import { ProviderName } from "../../components/storefronts/tokens/domain-object";
 import * as CreateShopifyProducts from "../../services/create-shopify-products";
@@ -31,6 +29,8 @@ import { ApprovalStepState } from "../../components/approval-steps/types";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
 import * as RequestService from "../../services/stripe/make-request";
+import generateCollection from "../../test-helpers/factories/collection";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -59,32 +59,24 @@ function setupStubs() {
   return { chargeStub, emailStub, slackStub, irisStub };
 }
 
-test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
+async function setup() {
   const { user, session } = await createUser();
-  const { slackStub, irisStub, chargeStub } = setupStubs();
-  const paymentMethodTokenId = uuid.v4();
+  const stubs = setupStubs();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
   const d1 = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
   const d2 = await createDesign({
     productType: "Another product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, d1.id);
-  await addDesign(collection.id, d2.id);
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id,
@@ -159,6 +151,30 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       productType: "TEESHIRT",
     });
   });
+
+  return {
+    ...stubs,
+    user,
+    session,
+    designs: [d1, d2],
+    address,
+    collection,
+    team,
+  };
+}
+
+test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
+  const {
+    session,
+    slackStub,
+    irisStub,
+    chargeStub,
+    collection,
+    designs: [d1, d2],
+    address,
+    user,
+  } = await setup();
+  const paymentMethodTokenId = uuid.v4();
 
   const [postResponse, body] = await post("/quote-payments", {
     body: {
@@ -294,21 +310,14 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 
   const paymentMethodTokenId = uuid.v4();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
   const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design.id);
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id,
@@ -366,22 +375,15 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
   const { user, session } = await createUser();
   const { slackStub } = setupStubs();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
 
   const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-  await addDesign(collection.id, design.id);
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id,
@@ -470,23 +472,15 @@ test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) =
   const { user, session } = await createUser();
   setupStubs();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
+  const { team } = await generateTeam(user.id);
+  const { collection } = await generateCollection({ teamId: team.id });
 
   const design = await createDesign({
     productType: "A product type",
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
-
-  await addDesign(collection.id, design.id);
 
   const address = await createAddress({
     ...ADDRESS_BLANK,
@@ -542,60 +536,19 @@ test(
   "/quote-payments POST does not generate quotes," +
     " invoice, lineItems on failure",
   async (t: Test) => {
-    const { user, session } = await createUser();
-    setupStubs();
+    const {
+      address,
+      user,
+      session,
+      collection,
+      designs: [design],
+    } = await setup();
 
     sandbox()
       .stub(LineItemsDAO, "createAll")
       .rejects(new InvalidDataError("Duplicate"));
 
     const paymentMethodTokenId = uuid.v4();
-
-    const collection = await CollectionsDAO.create({
-      createdAt: new Date(),
-      createdBy: user.id,
-      deletedAt: null,
-      description: "Initial commit",
-      id: uuid.v4(),
-      teamId: null,
-      title: "Drop 001/The Early Years",
-    });
-    const design = await createDesign({
-      productType: "A product type",
-      title: "A design",
-      userId: user.id,
-    });
-    await addDesign(collection.id, design.id);
-    const address = await createAddress({
-      ...ADDRESS_BLANK,
-      userId: user.id,
-    });
-
-    await generatePricingValues();
-    await db.transaction(async (trx: Knex.Transaction) => {
-      await PricingCostInputsDAO.create(trx, {
-        createdAt: new Date(),
-        deletedAt: null,
-        designId: design.id,
-        expiresAt: null,
-        id: uuid.v4(),
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        minimumOrderQuantity: 1,
-        processes: [
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-        ],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
-      });
-    });
 
     const [postResponse] = await post("/quote-payments", {
       body: {
@@ -620,13 +573,16 @@ test(
 );
 
 test("POST /quote-payments creates shopify products if connected to a storefront", async (t: Test) => {
-  setupStubs();
-
   const createShopifyProductsStub = sandbox()
     .stub(CreateShopifyProducts, "createShopifyProductsForCollection")
     .resolves();
-
-  const { user, session } = await createUser();
+  const {
+    address,
+    user,
+    session,
+    collection,
+    designs: [d1, d2],
+  } = await setup();
   await createStorefront({
     userId: user.id,
     accessToken: "token-foo",
@@ -636,58 +592,16 @@ test("POST /quote-payments creates shopify products if connected to a storefront
   });
   const paymentMethodTokenId = uuid.v4();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await addDesign(collection.id, design.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
   const [postResponse] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
         {
-          designId: design.id,
+          designId: d1.id,
+          units: 300,
+        },
+        {
+          designId: d2.id,
           units: 300,
         },
       ],
@@ -705,13 +619,17 @@ test("POST /quote-payments creates shopify products if connected to a storefront
 });
 
 test("POST /quote-payments still succeeds if creates shopify products fails", async (t: Test) => {
-  setupStubs();
-
   const createShopifyProductsStub = sandbox()
     .stub(CreateShopifyProducts, "createShopifyProductsForCollection")
     .rejects(new Error("Unexpected Error"));
 
-  const { user, session } = await createUser();
+  const {
+    address,
+    user,
+    session,
+    collection,
+    designs: [d1, d2],
+  } = await setup();
   await createStorefront({
     userId: user.id,
     accessToken: "token-foo",
@@ -721,49 +639,16 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
   });
   const paymentMethodTokenId = uuid.v4();
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
-  const design = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-  await addDesign(collection.id, design.id);
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-  });
-
   const [postResponse] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
         {
-          designId: design.id,
+          designId: d1.id,
+          units: 300,
+        },
+        {
+          designId: d2.id,
           units: 300,
         },
       ],
@@ -778,83 +663,12 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
 });
 
 test("POST /quote-payments does not allow parallel requests to succeed", async (t: Test) => {
-  const { user, session } = await createUser();
-
-  setupStubs();
-
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
-  const d1 = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  const d2 = await createDesign({
-    productType: "Another product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await addDesign(collection.id, d1.id);
-  await addDesign(collection.id, d2.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d1.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d2.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "BLANK",
-      productType: "TEESHIRT",
-    });
-  });
+  const {
+    address,
+    session,
+    collection,
+    designs: [d1, d2],
+  } = await setup();
 
   function createRequestOptions() {
     return {
@@ -902,82 +716,12 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
 });
 
 test("POST /quote-payments does not allow consecutive requests to succeed", async (t: Test) => {
-  const { user, session } = await createUser();
-  setupStubs();
-
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
-    createdBy: user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
-  });
-  const d1 = await createDesign({
-    productType: "A product type",
-    title: "A design",
-    userId: user.id,
-  });
-  const d2 = await createDesign({
-    productType: "Another product type",
-    title: "A design",
-    userId: user.id,
-  });
-  await addDesign(collection.id, d1.id);
-  await addDesign(collection.id, d2.id);
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d1.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d2.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "BLANK",
-      productType: "TEESHIRT",
-    });
-  });
+  const {
+    address,
+    session,
+    collection,
+    designs: [d1, d2],
+  } = await setup();
 
   function createRequestOptions() {
     return {

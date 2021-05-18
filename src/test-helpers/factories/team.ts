@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 
 import db from "../../services/db";
@@ -8,17 +9,21 @@ import {
   Role as TeamUserRole,
   TeamUserDb,
 } from "../../components/team-users/types";
+import { PlanDb } from "../../components/plans/types";
+import { generateSubscription } from "./subscription";
 
 export async function generateTeam(
   adminUserId: string,
   teamOptions: Partial<TeamDb> = {},
   teamUserOptions: Partial<
     TeamUserDb & { userId: string; userEmail: null }
-  > = {}
+  > = {},
+  planOptions: Partial<PlanDb> = {},
+  trx?: Knex.Transaction
 ) {
-  const trx = await db.transaction();
+  const transaction = trx || (await db.transaction());
   try {
-    const team = await TeamsDAO.create(trx, {
+    const team = await TeamsDAO.create(transaction, {
       createdAt: new Date(),
       deletedAt: null,
       id: uuid.v4(),
@@ -26,7 +31,7 @@ export async function generateTeam(
       type: TeamType.DESIGNER,
       ...teamOptions,
     });
-    const teamUser = await RawTeamUsersDAO.create(trx, {
+    const teamUser = await RawTeamUsersDAO.create(transaction, {
       id: uuid.v4(),
       role: TeamUserRole.OWNER,
       label: null,
@@ -39,14 +44,24 @@ export async function generateTeam(
       ...teamUserOptions,
     });
 
-    await trx.commit();
+    const { plan, subscription } = await generateSubscription(
+      transaction,
+      { teamId: team.id },
+      planOptions
+    );
+
+    if (!trx) {
+      await transaction.commit();
+    }
 
     return {
       team,
       teamUser,
+      plan,
+      subscription,
     };
   } catch (err) {
-    await trx.rollback();
+    await transaction.rollback();
     throw err;
   }
 }

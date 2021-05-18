@@ -2,26 +2,18 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import db from "../services/db";
-import * as CollectionsDAO from "../components/collections/dao";
 import * as PricingCostInputsDAO from "../components/pricing-cost-inputs/dao";
 import createUser from "./create-user";
 import createDesign from "../services/create-design";
-import { addDesigns } from "../components/collections/dao/design";
-import ProductDesign from "../components/product-designs/domain-objects/product-design";
 import generatePricingValues from "./factories/pricing-values";
 import generatePricingQuote from "../services/generate-pricing-quote";
+import generateCollection from "./factories/collection";
 
 export async function checkout() {
   const designer = await createUser();
   const admin = await createUser({ role: "ADMIN" });
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
+  const { collection } = await generateCollection({
     createdBy: designer.user.id,
-    deletedAt: null,
-    description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
-    title: "Drop 001/The Early Years",
   });
 
   const collectionDesigns = [
@@ -30,24 +22,22 @@ export async function checkout() {
         productType: "A product type",
         title: "Collection Design 1",
         userId: designer.user.id,
+        collectionIds: [collection.id],
       })),
       collectionIds: [collection.id],
-      collections: [{ id: collection.id, title: collection.title! }],
+      collections: [{ id: collection.id, title: collection.title }],
     },
     {
       ...(await createDesign({
         productType: "A product type",
         title: "Collection Design 2",
         userId: designer.user.id,
+        collectionIds: [collection.id],
       })),
       collectionIds: [collection.id],
-      collections: [{ id: collection.id, title: collection.title! }],
+      collections: [{ id: collection.id, title: collection.title }],
     },
   ];
-  await addDesigns({
-    collectionId: collection.id,
-    designIds: collectionDesigns.map((cd: ProductDesign) => cd.id),
-  });
 
   const draftDesigns = [
     await createDesign({

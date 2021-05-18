@@ -43,9 +43,9 @@ test("createDesign service creates a collaborator", async (t: Test) => {
   t.equal(approvalSteps.length, 4, "There are steps on the new design");
 });
 
-test("createDesign creates a collaborator and puts the design into the collection", async (t: Test) => {
+test("createDesign puts the design into the collection", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const { collection } = await generateCollection({});
+  const { collection } = await generateCollection();
 
   sandbox().stub(CreateDesignTasksService, "createDesignTasks");
 
@@ -57,8 +57,11 @@ test("createDesign creates a collaborator and puts the design into the collectio
   });
 
   const collaborators = await CollaboratorsDAO.findByDesign(design.id);
-  t.equal(collaborators.length, 1, "There is a collaborator on the new design");
-  t.equal(collaborators[0].userId, user.id, "The collaborator is the user");
+  t.equal(
+    collaborators.length,
+    0,
+    "no collaborator is made for a team collection design"
+  );
 
   const collections = await CollectionsDAO.findByDesign(design.id);
   t.deepEqual(

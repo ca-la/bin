@@ -180,25 +180,11 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
       },
       trx
     );
-    const { team } = await generateTeam(user.id);
+    const { subscription: active3 } = await generateTeam(user.id);
     const { team: team2, teamUser: teamUser2 } = await generateTeam(user.id);
     await TeamUsersDAO.deleteById(trx, teamUser2.id);
     const { user: user2 } = await createUser({ withSession: false });
     const { team: team3 } = await generateTeam(user2.id);
-
-    const active3 = await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: new Date("3000-01-01"),
-        planId: plan.id,
-        paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: "123",
-        userId: null,
-        teamId: team.id,
-        isPaymentWaived: false,
-      },
-      trx
-    );
 
     // subscription for team2
     // not active since the team2 membership is dropped
@@ -235,9 +221,10 @@ test("SubscriptionsDAO.findActive lists only active subscriptions", async (t: ta
 
     const found = await SubscriptionsDAO.findActive(user.id, trx);
     t.equal(found.length, 3);
-    t.equal(found[0].id, active1.id);
-    t.equal(found[1].id, active2.id);
-    t.equal(found[2].id, active3.id);
+    const ids = found.map(({ id }: { id: string }) => id);
+    t.true(ids.includes(active1.id));
+    t.true(ids.includes(active2.id));
+    t.true(ids.includes(active3.id));
   });
 });
 
@@ -305,81 +292,27 @@ test("SubscriptionsDAO supports updating", async (t: tape.Test) => {
 
 test("findForTeamWithPlans", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
-  const { team } = await generateTeam(user.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await generatePlan(trx, {
-      id: uuid.v4(),
-      billingInterval: BillingInterval.MONTHLY,
-      monthlyCostCents: 4567,
-      costOfGoodsShareBasisPoints: 0,
-      revenueShareBasisPoints: 1200,
-      stripePlanId: "plan_456",
-      title: "Some More",
-      isDefault: true,
-      isPublic: false,
-      ordering: null,
-      description: null,
-      baseCostPerBillingIntervalCents: 4567,
-      perSeatCostPerBillingIntervalCents: 0,
-      canSubmit: true,
-      canCheckOut: true,
-      maximumSeatsPerTeam: null,
-      maximumCollections: null,
-      includesFulfillment: true,
-      upgradeToPlanId: null,
-    });
-
-    const { paymentMethod: pm1 } = await generatePaymentMethod(trx, {
-      userId: user.id,
-      teamId: null,
-    });
-    const subscription = await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: new Date("3000-01-01"),
-        planId: plan.id,
-        paymentMethodId: pm1.id,
-        stripeSubscriptionId: "123",
-        teamId: team.id,
-        userId: null,
-        isPaymentWaived: false,
-      },
-      trx
-    );
-
+    const { team, subscription, plan } = await generateTeam(user.id);
     const subscriptions = await SubscriptionsDAO.findForTeamWithPlans(
       trx,
       team.id
     );
-    t.deepEqual(subscriptions, [
-      {
-        ...subscription,
-        plan,
-      },
-    ]);
+
+    t.deepEqual(subscriptions, [{ ...subscription, plan }]);
   });
 });
 
 test("findActiveByTeamId", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
-  const { team } = await generateTeam(user.id);
+  const { team, subscription: notActive, plan } = await generateTeam(user.id);
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    const plan = await generatePlan(trx, { title: "Team Plan" });
-
     // cancelled subscription
-    await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: new Date("2000-01-01"),
-        planId: plan.id,
-        paymentMethodId: null,
-        stripeSubscriptionId: "123",
-        teamId: team.id,
-        userId: null,
-        isPaymentWaived: false,
-      },
+    await SubscriptionsDAO.update(
+      notActive.id,
+      { cancelledAt: new Date("2000-01-01") },
       trx
     );
 

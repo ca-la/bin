@@ -3,12 +3,6 @@
 const uuid = require("node-uuid");
 
 const ProductDesignsDAO = require("./index");
-const {
-  default: generatePricingQuote,
-} = require("../../../services/generate-pricing-quote");
-const {
-  default: generatePricingValues,
-} = require("../../../test-helpers/factories/pricing-values");
 const CollectionsDAO = require("../../collections/dao");
 const DesignEventsDAO = require("../../design-events/dao");
 const { test } = require("../../../test-helpers/fresh");
@@ -17,6 +11,7 @@ const createDesign = require("../../../services/create-design").default;
 const { moveDesign } = require("../../../test-helpers/collections");
 const { deleteById } = require("../../../test-helpers/designs");
 const db = require("../../../services/db");
+const { checkout } = require("../../../test-helpers/checkout-collection");
 
 test("ProductDesignsDAO.update updates a design", async (t) => {
   const { user } = await createUser({ withSession: false });
@@ -196,38 +191,10 @@ test("ProductDesignsDAO.findAll with needsQuote query", async (t) => {
 });
 
 test("ProductDesignsDAO.findByQuoteId", async (t) => {
-  const { user } = await createUser({ withSession: false });
-  const design = await createDesign({
-    title: "Plain White Tee",
-    productType: "TEESHIRT",
-    userId: user.id,
-  });
-  await generatePricingValues();
-  const quote = await generatePricingQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-    },
-    200
-  );
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
   const retrieved = await db.transaction((trx) =>
     ProductDesignsDAO.findByQuoteId(trx, quote.id)
   );

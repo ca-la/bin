@@ -349,38 +349,18 @@ test("POST /team-users: that we cannot add team users above the restriction (tea
   const { user: teamUser, session: teamUserSession } = await createUser({
     role: "PARTNER",
   });
-  const { team } = await generateTeam(teamUser.id);
-
-  const trx = await db.transaction();
-
-  try {
-    const freeAndDefaultTeamPlan = await generatePlan(trx, {
+  const { team } = await generateTeam(
+    teamUser.id,
+    {},
+    {},
+    {
       title: "Team Plan",
       isDefault: true,
       baseCostPerBillingIntervalCents: 0,
       perSeatCostPerBillingIntervalCents: 0,
       maximumSeatsPerTeam: 2,
-    });
-
-    // Team's subscription
-    await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: null,
-        planId: freeAndDefaultTeamPlan.id,
-        paymentMethodId: null,
-        stripeSubscriptionId: "123",
-        userId: null,
-        teamId: team.id,
-        isPaymentWaived: false,
-      },
-      trx
-    );
-
-    await trx.commit();
-  } catch (e) {
-    await trx.rollback();
-  }
+    }
+  );
 
   // call two simultaneous requests
   const [[r1], [r2]] = await Promise.all([

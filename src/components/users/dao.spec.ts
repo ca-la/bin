@@ -17,6 +17,7 @@ import PartnerPayoutsDAO = require("../../components/partner-payouts/dao");
 import generateCollection from "../../test-helpers/factories/collection";
 import { templateDesignEvent } from "../design-events/types";
 import createDesign from "../../services/create-design";
+import { checkout } from "../../test-helpers/checkout-collection";
 
 const USER_DATA: UserIO = Object.freeze({
   email: "USER@example.com",
@@ -284,14 +285,13 @@ test("UsersDAO.completeSmsPreregistration completes a user", (t: Test) => {
 
 test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) => {
   const { user: partner } = await createUser();
-  const { user: designer } = await createUser();
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: designer.id,
-  });
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
   const { bid } = await createBid({
     designId: design.id,
+    quoteId: quote.id,
     bidOptions: {
       assignee: {
         type: "USER",

@@ -13,6 +13,7 @@ import generateBid from "../../test-helpers/factories/bid";
 import { payOutPartner } from ".";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import createDesign from "../create-design";
+import { checkout } from "../../test-helpers/checkout-collection";
 
 test("payOutPartner", async (t: Test) => {
   const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
@@ -85,15 +86,13 @@ test("payOutPartner requires payout account if payout is not manual", async (t: 
     role: "ADMIN",
     withSession: false,
   });
-  const { user: regularUser } = await createUser({ withSession: false });
-
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
-  });
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
 
   const { bid } = await generateBid({
+    quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
   });
@@ -125,15 +124,17 @@ test("payOutPartner with manual payment", async (t: Test) => {
     role: "ADMIN",
     withSession: false,
   });
-  const { user: regularUser } = await createUser({ withSession: false });
-
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
+  const { user: regularUser } = await createUser({
+    role: "PARTNER",
+    withSession: false,
   });
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
 
   const { bid } = await generateBid({
+    quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
   });
@@ -170,23 +171,18 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
     role: "ADMIN",
     withSession: false,
   });
-  const { user: regularUser } = await createUser({ withSession: false });
   const { user: partnerUser } = await createUser({
     role: "PARTNER",
     withSession: false,
   });
 
-  const { collection } = await generateCollection({
-    createdBy: regularUser.id,
-  });
-  const design = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: regularUser.id,
-    collectionIds: [collection.id],
-  });
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
 
   const { bid } = await generateBid({
+    quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
   });

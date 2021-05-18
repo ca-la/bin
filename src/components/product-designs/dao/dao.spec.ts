@@ -74,6 +74,7 @@ import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
 import ProductDesign = require("../domain-objects/product-design");
+import { checkout } from "../../../test-helpers/checkout-collection";
 
 test("ProductDesignsDAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -1536,16 +1537,17 @@ test("isOwner throws a ResourceNotFoundError if design does not exist", async (t
 });
 
 test("findById attached bidId for partners", async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
+  const {
+    user: { designer },
+    collectionDesigns: [design],
+    quotes: [partnerRemovedQuote],
+  } = await checkout();
   const { user: partner } = await createUser({
     withSession: false,
     role: "PARTNER",
   });
-  const design = await generateDesign({ userId: user.id });
-  const {
-    bid: partnerRemovedBid,
-    quote: partnerRemovedQuote,
-  } = await generateBid({
+  const { bid: partnerRemovedBid } = await generateBid({
+    quoteId: partnerRemovedQuote.id,
     designId: design.id,
     userId: partner.id,
   });
@@ -1558,7 +1560,7 @@ test("findById attached bidId for partners", async (t: tape.Test) => {
     quoteId: partnerRemovedQuote.id,
   });
   await generateDesignEvent({
-    actorId: user.id,
+    actorId: designer.user.id,
     targetId: partner.id,
     designId: design.id,
     type: "REMOVE_PARTNER",
@@ -1599,16 +1601,17 @@ test("findById attached bidId for partners", async (t: tape.Test) => {
 });
 
 test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
+  const {
+    user: { designer },
+    collectionDesigns: [design],
+    quotes: [partnerRemovedQuote],
+  } = await checkout();
   const { user: partner } = await createUser({
     withSession: false,
     role: "PARTNER",
   });
-  const design = await generateDesign({ userId: user.id });
-  const {
-    bid: partnerRemovedBid,
-    quote: partnerRemovedQuote,
-  } = await generateBid({
+  const { bid: partnerRemovedBid } = await generateBid({
+    quoteId: partnerRemovedQuote.id,
     designId: design.id,
     userId: partner.id,
   });
@@ -1629,7 +1632,7 @@ test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.
     quoteId: partnerRemovedQuote.id,
   });
   await generateDesignEvent({
-    actorId: user.id,
+    actorId: designer.user.id,
     targetId: partner.id,
     designId: design.id,
     type: "REMOVE_PARTNER",
@@ -1795,12 +1798,10 @@ test("getTitleAndOwnerByShipmentTracking", async (t: tape.Test) => {
 });
 
 test("findIdByQuoteId", async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-  const design = await generateDesign({ userId: user.id });
-  const { quote } = await generateBid({
-    designId: design.id,
-    userId: user.id,
-  });
+  const {
+    collectionDesigns: [design],
+    quotes: [quote],
+  } = await checkout();
 
   t.equal(
     await db.transaction((trx: Knex.Transaction) =>
@@ -1820,24 +1821,10 @@ test("findIdByQuoteId", async (t: Test) => {
 });
 
 test("findPaidDesigns", async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-  const design0 = await generateDesign({ userId: user.id });
-  const design1 = await generateDesign({ userId: user.id });
-
-  const emptyPaid = await db.transaction((trx: Knex.Transaction) =>
-    findPaidDesigns(trx)
-  );
-
-  t.deepEqual(emptyPaid, [], "returns no paid designs");
-
-  const { quote: quote0 } = await generateBid({
-    designId: design0.id,
-    userId: user.id,
-  });
-  const { quote: quote1 } = await generateBid({
-    designId: design1.id,
-    userId: user.id,
-  });
+  const {
+    collectionDesigns: [design0, design1],
+    quotes: [quote0, quote1],
+  } = await checkout();
 
   await generateDesignEvent({
     createdAt: new Date("2019-04-20"),
@@ -1868,18 +1855,9 @@ test("findPaidDesigns", async (t: Test) => {
 });
 
 test("findPaidDesigns allows filtering by product type", async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
-  const design0 = await generateDesign({ userId: user.id });
-  const design1 = await generateDesign({ userId: user.id });
-
-  const { quote: quote0 } = await generateBid({
-    designId: design0.id,
-    userId: user.id,
-  });
-  const { quote: quote1 } = await generateBid({
-    designId: design1.id,
-    userId: user.id,
-  });
+  const {
+    quotes: [quote0, quote1],
+  } = await checkout();
 
   await generateDesignEvent({
     createdAt: new Date("2019-04-20"),

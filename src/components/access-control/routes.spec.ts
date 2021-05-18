@@ -165,16 +165,15 @@ test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
   const userOne = await createUser();
   const userTwo = await createUser();
 
+  const { collection: collectionOne } = await generateCollection({
+    createdBy: userOne.user.id,
+  });
   const designOne = await createDesign({
     productType: "test",
     title: "design",
     userId: userOne.user.id,
+    collectionIds: [collectionOne.id],
   });
-
-  const { collection: collectionOne } = await generateCollection({
-    createdBy: userOne.user.id,
-  });
-  await addDesign(collectionOne.id, designOne.id);
 
   const [responseOne, bodyOne] = await API.get(
     `${API_PATH}/designs/${designOne.id}`,
@@ -185,7 +184,7 @@ test(`GET ${API_PATH}/designs checks access`, async (t: tape.Test) => {
   t.equal(responseOne.status, 200);
   t.deepEqual(bodyOne, {
     canComment: true,
-    canDelete: false,
+    canDelete: true,
     canEdit: true,
     canEditTitle: true,
     canEditVariants: true,

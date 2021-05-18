@@ -12,6 +12,7 @@ import { checkout } from "../../test-helpers/checkout-collection";
 import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inputs/types";
 import generateBid from "../../test-helpers/factories/bid";
 import createDesign from "../../services/create-design";
+import generateCollection from "../../test-helpers/factories/collection";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -41,9 +42,11 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
   await generatePricingValues();
   const { user, session } = await createUser({ role: "ADMIN" });
 
+  const { collection } = await generateCollection();
   const design = await createDesign({
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
   const uncommittedCostInput: CreatePricingCostInputRequest = {
     designId: design.id,
@@ -135,9 +138,11 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
 test("POST /pricing-quotes/preview fails if there are no pricing values for the request", async (t: Test) => {
   const { user, session } = await createUser({ role: "ADMIN" });
 
+  const { collection } = await generateCollection();
   const design = await createDesign({
     title: "A design",
     userId: user.id,
+    collectionIds: [collection.id],
   });
   const uncommittedCostInput: PricingCostInput = {
     createdAt: new Date(),
