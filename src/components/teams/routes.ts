@@ -302,7 +302,10 @@ export default {
         useTransaction,
         requireAuth,
         typeGuardFromSchema(teamSubscriptionUpgradeSchema),
-        requireTeamRoles([TeamUserRole.OWNER], findTeamById),
+        requireTeamRoles(
+          [TeamUserRole.EDITOR, TeamUserRole.ADMIN, TeamUserRole.OWNER],
+          findTeamById
+        ),
         upgradeTeamSubscriptionRouteHandler,
       ],
     },

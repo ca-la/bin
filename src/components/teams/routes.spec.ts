@@ -632,7 +632,7 @@ const teamSubscriptionPathTestCases: TeamSubscriptionPatchTestCase[] = [
   },
   {
     title:
-      "PATCH /teams/:id/subscription forbidden for regular user not a team OWNER",
+      "PATCH /teams/:id/subscription forbidden for regular user not a team member",
     userRole: "USER",
     findTeamUserStub: null,
     upgradeTeamSubscriptionStub: null,
@@ -656,27 +656,37 @@ const teamSubscriptionPathTestCases: TeamSubscriptionPatchTestCase[] = [
   },
   {
     title:
-      "PATCH /teams/:id/subscription forbidden for a team user with EDITOR role",
+      "PATCH /teams/:id/subscription response successfully for a team user with EDITOR role",
     userRole: "USER",
     findTeamUserStub: { role: TeamUserRole.EDITOR },
-    upgradeTeamSubscriptionStub: null,
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
     requestBody: {
       planId: "plan-id",
       stripeCardToken: "a-stripe-card-token",
     },
-    responseStatus: 403,
+    responseStatus: 200,
+    responseBody: {
+      id: "a-subscription-id",
+    },
   },
   {
     title:
-      "PATCH /teams/:id/subscription forbidden for a team user with ADMIN role",
+      "PATCH /teams/:id/subscription response successfully for a team user with EDITOR role",
     userRole: "USER",
     findTeamUserStub: { role: TeamUserRole.ADMIN },
-    upgradeTeamSubscriptionStub: null,
+    upgradeTeamSubscriptionStub: {
+      id: "a-subscription-id",
+    },
     requestBody: {
       planId: "plan-id",
       stripeCardToken: "a-stripe-card-token",
     },
-    responseStatus: 403,
+    responseStatus: 200,
+    responseBody: {
+      id: "a-subscription-id",
+    },
   },
   {
     title:
