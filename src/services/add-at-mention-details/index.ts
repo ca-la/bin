@@ -131,7 +131,9 @@ export async function getThreadUserIdsFromCommentThread(
   trx: Knex.Transaction,
   parentCommentId: string
 ): Promise<string[]> {
-  const parentComment = await CommentsDAO.findById(parentCommentId);
+  const parentComment = await CommentsDAO.findById(parentCommentId, trx, {
+    includeDeletedParents: true,
+  });
   if (!parentComment) {
     throw new Error(`Could not find comment ${parentCommentId}`);
   }

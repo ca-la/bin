@@ -56,6 +56,7 @@ export const UPDATABLE_COLUMNS = ["is_pinned", "text"];
 export const INSERTABLE_COLUMNS = [
   "id",
   "created_at",
+  "deleted_at",
   "is_pinned",
   "parent_comment_id",
   "text",

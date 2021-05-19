@@ -39,17 +39,47 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
   );
 
   const { comment, createdBy: commenter } = await generateComment();
-  await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepCommentDAO.create(trx, {
+  const { comment: deletedComment } = await generateComment({
+    deletedAt: new Date(2012, 10, 8),
+    userId: commenter.id,
+  });
+  const { comment: reply } = await generateComment({
+    userId: commenter.id,
+    parentCommentId: deletedComment.id,
+  });
+  const { comment: deletedWithoutReplies } = await generateComment({
+    deletedAt: new Date(2012, 10, 8),
+    userId: commenter.id,
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await ApprovalStepCommentDAO.create(trx, {
       commentId: comment.id,
       approvalStepId: approvalStep.id,
-    })
-  );
+    });
+    await ApprovalStepCommentDAO.create(trx, {
+      commentId: deletedComment.id,
+      approvalStepId: approvalStep.id,
+    });
+    await ApprovalStepCommentDAO.create(trx, {
+      commentId: reply.id,
+      approvalStepId: approvalStep.id,
+    });
+    await ApprovalStepCommentDAO.create(trx, {
+      commentId: deletedWithoutReplies.id,
+      approvalStepId: approvalStep.id,
+    });
+  });
 
   const found = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepCommentDAO.findByStepId(trx, approvalStep.id)
   );
 
-  t.equal(found.length, 1, "comments are returned");
+  t.equal(found.length, 3, "comments are returned");
   t.equal(found[0].userId, commenter.id);
+  t.deepEqual(
+    found,
+    [comment, deletedComment, reply],
+    "returned expected comments (with deleted with replies and without deleted comment without replies)"
+  );
 });

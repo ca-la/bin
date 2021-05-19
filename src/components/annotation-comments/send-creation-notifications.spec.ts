@@ -4,6 +4,7 @@ import Knex from "knex";
 import Sinon from "sinon";
 
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
+import * as CommentsDAO from "../../components/comments/dao";
 import Annotation from "../../components/product-design-canvas-annotations/domain-object";
 import Collaborator from "../../components/collaborators/types";
 import CollectionDb from "../../components/collections/domain-object";
@@ -185,6 +186,21 @@ test("sendCreationNotifications sends notifications to parent of thread and its 
   t.equal(replyStub.callCount, 2, "Creates a reply notification");
   replyStub.reset();
 
+  await CommentsDAO.deleteById(parentComment.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: comment1.userId,
+      annotationId: annotation.id,
+      comment: comment1,
+    });
+  });
+  t.equal(
+    replyStub.callCount,
+    2,
+    "Creates a reply notification even if the parent comment is deleted"
+  );
+  replyStub.reset();
+
   const { comment: comment2 } = await generateComment({
     createdAt: new Date(),
     deletedAt: null,
@@ -255,6 +271,21 @@ test("sendCreationNotifications sends a notification to @mentioned users in a re
   );
 
   t.equal(replyStub.callCount, 2, "Creates a reply notification");
+  replyStub.reset();
+
+  await CommentsDAO.deleteById(parentComment.id);
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await sendCreationNotifications(trx, {
+      actorUserId: comment1.userId,
+      annotationId: annotation.id,
+      comment: comment1,
+    });
+  });
+  t.equal(
+    replyStub.callCount,
+    2,
+    "Creates a reply notification even if the parent comment is deleted"
+  );
   replyStub.reset();
 
   const { comment: comment2 } = await generateComment({

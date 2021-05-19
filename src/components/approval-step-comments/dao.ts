@@ -42,7 +42,9 @@ export async function findByStepId(
   ktx: Knex,
   stepId: string
 ): Promise<Comment[]> {
-  const comments: CommentRow[] = await queryComments(ktx)
+  const comments: CommentRow[] = await queryComments(ktx, {
+    includeDeletedParents: true,
+  })
     .join(
       "design_approval_step_comments",
       "design_approval_step_comments.comment_id",

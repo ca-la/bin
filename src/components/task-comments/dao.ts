@@ -46,7 +46,9 @@ export async function findByTaskId(
   taskId: string,
   trx?: Knex.Transaction
 ): Promise<Comment[]> {
-  const comments: CommentRow[] = await queryComments(trx)
+  const comments: CommentRow[] = await queryComments(trx, {
+    includeDeletedParents: true,
+  })
     .join("task_comments", "task_comments.comment_id", "comments.id")
     .leftJoin(
       "product_design_stage_tasks AS pdst",

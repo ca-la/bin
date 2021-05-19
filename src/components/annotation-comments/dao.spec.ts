@@ -4,10 +4,7 @@ import Knex from "knex";
 
 import { test } from "../../test-helpers/fresh";
 import { create as createAnnotation } from "../product-design-canvas-annotations/dao";
-import {
-  create as createComment,
-  deleteById as deleteComment,
-} from "../comments/dao";
+import { deleteById as deleteComment } from "../comments/dao";
 import { create, findByAnnotationId, findByAnnotationIds } from "./dao";
 import createUser from "../../test-helpers/create-user";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
@@ -46,24 +43,36 @@ test("ProductDesignCanvasAnnotationComment DAO supports creation/retrieval", asy
     x: 20,
     y: 10,
   });
-  const comment1 = await createComment({
-    createdAt: now,
-    deletedAt: null,
-    id: uuid.v4(),
-    isPinned: false,
-    parentCommentId: null,
+  const { comment: comment1 } = await generateComment({
+    createdAt: new Date(2010, 2, 1),
     text: "A comment",
     userId: user.id,
   });
-  const comment2 = await createComment({
-    createdAt: yesterday,
-    deletedAt: null,
-    id: uuid.v4(),
-    isPinned: false,
-    parentCommentId: null,
+  const { comment: comment2 } = await generateComment({
+    createdAt: new Date(2011, 2, 1),
     text: "A comment",
     userId: user.id,
   });
+  const { comment: deletedComment } = await generateComment({
+    createdAt: new Date(2012, 2, 1),
+    deletedAt: new Date(2012, 3, 1),
+    text: "A deleted comment",
+    userId: user.id,
+  });
+  const { comment: reply } = await generateComment({
+    createdAt: new Date(2013, 2, 1),
+    parentCommentId: deletedComment.id,
+    text: "A reply to deleted comment",
+    userId: user.id,
+  });
+
+  const { comment: deletedWithoutReplies } = await generateComment({
+    createdAt: new Date(2014, 2, 1),
+    deletedAt: new Date(2014, 3, 1),
+    text: "A deleted comment without replies",
+    userId: user.id,
+  });
+
   await create({
     annotationId: annotation.id,
     commentId: comment1.id,
@@ -72,17 +81,37 @@ test("ProductDesignCanvasAnnotationComment DAO supports creation/retrieval", asy
     annotationId: annotation.id,
     commentId: comment2.id,
   });
+  await create({
+    annotationId: annotation.id,
+    commentId: deletedComment.id,
+  });
+  await create({
+    annotationId: annotation.id,
+    commentId: reply.id,
+  });
+  await create({
+    annotationId: annotation.id,
+    commentId: deletedWithoutReplies.id,
+  });
 
   const result = await findByAnnotationId(annotation.id);
   t.deepEqual(
     result,
     [
       {
+        ...comment1,
+        annotationId: annotation.id,
+      },
+      {
         ...comment2,
         annotationId: annotation.id,
       },
       {
-        ...comment1,
+        ...deletedComment,
+        annotationId: annotation.id,
+      },
+      {
+        ...reply,
         annotationId: annotation.id,
       },
     ],

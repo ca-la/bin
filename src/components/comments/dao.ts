@@ -13,8 +13,19 @@ import Comment, { CommentRow, BaseComment } from "./types";
 
 const TABLE_NAME = "comments";
 
-export function queryComments(ktx: Knex = db): Knex.QueryBuilder {
-  return ktx(TABLE_NAME)
+export interface CommentQueryOptions {
+  includeDeletedParents?: boolean;
+  excludeDeletedAt?: boolean;
+}
+
+export function queryComments(
+  ktx: Knex = db,
+  options: CommentQueryOptions = {
+    includeDeletedParents: false,
+    excludeDeletedAt: true,
+  }
+): Knex.QueryBuilder {
+  const query = ktx(TABLE_NAME)
     .select([
       "comments.*",
       { user_name: "users.name" },
@@ -35,21 +46,39 @@ export function queryComments(ktx: Knex = db): Knex.QueryBuilder {
       "comments.id"
     )
     .leftJoin("assets", "assets.id", "comment_attachments.asset_id")
-    .where({ "comments.deleted_at": null })
     .groupBy("comments.id", "users.name", "users.email", "users.role")
     .orderBy("created_at", "asc");
+
+  if (options.includeDeletedParents) {
+    query.whereRaw(`
+(
+  (comments.deleted_at IS null) OR (
+    comments.deleted_at IS NOT null and EXISTS (
+      SELECT 1 FROM comments AS reply_comments
+      WHERE reply_comments.parent_comment_id = comments.id AND reply_comments.deleted_at IS null
+    )
+  )
+)
+    `);
+  } else if (options.excludeDeletedAt) {
+    query.where({ "comments.deleted_at": null });
+  }
+
+  return query;
 }
 
 export function queryById(
   id: string,
-  trx?: Knex.Transaction
+  trx?: Knex.Transaction,
+  options?: CommentQueryOptions
 ): Knex.QueryBuilder {
-  return queryComments(trx).where({ "comments.id": id }).first();
+  return queryComments(trx, options).where({ "comments.id": id }).first();
 }
 
 export async function create(
   data: BaseComment,
-  trx?: Knex.Transaction
+  trx?: Knex.Transaction,
+  options?: CommentQueryOptions
 ): Promise<Comment> {
   const rowDataForInsertion = pick(
     baseDataAdapter.forInsertion(data),
@@ -62,7 +91,11 @@ export async function create(
         query.transacting(trx);
       }
     });
-  const comment: CommentRow | undefined = await queryById(data.id, trx);
+  const comment: CommentRow | undefined = await queryById(
+    data.id,
+    trx,
+    options
+  );
 
   if (!comment) {
     throw new Error("There was a problem saving the comment");
@@ -78,9 +111,10 @@ export async function create(
 
 export async function findById(
   id: string,
-  trx?: Knex.Transaction
+  trx?: Knex.Transaction,
+  options?: CommentQueryOptions
 ): Promise<Comment | null> {
-  const comment: CommentRow | undefined = await queryById(id, trx);
+  const comment: CommentRow | undefined = await queryById(id, trx, options);
 
   if (!comment) {
     return null;

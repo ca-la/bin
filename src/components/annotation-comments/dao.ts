@@ -50,7 +50,9 @@ export async function findByAnnotationId(
   annotationId: string,
   ktx?: Knex
 ): Promise<CommentWithMeta[]> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx)
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx, {
+    includeDeletedParents: true,
+  })
     .where({
       annotation_id: annotationId,
     })
@@ -72,7 +74,9 @@ export async function findByAnnotationIds(
   ktx: Knex,
   annotationIds: string[]
 ): Promise<AnnotationToCommentsWithMentions> {
-  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx)
+  const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx, {
+    includeDeletedParents: true,
+  })
     .whereIn("annotation_id", annotationIds)
     .orderBy("created_at", "asc")
     .groupBy("ac.annotation_id");

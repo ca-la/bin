@@ -6,6 +6,7 @@ import { test } from "../../test-helpers/fresh";
 import { create, deleteById, findById, update } from "./dao";
 import createUser from "../../test-helpers/create-user";
 import generateAsset from "../../test-helpers/factories/asset";
+import generateComment from "../../test-helpers/factories/comment";
 import * as CommentAttachmentDAO from "../comment-attachments/dao";
 import db from "../../services/db";
 
@@ -24,6 +25,117 @@ test("Comment DAO supports creation/retrieval", async (t: tape.Test) => {
 
   const result = await findById(comment.id);
   t.deepEqual(result, comment, "Inserted comment matches found");
+});
+
+test("Comment DAO returns deleted comments those have replies", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const deletedComment = await generateComment({
+    createdAt: new Date(2012, 10, 2),
+    deletedAt: new Date(2013, 10, 2),
+    parentCommentId: null,
+    text: "A deleted comment",
+    userId: user.id,
+  });
+
+  const reply = await generateComment({
+    createdAt: new Date(2012, 10, 2),
+    deletedAt: null,
+    parentCommentId: deletedComment.comment.id,
+    text: "A reply to deleted comment",
+    userId: user.id,
+  });
+
+  const noResult = await findById(deletedComment.comment.id);
+  t.equal(noResult, null, "Cannot find deleted comment by default");
+
+  const deletedFound = await db.transaction(async (trx: Knex.Transaction) => {
+    return findById(deletedComment.comment.id, trx, {
+      includeDeletedParents: true,
+    });
+  });
+  t.deepEqual(
+    deletedFound,
+    deletedComment.comment,
+    "can find deleted comment which has replies"
+  );
+
+  const replyFound = await db.transaction(async (trx: Knex.Transaction) => {
+    return findById(reply.comment.id, trx, {
+      includeDeletedParents: true,
+    });
+  });
+  t.deepEqual(
+    replyFound,
+    reply.comment,
+    "can find not deleted reply with includeDeletedParents option"
+  );
+});
+
+test("Comment DAO doesn't returns deleted comment those replies are deleted", async (t: tape.Test) => {
+  const { user } = await createUser({ withSession: false });
+
+  const deletedComment = await generateComment({
+    createdAt: new Date(2012, 10, 2),
+    deletedAt: new Date(2013, 10, 2),
+    parentCommentId: null,
+    text: "A deleted comment",
+    userId: user.id,
+  });
+
+  const reply = await generateComment({
+    createdAt: new Date(2012, 10, 2),
+    deletedAt: new Date(2013, 10, 2),
+    parentCommentId: deletedComment.comment.id,
+    text: "A reply to deleted comment",
+    userId: user.id,
+  });
+
+  const reply2 = await generateComment({
+    createdAt: new Date(2012, 10, 2),
+    deletedAt: new Date(2013, 10, 2),
+    parentCommentId: deletedComment.comment.id,
+    text: "A reply to deleted comment",
+    userId: user.id,
+  });
+
+  const noResult = await findById(deletedComment.comment.id);
+  t.equal(noResult, null, "Cannot find deleted comment by default");
+
+  const deletedNotFound = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      return findById(deletedComment.comment.id, trx, {
+        includeDeletedParents: true,
+      });
+    }
+  );
+  t.equal(
+    deletedNotFound,
+    null,
+    "cannot find deleted comment which has deleted replies"
+  );
+
+  const reply1NotFound = await db.transaction(async (trx: Knex.Transaction) => {
+    return findById(reply.comment.id, trx, {
+      includeDeletedParents: true,
+    });
+  });
+  t.equal(
+    reply1NotFound,
+    null,
+    "can not find deleted reply with includeDeletedParents option"
+  );
+
+  const reply2NotFound = await db.transaction(async (trx: Knex.Transaction) => {
+    return findById(reply2.comment.id, trx, {
+      includeDeletedParents: true,
+    });
+  });
+  t.equal(
+    reply2NotFound,
+    null,
+    "can not find deleted reply with includeDeletedParents option"
+  );
 });
 
 test("Comment DAO supports retrieval with attachments", async (t: tape.Test) => {
