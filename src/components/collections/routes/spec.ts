@@ -334,6 +334,42 @@ test("PATCH /collections/:collectionId request with not expected fields are allo
   );
 });
 
+test("PATCH /collections/:collectionId request with title as an empty string is not allowed", async (t: tape.Test) => {
+  const updateCollectionStub = sandbox()
+    .stub(CollectionsDAO, "update")
+    .returns({});
+  const { session, user } = await createUser();
+  const { team } = await generateTeam(user.id);
+  const body = {
+    createdAt: new Date(),
+    createdBy: user.id,
+    deletedAt: null,
+    description: "Initial commit",
+    id: uuid.v4(),
+    title: "Drop 001/The Early Years",
+    teamId: team.id,
+  };
+
+  const postResponse = await API.post("/collections", {
+    headers: API.authHeader(session.id),
+    body,
+  });
+
+  const updateBody = {
+    title: "",
+  };
+  const updateResponse = await API.patch(`/collections/${postResponse[1].id}`, {
+    body: updateBody,
+    headers: API.authHeader(session.id),
+  });
+  t.equal(
+    updateResponse[0].status,
+    400,
+    "PATCH request doesn't allow title as empty string"
+  );
+  t.equal(updateCollectionStub.callCount, 0);
+});
+
 test("PATCH /collections/:collectionId doesn't allow move collection to another team when the collection limit exceeded", async (t: tape.Test) => {
   const { session, user } = await createUser();
   const { team } = await generateTeam(user.id);

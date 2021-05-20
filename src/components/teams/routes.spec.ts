@@ -446,6 +446,17 @@ test("PATCH /teams/:id as ADMIN", async (t: Test) => {
   t.deepEqual(updateStub.args[0][2], { type: "PARTNER" });
 });
 
+test("PATCH /teams/:id doesn't accept empty title", async (t: Test) => {
+  const { updateStub } = setup({ role: "ADMIN" });
+
+  const [response] = await patch("/teams/a-team-id", {
+    headers: authHeader("a-session-id"),
+    body: { title: "" },
+  });
+  t.equal(response.status, 400, "cannot update title with empty string");
+  t.equal(updateStub.callCount, 0);
+});
+
 test("DELETE /teams/:id as random USER", async (t: Test) => {
   const { deleteStub } = setup();
 

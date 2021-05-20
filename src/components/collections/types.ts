@@ -58,7 +58,7 @@ export type CollectionSubmissionStatus = z.infer<
 export const collectionUpdateSchema = z
   .object({
     description: z.string().nullable(),
-    title: z.string().nullable(),
+    title: z.string().min(1).nullable(),
     teamId: z.string(),
   })
   .partial();

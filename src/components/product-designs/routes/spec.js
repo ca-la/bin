@@ -120,6 +120,25 @@ test("PATCH /product-designs/:id allows admins to update a wider range of keys",
     });
 });
 
+test("PATCH /product-designs/:id doesn't allow to provide title as empty string", async (t) => {
+  const { user, session } = await createUser({ role: "ADMIN" });
+
+  const design = await createDesign({
+    userId: user.id,
+    title: "Thing One",
+  });
+
+  const [response, body] = await patch(`/product-designs/${design.id}`, {
+    headers: authHeader(session.id),
+    body: {
+      title: "",
+    },
+  });
+
+  t.equal(response.status, 400, "empty title is not allowed");
+  t.equal(body.message, "Design title cannot be an empty string");
+});
+
 test("GET /product-designs allows searching", async (t) => {
   sandbox().stub(EmailService, "enqueueSend").returns(Promise.resolve());
 

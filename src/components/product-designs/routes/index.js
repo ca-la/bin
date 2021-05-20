@@ -285,6 +285,10 @@ function* updateDesign() {
     : ALLOWED_DESIGN_PARAMS;
   const data = pick(this.request.body, allowedParams);
 
+  if (data && data.title === "") {
+    this.throw(400, "Design title cannot be an empty string");
+  }
+
   let updated = yield ProductDesignsDAO.update(designId, data).catch(
     filterError(InvalidDataError, (err) => this.throw(400, err))
   );

@@ -9,7 +9,7 @@ export const teamTypeSchema = z.nativeEnum(TeamType);
 
 export const teamDbSchema = z.object({
   id: z.string(),
-  title: z.string(),
+  title: z.string().min(1),
   createdAt: z.date(),
   deletedAt: z.date().nullable(),
   type: teamTypeSchema,
