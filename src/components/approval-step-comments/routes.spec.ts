@@ -18,37 +18,44 @@ import * as AnnounceCommentService from "../iris/messages/approval-step-comment"
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import { SerializedCreateCommentWithResources } from "../comments/types";
 
-test("POST /design-approval-step-comments/:stepId creates a comment", async (t: tape.Test) => {
+test("POST /design-approval-step-comments/:stepId can create a comment by team member or non-PREVIEW collaborator or admin admin", async (t: tape.Test) => {
   sandbox()
     .stub(CreateNotifications, "sendApprovalStepCommentMentionNotification")
     .resolves();
   sandbox()
     .stub(AnnounceCommentService, "announceApprovalStepCommentCreation")
     .resolves({});
+
   const { session, user } = await createUser({});
+  const { session: previewerSession, user: previewer } = await createUser({});
+  const { session: editorSession, user: editor } = await createUser({});
+  const { session: anotherSession } = await createUser({});
+  const { session: adminSession } = await createUser({
+    role: "ADMIN",
+  });
 
   const design: ProductDesign = await generateDesign({
     id: "d1",
     userId: user.id,
   });
-  const approvalStep: ApprovalStep = {
-    state: ApprovalStepState.UNSTARTED,
-    id: uuid.v4(),
-    title: "Checkout",
-    ordering: 0,
+  generateCollaborator({
+    collectionId: null,
     designId: design.id,
-    reason: null,
-    type: ApprovalStepType.CHECKOUT,
-    collaboratorId: null,
-    teamUserId: null,
-    createdAt: new Date(),
-    startedAt: null,
-    completedAt: null,
-    dueAt: null,
-  };
-  await db.transaction((trx: Knex.Transaction) =>
-    ApprovalStepsDAO.createAll(trx, [approvalStep])
-  );
+    invitationMessage: null,
+    role: "PREVIEW",
+    userEmail: null,
+    userId: previewer.id,
+  });
+  generateCollaborator({
+    collectionId: null,
+    designId: design.id,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: editor.id,
+  });
+
+  const [approvalStep] = await ApprovalStepsDAO.findByDesign(db, design.id);
 
   const comment: SerializedCreateCommentWithResources = {
     createdAt: new Date().toISOString(),
@@ -69,11 +76,47 @@ test("POST /design-approval-step-comments/:stepId creates a comment", async (t: 
     `/design-approval-step-comments/${approvalStep.id}`,
     {
       headers: authHeader(session.id),
+      body: { ...comment, id: uuid.v4() },
+    }
+  );
+  t.equal(response.status, 201, "Works for user created design");
+  t.equal(body.userId, user.id);
+
+  const [adminResponse] = await post(
+    `/design-approval-step-comments/${approvalStep.id}`,
+    {
+      headers: authHeader(adminSession.id),
+      body: { ...comment, id: uuid.v4() },
+    }
+  );
+  t.equal(adminResponse.status, 201, "Works for CALA admins");
+
+  const [editorResponse] = await post(
+    `/design-approval-step-comments/${approvalStep.id}`,
+    {
+      headers: authHeader(editorSession.id),
+      body: { ...comment, id: uuid.v4() },
+    }
+  );
+  t.equal(editorResponse.status, 201, "Works for EDIT collaborators");
+
+  const [previewerResponse] = await post(
+    `/design-approval-step-comments/${approvalStep.id}`,
+    {
+      headers: authHeader(previewerSession.id),
+      body: { ...comment, id: uuid.v4() },
+    }
+  );
+  t.equal(previewerResponse.status, 403, "Fails for PREVIEW collaborators");
+
+  const [forbiddenResponse] = await post(
+    `/design-approval-step-comments/${approvalStep.id}`,
+    {
+      headers: authHeader(anotherSession.id),
       body: comment,
     }
   );
-  t.equal(response.status, 201, "Successfully returns");
-  t.equal(body.userId, user.id);
+  t.equal(forbiddenResponse.status, 403, "Fails for arbitrary users");
 });
 
 test("POST /design-approval-step-comments/:stepId sends @mention notifications", async (t: tape.Test) => {

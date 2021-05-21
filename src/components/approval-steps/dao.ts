@@ -1,4 +1,4 @@
-import { Transaction } from "knex";
+import Knex, { Transaction } from "knex";
 import { buildDao } from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
 import ApprovalStep, { ApprovalStepRow, approvalStepDomain } from "./types";
@@ -32,11 +32,8 @@ const dao = {
       .first()
       .then((candidate: any) => adapter.fromDb(candidate));
   },
-  async findByDesign(
-    trx: Transaction,
-    designId: string
-  ): Promise<ApprovalStep[]> {
-    return dao.find(trx, { designId });
+  async findByDesign(ktx: Knex, designId: string): Promise<ApprovalStep[]> {
+    return dao.find(ktx, { designId });
   },
 };
 

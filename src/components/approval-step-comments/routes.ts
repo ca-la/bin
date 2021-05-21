@@ -2,12 +2,19 @@ import Router from "koa-router";
 
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import * as ApprovalStepCommentDAO from "./dao";
+import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as NotificationsService from "../../services/create-notifications";
 import requireAuth from "../../middleware/require-auth";
 import {
   getCollaboratorsFromCommentMentions,
   getThreadUserIdsFromCommentThread,
 } from "../../services/add-at-mention-details";
+import {
+  attachDesignPermissions,
+  canCommentOnDesign,
+} from "../../middleware/can-access-design";
+import { Permissions } from "../permissions/types";
+
 import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import useTransaction, {
   TransactionState,
@@ -29,9 +36,26 @@ const router = new Router();
 
 interface CreateCommentContext extends StrictContext<CommentWithResources> {
   state: AuthedState &
-    TransactionState &
-    SafeBodyState<CreateCommentWithResources>;
+    TransactionState & { permissions?: Permissions } & SafeBodyState<
+      CreateCommentWithResources
+    >;
   params: { approvalStepId: string };
+}
+
+function* attachPermissions(
+  this: CreateCommentContext,
+  next: any
+): Iterator<any, any, any> {
+  const { trx } = this.state;
+  const { approvalStepId } = this.params;
+
+  const step = yield ApprovalStepsDAO.findById(trx, approvalStepId);
+  if (!step) {
+    this.throw(404, `Step ${approvalStepId} not found`);
+  }
+  yield attachDesignPermissions.call(this, step.designId);
+
+  yield next;
 }
 
 async function createApprovalStepComment(ctx: CreateCommentContext) {
@@ -104,6 +128,8 @@ router.post(
     createCommentWithResourcesSchema
   ),
   useTransaction,
+  attachPermissions,
+  canCommentOnDesign,
   convert.back(createApprovalStepComment)
 );
 
