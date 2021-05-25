@@ -14,7 +14,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, "Design ID required");
 
-  yield attachDesignPermissions.call(this, designId);
+  yield attachDesignPermissions(this, designId);
 
   const updates = yield ProductDesignStatusUpdatesDAO.findByDesign(designId);
   this.body = updates;

@@ -25,7 +25,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, "Design ID required");
 
-  yield attachDesignPermissions.call(this, designId);
+  yield attachDesignPermissions(this, designId);
 
   const comments = yield ProductDesignCommentsDAO.findByDesign(designId);
   const commentsWithUsers = yield Promise.all(comments.map(attachUser));
@@ -78,7 +78,7 @@ function* create() {
   const section = yield ProductDesignSectionsDAO.findById(sectionId);
   this.assert(section, 400, "Invalid section ID");
 
-  yield attachDesignPermissions.call(this, section.designId);
+  yield attachDesignPermissions(this, section.designId);
 
   const created = yield ProductDesignCommentsDAO.create({
     parentCommentId,

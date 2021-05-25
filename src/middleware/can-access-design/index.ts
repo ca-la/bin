@@ -12,18 +12,18 @@ import filterError = require("../../services/filter-error");
 import { requireQueryParam } from "../require-query-param";
 import { findById } from "../../components/product-designs/dao";
 
-export function* attachDesignPermissions(
-  this: Koa.Context,
+export async function attachDesignPermissions(
+  ctx: Koa.Context,
   designId: string
-): any {
-  const { role, userId } = this.state;
-  this.state.permissions = yield getDesignPermissions({
+) {
+  const { role, userId } = ctx.state;
+  ctx.state.permissions = await getDesignPermissions({
     designId,
     sessionRole: role,
     sessionUserId: userId,
   }).catch(
     filterError(ResourceNotFoundError, () => {
-      this.throw(404, "Design not found");
+      ctx.throw(404, "Design not found");
     })
   );
 }
@@ -100,7 +100,7 @@ export function* canAccessDesignInState(
   this.state.design = yield findById(this.state.designId);
 
   this.assert(this.state.design, 404, `Design not found`);
-  yield attachDesignPermissions.call(this, this.state.designId);
+  yield attachDesignPermissions(this, this.state.designId);
 
   const { permissions } = this.state;
   this.assert(

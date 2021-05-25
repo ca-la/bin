@@ -21,6 +21,12 @@ import {
   SafeBodyState,
   typeGuardFromSchema,
 } from "../../middleware/type-guard";
+import {
+  attachDesignPermissions,
+  canCommentOnDesign,
+} from "../../middleware/can-access-design";
+import * as AnnotationsDAO from "../product-design-canvas-annotations/dao";
+import * as CanvasesDAO from "../canvases/dao";
 
 const router = new Router();
 
@@ -29,6 +35,25 @@ interface CreateCommentContext extends StrictContext<CommentWithResources> {
     TransactionState &
     SafeBodyState<CreateCommentWithResources>;
   params: { annotationId: string };
+}
+
+async function attachPermissions(ctx: CreateCommentContext, next: any) {
+  const { trx } = ctx.state;
+  const { annotationId } = ctx.params;
+
+  const annotation = await AnnotationsDAO.findById(annotationId);
+  if (!annotation) {
+    ctx.throw(404, `Annotation ${annotationId} not found`);
+  }
+
+  const canvas = await CanvasesDAO.findById(annotation.canvasId, trx);
+  if (!canvas) {
+    ctx.throw(404, `Canvas ${annotation.canvasId} not found`);
+  }
+
+  await attachDesignPermissions(ctx, canvas.designId);
+
+  return next();
 }
 
 async function createAnnotationComment(ctx: CreateCommentContext) {
@@ -77,6 +102,8 @@ router.put(
     createCommentWithResourcesSchema
   ),
   useTransaction,
+  convert.back(attachPermissions),
+  canCommentOnDesign,
   convert.back(createAnnotationComment)
 );
 

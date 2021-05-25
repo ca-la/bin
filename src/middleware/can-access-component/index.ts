@@ -46,7 +46,7 @@ export function* canViewComponentInQueryParam(
     throw new Error(`Component ${componentId} has no canvas!`);
   }
 
-  yield attachDesignPermissions.call(this, rootCanvas.designId);
+  yield attachDesignPermissions(this, rootCanvas.designId);
   const { permissions } = this.state;
 
   this.assert(
@@ -68,9 +68,9 @@ export function* canEditComponentsInBody(
     targetComponentId
   );
 
-  yield attachDesignPermissions.call(this, sourceCanvas.designId);
+  yield attachDesignPermissions(this, sourceCanvas.designId);
   const { permissions: sourcePermissions } = this.state;
-  yield attachDesignPermissions.call(this, targetCanvas.designId);
+  yield attachDesignPermissions(this, targetCanvas.designId);
   const { permissions: targetPermissions } = this.state;
 
   this.assert(
@@ -102,9 +102,9 @@ export function* canEditComponentsInRelationshipParam(
     relationship.targetComponentId
   );
 
-  yield attachDesignPermissions.call(this, sourceCanvas.designId);
+  yield attachDesignPermissions(this, sourceCanvas.designId);
   const { permissions: sourcePermissions } = this.state;
-  yield attachDesignPermissions.call(this, targetCanvas.designId);
+  yield attachDesignPermissions(this, targetCanvas.designId);
   const { permissions: targetPermissions } = this.state;
 
   this.assert(

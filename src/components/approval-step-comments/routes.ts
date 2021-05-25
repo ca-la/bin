@@ -42,20 +42,17 @@ interface CreateCommentContext extends StrictContext<CommentWithResources> {
   params: { approvalStepId: string };
 }
 
-function* attachPermissions(
-  this: CreateCommentContext,
-  next: any
-): Iterator<any, any, any> {
-  const { trx } = this.state;
-  const { approvalStepId } = this.params;
+async function attachPermissions(ctx: CreateCommentContext, next: any) {
+  const { trx } = ctx.state;
+  const { approvalStepId } = ctx.params;
 
-  const step = yield ApprovalStepsDAO.findById(trx, approvalStepId);
+  const step = await ApprovalStepsDAO.findById(trx, approvalStepId);
   if (!step) {
-    this.throw(404, `Step ${approvalStepId} not found`);
+    ctx.throw(404, `Step ${approvalStepId} not found`);
   }
-  yield attachDesignPermissions.call(this, step.designId);
+  await attachDesignPermissions(ctx, step.designId);
 
-  yield next;
+  return next();
 }
 
 async function createApprovalStepComment(ctx: CreateCommentContext) {
@@ -128,7 +125,7 @@ router.post(
     createCommentWithResourcesSchema
   ),
   useTransaction,
-  attachPermissions,
+  convert.back(attachPermissions),
   canCommentOnDesign,
   convert.back(createApprovalStepComment)
 );

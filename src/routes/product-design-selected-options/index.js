@@ -32,7 +32,7 @@ function* canAccessSelectedOption(next) {
   );
   this.assert(selectedOption, 404);
 
-  yield attachDesignPermissions.call(this, selectedOption.designId);
+  yield attachDesignPermissions(this, selectedOption.designId);
 
   this.state.selectedOption = selectedOption;
 
@@ -54,7 +54,7 @@ function* getByDesign() {
   const { designId } = this.query;
   this.assert(designId, 403, "Design ID required");
 
-  yield attachDesignPermissions.call(this, designId);
+  yield attachDesignPermissions(this, designId);
 
   const options = yield ProductDesignSelectedOptionsDAO.findByDesignId(
     designId

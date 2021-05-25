@@ -21,6 +21,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     .stub(AnnounceCommentService, "announceAnnotationCommentCreation")
     .resolves({});
   const { session, user } = await createUser();
+  const { session: previewerSession, user: previewerUser } = await createUser();
 
   const annotationId = uuid.v4();
   const commentId = uuid.v4();
@@ -30,6 +31,11 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   const { collaborator } = await generateCollaborator({
     collectionId: collection.id,
     userId: user.id,
+  });
+  await generateCollaborator({
+    collectionId: collection.id,
+    userId: previewerUser.id,
+    role: "PREVIEW",
   });
 
   const design = await createDesign({
@@ -128,6 +134,20 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     body: annotationData,
     headers: authHeader(session.id),
   });
+
+  const forbiddenCommentResponse = await put(
+    `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
+    {
+      body: commentBody,
+      headers: authHeader(previewerSession.id),
+    }
+  );
+  t.equal(
+    forbiddenCommentResponse[0].status,
+    403,
+    "Should deny previewer to comment"
+  );
+
   const commentResponse = await put(
     `${API_PATH}/${annotationResponse[1].id}/comments/${commentId}`,
     {

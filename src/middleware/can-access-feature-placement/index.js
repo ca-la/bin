@@ -20,7 +20,7 @@ function* canAccessFeaturePlacement(next) {
   this.assert(feature, 404);
 
   const section = yield ProductDesignSectionsDAO.findById(feature.sectionId);
-  yield attachDesignPermissions.call(this, section.designId);
+  yield attachDesignPermissions(this, section.designId);
 
   yield next;
 }
