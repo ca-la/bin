@@ -29,7 +29,6 @@ const {
 } = require("../../../services/get-permissions");
 const db = require("../../../services/db");
 const { deleteDesign, deleteDesigns } = require("./deletion");
-const useTransaction = require("../../../middleware/use-transaction").default;
 
 const {
   getDesignUploadPolicy,
@@ -38,10 +37,7 @@ const {
 const { getPaidDesigns } = require("./paid");
 const { updateAllNodes } = require("./phidias");
 const { findAllDesignsThroughCollaboratorAndTeam } = require("../dao/dao");
-const { createFromTemplate } = require("./templates");
-const {
-  routeMiddlewareStack: createRouteMiddlewareStack,
-} = require("./create");
+const { routes: createRoutes } = require("./create");
 
 const router = new Router();
 
@@ -302,7 +298,7 @@ function* updateDesign() {
   this.status = 200;
 }
 
-router.post("/", ...createRouteMiddlewareStack);
+router.post("/", ...createRoutes.create);
 router.get("/", requireAuth, getDesigns);
 router.del(
   "/",
@@ -336,12 +332,7 @@ router.get(
 router.get("/upload-policy/:id", requireAuth, getDesignUploadPolicy);
 
 router.put("/:designId", requireAuth, canAccessDesignInParam, updateAllNodes);
-router.post(
-  "/templates/:templateDesignId",
-  requireAuth,
-  useTransaction,
-  createFromTemplate
-);
+router.post("/templates/:templateDesignId", ...createRoutes.createFromTemplate);
 
 module.exports.routes = router.routes();
 module.exports.attachResources = attachResources;

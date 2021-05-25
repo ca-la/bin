@@ -22,6 +22,7 @@ test("createFromDesignTemplate() empty case", async (t: Test) => {
         newCreatorId: u1,
         templateDesignId: d1,
         isPhidias: true,
+        collectionId: null,
       });
       t.fail("Should not get here.");
     } catch (error) {
@@ -59,6 +60,7 @@ test("createFromDesignTemplate() non-empty case for phidias", async (t: Test) =>
       newCreatorId: u1,
       templateDesignId: d1,
       isPhidias: true,
+      collectionId: null,
     });
   });
 
@@ -97,6 +99,8 @@ test("createFromDesignTemplate() non-empty case for preview tool", async (t: Tes
     return createFromDesignTemplate(trx, {
       newCreatorId: u1,
       templateDesignId: d1,
+      collectionId: null,
+      isPhidias: false,
     });
   });
 

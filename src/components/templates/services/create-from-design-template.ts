@@ -16,7 +16,7 @@ export default async function createFromDesignTemplate(
     isPhidias?: boolean;
     templateDesignId: string;
     newCreatorId: string;
-    collectionId?: string;
+    collectionId: string | null;
   }
 ): Promise<ProductDesign> {
   const { isPhidias, newCreatorId, templateDesignId, collectionId } = options;
