@@ -6,6 +6,7 @@ import * as CommentsDAO from "../../components/comments/dao";
 import Annotation from "../../components/product-design-canvas-annotations/domain-object";
 import prepareForDuplication from "./prepare-for-duplication";
 import Comment from "../../components/comments/types";
+import db from "../db";
 
 /**
  * Finds all comments associated with the given annotation, creates duplicates, and associates
@@ -17,7 +18,8 @@ async function findAndDuplicateAnnotationComments(
   trx: Knex.Transaction
 ): Promise<Comment[]> {
   const comments =
-    (await AnnotationCommentsDAO.findByAnnotationId(annotationId)) || [];
+    (await AnnotationCommentsDAO.findByAnnotationId(db, { annotationId })) ||
+    [];
 
   return Promise.all(
     comments.map(async (comment: Comment) => {

@@ -6,11 +6,11 @@ export interface CommentWithAttachmentLinks extends Comment {
   attachments: (Asset & AssetLinks)[];
 }
 
-export function addAttachmentLinks(
-  comment: Comment
-): CommentWithAttachmentLinks {
+export function addAttachmentLinks<T extends Comment>(
+  comment: T
+): T & { attachments: (Asset & AssetLinks)[] } {
   if (comment.attachments.length === 0) {
-    return comment as CommentWithAttachmentLinks;
+    return { ...comment, attachments: [] };
   }
   return {
     ...comment,

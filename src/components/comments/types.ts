@@ -103,3 +103,9 @@ export function isMentionType(candidate: string): candidate is MentionType {
 }
 
 export default Comment;
+
+export interface PaginatedComments {
+  data: CommentWithResources[];
+  previousCursor: string | null;
+  nextCursor: string | null;
+}

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { schemaToGraphQLType } from "../../apollo/published-types";
+import { GraphQLType, schemaToGraphQLType } from "../../apollo/published-types";
 import { userRoleSchema } from "../users/types";
 import { Role } from "../users/graphql-types";
 import { attachmentSchema } from "../assets/types";
@@ -17,6 +17,7 @@ export const commentWithResourcesSchema = z.object({
   userEmail: z.string().nullable(),
   userRole: userRoleSchema,
   attachments: z.array(attachmentSchema),
+  replyCount: z.number().optional(),
 });
 
 export const CommentWithResources = schemaToGraphQLType(
@@ -48,3 +49,14 @@ export const CommentInput = schemaToGraphQLType(
     type: "input",
   }
 );
+
+export const PaginatedComments: GraphQLType = {
+  name: "PaginatedComments",
+  type: "type",
+  body: {
+    data: "[CommentWithResources]!",
+    nextCursor: "String",
+    previousCursor: "String",
+  },
+  requires: ["CommentWithResources"],
+};

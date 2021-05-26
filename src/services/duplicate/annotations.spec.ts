@@ -56,7 +56,9 @@ test("findAndDuplicateAnnotations", async (t: tape.Test) => {
     },
     "Returns the duplicate annotation"
   );
-  const c1 = await AnnotationCommentsDAO.findByAnnotationId(a1.id);
+  const c1 = await AnnotationCommentsDAO.findByAnnotationId(db, {
+    annotationId: a1.id,
+  });
   if (!c1) {
     throw new Error(`Comments for annotation ${a1.id} not found!`);
   }
@@ -69,6 +71,7 @@ test("findAndDuplicateAnnotations", async (t: tape.Test) => {
       annotationId: a1.id,
       createdAt: c1[0].createdAt,
       id: c1[0].id,
+      replyCount: 0,
     },
     "The duplicated comment is the same minus the id and createdAt fields"
   );

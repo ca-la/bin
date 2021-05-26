@@ -197,6 +197,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userName: user.name,
         userRole: user.role,
         attachments: [],
+        replyCount: 0,
       },
     ],
     "Comment retrieval returns the created comment in an array"
@@ -275,6 +276,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
         userName: user.name,
         userRole: user.role,
         attachments: [],
+        replyCount: 0,
       },
       {
         ...commentWithMentionBody,
@@ -291,6 +293,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
             downloadLink: "a-very-download",
           },
         ],
+        replyCount: 0,
       },
     ],
     "Comment retrieval returns all the comments for the annotation"

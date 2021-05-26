@@ -16,6 +16,7 @@ const TABLE_NAME = "comments";
 export interface CommentQueryOptions {
   includeDeletedParents?: boolean;
   excludeDeletedAt?: boolean;
+  sortOrder?: "asc" | "desc";
 }
 
 export function queryComments(
@@ -23,6 +24,7 @@ export function queryComments(
   options: CommentQueryOptions = {
     includeDeletedParents: false,
     excludeDeletedAt: true,
+    sortOrder: "asc",
   }
 ): Knex.QueryBuilder {
   const query = ktx(TABLE_NAME)
@@ -47,7 +49,8 @@ export function queryComments(
     )
     .leftJoin("assets", "assets.id", "comment_attachments.asset_id")
     .groupBy("comments.id", "users.name", "users.email", "users.role")
-    .orderBy("created_at", "asc");
+    .orderBy("created_at", options.sortOrder || "asc")
+    .orderBy("id", options.sortOrder || "asc");
 
   if (options.includeDeletedParents) {
     query.whereRaw(`
@@ -60,7 +63,7 @@ export function queryComments(
   )
 )
     `);
-  } else if (options.excludeDeletedAt) {
+  } else if (options.excludeDeletedAt !== false) {
     query.where({ "comments.deleted_at": null });
   }
 

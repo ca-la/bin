@@ -111,10 +111,9 @@ async function getList(ctx: AuthedContext) {
 }
 
 async function getAnnotationComments(ctx: AuthedContext) {
-  const comments = await AnnotationCommentDAO.findByAnnotationId(
-    ctx.params.annotationId,
-    db
-  );
+  const comments = await AnnotationCommentDAO.findByAnnotationId(db, {
+    annotationId: ctx.params.annotationId,
+  });
   if (comments) {
     const commentsWithMentions = await addAtMentionDetails(db, comments);
     const commentsWithAttachments = commentsWithMentions.map(

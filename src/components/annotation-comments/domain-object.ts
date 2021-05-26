@@ -1,6 +1,9 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-import { isCommentRow } from "../comments/domain-object";
+import {
+  isCommentRow,
+  dataAdapter as commentDataAdapter,
+} from "../comments/domain-object";
 import Comment, { CommentRow } from "../comments/types";
 
 export default interface AnnotationComment {
@@ -26,17 +29,37 @@ export function isAnnotationCommentRow(
 
 export interface CommentWithMeta extends Comment {
   annotationId: string;
+  replyCount: number;
 }
 
 export interface CommentWithMetaRow extends CommentRow {
   annotation_id: string;
+  reply_count: number;
+}
+
+export function encode(row: CommentWithMetaRow): CommentWithMeta {
+  return {
+    ...commentDataAdapter.parse(row),
+    annotationId: row.annotation_id,
+    replyCount: Number(row.reply_count),
+  };
+}
+
+export function decode(data: CommentWithMeta): CommentWithMetaRow {
+  return {
+    ...commentDataAdapter.toDb(data),
+    annotation_id: data.annotationId,
+    reply_count: data.replyCount,
+  };
 }
 
 export const withMetaDataAdapter = new DataAdapter<
   CommentWithMetaRow,
   CommentWithMeta
->();
+>(encode, decode);
 
 export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
-  return isCommentRow(row) && hasProperties(row, "annotation_id");
+  return (
+    isCommentRow(row) && hasProperties(row, "annotation_id", "reply_count")
+  );
 }

@@ -47,5 +47,5 @@ test("addAssetLink does nothing if the comment has no attachments", async (t: ta
   const comment = (await generateComment()).comment;
 
   const commentWithLinks = addAttachmentLinks(comment);
-  t.equal(comment, commentWithLinks);
+  t.deepEquals(comment, commentWithLinks);
 });
