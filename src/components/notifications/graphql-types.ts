@@ -1,5 +1,5 @@
 import * as NotificationTypes from "../notifications/types";
-import { GraphQLType } from "../../apollo/published-types";
+import { GraphQLType } from "../../apollo/published-types/published-types";
 
 export const BreadCrumb: GraphQLType = {
   name: "BreadCrumb",

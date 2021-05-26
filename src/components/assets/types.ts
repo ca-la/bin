@@ -26,6 +26,8 @@ export const assetSchema = z.object({
 });
 export type Asset = z.infer<typeof assetSchema>;
 
+export const attachmentSchema = assetSchema.merge(assetLinksSchema);
+
 export const ACCEPTED_IMAGE_TYPES = [
   "heic",
   "jpg",

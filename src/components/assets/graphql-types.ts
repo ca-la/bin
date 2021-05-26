@@ -1,4 +1,4 @@
-import { GraphQLType } from "../../apollo/published-types";
+import { GraphQLType } from "../../apollo/published-types/published-types";
 
 export const AssetLinks: GraphQLType = {
   name: "AssetLinks",
@@ -32,8 +32,8 @@ export const Asset: GraphQLType = {
   },
 };
 
-export const AssetWithLinks: GraphQLType = {
-  name: "AssetWithLinks",
+export const Attachment: GraphQLType = {
+  name: "Attachment",
   type: "type",
   body: {
     ...Asset.body,

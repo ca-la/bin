@@ -1,4 +1,7 @@
-import { GraphQLType, schemaToGraphQLType } from "../../../apollo";
+import {
+  GraphQLType,
+  schemaToGraphQLType,
+} from "../../../apollo/published-types";
 import { baseProductDesignSchema, BaseProductDesign } from "../types";
 import { CollectionDb } from "../../collections/types";
 

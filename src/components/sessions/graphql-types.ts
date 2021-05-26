@@ -1,4 +1,4 @@
-import { GraphQLType } from "../../apollo/published-types";
+import { GraphQLType } from "../../apollo/published-types/published-types";
 
 export const Session: GraphQLType = {
   name: "Session",
