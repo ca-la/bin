@@ -11,13 +11,11 @@ interface SpentResult {
 }
 
 export default async function spendCredit(
+  creditPaymentAmount: number,
   userId: string,
   invoice: Invoice,
   trx: Knex.Transaction
 ): Promise<SpentResult> {
-  const availableCredit = await CreditsDAO.getCreditAmount(userId, trx);
-
-  const creditPaymentAmount = Math.min(invoice.totalCents, availableCredit);
   const nonCreditPaymentAmount = invoice.totalCents - creditPaymentAmount;
 
   if (creditPaymentAmount > 0) {

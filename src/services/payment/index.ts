@@ -6,7 +6,7 @@ import * as InvoicesDAO from "../../dao/invoices";
 import * as LineItemsDAO from "../../dao/line-items";
 import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
-import payInvoice = require("../../services/pay-invoice");
+import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
 import {
   findMinimalByIds,
   ProductDesignMinimalRow,
@@ -24,8 +24,65 @@ import Invoice = require("../../domain-objects/invoice");
 import LineItem from "../../domain-objects/line-item";
 import createDesignPaymentLocks from "./create-design-payment-locks";
 import { logServerError, time, timeLog, timeEnd } from "../../services/logger";
+import { DesignQuoteLineItem } from "../../published-types";
+import { CreditsDAO } from "../../components/credits";
+import { PaymentMethod } from "../../components/payment-methods/types";
+import * as Stripe from "../stripe";
 
 type CreateRequest = CreateQuotePayload[];
+
+async function payInvoice(
+  creditAppliedCents: number,
+  invoice: Invoice,
+  paymentMethod: PaymentMethod,
+  userId: string,
+  trx: Knex.Transaction
+) {
+  // We acquire an update lock on the relevant invoice row to make sure we can
+  // only be in the process of paying for one invoice at a given time.
+  await trx.raw("select * from invoices where id = ? for update", [invoice.id]);
+
+  if (invoice.isPaid) {
+    throw new InvalidDataError("This invoice is already paid");
+  }
+
+  const { nonCreditPaymentAmount } = await spendCredit(
+    creditAppliedCents,
+    userId,
+    invoice,
+    trx
+  );
+
+  if (nonCreditPaymentAmount > 0) {
+    const charge = await Stripe.charge({
+      customerId: paymentMethod.stripeCustomerId,
+      sourceId: paymentMethod.stripeSourceId,
+      amountCents: nonCreditPaymentAmount,
+      description:
+        invoice.title ||
+        invoice.collectionId ||
+        invoice.description ||
+        invoice.id,
+      invoiceId: invoice.id,
+    });
+
+    await InvoicePaymentsDAO.createTrx(trx, {
+      invoiceId: invoice.id,
+      paymentMethodId: paymentMethod.id,
+      stripeChargeId: charge.id,
+      totalCents: nonCreditPaymentAmount,
+      creditUserId: null,
+      deletedAt: null,
+      resolvePaymentId: null,
+      rumbleshipPurchaseHash: null,
+    });
+  }
+
+  return {
+    invoice: await InvoicesDAO.findByIdTrx(trx, invoice.id),
+    nonCreditPaymentAmount,
+  };
+}
 
 export function isCreateRequest(body: any): body is CreateRequest {
   return (
@@ -99,12 +156,6 @@ const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
   return designs.map((design: ProductDesignMinimalRow) => design.title);
 };
 
-const getQuoteTotal = (quotes: PricingQuote[]): number => {
-  return quotes
-    .map((quote: PricingQuote) => quote.units * quote.unitCostCents)
-    .reduce((total: number, current: number) => total + current, 0);
-};
-
 async function processQuotesAfterInvoice(
   trx: Knex.Transaction,
   invoiceId: string,
@@ -114,6 +165,85 @@ async function processQuotesAfterInvoice(
   for (const quote of quotes) {
     await setApprovalStepsDueAtByPricingQuote(trx, quote);
   }
+}
+
+// TODO: Promote this to a real component and drive the UI with it
+async function getCartDetails(
+  trx: Knex.Transaction,
+  quoteRequests: CreateRequest,
+  userId: string
+) {
+  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
+
+  let combinedLineItems: DesignQuoteLineItem[] = [];
+  let subtotalCents = 0;
+  let dueNowCents = 0;
+  let totalUnits = 0;
+
+  for (const quote of quotes) {
+    const quoteCostCents = quote.unitCostCents * quote.units;
+    subtotalCents += quoteCostCents;
+    dueNowCents += quoteCostCents + quote.productionFeeCents;
+    totalUnits += quote.units;
+
+    if (quote.productionFeeCents > 0) {
+      const existingLineItemIndex = combinedLineItems.findIndex(
+        (existing: DesignQuoteLineItem) =>
+          existing.description === "Production Fee"
+      );
+      if (existingLineItemIndex === -1) {
+        combinedLineItems = [
+          ...combinedLineItems,
+          {
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+            cents: quote.productionFeeCents,
+          },
+        ];
+      } else {
+        combinedLineItems = [
+          ...combinedLineItems.slice(0, existingLineItemIndex),
+          {
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+            cents:
+              combinedLineItems[existingLineItemIndex].cents +
+              quote.productionFeeCents,
+          },
+          ...combinedLineItems.slice(existingLineItemIndex + 1),
+        ];
+      }
+    }
+  }
+
+  let balanceDueCents = dueNowCents;
+  const availableCreditCents = await CreditsDAO.getCreditAmount(userId, trx);
+  const creditAppliedCents = Math.min(dueNowCents, availableCreditCents);
+
+  if (creditAppliedCents > 0) {
+    combinedLineItems = [
+      ...combinedLineItems,
+      {
+        description: "Credit Applied",
+        explainerCopy: null,
+        cents: creditAppliedCents * -1,
+      },
+    ];
+    balanceDueCents = Math.max(0, dueNowCents - creditAppliedCents);
+  }
+
+  return {
+    quotes,
+    combinedLineItems,
+    subtotalCents,
+    dueNowCents,
+    dueLaterCents: 0, // Placeholder for showing financing fees, etc
+    creditAppliedCents,
+    balanceDueCents,
+    totalUnits,
+  };
 }
 
 /**
@@ -145,22 +275,21 @@ export default async function payInvoiceWithNewPaymentMethod(
       trx,
     });
     timeLog("payInvoiceWithNewPaymentMethod", "createPaymentMethod");
-    const quotes: PricingQuote[] = await createQuotes(
+    const { quotes, dueNowCents, creditAppliedCents } = await getCartDetails(
+      trx,
       quoteRequests,
-      userId,
-      trx
+      userId
     );
     timeLog("payInvoiceWithNewPaymentMethod", "createQuotes");
 
     const designNames = await getDesignNames(quotes);
     timeLog("payInvoiceWithNewPaymentMethod", "designNames");
     const collectionName = collection.title || "Untitled";
-    const totalCents = getQuoteTotal(quotes);
     const invoice = await createInvoice(
       designNames,
       collectionName,
       collection.id,
-      totalCents,
+      dueNowCents,
       userId,
       invoiceAddressId,
       trx
@@ -170,7 +299,13 @@ export default async function payInvoiceWithNewPaymentMethod(
     await processQuotesAfterInvoice(trx, invoice.id, quotes);
     timeLog("payInvoiceWithNewPaymentMethod", "processQuotesAfterInvoice");
 
-    const paidInvoice = payInvoice(invoice.id, paymentMethod.id, userId, trx);
+    const paidInvoice = payInvoice(
+      creditAppliedCents,
+      invoice,
+      paymentMethod,
+      userId,
+      trx
+    );
     timeLog("payInvoiceWithNewPaymentMethod", "payInvoice");
 
     timeEnd("payInvoiceWithNewPaymentMethod");
@@ -197,22 +332,22 @@ export async function payWaivedQuote(
       createDesignPaymentLocks(trx, quoteRequests)
     );
 
-    const quotes: PricingQuote[] = await trackTimeCallback("createQuotes", () =>
-      createQuotes(quoteRequests, userId, trx)
+    const { quotes, dueNowCents, creditAppliedCents } = await getCartDetails(
+      trx,
+      quoteRequests,
+      userId
     );
     const designNames = await trackTimeCallback("getDesignNames", () =>
       getDesignNames(quotes)
     );
     const collectionName = collection.title || "Untitled";
 
-    const totalCents = getQuoteTotal(quotes);
-
     const invoice = await trackTimeCallback("createInvoice", () =>
       createInvoice(
         designNames,
         collectionName,
         collection.id,
-        totalCents,
+        dueNowCents,
         userId,
         invoiceAddressId,
         trx
@@ -220,7 +355,7 @@ export async function payWaivedQuote(
     );
 
     const spentResult = await trackTimeCallback("spendCredit", () =>
-      spendCredit(userId, invoice, trx)
+      spendCredit(creditAppliedCents, userId, invoice, trx)
     );
 
     if (spentResult.nonCreditPaymentAmount) {

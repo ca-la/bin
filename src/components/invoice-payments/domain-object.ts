@@ -14,7 +14,7 @@ export interface InvoicePaymentRow {
   credit_user_id: number | null;
 }
 
-interface InvoicePaymentBase {
+export interface InvoicePayment {
   id: string;
   createdAt: Date;
   deletedAt: Date | null;
@@ -27,39 +27,12 @@ interface InvoicePaymentBase {
   creditUserId: string | null;
 }
 
-interface StripePayment extends InvoicePaymentBase {
-  paymentMethodId: string;
-  stripeChargeId: string;
-}
-
-interface RumbleshipPayment extends InvoicePaymentBase {
-  rumbleshipPurchaseHash: string;
-}
-
-interface ResolvePayment extends InvoicePaymentBase {
-  resolvePaymentId: string;
-}
-
-interface CreditPayment extends InvoicePaymentBase {
-  creditUserId: string;
-}
-
-export type InvoicePayment =
-  | StripePayment
-  | RumbleshipPayment
-  | ResolvePayment
-  | CreditPayment;
-
-type MaybeSaved<T extends InvoicePaymentBase> = Omit<T, "createdAt" | "id"> & {
+type MaybeSaved<T extends InvoicePayment> = Omit<T, "createdAt" | "id"> & {
   createdAt?: Date;
   id?: string;
 };
 
-export type MaybeSavedInvoicePayment =
-  | MaybeSaved<StripePayment>
-  | MaybeSaved<RumbleshipPayment>
-  | MaybeSaved<ResolvePayment>
-  | MaybeSaved<CreditPayment>;
+export type MaybeSavedInvoicePayment = MaybeSaved<InvoicePayment>;
 
 export const dataAdapter = new DataAdapter<InvoicePaymentRow, InvoicePayment>();
 

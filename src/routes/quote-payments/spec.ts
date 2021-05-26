@@ -42,6 +42,8 @@ const ADDRESS_BLANK = {
   postCode: "RG41 2PE",
 };
 
+const CREDIT_AMOUNT_CENTS = 200_00;
+
 function setupStubs() {
   sandbox()
     .stub(RequestService, "default")
@@ -61,9 +63,15 @@ function setupStubs() {
 
 async function setup() {
   const { user, session } = await createUser();
+  const admin = await createUser({ role: "ADMIN", withSession: false });
   const stubs = setupStubs();
 
-  const { team } = await generateTeam(user.id);
+  const { team } = await generateTeam(
+    user.id,
+    {},
+    {},
+    { costOfGoodsShareBasisPoints: 2000 }
+  );
   const { collection } = await generateCollection({ teamId: team.id });
   const d1 = await createDesign({
     productType: "A product type",
@@ -84,6 +92,14 @@ async function setup() {
 
   await generatePricingValues();
   await db.transaction(async (trx: Knex.Transaction) => {
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: CREDIT_AMOUNT_CENTS,
+      createdBy: admin.user.id,
+      description: "Manual credit grant",
+      expiresAt: null,
+      givenTo: user.id,
+    });
     await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
@@ -222,8 +238,8 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.assert(chargeStub.calledOnce, "Stripe was charged");
   t.equals(
     chargeStub.args[0][0].amountCents,
-    1445800,
-    "Charge sum was correct"
+    14_458_00 * 1.2 - CREDIT_AMOUNT_CENTS,
+    "Charge sum includes the production fee"
   );
 
   const realtimeDesignEvents = irisStub.args.filter(
@@ -293,7 +309,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
           params: {
             collection,
             designer: user,
-            paymentAmountCents: body.totalCents,
+            paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
           },
         },
       ],

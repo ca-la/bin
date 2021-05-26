@@ -24,7 +24,7 @@ import {
 } from "../../components/pricing-cost-inputs/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import DataAdapter from "../data-adapter";
-import addMargin from "../add-margin";
+import addMargin, { calculateBasisPoints } from "../add-margin";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { ApprovalStepType } from "../../components/approval-steps/types";
 import { templateDesignEvent } from "../../components/design-events/types";
@@ -37,6 +37,7 @@ import {
 } from "./quote-values";
 import { FINANCING_MARGIN } from "../../config";
 import addTimeBuffer from "../add-time-buffer";
+import { getDesignProductionFeeBasisPoints } from "../../components/design-quotes/service";
 
 export type UnsavedQuote = Omit<
   PricingQuote,
@@ -45,20 +46,32 @@ export type UnsavedQuote = Omit<
 
 export async function generateUnsavedQuote(
   costInput: PricingCostInput,
-  units: number
+  units: number,
+  productionFeeBasisPoints: number
 ): Promise<UnsavedQuote> {
   const quoteValues = await findVersionValuesForRequest(costInput, units);
 
-  return calculateQuote(costInput, units, quoteValues);
+  return calculateQuote(
+    costInput,
+    units,
+    quoteValues,
+    productionFeeBasisPoints
+  );
 }
 
 export async function generateUnsavedQuoteWithoutVersions(
   costInput: UncomittedCostInput,
-  units: number
+  units: number,
+  productionFeeBasisPoints: number
 ): Promise<UnsavedQuote> {
   const quoteValues = await findLatestValuesForRequest(costInput, units);
 
-  return calculateQuote(costInput, units, quoteValues);
+  return calculateQuote(
+    costInput,
+    units,
+    quoteValues,
+    productionFeeBasisPoints
+  );
 }
 
 export async function generatePricingQuoteFromPool(
@@ -70,11 +83,15 @@ export async function generatePricingQuoteFromPool(
   const quoteValues = getQuoteValuesFromPool(costInput, pool, units);
 
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
+  const productionFeeBasisPoints = await getDesignProductionFeeBasisPoints(
+    costInput.designId
+  );
   const { quote, processes } = calculateQuoteAndProcesses(
     costInput,
     units,
     quoteValues,
-    pricingQuoteInputId
+    pricingQuoteInputId,
+    productionFeeBasisPoints
   );
   const createdQuote = await create(quote, ktx);
 
@@ -91,11 +108,15 @@ export default async function generatePricingQuote(
   const quoteValues = await findVersionValuesForRequest(costInput, units);
 
   const pricingQuoteInputId = await getQuoteInput(quoteValues);
+  const productionFeeBasisPoints = await getDesignProductionFeeBasisPoints(
+    costInput.designId
+  );
   const { quote, processes } = calculateQuoteAndProcesses(
     costInput,
     units,
     quoteValues,
-    pricingQuoteInputId
+    pricingQuoteInputId,
+    productionFeeBasisPoints
   );
   const createdQuote = await create(quote, trx);
 
@@ -129,7 +150,8 @@ async function getQuoteInput(values: PricingQuoteValues): Promise<string> {
 function calculateQuote(
   costInput: UncomittedCostInput,
   units: number,
-  values: PricingQuoteValues
+  values: PricingQuoteValues,
+  productionFeeBasisPoints: number
 ): UnsavedQuote {
   const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
   const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = [
@@ -176,6 +198,11 @@ function calculateQuote(
     Object.values(baseCost).concat([developmentCostCents])
   );
   const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
+  const totalCents = unitCostCents * units;
+  const productionFeeCents = calculateBasisPoints(
+    totalCents,
+    productionFeeBasisPoints
+  );
 
   return {
     ...baseCost,
@@ -194,6 +221,7 @@ function calculateQuote(
     sourcingTimeMs,
     specificationTimeMs,
     unitCostCents,
+    productionFeeCents,
   };
 }
 
@@ -201,7 +229,8 @@ function calculateQuoteAndProcesses(
   costInput: PricingCostInput,
   units: number,
   values: PricingQuoteValues,
-  pricingQuoteInputId: string
+  pricingQuoteInputId: string,
+  productionFeeBasisPoints: number
 ): {
   quote: Uninserted<PricingQuoteRow>;
   processes: Uninserted<PricingProcessQuoteRow>[];
@@ -216,7 +245,7 @@ function calculateQuoteAndProcesses(
         id: uuid.v4(),
         pricingQuoteInputId,
       },
-      calculateQuote(costInput, units, values)
+      calculateQuote(costInput, units, values, productionFeeBasisPoints)
     )
   );
   const processes: Uninserted<PricingProcessQuoteRow>[] = values.processes.map(
