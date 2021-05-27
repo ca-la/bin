@@ -62,6 +62,10 @@ export const notificationMessageActionSchema = z.union([
   approvalStepCommentReplyActionSchema,
 ]);
 
+export type NotificationMessageAction = z.infer<
+  typeof notificationMessageActionSchema
+>;
+
 export enum NotificationFilter {
   UNARCHIVED = "UNARCHIVED",
   ARCHIVED = "ARCHIVED",
