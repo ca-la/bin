@@ -1,14 +1,21 @@
-import User from "../users/types";
+import { z } from "zod";
+import { userSchema } from "../users/types";
 
-export interface BreadCrumb {
-  text: string;
-  url: string;
-}
+export const breadCrumbSchema = z.object({
+  text: z.string(),
+  url: z.string(),
+});
+export type BreadCrumb = z.infer<typeof breadCrumbSchema>;
 
-export interface Mentions {
-  [id: string]: string | undefined;
-}
+export const mentionsSchema = z.record(z.string().optional());
+export type Mentions = z.infer<typeof mentionsSchema>;
 
+export const notificationMessageAttachmentSchema = z.object({
+  text: z.string(),
+  url: z.string(),
+  mentions: mentionsSchema.optional(),
+  hasAttachments: z.boolean().optional(),
+});
 export interface NotificationMessageAttachment {
   text: string;
   url: string;
@@ -22,72 +29,38 @@ export enum NotificationMessageActionType {
   APPROVAL_STEP_COMMENT_REPLY = "APPROVAL_STEP_COMMENT_REPLY",
 }
 
-export interface NotificationMessageActionBase {
-  type: NotificationMessageActionType;
-}
+export const notificationMessageActionBaseSchema = z.object({
+  type: z.nativeEnum(NotificationMessageActionType),
+});
+export type NotificationMessageActionBase = z.infer<
+  typeof notificationMessageActionBaseSchema
+>;
 
-interface CommentActionBase extends NotificationMessageActionBase {
-  parentCommentId: string;
-  designId: string;
-}
+const commentActionBaseSchema = notificationMessageActionBaseSchema.extend({
+  parentCommentId: z.string(),
+  designId: z.string(),
+});
 
-interface TaskCommentReplyAction extends CommentActionBase {
-  type: NotificationMessageActionType.TASK_COMMENT_REPLY;
-  taskId: string;
-}
+const taskCommentReplyActionSchema = commentActionBaseSchema.extend({
+  type: z.literal(NotificationMessageActionType.TASK_COMMENT_REPLY),
+  taskId: z.string(),
+});
 
-interface AnnotationCommentReplyAction extends CommentActionBase {
-  type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY;
-  annotationId: string;
-}
+const annotationCommentReplyActionSchema = commentActionBaseSchema.extend({
+  type: z.literal(NotificationMessageActionType.ANNOTATION_COMMENT_REPLY),
+  annotationId: z.string(),
+});
 
-interface ApprovalStepCommentReplyAction extends CommentActionBase {
-  type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY;
-  approvalStepId: string;
-}
+const approvalStepCommentReplyActionSchema = commentActionBaseSchema.extend({
+  type: z.literal(NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY),
+  approvalStepId: z.string(),
+});
 
-export type NotificationMessageAction =
-  | TaskCommentReplyAction
-  | AnnotationCommentReplyAction
-  | ApprovalStepCommentReplyAction;
-
-export interface NotificationMessage {
-  id: string;
-  title: string;
-  html: string;
-  readAt: Date | null;
-  link: string;
-  createdAt: Date;
-  actor: User | null;
-  imageUrl: string | null;
-  location: BreadCrumb[];
-  attachments: NotificationMessageAttachment[];
-  actions: NotificationMessageAction[];
-  archivedAt: Date | null;
-  matchedFilters: NotificationFilter[];
-  text: string;
-  type: NotificationType;
-}
-
-// GraphQL doesn't allow arbitrary schemaless object like Mention
-export interface MentionForGraphQL {
-  id: string;
-  name: string | undefined;
-}
-
-export type NotificationMessageAttachmentForGraphQL = Omit<
-  NotificationMessageAttachment,
-  "mentions"
-> & {
-  mentions?: MentionForGraphQL[];
-};
-
-export type NotificationMessageForGraphQL = Omit<
-  NotificationMessage,
-  "attachments"
-> & {
-  attachments: NotificationMessageAttachmentForGraphQL[];
-};
+export const notificationMessageActionSchema = z.union([
+  taskCommentReplyActionSchema,
+  annotationCommentReplyActionSchema,
+  approvalStepCommentReplyActionSchema,
+]);
 
 export enum NotificationFilter {
   UNARCHIVED = "UNARCHIVED",
@@ -128,3 +101,43 @@ export enum NotificationType {
   SHIPMENT_TRACKING_CREATE = "SHIPMENT_TRACKING_CREATE",
   SHIPMENT_TRACKING_UPDATE = "SHIPMENT_TRACKING_UPDATE",
 }
+
+export const notificationMessageSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  html: z.string(),
+  readAt: z.date().nullable(),
+  link: z.string(),
+  createdAt: z.date(),
+  actor: userSchema.nullable(),
+  imageUrl: z.string().nullable(),
+  location: z.array(breadCrumbSchema),
+  attachments: z.array(notificationMessageAttachmentSchema),
+  actions: z.array(notificationMessageActionSchema),
+  archivedAt: z.date().nullable(),
+  matchedFilters: z.array(z.nativeEnum(NotificationFilter)),
+  text: z.string(),
+  type: z.nativeEnum(NotificationType),
+});
+
+export type NotificationMessage = z.infer<typeof notificationMessageSchema>;
+
+// GraphQL doesn't allow arbitrary schemaless object like Mention
+export interface MentionForGraphQL {
+  id: string;
+  name: string | undefined;
+}
+
+export type NotificationMessageAttachmentForGraphQL = Omit<
+  NotificationMessageAttachment,
+  "mentions"
+> & {
+  mentions?: MentionForGraphQL[];
+};
+
+export type NotificationMessageForGraphQL = Omit<
+  NotificationMessage,
+  "attachments"
+> & {
+  attachments: NotificationMessageAttachmentForGraphQL[];
+};
