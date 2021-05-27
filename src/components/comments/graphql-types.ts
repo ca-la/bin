@@ -20,6 +20,10 @@ export const commentWithResourcesSchema = z.object({
   replyCount: z.number().optional(),
 });
 
+export type CommentWithResourcesType = z.infer<
+  typeof commentWithResourcesSchema
+>;
+
 export const CommentWithResources = schemaToGraphQLType(
   "CommentWithResources",
   commentWithResourcesSchema,
@@ -31,10 +35,9 @@ export const CommentWithResources = schemaToGraphQLType(
   }
 );
 
-export const commentInputSchema = z.object({
+const commentInputSchema = z.object({
   text: z.string(),
   parentCommentId: z.string().nullable(),
-  userId: z.string().nullable(),
   isPinned: z.boolean(),
   approvalStepId: z.string().nullable(),
   annotationId: z.string().nullable(),

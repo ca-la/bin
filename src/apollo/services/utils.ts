@@ -7,20 +7,12 @@ import {
   MiddlewareComponent,
 } from "../types";
 
-interface AwaitingType {
-  type: GraphQLType;
-  blockers: Set<string>;
-}
-
 export function extractSortedTypes(endpoints: TypesContainer[]) {
-  const awaitingTypes = new Set<AwaitingType>();
+  const awaitingTypes = new Map<GraphQLType, Set<string>>();
   for (const endpoint of endpoints) {
     if (endpoint.types) {
       for (const type of endpoint.types) {
-        awaitingTypes.add({
-          type,
-          blockers: new Set(type.requires),
-        });
+        awaitingTypes.set(type, new Set(type.requires));
       }
     }
   }
@@ -30,27 +22,25 @@ export function extractSortedTypes(endpoints: TypesContainer[]) {
     i >= 0 && awaitingTypes.size > 0;
     i = i - 1
   ) {
-    for (const awaitingType of awaitingTypes) {
-      if (awaitingType.blockers.size === 0) {
-        for (const otherType of awaitingTypes) {
-          if (otherType.blockers.has(awaitingType.type.name)) {
-            otherType.blockers.delete(awaitingType.type.name);
+    for (const [awaitingType, blockers] of awaitingTypes) {
+      if (blockers.size === 0) {
+        for (const [, otherTypeBlockers] of awaitingTypes) {
+          if (otherTypeBlockers.has(awaitingType.name)) {
+            otherTypeBlockers.delete(awaitingType.name);
           }
         }
-        sorted.push(awaitingType.type);
+        sorted.push(awaitingType);
         awaitingTypes.delete(awaitingType);
       }
     }
   }
 
   if (awaitingTypes.size > 0) {
-    const firstNotResolved: AwaitingType = awaitingTypes.values().next().value;
+    const [type, requires] = awaitingTypes.entries().next().value;
     throw new Error(
       `Could not resolve dependencies for GraphQL type "${
-        firstNotResolved.type.name
-      }". The missing dependencies are: ${(
-        firstNotResolved.type.requires || []
-      ).join(", ")}`
+        type.name
+      }". The missing dependencies are: ${Array.from(requires).join(", ")}`
     );
   }
 

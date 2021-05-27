@@ -4,6 +4,7 @@ import { SessionEndpoints } from "../components/sessions/endpoints";
 import { ApprovalStepEndpoints } from "../components/approval-steps/endpoints";
 import { UserDeviceEndpoints } from "../components/user-devices/endpoints";
 import { ProductDesignEndpoints } from "../components/product-designs/endpoints";
+import { CommentEndpoints } from "../components/comments/endpoints";
 import { ProductDesignCanvasAnnotationEndpoints } from "../components/product-design-canvas-annotations/endpoint";
 
 export const endpoints = [
@@ -13,6 +14,7 @@ export const endpoints = [
   ...ApprovalStepEndpoints,
   ...UserDeviceEndpoints,
   ...ProductDesignEndpoints,
+  ...CommentEndpoints,
   ...ProductDesignCanvasAnnotationEndpoints,
 ];
 

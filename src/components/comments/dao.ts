@@ -7,9 +7,14 @@ import {
   INSERTABLE_COLUMNS,
   isCommentRow,
   UPDATABLE_COLUMNS,
-} from "../../components/comments/domain-object";
+} from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import Comment, { CommentRow, BaseComment } from "./types";
+import { CommentInputType } from "./graphql-types";
+import * as ApprovalStepsDAO from "../approval-steps/dao";
+import { NotFoundError, UserInputError } from "../../apollo";
+import * as AnnotationsDAO from "../product-design-canvas-annotations/dao";
+import * as CanvasesDAO from "../canvases/dao";
 
 const TABLE_NAME = "comments";
 
@@ -193,5 +198,38 @@ export async function deleteById(
 
   if (deletedRows === 0) {
     throw new Error(`No comment found with id ${id}`);
+  }
+}
+
+export async function extractDesignIdFromCommentInput(
+  ktx: Knex,
+  input: CommentInputType
+): Promise<string> {
+  if (input.approvalStepId && input.annotationId) {
+    throw new UserInputError(
+      "Comment should not have approvalStepId and annotationId simultaneously"
+    );
+  }
+
+  if (input.approvalStepId) {
+    const step = await ApprovalStepsDAO.findById(ktx, input.approvalStepId);
+    if (!step) {
+      throw new NotFoundError(`Step ${input.approvalStepId} not found`);
+    }
+    return step.designId;
+  } else if (input.annotationId) {
+    const annotation = await AnnotationsDAO.findById(input.annotationId);
+    if (!annotation) {
+      throw new NotFoundError(`Annotation ${input.annotationId} not found`);
+    }
+    const canvas = await CanvasesDAO.findById(annotation.canvasId, ktx);
+    if (!canvas) {
+      throw new NotFoundError(`Canvas ${annotation.canvasId} not found`);
+    }
+    return canvas.designId;
+  } else {
+    throw new UserInputError(
+      `Comment should have approvalStepId or annotationId`
+    );
   }
 }

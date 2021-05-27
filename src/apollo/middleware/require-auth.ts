@@ -34,3 +34,13 @@ export async function requireAuth<Args, Result>(
 
   return context;
 }
+
+export function useRequireAuth<T>(
+  context: GraphQLContextBase<T>
+): GraphQLContextAuthenticated<T> {
+  if (!isAuthedContext(context)) {
+    throw new AuthenticationError("Unauthorized");
+  }
+
+  return context;
+}

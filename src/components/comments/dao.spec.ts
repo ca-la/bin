@@ -3,12 +3,21 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import { test } from "../../test-helpers/fresh";
-import { create, deleteById, findById, update } from "./dao";
+import {
+  create,
+  deleteById,
+  findById,
+  update,
+  extractDesignIdFromCommentInput,
+} from "./dao";
+import { CommentInputType } from "./graphql-types";
 import createUser from "../../test-helpers/create-user";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateComment from "../../test-helpers/factories/comment";
 import * as CommentAttachmentDAO from "../comment-attachments/dao";
 import db from "../../services/db";
+import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
+import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 
 test("Comment DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -210,4 +219,63 @@ test("Comment DAO supports delete", async (t: tape.Test) => {
 
   const result = await findById(comment.id);
   t.equal(result, null, "Removes comment");
+});
+
+test("extractDesignIdFromCommentInput requires approvalStepId/annotationId", async (t: tape.Test) => {
+  const input: CommentInputType = {
+    text: "hey",
+    parentCommentId: null,
+    isPinned: false,
+    approvalStepId: null,
+    annotationId: null,
+  };
+  try {
+    await extractDesignIdFromCommentInput(db, input);
+    t.fail("Should throw if both approvalStepId and annotationId are empty");
+  } catch (err) {
+    t.is(err.message, "Comment should have approvalStepId or annotationId");
+  }
+  try {
+    await extractDesignIdFromCommentInput(db, {
+      ...input,
+      approvalStepId: "s1",
+      annotationId: "a1",
+    });
+    t.fail("Should throw if both approvalStepId and annotationId are set");
+  } catch (err) {
+    t.is(
+      err.message,
+      "Comment should not have approvalStepId and annotationId simultaneously"
+    );
+  }
+});
+
+test("extractDesignIdFromCommentInput should work for approvalStepId case", async (t: tape.Test) => {
+  const trx = await db.transaction();
+  try {
+    const { approvalStep } = await generateApprovalStep(trx);
+
+    const designId = await extractDesignIdFromCommentInput(trx, {
+      text: "hey",
+      parentCommentId: null,
+      isPinned: false,
+      approvalStepId: approvalStep.id,
+      annotationId: null,
+    });
+    t.is(designId, approvalStep.designId);
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("extractDesignIdFromCommentInput should work for annotation case", async (t: tape.Test) => {
+  const { annotation, design } = await generateAnnotation();
+  const designId = await extractDesignIdFromCommentInput(db, {
+    text: "hey",
+    parentCommentId: null,
+    isPinned: false,
+    approvalStepId: null,
+    annotationId: annotation.id,
+  });
+  t.is(designId, design.id);
 });

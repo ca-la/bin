@@ -1,21 +1,14 @@
 import Router from "koa-router";
 
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
-import * as ApprovalStepCommentDAO from "./dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
-import * as NotificationsService from "../../services/create-notifications";
 import requireAuth from "../../middleware/require-auth";
-import {
-  getCollaboratorsFromCommentMentions,
-  getThreadUserIdsFromCommentThread,
-} from "../../services/add-at-mention-details";
 import {
   attachDesignPermissions,
   canCommentOnDesign,
 } from "../../middleware/can-access-design";
 import { Permissions } from "../permissions/types";
 
-import { announceApprovalStepCommentCreation } from "../iris/messages/approval-step-comment";
 import useTransaction, {
   TransactionState,
 } from "../../middleware/use-transaction";
@@ -31,6 +24,7 @@ import {
   typeGuardFromSchema,
 } from "../../middleware/type-guard";
 import { StrictContext } from "../../router-context";
+import { createAndAnnounce } from "./service";
 
 const router = new Router();
 
@@ -66,52 +60,10 @@ async function createApprovalStepComment(ctx: CreateCommentContext) {
     userId,
   });
 
-  const approvalStepComment = await ApprovalStepCommentDAO.create(trx, {
-    approvalStepId,
-    commentId: comment.id,
-  });
-
-  const {
-    mentionedUserIds,
-    idNameMap,
-  } = await getCollaboratorsFromCommentMentions(trx, comment.text);
-
-  for (const mentionedUserId of mentionedUserIds) {
-    await NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
-      approvalStepId,
-      commentId: comment.id,
-      actorId: userId,
-      recipientId: mentionedUserId,
-    });
-  }
-
-  const threadUserIds: string[] =
-    comment.parentCommentId && mentionedUserIds.length === 0
-      ? await getThreadUserIdsFromCommentThread(trx, comment.parentCommentId)
-      : [];
-
-  for (const threadUserId of threadUserIds) {
-    await NotificationsService.sendApprovalStepCommentReplyNotification(trx, {
-      approvalStepId,
-      commentId: comment.id,
-      actorId: userId,
-      recipientId: threadUserId,
-    });
-  }
-
-  await NotificationsService.sendDesignOwnerApprovalStepCommentCreateNotification(
+  const commentWithResources = await createAndAnnounce(
     trx,
     approvalStepId,
-    comment.id,
-    userId,
-    mentionedUserIds,
-    threadUserIds
-  );
-
-  const commentWithResources = { ...comment, mentions: idNameMap };
-  await announceApprovalStepCommentCreation(
-    approvalStepComment,
-    commentWithResources
+    comment
   );
 
   ctx.status = 201;

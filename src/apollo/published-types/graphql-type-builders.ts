@@ -108,6 +108,16 @@ export function schemaToGraphQLType(
         };
       }
 
+      if (internal instanceof z.ZodBoolean) {
+        return {
+          ...acc,
+          body: {
+            ...acc.body,
+            [key]: `Boolean${maybeBang}`,
+          },
+        };
+      }
+
       return acc;
     },
     {

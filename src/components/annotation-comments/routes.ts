@@ -1,15 +1,11 @@
 import Router from "koa-router";
 
-import * as AnnotationCommentDAO from "../annotation-comments/dao";
-import sendCreationNotifications from "./send-creation-notifications";
 import requireAuth = require("../../middleware/require-auth");
 import useTransaction, {
   TransactionState,
 } from "../../middleware/use-transaction";
-import { announceAnnotationCommentCreation } from "../iris/messages/annotation-comment";
 import Asset from "../assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
-import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
 import {
   CommentWithResources,
   CreateCommentWithResources,
@@ -27,6 +23,7 @@ import {
 } from "../../middleware/can-access-design";
 import * as AnnotationsDAO from "../product-design-canvas-annotations/dao";
 import * as CanvasesDAO from "../canvases/dao";
+import { createAndAnnounce } from "./service";
 
 const router = new Router();
 
@@ -68,28 +65,11 @@ async function createAnnotationComment(ctx: CreateCommentContext) {
     userId,
   });
 
-  const annotationComment = await AnnotationCommentDAO.create(
-    {
-      annotationId,
-      commentId: comment.id,
-    },
-    trx
-  );
-
-  const commentWithResources = (await addAtMentionDetailsForComment(
+  const commentWithResources = await createAndAnnounce(
     trx,
-    comment
-  )) as CommentWithResources;
-
-  await announceAnnotationCommentCreation(
-    annotationComment,
-    commentWithResources
-  );
-  await sendCreationNotifications(trx, {
-    actorUserId: ctx.state.userId,
     annotationId,
-    comment,
-  });
+    comment
+  );
 
   ctx.status = 201;
   ctx.body = commentWithResources;
