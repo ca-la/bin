@@ -5,6 +5,7 @@ import {
   AuthenticationError,
   ForbiddenError,
   UserInputError,
+  ValidationError,
 } from "apollo-server-koa";
 import { GraphQLError } from "graphql";
 
@@ -17,5 +18,6 @@ test("isClientError", async (t: Test) => {
   );
   t.equal(isClientError(new ForbiddenError("")), true, "ForbiddenError");
   t.equal(isClientError(new UserInputError("")), true, "UserInputError");
+  t.equal(isClientError(new ValidationError("")), true, "ValidationError");
   t.equal(isClientError(new GraphQLError("")), false, "GraphQLError");
 });

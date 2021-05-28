@@ -14,6 +14,7 @@ export function isClientError(error: GraphQLError) {
     case "FORBIDDEN":
     case "BAD_USER_INPUT":
     case "NOT_FOUND":
+    case "GRAPHQL_VALIDATION_FAILED":
       return true;
   }
   return false;
