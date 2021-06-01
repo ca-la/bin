@@ -6,13 +6,17 @@ import * as PricingCostInputsDAO from "../components/pricing-cost-inputs/dao";
 import createUser from "./create-user";
 import createDesign from "../services/create-design";
 import generatePricingValues from "./factories/pricing-values";
-import generatePricingQuote from "../services/generate-pricing-quote";
+import { createQuotes } from "../services/generate-pricing-quote";
 import generateCollection from "./factories/collection";
 
-export async function checkout() {
+export async function checkout(generatePricing: boolean = true) {
+  if (generatePricing) {
+    await generatePricingValues();
+  }
+
   const designer = await createUser();
   const admin = await createUser({ role: "ADMIN" });
-  const { collection } = await generateCollection({
+  const { collection, team } = await generateCollection({
     createdBy: designer.user.id,
   });
 
@@ -51,8 +55,7 @@ export async function checkout() {
       userId: designer.user.id,
     }),
   ];
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
+  const quotes = await db.transaction(async (trx: Knex.Transaction) => {
     await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
       deletedAt: null,
@@ -97,76 +100,19 @@ export async function checkout() {
       productComplexity: "BLANK",
       productType: "TEESHIRT",
     });
+
+    return createQuotes(
+      [
+        { designId: collectionDesigns[0].id, units: 300 },
+        { designId: collectionDesigns[1].id, units: 200 },
+      ],
+      designer.user.id,
+      trx
+    );
   });
 
-  const quotes = [
-    await generatePricingQuote(
-      {
-        createdAt: new Date(),
-        deletedAt: null,
-        expiresAt: null,
-        id: uuid.v4(),
-        minimumOrderQuantity: 1,
-        designId: collectionDesigns[0].id,
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        processes: [
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-        ],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
-        processTimelinesVersion: 0,
-        processesVersion: 0,
-        productMaterialsVersion: 0,
-        productTypeVersion: 0,
-        marginVersion: 0,
-        constantsVersion: 0,
-        careLabelsVersion: 0,
-      },
-      300
-    ),
-    await generatePricingQuote(
-      {
-        createdAt: new Date(),
-        deletedAt: null,
-        expiresAt: null,
-        id: uuid.v4(),
-        minimumOrderQuantity: 1,
-        designId: collectionDesigns[1].id,
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        processes: [
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-        ],
-        productComplexity: "BLANK",
-        productType: "TEESHIRT",
-        processTimelinesVersion: 0,
-        processesVersion: 0,
-        productMaterialsVersion: 0,
-        productTypeVersion: 0,
-        marginVersion: 0,
-        constantsVersion: 0,
-        careLabelsVersion: 0,
-      },
-      200
-    ),
-  ];
-
   return {
+    team,
     collection,
     collectionDesigns,
     draftDesigns,

@@ -2,9 +2,9 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import generatePricingValues from "./pricing-values";
-import generatePricingQuote from "../../services/generate-pricing-quote";
 
 import { PricingQuote } from "../../domain-objects/pricing-quote";
+import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import * as CollectionsDAO from "../../components/collections/dao";
 import { Bid, BidCreationPayload } from "../../components/bids/types";
@@ -21,6 +21,8 @@ import { templateDesignEvent } from "../../components/design-events/types";
 import { generateDesign } from "./product-design";
 import { BidTaskTypeId } from "../../components/bid-task-types/types";
 import generateCollection from "./collection";
+import { createQuotes } from "../../services/generate-pricing-quote";
+import ProductDesign from "../../components/product-designs/domain-objects/product-design";
 
 interface BidInterface {
   user: User;
@@ -60,7 +62,7 @@ export default async function generateBid({
     throw new Error("Could not find or create collection for design");
   }
 
-  let design;
+  let design: ProductDesign;
   const found = designId ? await ProductDesignsDAO.findById(designId) : null;
   if (found) {
     design = found;
@@ -75,29 +77,29 @@ export default async function generateBid({
 
   const quote = quoteId
     ? await PricingQuotesDAO.findById(quoteId)
-    : await generatePricingQuote(
-        {
-          createdAt: new Date(),
-          deletedAt: null,
-          expiresAt: null,
-          id: uuid.v4(),
-          minimumOrderQuantity: 1,
-          designId: design.id,
-          materialBudgetCents: 1200,
-          materialCategory: "BASIC",
-          processes: [],
-          productComplexity: "SIMPLE",
-          productType: "TEESHIRT",
-          processTimelinesVersion: 0,
-          processesVersion: 0,
-          productMaterialsVersion: 0,
-          productTypeVersion: 0,
-          marginVersion: 0,
-          constantsVersion: 0,
-          careLabelsVersion: 0,
-        },
-        200
-      );
+    : await db
+        .transaction(async (trx: Knex.Transaction) => {
+          await PricingCostInputsDAO.create(trx, {
+            createdAt: new Date(),
+            deletedAt: null,
+            expiresAt: null,
+            id: uuid.v4(),
+            minimumOrderQuantity: 1,
+            designId: design.id,
+            materialBudgetCents: 1200,
+            materialCategory: "BASIC",
+            processes: [],
+            productComplexity: "SIMPLE",
+            productType: "TEESHIRT",
+          });
+
+          return createQuotes(
+            [{ designId: design.id, units: 200 }],
+            createdBy,
+            trx
+          );
+        })
+        .then((quotes: PricingQuote[]) => quotes[0]);
 
   if (!quote) {
     throw new Error("Could not find or create quote for new pricing bid");
@@ -143,38 +145,24 @@ export async function bidDesign({
   await generatePricingValues();
   const quote = quoteId
     ? await PricingQuotesDAO.findById(quoteId)
-    : await generatePricingQuote(
-        {
-          createdAt: now,
-          deletedAt: null,
-          expiresAt: null,
-          id: uuid.v4(),
-          minimumOrderQuantity: 1,
-          designId,
-          materialBudgetCents: 1200,
-          materialCategory: "BASIC",
-          processes: [
-            {
-              complexity: "1_COLOR",
-              name: "SCREEN_PRINTING",
-            },
-            {
-              complexity: "1_COLOR",
-              name: "SCREEN_PRINTING",
-            },
-          ],
-          productComplexity: "SIMPLE",
-          productType: "TEESHIRT",
-          processTimelinesVersion: 0,
-          processesVersion: 0,
-          productMaterialsVersion: 0,
-          productTypeVersion: 0,
-          marginVersion: 0,
-          constantsVersion: 0,
-          careLabelsVersion: 0,
-        },
-        200
-      );
+    : await db
+        .transaction(async (trx: Knex.Transaction) => {
+          await PricingCostInputsDAO.create(trx, {
+            createdAt: new Date(),
+            deletedAt: null,
+            expiresAt: null,
+            id: uuid.v4(),
+            minimumOrderQuantity: 1,
+            designId,
+            materialBudgetCents: 1200,
+            materialCategory: "BASIC",
+            processes: [],
+            productComplexity: "SIMPLE",
+            productType: "TEESHIRT",
+          });
+          return createQuotes([{ designId, units: 200 }], actorId, trx);
+        })
+        .then((quotes: PricingQuote[]) => quotes[0]);
   if (!quote) {
     throw new Error("Could not find or create quote when bidding");
   }

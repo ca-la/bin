@@ -111,8 +111,8 @@ LIMIT 1;
 
 export async function attachProcesses<
   T extends { id: string } = WithoutProcesses
->(inputs: T): Promise<T & { processes: Process[] }> {
-  const processes: Process[] = await db("pricing_cost_input_processes")
+>(inputs: T, ktx: Knex = db): Promise<T & { processes: Process[] }> {
+  const processes: Process[] = await ktx("pricing_cost_input_processes")
     .select(["name", "complexity"])
     .where({ pricing_cost_input_id: inputs.id })
     .orderBy("name", "desc");
@@ -161,7 +161,7 @@ export async function findByDesignId(options: {
   const inputs: PricingCostInputRow[] = [];
 
   for (const costInput of withoutProcesses) {
-    const input = await attachProcesses(costInput);
+    const input = await attachProcesses(costInput, trx);
     inputs.push(input);
   }
 
@@ -180,7 +180,7 @@ export async function findLatestForEachDesignId(
 
   const inputs: PricingCostInputRow[] = [];
   for (const costInput of withoutProcesses) {
-    const input = await attachProcesses(costInput);
+    const input = await attachProcesses(costInput, ktx);
     inputs.push(input);
   }
 
@@ -215,7 +215,7 @@ export async function expireCostInputs(
   const inputs: PricingCostInputRow[] = [];
 
   for (const costInput of costInputs) {
-    const input = await attachProcesses(costInput);
+    const input = await attachProcesses(costInput, trx);
     inputs.push(input);
   }
 

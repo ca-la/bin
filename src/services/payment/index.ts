@@ -17,7 +17,7 @@ import { PricingQuote } from "../../domain-objects/pricing-quote";
 import { setApprovalStepsDueAtByPricingQuote } from "../../components/approval-steps/service";
 import {
   CreateQuotePayload,
-  generateFromPayloadAndUser as createQuotes,
+  createQuotes,
 } from "../../services/generate-pricing-quote";
 import CollectionDb from "../../components/collections/domain-object";
 import Invoice = require("../../domain-objects/invoice");

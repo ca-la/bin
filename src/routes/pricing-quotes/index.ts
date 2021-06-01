@@ -10,15 +10,15 @@ import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAdmin = require("../../middleware/require-admin");
 import { findByDesignId, findById } from "../../dao/pricing-quotes";
 import { findByQuoteId as findBidsByQuoteId } from "../../components/bids/dao";
-import {
-  calculateAmounts,
-  generateUnsavedQuoteWithoutVersions,
-} from "../../services/generate-pricing-quote";
+import { createUnsavedQuoteWithLatest } from "../../services/generate-pricing-quote";
 import {
   CreatePricingCostInputRequest,
   isCreatePricingCostInputRequest,
 } from "../../components/pricing-cost-inputs/types";
-import { getDesignProductionFeeBasisPoints } from "../../components/design-quotes/service";
+import {
+  calculateAmounts,
+  getDesignProductionFeeBasisPoints,
+} from "../../components/design-quotes/service";
 import { StrictContext } from "../../router-context";
 import { safeQuery, SafeQueryState } from "../../middleware/type-guard";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
@@ -92,7 +92,7 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
   const productionFeeBasisPoints = yield getDesignProductionFeeBasisPoints(
     uncommittedCostInput.designId
   );
-  const unsavedQuote = yield generateUnsavedQuoteWithoutVersions(
+  const unsavedQuote = yield createUnsavedQuoteWithLatest(
     {
       minimumOrderQuantity,
       designId: uncommittedCostInput.designId,

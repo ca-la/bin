@@ -372,34 +372,10 @@ test("Partner pairing: accept as user", async (t: Test) => {
     },
     "responds with the accepted bid and associated design."
   );
-  t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type,
-    })),
-    [
-      {
-        actorId: admin.user.id,
-        designId: design.id,
-        type: "BID_DESIGN",
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "ACCEPT_SERVICE_BID",
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "STEP_PARTNER_PAIRING",
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "STEP_PARTNER_PAIRING",
-      },
-    ],
+  t.ok(
+    designEvents.find(
+      (event: DesignEvent) => event.type === "ACCEPT_SERVICE_BID"
+    ),
     "Adds an acceptance event"
   );
 
@@ -487,39 +463,11 @@ test("Partner pairing: accept as a team member", async (t: Test) => {
     },
     "responds with the accepted bid and associated design."
   );
-  t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type,
-      targetTeamId: event.targetTeamId,
-    })),
-    [
-      {
-        actorId: admin.user.id,
-        designId: design.id,
-        type: "BID_DESIGN",
-        targetTeamId: team.id,
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "ACCEPT_SERVICE_BID",
-        targetTeamId: team.id,
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "STEP_PARTNER_PAIRING",
-        targetTeamId: team.id,
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "STEP_PARTNER_PAIRING",
-        targetTeamId: team.id,
-      },
-    ],
+  t.ok(
+    designEvents.find(
+      (event: DesignEvent) =>
+        event.type === "ACCEPT_SERVICE_BID" && event.targetTeamId === team.id
+    ),
     "Adds an acceptance event"
   );
 });
@@ -610,24 +558,10 @@ test("Partner pairing: reject as user", async (t: Test) => {
   const createdRejection = await BidRejectionDAO.findByBidId(bid.id);
 
   t.equal(response.status, 204);
-  t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type,
-    })),
-    [
-      {
-        actorId: admin.user.id,
-        designId: design.id,
-        type: "BID_DESIGN",
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "REJECT_SERVICE_BID",
-      },
-    ],
+  t.ok(
+    designEvents.find(
+      (event: DesignEvent) => event.type === "REJECT_SERVICE_BID"
+    ),
     "Adds a rejection event"
   );
   t.deepEqual(omit(createdRejection, "id", "createdAt", "bidId"), bidRejection);
@@ -711,27 +645,11 @@ test("Partner pairing: reject as team member", async (t: Test) => {
   const createdRejection = await BidRejectionDAO.findByBidId(bid.id);
 
   t.equal(response.status, 204);
-  t.deepEqual(
-    designEvents.map((event: DesignEvent): any => ({
-      actorId: event.actorId,
-      designId: event.designId,
-      type: event.type,
-      targetTeamId: event.targetTeamId,
-    })),
-    [
-      {
-        actorId: admin.user.id,
-        designId: design.id,
-        type: "BID_DESIGN",
-        targetTeamId: team.id,
-      },
-      {
-        actorId: partner.user.id,
-        designId: design.id,
-        type: "REJECT_SERVICE_BID",
-        targetTeamId: team.id,
-      },
-    ],
+  t.ok(
+    designEvents.find(
+      (event: DesignEvent) =>
+        event.type === "REJECT_SERVICE_BID" && event.targetTeamId === team.id
+    ),
     "Adds a rejection event"
   );
   t.deepEqual(omit(createdRejection, "id", "createdAt", "bidId"), bidRejection);

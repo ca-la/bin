@@ -1823,20 +1823,7 @@ test("findIdByQuoteId", async (t: Test) => {
 test("findPaidDesigns", async (t: Test) => {
   const {
     collectionDesigns: [design0, design1],
-    quotes: [quote0, quote1],
   } = await checkout();
-
-  await generateDesignEvent({
-    createdAt: new Date("2019-04-20"),
-    quoteId: quote0.id,
-    type: "COMMIT_QUOTE",
-  });
-
-  await generateDesignEvent({
-    createdAt: new Date("2019-04-19"),
-    quoteId: quote1.id,
-    type: "COMMIT_QUOTE",
-  });
 
   const paid = await db.transaction((trx: Knex.Transaction) =>
     findPaidDesigns(trx)
@@ -1855,21 +1842,7 @@ test("findPaidDesigns", async (t: Test) => {
 });
 
 test("findPaidDesigns allows filtering by product type", async (t: Test) => {
-  const {
-    quotes: [quote0, quote1],
-  } = await checkout();
-
-  await generateDesignEvent({
-    createdAt: new Date("2019-04-20"),
-    quoteId: quote0.id,
-    type: "COMMIT_QUOTE",
-  });
-
-  await generateDesignEvent({
-    createdAt: new Date("2019-04-19"),
-    quoteId: quote1.id,
-    type: "COMMIT_QUOTE",
-  });
+  await checkout();
 
   const paid = await db.transaction((trx: Knex.Transaction) =>
     findPaidDesigns(trx, { productType: "TEESHIRT" })

@@ -3,8 +3,6 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import generatePricingValues from "../../test-helpers/factories/pricing-values";
-import generatePricingQuote from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
 import DesignEventsDAO from "../design-events/dao";
 import { generateDesign } from "../../test-helpers/factories/product-design";
@@ -28,23 +26,37 @@ import generateDesignEvent from "../../test-helpers/factories/design-event";
 import { daysToMs } from "../../services/time-conversion";
 import { addDesign } from "../../test-helpers/collections";
 import generateCollection from "../../test-helpers/factories/collection";
-import { generateTeam } from "../../test-helpers/factories/team";
 import PayoutAccountsDAO = require("../../dao/partner-payout-accounts");
 import PartnerPayoutsDAO = require("../partner-payouts/dao");
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role as TeamUserRole } from "../team-users/types";
 import { BidDb } from "./types";
 import { MILLISECONDS_TO_EXPIRE } from "./constants";
+import { checkout } from "../../test-helpers/checkout-collection";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 const testDate = new Date();
 
 async function setup() {
   const clock = sandbox().useFakeTimers(testDate);
-  await generatePricingValues();
-  const { user: admin } = await createUser({
-    role: "ADMIN",
-    withSession: false,
-  });
+  const {
+    team,
+    user: {
+      admin: { user: admin },
+      designer: { user: designer1 },
+    },
+    collection: c1,
+    collectionDesigns: [d1],
+    quotes: [q1],
+  } = await checkout();
+  const {
+    user: {
+      designer: { user: designer2 },
+    },
+    collection: c2,
+    collectionDesigns: [d2],
+    quotes: [q2],
+  } = await checkout();
   const { user: partner1 } = await createUser({
     role: "PARTNER",
     withSession: false,
@@ -57,21 +69,13 @@ async function setup() {
     role: "PARTNER",
     withSession: false,
   });
-  const { user: designer1 } = await createUser({
-    role: "ADMIN",
-    withSession: false,
-  });
-  const { user: designer2 } = await createUser({
-    role: "ADMIN",
-    withSession: false,
-  });
-  const { team } = await generateTeam(partner1.id);
+  const { team: partnerTeam } = await generateTeam(partner1.id);
   await db.transaction((trx: Knex.Transaction) =>
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
       label: null,
-      teamId: team.id,
+      teamId: partnerTeam.id,
       userId: partner3.id,
       userEmail: null,
       createdAt: new Date(),
@@ -102,83 +106,6 @@ async function setup() {
     stripeUserId: "stripe-user-one",
   });
 
-  const d1 = await generateDesign({ userId: designer1.id });
-  const d2 = await generateDesign({ userId: designer2.id });
-  const { collection: c1 } = await generateCollection({
-    createdBy: designer1.id,
-  });
-  const { collection: c2 } = await generateCollection({
-    createdBy: designer2.id,
-  });
-  await addDesign(c1.id, d1.id);
-  await addDesign(c2.id, d2.id);
-
-  const q1 = await generatePricingQuote(
-    {
-      createdAt: testDate,
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: d1.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    200
-  );
-
-  const q2 = await generatePricingQuote(
-    {
-      createdAt: testDate,
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: d2.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    300
-  );
-
   return {
     users: {
       admin,
@@ -189,6 +116,7 @@ async function setup() {
       designer2,
     },
     team,
+    partnerTeam,
     payoutAccounts: [payoutAccount1, payoutAccount2],
     designs: [d1, d2],
     collections: [c1, c2],
@@ -387,7 +315,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     clock,
     users: { admin, partner1, partner2, partner3 },
     designs: [design1, design2],
-    team,
+    partnerTeam,
     payoutAccounts: [, payoutAccount2],
     quotes: [quote1, quote2],
   } = await setup();
@@ -420,7 +348,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     designId: design1.id,
     quoteId: quote1.id,
     actorId: admin.id,
-    targetTeamId: team.id,
+    targetTeamId: partnerTeam.id,
   });
 
   clock.tick(1000);
@@ -686,7 +614,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findAllByQuoteAndTargetId(trx, quote1.id, team.id),
+      await findAllByQuoteAndTargetId(trx, quote1.id, partnerTeam.id),
       [
         { ...open1, designEvents: [] },
         { ...teamBid, designEvents: [deTeamBid] },
@@ -697,7 +625,7 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
     );
 
     t.deepEqual(
-      await findAllByQuoteAndTargetId(trx, quote2.id, team.id),
+      await findAllByQuoteAndTargetId(trx, quote2.id, partnerTeam.id),
       [
         { ...accepted2, acceptedAt, designEvents: [] },
         { ...accepted1, acceptedAt, designEvents: [] },
@@ -767,8 +695,8 @@ test("Bids DAO supports retrieval of subset of bids", async (t: Test) => {
         ...teamBid,
         assignee: {
           type: "TEAM",
-          id: team.id,
-          name: team.title,
+          id: partnerTeam.id,
+          name: partnerTeam.title,
         },
       },
       "findByBidIdAndUser / returns bid to a team for team users"
@@ -913,98 +841,33 @@ test("Bids DAO does not consider deleted payout logs", async (t: Test) => {
   t.equal(bids.length, 1);
 });
 
-test("findUnpaidByTeamId", async () => {
-  test("finds unpaid bids", async (t: Test) => {
-    const {
-      users: { admin, partner1 },
-      team,
-      designs: [design],
-      quotes,
-      clock,
-    } = await setup();
-    const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
-    clock.setSystemTime(acceptedAt);
+test("finds unpaid bids", async (t: Test) => {
+  const {
+    users: { admin, partner1 },
+    team,
+    designs: [design],
+    quotes,
+    clock,
+  } = await setup();
+  const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
+  clock.setSystemTime(acceptedAt);
 
-    const { bid } = await bidToPartner({
-      designId: design.id,
-      quoteId: quotes[0].id,
-      actorId: admin.id,
-      targetTeamId: team.id,
-    });
-    await acceptBid({
-      bidId: bid!.id,
-      designId: design.id,
-      actorId: partner1.id,
-      targetTeamId: team.id,
-    });
+  const { bid } = await bidToPartner({
+    designId: design.id,
+    quoteId: quotes[0].id,
+    actorId: admin.id,
+    targetTeamId: team.id,
+  });
+  await acceptBid({
+    bidId: bid!.id,
+    designId: design.id,
+    actorId: partner1.id,
+    targetTeamId: team.id,
+  });
 
-    await db.transaction(async (trx: Knex.Transaction) =>
-      t.deepEquals(
-        await findUnpaidByTeamId(trx, team.id),
-        [
-          {
-            ...bid,
-            acceptedAt,
-            assignee: {
-              id: team.id,
-              name: team.title,
-              type: "TEAM",
-            },
-          },
-        ],
-        "Returns bid that has recieved no payment"
-      )
-    );
-
-    await payPartner({
-      payoutAccountId: null,
-      payoutAmountCents: bid!.bidPriceCents / 2,
-      initiatorUserId: admin.id,
-      bidId: bid!.id,
-    });
-
-    await db.transaction(async (trx: Knex.Transaction) =>
-      t.deepEquals(
-        await findUnpaidByTeamId(trx, team.id),
-        [
-          {
-            ...bid,
-            acceptedAt,
-            assignee: {
-              id: team.id,
-              name: team.title,
-              type: "TEAM",
-            },
-          },
-        ],
-        "Returns bid that has recieved partial payment"
-      )
-    );
-
-    const payout = await payPartner({
-      payoutAccountId: null,
-      payoutAmountCents: bid!.bidPriceCents / 2,
-      initiatorUserId: admin.id,
-      bidId: bid!.id,
-    });
-
-    await db.transaction(async (trx: Knex.Transaction) =>
-      t.deepEquals(
-        await findUnpaidByTeamId(trx, team.id),
-        [],
-        "Does not return paid bids"
-      )
-    );
-
-    const afterDeleteBids = await db.transaction(
-      async (trx: Knex.Transaction) => {
-        await PartnerPayoutsDAO.deleteById(trx, payout.id);
-        return findUnpaidByTeamId(trx, team.id);
-      }
-    );
-
+  await db.transaction(async (trx: Knex.Transaction) =>
     t.deepEquals(
-      afterDeleteBids,
+      await findUnpaidByTeamId(trx, team.id),
       [
         {
           ...bid,
@@ -1016,66 +879,129 @@ test("findUnpaidByTeamId", async () => {
           },
         },
       ],
-      "starts returning bids again after deleting one of the payments"
-    );
+      "Returns bid that has recieved no payment"
+    )
+  );
+
+  await payPartner({
+    payoutAccountId: null,
+    payoutAmountCents: bid!.bidPriceCents / 2,
+    initiatorUserId: admin.id,
+    bidId: bid!.id,
   });
 
-  test("does not return bids the team was removed ", async (t: Test) => {
-    const {
-      users: { admin, partner1 },
-      team,
-      designs: [design],
-      quotes,
-      clock,
-    } = await setup();
-    const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
-    clock.setSystemTime(acceptedAt);
-
-    const { bid } = await bidToPartner({
-      designId: design.id,
-      quoteId: quotes[0].id,
-      actorId: admin.id,
-      targetTeamId: team.id,
-    });
-
-    await acceptBid({
-      bidId: bid!.id,
-      designId: design.id,
-      actorId: partner1.id,
-      targetTeamId: team.id,
-    });
-
-    await db.transaction(async (trx: Knex.Transaction) =>
-      t.deepEquals(
-        await findUnpaidByTeamId(trx, team.id),
-        [
-          {
-            ...bid,
-            acceptedAt,
-            assignee: {
-              id: team.id,
-              name: team.title,
-              type: "TEAM",
-            },
+  await db.transaction(async (trx: Knex.Transaction) =>
+    t.deepEquals(
+      await findUnpaidByTeamId(trx, team.id),
+      [
+        {
+          ...bid,
+          acceptedAt,
+          assignee: {
+            id: team.id,
+            name: team.title,
+            type: "TEAM",
           },
-        ],
-        "Returns bid before being removed"
-      )
-    );
+        },
+      ],
+      "Returns bid that has recieved partial payment"
+    )
+  );
 
-    await removePartner({
-      bidId: bid!.id,
-      designId: design.id,
-      targetTeamId: team.id,
-      actorId: admin.id,
-    });
-
-    await db.transaction(async (trx: Knex.Transaction) =>
-      t.deepEquals(
-        await findUnpaidByTeamId(trx, team.id),
-        [],
-        "Does not return removed bid"
-      )
-    );
+  const payout = await payPartner({
+    payoutAccountId: null,
+    payoutAmountCents: bid!.bidPriceCents / 2,
+    initiatorUserId: admin.id,
+    bidId: bid!.id,
   });
+
+  await db.transaction(async (trx: Knex.Transaction) =>
+    t.deepEquals(
+      await findUnpaidByTeamId(trx, team.id),
+      [],
+      "Does not return paid bids"
+    )
+  );
+
+  const afterDeleteBids = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      await PartnerPayoutsDAO.deleteById(trx, payout.id);
+      return findUnpaidByTeamId(trx, team.id);
+    }
+  );
+
+  t.deepEquals(
+    afterDeleteBids,
+    [
+      {
+        ...bid,
+        acceptedAt,
+        assignee: {
+          id: team.id,
+          name: team.title,
+          type: "TEAM",
+        },
+      },
+    ],
+    "starts returning bids again after deleting one of the payments"
+  );
+});
+
+test("does not return bids the team was removed ", async (t: Test) => {
+  const {
+    users: { admin, partner1 },
+    team,
+    designs: [design],
+    quotes,
+    clock,
+  } = await setup();
+  const acceptedAt = new Date(testDate.getTime() + daysToMs(1));
+  clock.setSystemTime(acceptedAt);
+
+  const { bid } = await bidToPartner({
+    designId: design.id,
+    quoteId: quotes[0].id,
+    actorId: admin.id,
+    targetTeamId: team.id,
+  });
+
+  await acceptBid({
+    bidId: bid!.id,
+    designId: design.id,
+    actorId: partner1.id,
+    targetTeamId: team.id,
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) =>
+    t.deepEquals(
+      await findUnpaidByTeamId(trx, team.id),
+      [
+        {
+          ...bid,
+          acceptedAt,
+          assignee: {
+            id: team.id,
+            name: team.title,
+            type: "TEAM",
+          },
+        },
+      ],
+      "Returns bid before being removed"
+    )
+  );
+
+  await removePartner({
+    bidId: bid!.id,
+    designId: design.id,
+    targetTeamId: team.id,
+    actorId: admin.id,
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) =>
+    t.deepEquals(
+      await findUnpaidByTeamId(trx, team.id),
+      [],
+      "Does not return removed bid"
+    )
+  );
 });

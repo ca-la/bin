@@ -1,4 +1,5 @@
 import { find, omit, uniqBy } from "lodash";
+import uuid from "node-uuid";
 import Knex from "knex";
 import db from "../../services/db";
 import {
@@ -9,9 +10,12 @@ import {
 
 import { Process } from "../../domain-objects/pricing";
 import {
+  BasePricingQuoteRequest,
+  dataAdapter,
   isPricingQuoteRow,
   PricingProcessQuoteRow,
   PricingQuote,
+  PricingQuoteCalculated,
   PricingQuoteInputRow,
   PricingQuoteRow,
   PricingQuoteValues,
@@ -101,13 +105,24 @@ const normalizedPricingQuoteAdapter = new DataAdapter<
   NormalizedPricingQuote
 >(encodeNormalizedPricingQuote);
 
+interface CreatePricingQuote
+  extends BasePricingQuoteRequest,
+    PricingQuoteCalculated {
+  pricingQuoteInputId: string;
+}
+
 export async function create(
-  quote: Uninserted<PricingQuoteRow>,
+  quote: CreatePricingQuote,
   ktx: Knex = db
 ): Promise<NormalizedPricingQuote> {
   const TABLE_NAME = "pricing_quotes";
+  const data = dataAdapter.forInsertion({
+    ...quote,
+    id: uuid.v4(),
+    processes: [],
+  });
   const created = await ktx(TABLE_NAME)
-    .insert(omit(quote, ["processes"]))
+    .insert(omit(data, ["processes"]))
     .returning("*")
     .then((rows: PricingQuoteRow[]) => first(rows));
 
@@ -234,13 +249,7 @@ export async function createPricingProcesses(
   ktx: Knex = db
 ): Promise<PricingProcess[]> {
   const TABLE_NAME = "pricing_quote_processes";
-  return Promise.all(
-    processRows.map(
-      async (
-        processRow: Uninserted<PricingProcessQuoteRow>
-      ): Promise<PricingProcess> => ktx(TABLE_NAME).insert(processRow)
-    )
-  );
+  return ktx(TABLE_NAME).insert(processRows, "*");
 }
 
 async function attachProcesses(

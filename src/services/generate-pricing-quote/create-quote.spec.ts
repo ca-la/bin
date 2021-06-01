@@ -5,10 +5,7 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import DesignEventsDAO from "../../components/design-events/dao";
 import { PricingQuoteValues } from "../../domain-objects/pricing-quote";
-import generatePricingQuote, {
-  generateUnsavedQuote,
-  generateFromPayloadAndUser,
-} from "./index";
+import { createUnsavedQuote, createQuotes } from "./create-quote";
 import { daysToMs } from "../time-conversion";
 import db from "../db";
 import createUser from "../../test-helpers/create-user";
@@ -54,60 +51,18 @@ const quoteRequestOne: PricingCostInput = {
   careLabelsVersion: 0,
 };
 
-test("generateUnsavedQuote failure", async (t: Test) => {
+test("createUnsavedQuote failure", async (t: Test) => {
   sandbox().stub(PricingQuotesDAO, "findLatestValuesForRequest").throws();
 
   try {
-    await generateUnsavedQuote(quoteRequestOne, 100000, 0);
+    await createUnsavedQuote(quoteRequestOne, 100000, 0);
     t.fail("Should not have succeeded!");
   } catch {
     t.ok("Fails to generate an unsaved quote");
   }
 });
 
-test("generatePricingQuote failure", async (t: Test) => {
-  sandbox().stub(PricingQuotesDAO, "findLatestValuesForRequest").throws();
-
-  try {
-    await generatePricingQuote(
-      {
-        createdAt: new Date(),
-        deletedAt: null,
-        expiresAt: null,
-        id: uuid.v4(),
-        minimumOrderQuantity: 1,
-        designId: "a-design-id",
-        materialBudgetCents: 1200,
-        materialCategory: "BASIC",
-        processes: [
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-          {
-            complexity: "1_COLOR",
-            name: "SCREEN_PRINTING",
-          },
-        ],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
-        processTimelinesVersion: 0,
-        processesVersion: 0,
-        productMaterialsVersion: 0,
-        productTypeVersion: 0,
-        marginVersion: 0,
-        constantsVersion: 0,
-        careLabelsVersion: 0,
-      },
-      100000
-    );
-    t.fail("Should not have succeeded!");
-  } catch {
-    t.ok("Fails to generate an unsaved quote");
-  }
-});
-
-test("generateUnsavedQuote", async (t: Test) => {
+test("createUnsavedQuote", async (t: Test) => {
   const latestValues: PricingQuoteValues = {
     brandedLabelsAdditionalCents: 5,
     brandedLabelsMinimumCents: 255,
@@ -217,11 +172,7 @@ test("generateUnsavedQuote", async (t: Test) => {
     .stub(PricingQuotesDAO, "findVersionValuesForRequest")
     .resolves(latestValues);
 
-  const unsavedQuote = await generateUnsavedQuote(
-    quoteRequestOne,
-    100_000,
-    200
-  );
+  const unsavedQuote = await createUnsavedQuote(quoteRequestOne, 100_000, 200);
 
   t.equal(unsavedQuote.baseCostCents, 386, "calculates base cost correctly");
   t.equal(
@@ -242,7 +193,7 @@ test("generateUnsavedQuote", async (t: Test) => {
   );
 });
 
-test("generateUnsavedQuote for blank", async (t: Test) => {
+test("createUnsavedQuote for blank", async (t: Test) => {
   const latestValues: PricingQuoteValues = {
     brandedLabelsAdditionalCents: 5,
     brandedLabelsMinimumCents: 25500,
@@ -343,7 +294,7 @@ test("generateUnsavedQuote for blank", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await generateDesign({ userId: user.id });
 
-  const unsavedQuote = await generateUnsavedQuote(
+  const unsavedQuote = await createUnsavedQuote(
     {
       createdAt: new Date(),
       deletedAt: null,
@@ -386,7 +337,7 @@ test("generateUnsavedQuote for blank", async (t: Test) => {
   );
 });
 
-test("generateUnsavedQuote for packaging", async (t: Test) => {
+test("createUnsavedQuote for packaging", async (t: Test) => {
   const latestValues: PricingQuoteValues = {
     brandedLabelsAdditionalCents: 5,
     brandedLabelsMinimumCents: 25500,
@@ -475,7 +426,7 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await generateDesign({ userId: user.id });
 
-  const unsavedQuote = await generateUnsavedQuote(
+  const unsavedQuote = await createUnsavedQuote(
     {
       createdAt: new Date(),
       deletedAt: null,
@@ -513,7 +464,7 @@ test("generateUnsavedQuote for packaging", async (t: Test) => {
   );
 });
 
-test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
+test("createQuote uses the checkout step", async (t: Test) => {
   const { user } = await createUser();
   const { team } = await generateTeam(user.id);
   const { collection } = await generateCollection({ teamId: team.id });
@@ -561,7 +512,7 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
       productComplexity: "BLANK",
       productType: "TEESHIRT",
     });
-    return generateFromPayloadAndUser(payload, user.id, trx);
+    return createQuotes(payload, user.id, trx);
   });
 
   const [
@@ -592,7 +543,7 @@ test("generateFromPayloadAndUser uses the checkout step", async (t: Test) => {
   });
 });
 
-test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {
+test("createQuote respects MOQ", async (t: Test) => {
   const designId = "a-design-id";
   sandbox().stub(ApprovalStepsDAO, "findOne").resolves({
     id: "a-checkout-step-id",
@@ -620,7 +571,7 @@ test("generateFromPayloadAndUser respects MOQ", async (t: Test) => {
   const trx = await db.transaction();
 
   try {
-    await generateFromPayloadAndUser(
+    await createQuotes(
       [
         {
           designId,

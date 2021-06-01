@@ -1,6 +1,6 @@
-import db from "../../db";
+import db from "../db";
 import { pick } from "lodash";
-import { test, Test } from "../../../test-helpers/fresh";
+import { test, Test } from "../../test-helpers/fresh";
 import {
   DeepEqualSet,
   basicValuePoolQuery,
@@ -9,10 +9,10 @@ import {
   getProcessTimelinePool,
   ProcessTimeLinePoolFilter,
   findQuoteItemFromPool,
-} from ".";
-import { MaterialCategory } from "../../../domain-objects/pricing";
-import generatePricingValues from "../../../test-helpers/factories/pricing-values";
-import PricingProcessTimeline from "../../../components/pricing-process-timeline/domain-object";
+} from "./quote-values";
+import { MaterialCategory } from "../../domain-objects/pricing";
+import generatePricingValues from "../../test-helpers/factories/pricing-values";
+import PricingProcessTimeline from "../../components/pricing-process-timeline/domain-object";
 
 test("DeepEqualSet", async (t: Test) => {
   type MaterialFilterType = QuoteValueFilterBase & {

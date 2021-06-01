@@ -13,17 +13,14 @@ import { createTrx as createInvoice } from "../invoices";
 import db from "../../services/db";
 import LineItem from "../../domain-objects/line-item";
 import Invoice = require("../../domain-objects/invoice");
-import generatePricingValues from "../../test-helpers/factories/pricing-values";
-import generatePricingQuote from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
 import generateInvoice from "../../test-helpers/factories/invoice";
 import createDesign from "../../services/create-design";
-import generateCollection from "../../test-helpers/factories/collection";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateComponent from "../../test-helpers/factories/component";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateLineItem from "../../test-helpers/factories/line-item";
-import { generateTeam } from "../../test-helpers/factories/team";
+import { checkout } from "../../test-helpers/checkout-collection";
 
 test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -153,21 +150,19 @@ test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
 });
 
 test("getLineItemsWithMetaByInvoiceId retrieves all line items with meta for an invoice", async (t: tape.Test) => {
-  const { user } = await createUser({ withSession: false });
-  const { team } = await generateTeam(user.id);
-  const { collection } = await generateCollection({ teamId: team.id });
+  const {
+    user: {
+      designer: { user },
+    },
+    collection,
+    collectionDesigns: [design1],
+    quotes: [quote],
+  } = await checkout();
   const { invoice } = await generateInvoice({ userId: user.id });
   const result1 = await getLineItemsWithMetaByInvoiceId(invoice.id);
   t.deepEqual(result1, [], "Returns nothing if there are no line items");
 
   // Create all the items necessary to return a line item with metadata
-
-  const design1 = await createDesign({
-    productType: "TEESHIRT",
-    title: "Plain White Tee",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
 
   const { asset } = await generateAsset({ userId: user.id });
   const { component } = await generateComponent({
@@ -185,39 +180,6 @@ test("getLineItemsWithMetaByInvoiceId retrieves all line items with meta for an 
     totalCents: 100000,
     userId: user.id,
   });
-  await generatePricingValues();
-  const quote = await generatePricingQuote(
-    {
-      createdAt: new Date(),
-      deletedAt: null,
-      expiresAt: null,
-      id: uuid.v4(),
-      minimumOrderQuantity: 1,
-      designId: design1.id,
-      materialBudgetCents: 1200,
-      materialCategory: "BASIC",
-      processes: [
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-        {
-          complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
-        },
-      ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
-      processTimelinesVersion: 0,
-      processesVersion: 0,
-      productMaterialsVersion: 0,
-      productTypeVersion: 0,
-      marginVersion: 0,
-      constantsVersion: 0,
-      careLabelsVersion: 0,
-    },
-    100000
-  );
   const { lineItem } = await generateLineItem(quote.id, {
     designId: design1.id,
     invoiceId: invoice2.id,
@@ -229,7 +191,7 @@ test("getLineItemsWithMetaByInvoiceId retrieves all line items with meta for an 
     [
       {
         ...lineItem,
-        designTitle: "Plain White Tee",
+        designTitle: design1.title,
         designCollections: [{ id: collection.id, title: collection.title }],
         designImageIds: [asset.id],
         quotedUnits: quote.units,
