@@ -10,5 +10,6 @@ export const rawDao = buildDao<FinancingAccountDb, FinancingAccountDbRow>(
   rawAdapter,
   {
     orderColumn: "created_at",
+    excludeDeletedAt: false, // no `deleted_at` column
   }
 );
