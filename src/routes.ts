@@ -25,6 +25,7 @@ import componentRoutes from "./components/components/routes";
 import creditRoutes from "./components/credits/routes";
 import designQuoteRoutes from "./components/design-quotes/routes";
 import duplicationRoutes from "./components/duplication/routes";
+import financingAccountsRouter from "./components/financing-accounts/routes";
 import healthRoutes from "./components/health/routes";
 import integrationRoutes from "./components/integrations/routes";
 import newsletterSubscriptionRoutes from "./components/newsletter-subscriptions/routes";
@@ -133,5 +134,6 @@ plugComponentRouter(router, templateCategoryComponent.router);
 plugComponentRouter(router, teamComponent.router);
 plugComponentRouter(router, teamUserComponent.router);
 plugComponentRouter(router, participantRouter);
+plugComponentRouter(router, financingAccountsRouter);
 
 export default router;
