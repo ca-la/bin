@@ -18,6 +18,8 @@ export const financingAccountDbRowSchema = z.object({
   team_id: financingAccountDbSchema.shape.teamId,
   term_length_days: financingAccountDbSchema.shape.termLengthDays,
   fee_basis_points: financingAccountDbSchema.shape.feeBasisPoints,
-  credit_limit_cents: z.string(),
+  credit_limit_cents: z
+    .union([z.number(), z.string()])
+    .transform((maybeNumber: number | string) => String(maybeNumber)),
 });
 export type FinancingAccountDbRow = z.infer<typeof financingAccountDbRowSchema>;

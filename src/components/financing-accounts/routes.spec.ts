@@ -1,7 +1,10 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, post, get } from "../../test-helpers/http";
+import createUser from "../../test-helpers/create-user";
+import { generateTeam } from "../../test-helpers/factories/team";
 import SessionsDAO from "../../dao/sessions";
+
 import { rawDao } from "./dao";
 
 test("POST /financing-accounts", async (t: Test) => {
@@ -162,4 +165,31 @@ test("GET /financing-accounts?teamId", async (t: Test) => {
   });
 
   t.equal(notValid.status, 400, "responds with invalid response");
+});
+
+test("GET -> POST -> GET: end to end", async (t: Test) => {
+  const admin = await createUser({ role: "ADMIN" });
+  const designer = await createUser();
+  const { team } = await generateTeam(designer.user.id);
+
+  const [, empty] = await get(`/financing-accounts?teamId=${team.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.deepEqual(empty, [], "no accounts to start with");
+
+  const [, created] = await post("/financing-accounts", {
+    headers: authHeader(admin.session.id),
+    body: {
+      teamId: team.id,
+      termLengthDays: 30,
+      feeBasisPoints: 10_00,
+      creditLimitCents: 100_000_00,
+    },
+  });
+  const [, found] = await get(`/financing-accounts?teamId=${team.id}`, {
+    headers: authHeader(admin.session.id),
+  });
+
+  t.deepEqual(found, [created], "finds the created account");
 });
