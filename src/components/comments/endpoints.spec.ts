@@ -1,11 +1,7 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 import db from "../../services/db";
-import {
-  sandbox,
-  // sandbox,
-  test,
-} from "../../test-helpers/fresh";
+import { sandbox, test } from "../../test-helpers/fresh";
 import { authHeader, post } from "../../test-helpers/http";
 import { Test } from "tape";
 import createUser from "../../test-helpers/create-user";
