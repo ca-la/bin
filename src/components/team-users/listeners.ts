@@ -29,7 +29,10 @@ async function sendTeamUsersListUpdatedMessage(
   IrisService.sendMessage(realtimeTeamUsersListUpdated(teamId, teamUsersList));
 }
 
-async function sendTeamsToUpdatedUser(trx: Knex.Transaction, userId: string) {
+export async function sendTeamsToUpdatedUser(
+  trx: Knex.Transaction,
+  userId: string
+) {
   const teams = await TeamsDAO.findByUser(trx, userId);
 
   IrisService.sendMessage(realtimeTeamListUpdated(userId, teams));

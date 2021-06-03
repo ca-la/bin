@@ -6,29 +6,55 @@ set -o pipefail
 set -o noglob
 
 # Run server with ts-node watching for changes
-# Usage: bin/dev
+
+usage() {
+  echo "Usage: bin/dev <api|api-worker> [-i]"
+  echo 'Options:'
+  echo ' -i Enable inspector'
+  exit 1
+}
+
+DEFAULT_APP=api
 
 run() {
   source bin/lib/loadenv
   loadenv_local
 
-  nodemon_opts=""
+  app_to_run=${1:-$DEFAULT_APP}
+  if [[ ${1:-""} == -* ]]; then
+    app_to_run=$DEFAULT_APP
+  elif [[ $# -gt 0 ]]; then
+    shift
+  fi
 
+  path_to_app="./src"
+  case "$app_to_run" in
+    api)
+      path_to_app="./src"
+      ;;
+    api-worker)
+      path_to_app="./src/workers/api-worker"
+      ;;
+    *)
+      usage
+      ;;
+  esac
+  echo $path_to_app
+
+  nodemon_opts=""
   while getopts "i" opt; do
     case $opt in
       i)
         nodemon_opts="--inspect"
         ;;
       *)
-        echo 'Usage: bin/dev [-i]'
-        echo 'Options:'
-        echo ' -i Enable inspector'
-        exit 1
+        usage
         ;;
       esac
   done
 
-  npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' ./src
+
+  npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' $path_to_app
 }
 
 run "$@"

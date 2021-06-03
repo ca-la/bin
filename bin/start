@@ -7,8 +7,13 @@ set -o noglob
 
 # Start up production API server
 # Relies on config specified in environment variables; does not read from .env
-#
-# Usage: bin/start
+
+usage() {
+  echo "Usage: bin/run <api|api-worker>"
+  exit 1
+}
+
+DEFAULT_APP=api
 
 run() {
   if [ ! -d "dist" ]; then
@@ -16,7 +21,19 @@ run() {
     exit 1
   fi
 
-  node dist
+  app_to_run=${1:-$DEFAULT_APP}
+  case "$app_to_run" in
+    api)
+      node dist
+      ;;
+    api-worker)
+      node dist/workers/api-worker
+      ;;
+    *)
+      usage
+      ;;
+  esac
+
 }
 
 run "$@"
