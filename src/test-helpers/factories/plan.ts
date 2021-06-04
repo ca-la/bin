@@ -22,7 +22,7 @@ export default async function generatePlan(
       billingInterval: BillingInterval.MONTHLY,
       monthlyCostCents: 1234,
       revenueShareBasisPoints: 1200,
-      costOfGoodsShareBasisPoints: 0,
+      costOfGoodsShareBasisPoints: 2000,
       fulfillmentFeesShareBasisPoints: 0,
       stripePlanId: "plan_123",
       title: "A little Bit",

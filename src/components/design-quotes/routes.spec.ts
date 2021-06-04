@@ -1,11 +1,13 @@
 import { test, Test, sandbox } from "../../test-helpers/fresh";
-import { get, authHeader } from "../../test-helpers/http";
+import { post, get, authHeader } from "../../test-helpers/http";
 import SessionsDAO from "../../dao/sessions";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import * as DesignQuoteService from "./service";
 import { DesignQuote } from "./types";
+import { costCollection } from "../../test-helpers/cost-collection";
+import ProductDesign from "../product-designs/domain-objects/product-design";
 
-test("GET /design-quotes: no auth", async (t: Test) => {
+test("GET /design-quotes?designId&units: no auth", async (t: Test) => {
   const [noAuth] = await get("/design-quotes?designId=a-design-id&units=100");
 
   t.equal(noAuth.status, 401, "requires authentication");
@@ -39,7 +41,7 @@ test("GET /design-quotes: no units", async (t: Test) => {
   t.equal(noUnits.status, 400, "requires a units in query params");
 });
 
-test("GET /design-quotes: valid", async (t: Test) => {
+test("GET /design-quotes?designId&units: valid", async (t: Test) => {
   const designQuote: DesignQuote = {
     designId: "a-design-id",
     payLaterTotalCents: 10639,
@@ -78,4 +80,81 @@ test("GET /design-quotes: valid", async (t: Test) => {
 
   t.equal(response.status, 200, "returns a success response");
   t.deepEqual(body, designQuote);
+});
+
+test("POST /design-quotes: no auth", async (t: Test) => {
+  const [noAuth] = await post("/design-quotes");
+
+  t.equal(noAuth.status, 401, "requires authentication");
+});
+
+test("POST /design-quotes: valid", async (t: Test) => {
+  const {
+    user: { designer },
+    collectionDesigns,
+  } = await costCollection();
+
+  const [response, body] = await post("/design-quotes", {
+    headers: authHeader(designer.session.id),
+    body: collectionDesigns.map((design: ProductDesign) => ({
+      designId: design.id,
+      units: 100,
+    })),
+  });
+
+  t.equal(response.status, 200, "responds with a success response");
+  t.deepEqual(
+    body,
+    {
+      balanceDueCents: 852720,
+      combinedLineItems: [
+        {
+          cents: 142120,
+          description: "Production Fee",
+          explainerCopy:
+            "A fee for what you produce with us, based on your plan",
+        },
+      ],
+      creditAppliedCents: 0,
+      dueLaterCents: 0,
+      dueNowCents: 852720,
+      quotes: [
+        {
+          designId: collectionDesigns[0].id,
+          lineItems: [
+            {
+              cents: 99200,
+              description: "Production Fee",
+              explainerCopy:
+                "A fee for what you produce with us, based on your plan",
+            },
+          ],
+          minimumOrderQuantity: 1,
+          payLaterTotalCents: 527660,
+          payNowTotalCents: 496000,
+          timeTotalMs: 1219764706,
+          units: 100,
+        },
+        {
+          designId: collectionDesigns[1].id,
+          lineItems: [
+            {
+              cents: 42920,
+              description: "Production Fee",
+              explainerCopy:
+                "A fee for what you produce with us, based on your plan",
+            },
+          ],
+          minimumOrderQuantity: 1,
+          payLaterTotalCents: 228298,
+          payNowTotalCents: 214600,
+          timeTotalMs: 711529412,
+          units: 100,
+        },
+      ],
+      subtotalCents: 710600,
+      totalUnits: 200,
+    },
+    "returns calculated CartDetails with design quotes"
+  );
 });

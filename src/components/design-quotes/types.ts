@@ -17,3 +17,15 @@ export const designQuoteSchema = z.object({
   lineItems: z.array(designQuoteLineItemSchema),
 });
 export type DesignQuote = z.infer<typeof designQuoteSchema>;
+
+export const cartDetailsSchema = z.object({
+  quotes: z.array(designQuoteSchema),
+  combinedLineItems: z.array(designQuoteLineItemSchema),
+  subtotalCents: z.number(),
+  dueNowCents: z.number(),
+  dueLaterCents: z.number(),
+  creditAppliedCents: z.number(),
+  balanceDueCents: z.number(),
+  totalUnits: z.number(),
+});
+export type CartDetails = z.infer<typeof cartDetailsSchema>;

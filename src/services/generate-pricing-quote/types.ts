@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 
 export type UnsavedQuote = Omit<
@@ -5,7 +6,8 @@ export type UnsavedQuote = Omit<
   "id" | "createdAt" | "pricingQuoteInputId" | "processes"
 >;
 
-export interface CreateQuotePayload {
-  designId: string;
-  units: number;
-}
+export const createQuotePayloadSchema = z.object({
+  designId: z.string(),
+  units: z.number(),
+});
+export type CreateQuotePayload = z.infer<typeof createQuotePayloadSchema>;

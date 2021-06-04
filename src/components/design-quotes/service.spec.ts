@@ -1,12 +1,19 @@
+import Knex from "knex";
+
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import * as PlansDAO from "../plans/dao";
 import UnauthorizedError from "../../errors/unauthorized";
 import * as CreateQuoteService from "../../services/generate-pricing-quote/create-quote";
 import { UnsavedQuote } from "../../services/generate-pricing-quote";
+import db from "../../services/db";
+import createUser from "../../test-helpers/create-user";
+import { costCollection } from "../../test-helpers/cost-collection";
+import { CreditsDAO, CreditType } from "../credits";
+import { generateSubscription } from "../../test-helpers/factories/subscription";
+import * as SubscriptionsDAO from "../subscriptions/dao";
 
 import * as DesignQuoteService from "./service";
-import { PricingCostInput } from "../../published-types";
-import db from "../../services/db";
+import { PricingCostInput } from "../pricing-cost-inputs/types";
 
 const BASIS_POINTS = 205;
 const unsavedQuote: UnsavedQuote = {
@@ -137,4 +144,325 @@ test("calculateDesignQuote: without costOfGoodsShareBasisPoints", async (t: Test
   t.deepEqual(generateUnsavedQuoteStub.args, [
     [{ designId: "a-design-id", minimumOrderQuantity: 5432 }, 100, 0],
   ]);
+});
+
+test("getCartDetails: empty", async (t: Test) => {
+  const designer = await createUser({ withSession: false });
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(trx, [], designer.user.id)
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [],
+    combinedLineItems: [],
+    subtotalCents: 0,
+    dueNowCents: 0,
+    dueLaterCents: 0,
+    creditAppliedCents: 0,
+    balanceDueCents: 0,
+    totalUnits: 0,
+  });
+});
+
+test("getCartDetails: no credits, no production fee", async (t: Test) => {
+  const {
+    team,
+    collectionDesigns,
+    user: { designer },
+  } = await costCollection();
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const activePlan = await SubscriptionsDAO.findActiveByTeamId(trx, team.id);
+
+    if (activePlan) {
+      await SubscriptionsDAO.update(
+        activePlan.id,
+        { cancelledAt: new Date() },
+        trx
+      );
+    }
+
+    await generateSubscription(
+      trx,
+      { teamId: team.id },
+      { costOfGoodsShareBasisPoints: 0 }
+    );
+  });
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [],
+    subtotalCents: 7_106_00,
+    dueNowCents: 7_106_00,
+    dueLaterCents: 0,
+    creditAppliedCents: 0,
+    balanceDueCents: 7_106_00,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: no credits", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer },
+  } = await costCollection();
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: 4_960_00 * 1.2 - 4_960_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: 2_146_00 * 1.2 - 2_146_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: 7_106_00 * 1.2 - 7_106_00,
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+    ],
+    subtotalCents: 7_106_00,
+    dueNowCents: 7_106_00 * 1.2,
+    dueLaterCents: 0,
+    creditAppliedCents: 0,
+    balanceDueCents: 7_106_00 * 1.2,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: with partial credits", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer, admin },
+  } = await costCollection();
+
+  await db.transaction((trx: Knex.Transaction) =>
+    CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 1230,
+      createdBy: admin.user.id,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: designer.user.id,
+    })
+  );
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: 4_960_00 * 1.2 - 4_960_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: 2_146_00 * 1.2 - 2_146_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: 7_106_00 * 1.2 - 7_106_00,
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+      {
+        cents: -12_30,
+        description: "Credit Applied",
+        explainerCopy: null,
+      },
+    ],
+    subtotalCents: 7_106_00,
+    dueNowCents: 7_106_00 * 1.2,
+    dueLaterCents: 0,
+    creditAppliedCents: 12_30,
+    balanceDueCents: 7_106_00 * 1.2 - 12_30,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: with full credits", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer, admin },
+  } = await costCollection();
+
+  await db.transaction((trx: Knex.Transaction) =>
+    CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 12300000,
+      createdBy: admin.user.id,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: designer.user.id,
+    })
+  );
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: 4_960_00 * 1.2 - 4_960_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: 2_146_00 * 1.2 - 2_146_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: 7_106_00 * 1.2 - 7_106_00,
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+      {
+        cents: 7_106_00 * -1.2,
+        description: "Credit Applied",
+        explainerCopy: null,
+      },
+    ],
+    subtotalCents: 7_106_00,
+    dueNowCents: 7_106_00 * 1.2,
+    dueLaterCents: 0,
+    creditAppliedCents: 7_106_00 * 1.2,
+    balanceDueCents: 0,
+    totalUnits: 100 + 100,
+  });
 });

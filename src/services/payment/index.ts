@@ -24,10 +24,9 @@ import Invoice = require("../../domain-objects/invoice");
 import LineItem from "../../domain-objects/line-item";
 import createDesignPaymentLocks from "./create-design-payment-locks";
 import { logServerError, time, timeLog, timeEnd } from "../../services/logger";
-import { DesignQuoteLineItem } from "../../published-types";
-import { CreditsDAO } from "../../components/credits";
 import { PaymentMethod } from "../../components/payment-methods/types";
 import * as Stripe from "../stripe";
+import { getCartDetails } from "../../components/design-quotes/service";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -167,85 +166,6 @@ async function processQuotesAfterInvoice(
   }
 }
 
-// TODO: Promote this to a real component and drive the UI with it
-async function getCartDetails(
-  trx: Knex.Transaction,
-  quoteRequests: CreateRequest,
-  userId: string
-) {
-  const quotes: PricingQuote[] = await createQuotes(quoteRequests, userId, trx);
-
-  let combinedLineItems: DesignQuoteLineItem[] = [];
-  let subtotalCents = 0;
-  let dueNowCents = 0;
-  let totalUnits = 0;
-
-  for (const quote of quotes) {
-    const quoteCostCents = quote.unitCostCents * quote.units;
-    subtotalCents += quoteCostCents;
-    dueNowCents += quoteCostCents + quote.productionFeeCents;
-    totalUnits += quote.units;
-
-    if (quote.productionFeeCents > 0) {
-      const existingLineItemIndex = combinedLineItems.findIndex(
-        (existing: DesignQuoteLineItem) =>
-          existing.description === "Production Fee"
-      );
-      if (existingLineItemIndex === -1) {
-        combinedLineItems = [
-          ...combinedLineItems,
-          {
-            description: "Production Fee",
-            explainerCopy:
-              "A fee for what you produce with us, based on your plan",
-            cents: quote.productionFeeCents,
-          },
-        ];
-      } else {
-        combinedLineItems = [
-          ...combinedLineItems.slice(0, existingLineItemIndex),
-          {
-            description: "Production Fee",
-            explainerCopy:
-              "A fee for what you produce with us, based on your plan",
-            cents:
-              combinedLineItems[existingLineItemIndex].cents +
-              quote.productionFeeCents,
-          },
-          ...combinedLineItems.slice(existingLineItemIndex + 1),
-        ];
-      }
-    }
-  }
-
-  let balanceDueCents = dueNowCents;
-  const availableCreditCents = await CreditsDAO.getCreditAmount(userId, trx);
-  const creditAppliedCents = Math.min(dueNowCents, availableCreditCents);
-
-  if (creditAppliedCents > 0) {
-    combinedLineItems = [
-      ...combinedLineItems,
-      {
-        description: "Credit Applied",
-        explainerCopy: null,
-        cents: creditAppliedCents * -1,
-      },
-    ];
-    balanceDueCents = Math.max(0, dueNowCents - creditAppliedCents);
-  }
-
-  return {
-    quotes,
-    combinedLineItems,
-    subtotalCents,
-    dueNowCents,
-    dueLaterCents: 0, // Placeholder for showing financing fees, etc
-    creditAppliedCents,
-    balanceDueCents,
-    totalUnits,
-  };
-}
-
 /**
  * This Function enables a user to generate quotes and pay them in one step.
  * It will:
@@ -275,7 +195,12 @@ export default async function payInvoiceWithNewPaymentMethod(
       trx,
     });
     timeLog("payInvoiceWithNewPaymentMethod", "createPaymentMethod");
-    const { quotes, dueNowCents, creditAppliedCents } = await getCartDetails(
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
+    const { dueNowCents, creditAppliedCents } = await getCartDetails(
       trx,
       quoteRequests,
       userId
@@ -332,7 +257,12 @@ export async function payWaivedQuote(
       createDesignPaymentLocks(trx, quoteRequests)
     );
 
-    const { quotes, dueNowCents, creditAppliedCents } = await getCartDetails(
+    const quotes: PricingQuote[] = await createQuotes(
+      quoteRequests,
+      userId,
+      trx
+    );
+    const { dueNowCents, creditAppliedCents } = await getCartDetails(
       trx,
       quoteRequests,
       userId
