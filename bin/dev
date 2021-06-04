@@ -14,7 +14,7 @@ usage() {
   exit 1
 }
 
-DEFAULT_APP=api
+DEFAULT_APP=api_and_worker
 
 run() {
   source bin/lib/loadenv
@@ -26,20 +26,6 @@ run() {
   elif [[ $# -gt 0 ]]; then
     shift
   fi
-
-  path_to_app="./src"
-  case "$app_to_run" in
-    api)
-      path_to_app="./src"
-      ;;
-    api-worker)
-      path_to_app="./src/workers/api-worker"
-      ;;
-    *)
-      usage
-      ;;
-  esac
-  echo $path_to_app
 
   nodemon_opts=""
   while getopts "i" opt; do
@@ -53,8 +39,28 @@ run() {
       esac
   done
 
+  case "$app_to_run" in
+    api)
+      npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' ./src
+      ;;
 
-  npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' $path_to_app
+    api-worker)
+      npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' ./src/workers/api-worker
+      ;;
+
+    api_and_worker)
+      npx nodemon $nodemon_opts -e '[t|j]s' -w ./src -r 'ts-node/register' ./src 2>&1 | sed -e 's/^/api: /;' &
+      sleep 3
+      npx nodemon ${nodemon_opts/--inspect/--inspect=127.0.0.1:9239}  -e '[t|j]s' -w ./src -r 'ts-node/register' ./src/workers/api-worker 2>&1 | sed -e 's/^/api-worker: /;' &
+
+      trap "kill 0" EXIT # Kill children when this process is killed
+      wait # wait for all background processes
+      ;;
+
+    *)
+      usage
+      ;;
+  esac
 }
 
 run "$@"
