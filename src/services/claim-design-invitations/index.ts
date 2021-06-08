@@ -1,3 +1,4 @@
+import Knex from "knex";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import { Collaborator } from "../../published-types";
 
@@ -9,16 +10,21 @@ import { Collaborator } from "../../published-types";
  */
 export async function claimDesignInvitations(
   userEmail: string,
-  userId: string
+  userId: string,
+  trx?: Knex.Transaction
 ) {
   const invitations = await CollaboratorsDAO.findUnclaimedByEmail(userEmail);
 
   await Promise.all(
     invitations.map((invitation: Collaborator) =>
-      CollaboratorsDAO.update(invitation.id, {
-        userEmail: null,
-        userId,
-      })
+      CollaboratorsDAO.update(
+        invitation.id,
+        {
+          userEmail: null,
+          userId,
+        },
+        trx
+      )
     )
   );
 }

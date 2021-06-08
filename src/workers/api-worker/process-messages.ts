@@ -1,6 +1,7 @@
 import { fetchResources, deleteResources } from "./aws";
 import { log, logServerError } from "../../services/logger";
 import { MessageHandler } from "./message-handler";
+import { HandlerResult } from "./types";
 
 export async function processMessages(handler: MessageHandler): Promise<void> {
   let message;
@@ -15,20 +16,45 @@ export async function processMessages(handler: MessageHandler): Promise<void> {
     return;
   }
 
+  let handlerResult: HandlerResult;
   try {
-    const response = await handler(message);
-    log(
-      "Message handler responded with: \n",
-      JSON.stringify(response, null, 2)
-    );
+    handlerResult = await handler(message);
   } catch (e) {
-    logServerError("Error in handler: ", e);
+    handlerResult = {
+      type: "FAILURE",
+      error: e,
+    };
+  }
+
+  if (
+    handlerResult.type === "FAILURE" ||
+    handlerResult.type === "FAILURE_DO_NOT_RETRY"
+  ) {
+    const retryMessage =
+      handlerResult.type === "FAILURE_DO_NOT_RETRY"
+        ? "(we won't retry this message)"
+        : "(we will retry this message)";
+    logServerError(
+      `Message handler error ${retryMessage}: `,
+      handlerResult.error
+    );
+  }
+
+  if (handlerResult.type === "SUCCESS" && handlerResult.message !== null) {
+    log(handlerResult.message);
   }
 
   if (!message.ReceiptHandle) {
     logServerError(
       `Message ${message.MessageId} does not contain a ReceiptHandle!`
     );
+    return;
+  }
+
+  if (handlerResult.type === "FAILURE") {
+    // we don't delete the resource for the message we want to try again later
+    // SQS will allows us to receive it again after it becomes visible (VisibilityTimeout 30s).
+    // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
     return;
   }
 

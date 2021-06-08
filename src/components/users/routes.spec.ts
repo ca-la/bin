@@ -5,7 +5,6 @@ import * as CohortsDAO from "../../components/cohorts/dao";
 import * as CohortUsersDAO from "../../components/cohorts/users/dao";
 import * as createStripeSubscription from "../../services/stripe/create-subscription";
 import { CreditsDAO } from "../../components/credits";
-import * as DuplicationService from "../../services/duplicate";
 import * as PromoCodesDAO from "../../components/promo-codes/dao";
 import * as ReferralRedemptionsService from "../../components/referral-redemptions/service";
 import * as ReferralCodeService from "../../components/referral-codes/service";
@@ -18,11 +17,11 @@ import InvalidDataError from "../../errors/invalid-data";
 import MailChimp = require("../../services/mailchimp");
 import SessionsDAO from "../../dao/sessions";
 import Stripe = require("../../services/stripe");
-import TeamUsersDAO from "../../components/team-users/dao";
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
 import { baseUser } from "./types";
 import { sandbox, Test, test } from "../../test-helpers/fresh";
 import { customerTestBlank } from "../customers/types";
+import * as ApiWorker from "../../workers/api-worker/send-message";
 
 const createBody = {
   email: "user@example.com",
@@ -37,15 +36,9 @@ const createBody = {
 };
 
 function stubUserDependencies() {
-  const duplicationStub = sandbox()
-    .stub(DuplicationService, "duplicateDesigns")
-    .resolves();
   const mailchimpStub = sandbox()
     .stub(MailChimp, "subscribeToUsers")
     .returns(Promise.resolve());
-  const teamUsersStub = sandbox()
-    .stub(TeamUsersDAO, "claimAllByEmail")
-    .resolves();
   const createTeamStub = sandbox()
     .stub(TeamsService, "createTeamWithOwner")
     .resolves({
@@ -62,14 +55,16 @@ function stubUserDependencies() {
   sandbox()
     .stub(ReferralCodeService, "generateReferralCode")
     .resolves("FOOBAR");
+  const sendApiWorkerMessageStub = sandbox()
+    .stub(ApiWorker, "sendMessage")
+    .resolves();
 
   return {
-    duplicationStub,
     mailchimpStub,
-    teamUsersStub,
     createTeamStub,
     createSubscriptionStub,
     createSessionStub,
+    sendApiWorkerMessageStub,
   };
 }
 
@@ -414,30 +409,54 @@ test("PATCH /users/:id returns multiple errors", async (t: Test) => {
 
 test("POST /users allows registration + design duplication", async (t: Test) => {
   sandbox().stub(Config, "DEFAULT_DESIGN_IDS").value("d1,d2");
-  const { duplicationStub } = stubUserDependencies();
+  const { sendApiWorkerMessageStub } = stubUserDependencies();
 
   const [, body] = await post("/users", {
     body: createBody,
   });
 
   t.deepEqual(
-    duplicationStub.args,
-    [[body.id, ["d1", "d2"]]],
-    "calls duplication with default design IDs"
+    sendApiWorkerMessageStub.args,
+    [
+      [
+        {
+          type: "POST_PROCESS_USER_CREATION",
+          deduplicationId: body.id,
+          keys: {
+            userId: body.id,
+            designIdsToDuplicate: ["d1", "d2"],
+            email: body.email,
+          },
+        },
+      ],
+    ],
+    "calls api-worker with default design IDs"
   );
 });
 
 test("POST /users?initialDesigns= allows registration + design duplication", async (t: Test) => {
-  const { duplicationStub } = stubUserDependencies();
+  const { sendApiWorkerMessageStub } = stubUserDependencies();
 
   const [, body] = await post(`/users?initialDesigns=d1&initialDesigns=d2`, {
     body: createBody,
   });
 
   t.deepEqual(
-    duplicationStub.args,
-    [[body.id, ["d1", "d2"]]],
-    "calls duplication with design IDs"
+    sendApiWorkerMessageStub.args,
+    [
+      [
+        {
+          type: "POST_PROCESS_USER_CREATION",
+          deduplicationId: body.id,
+          keys: {
+            userId: body.id,
+            designIdsToDuplicate: ["d1", "d2"],
+            email: body.email,
+          },
+        },
+      ],
+    ],
+    "calls api-worker with provided deisigns IDs for duplication"
   );
 });
 
@@ -552,11 +571,12 @@ test("GET /users?search with malformed RegExp throws 400", async (t: Test) => {
 
 test("POST /users allows subscribing to a plan", async (t: Test) => {
   const {
-    teamUsersStub,
+    sendApiWorkerMessageStub,
     createSubscriptionStub,
     mailchimpStub,
   } = stubUserDependencies();
 
+  sandbox().stub(Config, "DEFAULT_DESIGN_IDS").value("d1,d2");
   sandbox()
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
@@ -573,9 +593,23 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
 
   t.equal(response.status, 201);
 
-  t.equal(teamUsersStub.callCount, 1, "Calls team user stub");
-  t.equal(teamUsersStub.firstCall.args[1], body.email);
-  t.equal(teamUsersStub.firstCall.args[2], body.id);
+  t.deepEqual(
+    sendApiWorkerMessageStub.args,
+    [
+      [
+        {
+          type: "POST_PROCESS_USER_CREATION",
+          deduplicationId: body.id,
+          keys: {
+            userId: body.id,
+            designIdsToDuplicate: ["d1", "d2"],
+            email: body.email,
+          },
+        },
+      ],
+    ],
+    "calls api-worker with created user id and email to post process"
+  );
 
   t.equal(createSubscriptionStub.args[0][1].planId, "a-plan-id");
   t.equal(createSubscriptionStub.args[0][1].teamId, "a-team-id");

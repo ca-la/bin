@@ -6,20 +6,17 @@ import rethrow = require("pg-rethrow");
 import * as UsersDAO from "./dao";
 import applyCode from "../../components/promo-codes/apply-code";
 import canAccessUserResource = require("../../middleware/can-access-user-resource");
-import { claimDesignInvitations } from "../../services/claim-design-invitations";
 import CohortsDAO = require("../../components/cohorts/dao");
 import CohortUsersDAO = require("../../components/cohorts/users/dao");
 import compact from "../../services/compact";
 import { createSubscription } from "../subscriptions/create";
 import db from "../../services/db";
-import DuplicationService = require("../../services/duplicate");
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
 import MailChimp = require("../../services/mailchimp");
 import MultipleErrors from "../../errors/multiple-errors";
 import requireAuth = require("../../middleware/require-auth");
 import SessionsDAO = require("../../dao/sessions");
-import TeamUsersDAO from "../../components/team-users/dao";
 import User, { Role, ROLES } from "./domain-object";
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from "../../config";
 import { hasProperties } from "../../services/require-properties";
@@ -28,6 +25,7 @@ import { logServerError } from "../../services/logger";
 import { validatePassword } from "./services/validate-password";
 import { createTeamWithOwner } from "../teams/service";
 import { check } from "../../services/check";
+import { sendMessage as sendApiWorkerMessage } from "../../workers/api-worker/send-message";
 import {
   redeemReferralCode,
   InvalidReferralCodeError,
@@ -89,8 +87,6 @@ async function createWithTeam(
     planId,
     isPaymentWaived: false,
   });
-
-  await TeamUsersDAO.claimAllByEmail(trx, email, user.id);
 
   return user;
 }
@@ -159,21 +155,20 @@ async function createUser(ctx: PublicContext) {
     logServerError(`Failed to sign up user to Mailchimp: ${user.email}`);
   }
 
-  await claimDesignInvitations(body.email, user.id);
+  const designIdsToDuplicate =
+    initialDesigns && Array.isArray(initialDesigns) && initialDesigns.length > 0
+      ? initialDesigns
+      : DEFAULT_DESIGN_IDS.split(",");
 
-  if (
-    initialDesigns &&
-    Array.isArray(initialDesigns) &&
-    initialDesigns.length > 0
-  ) {
-    // Intentionally not checking ownership permissions - TODO reconsider security model
-    await DuplicationService.duplicateDesigns(user.id, initialDesigns);
-  } else {
-    // This will start off the user with any number of 'default' designs that
-    // will automatically show in their drafts when they first log in.
-    const defaultDesignIds = DEFAULT_DESIGN_IDS.split(",");
-    await DuplicationService.duplicateDesigns(user.id, defaultDesignIds);
-  }
+  await sendApiWorkerMessage({
+    type: "POST_PROCESS_USER_CREATION",
+    deduplicationId: user.id,
+    keys: {
+      userId: user.id,
+      designIdsToDuplicate,
+      email: body.email,
+    },
+  });
 
   // Allow `?returnValue=session` on the end of the URL to return a session (with
   // attached user) rather than just a user.

@@ -17,15 +17,32 @@ export interface ApiMessages {
       userId: string;
       designIdsToDuplicate: string[];
       email: string;
-      name: string;
-      cohort: string | null;
-      referralCode: string;
     };
   };
 }
 
 export interface Task<MessageKey extends keyof ApiMessages> {
   type: MessageKey;
-  keys: ApiMessages[MessageKey]["keys"];
   deduplicationId: string;
+  keys: ApiMessages[MessageKey]["keys"];
 }
+
+interface HandlerSuccess {
+  type: "SUCCESS";
+  message: string | null;
+}
+
+interface HandlerFailure {
+  type: "FAILURE";
+  error: Error;
+}
+
+interface HandlerFailureDoNotRetry {
+  type: "FAILURE_DO_NOT_RETRY";
+  error: Error;
+}
+
+export type HandlerResult =
+  | HandlerSuccess
+  | HandlerFailure
+  | HandlerFailureDoNotRetry;
