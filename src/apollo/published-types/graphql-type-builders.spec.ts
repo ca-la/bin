@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { omit } from "lodash";
 import { test, Test } from "../../test-helpers/fresh";
 import {
   intersection,
@@ -74,7 +75,7 @@ test("schemaToGraphQLType", async (t: Test) => {
     attachmentsNullable: z.array(z.object({})).nullable(),
   });
 
-  const type = schemaToGraphQLType("T1", schema, {
+  const options: Parameters<typeof schemaToGraphQLType>[2] = {
     type: "input",
     isUninserted: true,
     depTypes: {
@@ -102,7 +103,8 @@ test("schemaToGraphQLType", async (t: Test) => {
     bodyPatch: {
       injectedField: "String",
     },
-  });
+  };
+  const type = schemaToGraphQLType("T1", schema, options);
 
   t.deepEqual(type, {
     name: "T1",
@@ -123,6 +125,19 @@ test("schemaToGraphQLType", async (t: Test) => {
     },
     requires: ["Design", "Image", "Attachment"],
   });
+
+  try {
+    schemaToGraphQLType("T1", schema, {
+      ...options,
+      depTypes: omit(options.depTypes, "ref2"),
+    });
+    t.fail("Expected an error as the ref2 doesn't have definition");
+  } catch (err) {
+    t.is(
+      err.message,
+      'Found an unprocessable field ref2 when building a type "T1"'
+    );
+  }
 });
 
 test("buildGraphQLSortType", async (t: Test) => {

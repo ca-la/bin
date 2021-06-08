@@ -49,6 +49,10 @@ export function schemaToGraphQLType(
       acc: { body: GraphQLTypeBody; requires: string[] },
       [key, value]: [string, unknown]
     ) => {
+      if (bodyPatch.hasOwnProperty(key)) {
+        return acc;
+      }
+
       const zType = value as z.ZodFirstPartySchemaTypes;
       const maybeBang = zType.isNullable() ? "" : "!";
 
@@ -118,7 +122,9 @@ export function schemaToGraphQLType(
         };
       }
 
-      return acc;
+      throw new Error(
+        `Found an unprocessable field ${key} when building a type "${name}"`
+      );
     },
     {
       body: isUninserted ? { id: "String" } : {},
