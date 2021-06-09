@@ -19,6 +19,7 @@ test("spendCredit spends the available amount", async (t: Test) => {
       description: "For being a good customer",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     const result = await spendCredit(1230, user.id, invoice, trx);

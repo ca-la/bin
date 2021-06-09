@@ -34,6 +34,7 @@ async function run(): Promise<void> {
       description: "Manual reduction of credit",
       expiresAt: null,
       givenTo: userId,
+      financingAccountId: null,
     });
   });
 

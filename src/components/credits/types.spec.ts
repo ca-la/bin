@@ -13,6 +13,7 @@ test("Credits schema", async (t: Test) => {
     creditDeltaCents: 1,
     description: "u2",
     expiresAt: null,
+    financingAccountId: null,
   };
   interface TestCase {
     title: string;
@@ -85,6 +86,22 @@ test("Credits schema", async (t: Test) => {
         expiresAt: new Date(),
       },
       error: "should be null for REMOVE type transaction",
+    },
+    {
+      title: "Null credit recipient",
+      credit: {
+        givenTo: null,
+        financingAccountId: null,
+      },
+      error: "exactly one recipient key must be not null",
+    },
+    {
+      title: "More than one not null credit recipient",
+      credit: {
+        givenTo: "a-user-id",
+        financingAccountId: "a-financing-account-id",
+      },
+      error: "exactly one recipient key must be not null",
     },
   ];
 

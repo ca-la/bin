@@ -33,6 +33,7 @@ async function run(): Promise<void> {
       description: "Manual credit grant",
       expiresAt: null,
       givenTo: userId,
+      financingAccountId: null,
     });
   });
 

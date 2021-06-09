@@ -99,6 +99,7 @@ async function setup() {
       description: "Manual credit grant",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
     await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
@@ -438,6 +439,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
       description: "Free money",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
   });
 

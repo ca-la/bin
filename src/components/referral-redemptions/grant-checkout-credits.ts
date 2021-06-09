@@ -55,6 +55,7 @@ from eligible_redemptions;
       creditDeltaCents: REFERRING_USER_CHECKOUT_CREDIT_CENTS,
       description: `Referral credit for ${redemption.referredUserName}`,
       expiresAt: null,
+      financingAccountId: null,
     });
 
     await dao.update(trx, redemption.redemptionId, {

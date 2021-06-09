@@ -313,6 +313,7 @@ test("getCartDetails: with partial credits", async (t: Test) => {
       description: "For being a good customer",
       expiresAt: null,
       givenTo: designer.user.id,
+      financingAccountId: null,
     })
   );
 
@@ -397,6 +398,7 @@ test("getCartDetails: with full credits", async (t: Test) => {
       description: "For being a good customer",
       expiresAt: null,
       givenTo: designer.user.id,
+      financingAccountId: null,
     })
   );
 

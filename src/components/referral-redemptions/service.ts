@@ -40,6 +40,7 @@ export async function redeemReferralCode({
     creditDeltaCents: REFERRED_USER_SIGNUP_CENTS,
     description: `Referral credit for registration`,
     expiresAt: null,
+    financingAccountId: null,
   });
 
   return await ReferralRedemptionsDAO.create(trx, {

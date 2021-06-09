@@ -113,15 +113,17 @@ for update`,
     id: blank.id || uuid.v4(),
     createdAt: new Date(),
   });
-  const amount = await getCreditAmount(blank.givenTo, trx);
-  if (amount < 0) {
-    throw new Error(
-      `Cannot remove ${-blank.creditDeltaCents} cents of credit from user ${
-        blank.givenTo
-      }; they only have ${
-        BigInt(amount) - BigInt(blank.creditDeltaCents)
-      } available`
-    );
+  if (blank.givenTo !== null) {
+    const amount = await getCreditAmount(blank.givenTo, trx);
+    if (amount < 0) {
+      throw new Error(
+        `Cannot remove ${-blank.creditDeltaCents} cents of credit from user ${
+          blank.givenTo
+        }; they only have ${
+          BigInt(amount) - BigInt(blank.creditDeltaCents)
+        } available`
+      );
+    }
   }
   return created;
 }

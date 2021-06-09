@@ -37,6 +37,7 @@ export default async function spendCredit(
       creditDeltaCents: -creditPaymentAmount,
       description: `Spent credits on invoice ${invoice.id}`,
       expiresAt: null,
+      financingAccountId: null,
     });
   }
 

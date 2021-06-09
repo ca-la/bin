@@ -26,6 +26,7 @@ export default async function applyCode(
         creditDeltaCents: promoCode.creditAmountCents,
         description: `Promo code applied: ${code}`,
         expiresAt: promoCode.creditExpiresAt,
+        financingAccountId: null,
       });
 
       if (promoCode.isSingleUse) {

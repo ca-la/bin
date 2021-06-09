@@ -71,6 +71,7 @@ function* changeCredit(
     description: body.description,
     expiresAt: deserializedExpiration,
     givenTo: body.userId,
+    financingAccountId: null,
   });
 
   this.status = 200;

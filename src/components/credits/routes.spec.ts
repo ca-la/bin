@@ -17,6 +17,7 @@ test("GET /credits returns credit amount", async (t: Test) => {
       description: "For being a good customer",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
   });
 

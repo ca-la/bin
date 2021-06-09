@@ -17,6 +17,7 @@ test("CreditsDAO supports adding & removing credits", async (t: Test) => {
       description: "For being a good customer",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     await CreditsDAO.create(trx, {
@@ -26,6 +27,7 @@ test("CreditsDAO supports adding & removing credits", async (t: Test) => {
       description: "promo code",
       expiresAt: null,
       givenTo: otherUser.id,
+      financingAccountId: null,
     });
 
     await CreditsDAO.create(trx, {
@@ -35,6 +37,7 @@ test("CreditsDAO supports adding & removing credits", async (t: Test) => {
       description: "spending some money",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
   });
 
@@ -54,6 +57,7 @@ test("CreditsDAO prevents you from removing more than available credits", async 
         description: "For being a good customer",
         expiresAt: null,
         givenTo: user.id,
+        financingAccountId: null,
       });
 
       await CreditsDAO.create(trx, {
@@ -63,6 +67,7 @@ test("CreditsDAO prevents you from removing more than available credits", async 
         description: "spending some money",
         expiresAt: null,
         givenTo: user.id,
+        financingAccountId: null,
       });
     });
     t.fail("Should not have completed transaction");
@@ -90,6 +95,7 @@ test("CreditsDAO prevents you from removing with 0 credits", async (t: Test) => 
         description: "spending some money",
         expiresAt: null,
         givenTo: user.id,
+        financingAccountId: null,
       });
     });
     t.fail("Should not have completed transaction");
@@ -116,6 +122,7 @@ test("CreditsDAO prevents you from spending the same credits twice in parallel",
       description: "For being a good customer",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
   });
 
@@ -129,6 +136,7 @@ test("CreditsDAO prevents you from spending the same credits twice in parallel",
           description: "spending some money",
           expiresAt: null,
           givenTo: user.id,
+          financingAccountId: null,
         });
       }),
       db.transaction(async (trx: Knex.Transaction) => {
@@ -139,6 +147,7 @@ test("CreditsDAO prevents you from spending the same credits twice in parallel",
           description: "spending some money",
           expiresAt: null,
           givenTo: user.id,
+          financingAccountId: null,
         });
       }),
     ]);
@@ -170,6 +179,7 @@ test("CreditsDAO supports credit expiration", async (t: Test) => {
       description: "Cool",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     // Add $5 of expired credit
@@ -180,6 +190,7 @@ test("CreditsDAO supports credit expiration", async (t: Test) => {
       description: "Cool",
       expiresAt: new Date(Date.now() - 1),
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     // Add $10 of credit that expires soon
@@ -190,6 +201,7 @@ test("CreditsDAO supports credit expiration", async (t: Test) => {
       description: "Cooler",
       expiresAt: new Date(Date.now() + 1000),
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     // Spend $2
@@ -200,6 +212,7 @@ test("CreditsDAO supports credit expiration", async (t: Test) => {
       description: "spending some money",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
   });
 
@@ -241,6 +254,7 @@ test("CreditsDAO subtracts from the soonest-expiring credits first", async (t: T
       description: "Credit A",
       expiresAt: new Date(Date.now() + 4000),
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     clock.tick(500); // To 1.5k (checkpoint V)
@@ -256,6 +270,7 @@ test("CreditsDAO subtracts from the soonest-expiring credits first", async (t: T
       description: "Credit B",
       expiresAt: new Date(Date.now() + 2000),
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     clock.tick(500); // To 2.5k
@@ -271,6 +286,7 @@ test("CreditsDAO subtracts from the soonest-expiring credits first", async (t: T
       description: "Spending",
       expiresAt: null,
       givenTo: user.id,
+      financingAccountId: null,
     });
 
     clock.tick(500); // To 3.5k

@@ -15,7 +15,8 @@ const unvalidatedCreditSchema = z.object({
   createdAt: z.date(),
   type: creditTypeSchema,
   createdBy: z.string().nullable(),
-  givenTo: z.string(),
+  givenTo: z.string().nullable(),
+  financingAccountId: z.string().nullable(),
   creditDeltaCents: z.union([z.bigint(), z.number().int()]),
   description: z.string(),
   expiresAt: z.date().nullable(),
@@ -23,6 +24,15 @@ const unvalidatedCreditSchema = z.object({
 export type UnvalidatedCredit = z.infer<typeof unvalidatedCreditSchema>;
 
 export const creditSchema = unvalidatedCreditSchema
+  .refine(
+    (data: UnvalidatedCredit) =>
+      (data.givenTo !== null && data.financingAccountId === null) ||
+      (data.financingAccountId !== null && data.givenTo === null),
+    {
+      message: "exactly one recipient key must be not null",
+      path: ["givenTo"],
+    }
+  )
   .refine(
     (data: UnvalidatedCredit) =>
       data.type === CreditType.REMOVE
@@ -60,7 +70,8 @@ export const creditRowSchema = z.object({
   created_at: z.date(),
   type: creditTypeSchema,
   created_by: z.string().nullable(),
-  given_to: z.string(),
+  given_to: z.string().nullable(),
+  financing_account_id: z.string().nullable(),
   credit_delta_cents: z.union([z.bigint(), z.number().int()]),
   description: z.string(),
   expires_at: z.date().nullable(),

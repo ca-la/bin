@@ -77,6 +77,7 @@ export async function addReferralSubscriptionBonuses(
       creditDeltaCents,
       description: "Referral subscription bonus",
       expiresAt: null,
+      financingAccountId: null,
     });
   }
 
