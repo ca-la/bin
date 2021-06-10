@@ -21,6 +21,7 @@ import * as AnnotationsDAO from "../../components/product-design-canvas-annotati
 import * as CanvasesDAO from "../canvases/dao";
 import * as ComponentsDAO from "../components/dao";
 import * as CommentsDAO from "../../components/comments/dao";
+import { standardDao as TeamsDAO } from "../../components/teams/dao";
 import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
 import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
 import { deleteById } from "../../test-helpers/designs";
@@ -36,6 +37,7 @@ import generateApprovalSubmission from "../../test-helpers/factories/design-appr
 import { NotificationFilter } from "./types";
 import * as PushNotificationService from "../../services/push-notifications";
 import createDesign from "../../services/create-design";
+import { generateTeam } from "../../test-helpers/factories/team";
 
 test("Notifications DAO supports creation", async (t: tape.Test) => {
   sandbox()
@@ -854,6 +856,19 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
     type: NotificationType.INVITE_COLLABORATOR,
     archivedAt: new Date(),
   });
+
+  const { team } = await generateTeam(userOne.id);
+  await generateNotification({
+    actorUserId: userOne.id,
+    recipientUserId: userTwo.id,
+    sentEmailAt: new Date(),
+    type: NotificationType.INVITE_TEAM_USER,
+    teamId: team.id,
+    archivedAt: null,
+  });
+  await db.transaction(async (trx: Knex.Transaction) =>
+    TeamsDAO.update(trx, team.id, { deletedAt: new Date() })
+  );
 
   return db.transaction(async (trx: Knex.Transaction) => {
     const archivedNotifications = await NotificationsDAO.findByUserId(

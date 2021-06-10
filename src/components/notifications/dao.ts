@@ -564,9 +564,13 @@ function queryUnreadCountByUserId(
       on can.id = n.canvas_id
     left join product_design_canvas_measurements as m
       on m.id = n.measurement_id
+    left join teams as t
+      on t.id = n.team_id
+    left join team_users as tu
+      on tu.id = n.recipient_team_user_id
     `
       )
-      .whereNotIn("type", DEPRECATED_NOTIFICATION_TYPES)
+      .whereNotIn("n.type", DEPRECATED_NOTIFICATION_TYPES)
       .andWhere({
         "a.deleted_at": null,
         "c.deleted_at": null,
@@ -574,6 +578,8 @@ function queryUnreadCountByUserId(
         "co.deleted_at": null,
         "d.deleted_at": null,
         "m.deleted_at": null,
+        "t.deleted_at": null,
+        "tu.deleted_at": null,
         "n.read_at": null,
         "n.deleted_at": null,
       })
