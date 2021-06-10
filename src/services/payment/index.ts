@@ -71,6 +71,7 @@ async function payInvoice(
       stripeChargeId: charge.id,
       totalCents: nonCreditPaymentAmount,
       creditUserId: null,
+      creditTransactionId: null,
       deletedAt: null,
       resolvePaymentId: null,
       rumbleshipPurchaseHash: null,

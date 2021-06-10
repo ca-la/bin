@@ -25,6 +25,7 @@ export default async function generateInvoicePayment(
       return InvoicePaymentsDAO.createTrx(trx, {
         createdAt: new Date(),
         creditUserId: null,
+        creditTransactionId: null,
         deletedAt: null,
         id: uuid.v4(),
         invoiceId: invoice.id,

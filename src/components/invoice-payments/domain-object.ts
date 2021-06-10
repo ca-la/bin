@@ -12,6 +12,7 @@ export interface InvoicePaymentRow {
   rumbleship_purchase_hash: string | null;
   resolve_payment_id: string | null;
   credit_user_id: number | null;
+  credit_transaction_id: string | null;
 }
 
 export interface InvoicePayment {
@@ -25,6 +26,7 @@ export interface InvoicePayment {
   rumbleshipPurchaseHash: string | null;
   resolvePaymentId: string | null;
   creditUserId: string | null;
+  creditTransactionId: string | null;
 }
 
 type MaybeSaved<T extends InvoicePayment> = Omit<T, "createdAt" | "id"> & {
@@ -48,7 +50,8 @@ export function isInvoicePaymentRow(row: object): row is InvoicePaymentRow {
     "stripe_charge_id",
     "rumbleship_purchase_hash",
     "resolve_payment_id",
-    "credit_user_id"
+    "credit_user_id",
+    "credit_transaction_id"
   );
 }
 
@@ -64,6 +67,7 @@ export function isInvoicePayment(row: object): row is InvoicePayment {
     "stripeChargeId",
     "rumbleshipPurchaseHash",
     "resolvePaymentId",
-    "creditsUsedCents"
+    "creditsUsedCents",
+    "creditTransactionId"
   );
 }

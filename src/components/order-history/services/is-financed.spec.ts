@@ -17,6 +17,7 @@ test("isFinanced can determine if a list of payments against an invoice were fin
   const payment1: InvoicePayment = {
     createdAt: new Date(),
     creditUserId: null,
+    creditTransactionId: null,
     deletedAt: null,
     id: uuid.v4(),
     invoiceId: uuid.v4(),
@@ -42,6 +43,7 @@ test("isFinanced can determine if a list of payments against an invoice were fin
   const payment2: InvoicePayment = {
     createdAt: new Date(),
     creditUserId: null,
+    creditTransactionId: null,
     deletedAt: null,
     id: uuid.v4(),
     invoiceId: uuid.v4(),

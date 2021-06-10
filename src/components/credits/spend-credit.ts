@@ -19,7 +19,18 @@ export default async function spendCredit(
   const nonCreditPaymentAmount = invoice.totalCents - creditPaymentAmount;
 
   if (creditPaymentAmount > 0) {
+    const credit = await CreditsDAO.create(trx, {
+      type: CreditType.REMOVE,
+      createdBy: userId,
+      givenTo: userId,
+      creditDeltaCents: -creditPaymentAmount,
+      description: `Spent credits on invoice ${invoice.id}`,
+      expiresAt: null,
+      financingAccountId: null,
+    });
+
     await InvoicePaymentsDAO.createTrx(trx, {
+      creditTransactionId: credit.id,
       creditUserId: userId,
       deletedAt: null,
       invoiceId: invoice.id,
@@ -28,16 +39,6 @@ export default async function spendCredit(
       rumbleshipPurchaseHash: null,
       stripeChargeId: null,
       totalCents: creditPaymentAmount,
-    });
-
-    await CreditsDAO.create(trx, {
-      type: CreditType.REMOVE,
-      createdBy: userId,
-      givenTo: userId,
-      creditDeltaCents: -creditPaymentAmount,
-      description: `Spent credits on invoice ${invoice.id}`,
-      expiresAt: null,
-      financingAccountId: null,
     });
   }
 
