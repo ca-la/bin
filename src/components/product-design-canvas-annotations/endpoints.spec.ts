@@ -23,12 +23,14 @@ test("notificationMessages endpoint", async () => {
       parentCommentId?: string | null;
       previousCursor?: string | null;
       nextCursor?: string | null;
+      commentId?: string | null;
       limit?: number;
     } = {
       annotationId: "annotation-id",
       parentCommentId: null,
       previousCursor: null,
       nextCursor: null,
+      commentId: null,
       limit: 10,
     }
   ) {
@@ -40,13 +42,15 @@ test("notificationMessages endpoint", async () => {
         $parentCommentId: String,
         $limit: Int!,
         $nextCursor: String,
-        $previousCursor: String) {
+        $previousCursor: String,
+        $commentId: String) {
           annotationComments(
             annotationId: $annotationId,
             parentCommentId: $parentCommentId,
             limit: $limit,
             nextCursor: $nextCursor,
             previousCursor: $previousCursor
+            commentId: $commentId
           ) {
           data {
             id
@@ -257,14 +261,25 @@ test("notificationMessages endpoint", async () => {
         parentCommentId: comment1.id,
       },
     });
+    const { comment: replyComment3 } = await generateAnnotationComment({
+      annotationId: annotation.id,
+      comment: {
+        createdAt: new Date(2020, 0, 6),
+        parentCommentId: comment1.id,
+      },
+    });
     const { comment: comment3 } = await generateAnnotationComment({
       annotationId: annotation.id,
-      comment: { createdAt: new Date(2020, 0, 6) },
+      comment: { createdAt: new Date(2020, 0, 7) },
+    });
+    const { comment: comment4 } = await generateAnnotationComment({
+      annotationId: annotation.id,
+      comment: { createdAt: new Date(2020, 0, 8) },
     });
 
     const previousCursor = CursorService.createCursor({
-      createdAt: comment1.createdAt,
-      id: comment1.id,
+      createdAt: comment2.createdAt,
+      id: comment2.id,
     });
 
     const [firstPageResponse, firstPageBody] = await post("/v2", {
@@ -285,13 +300,13 @@ test("notificationMessages endpoint", async () => {
           annotationComments: {
             data: [
               {
-                id: comment2.id,
-                createdAt: comment2.createdAt.toISOString(),
+                id: comment3.id,
+                createdAt: comment3.createdAt.toISOString(),
                 replyCount: 0,
               },
               {
-                id: comment3.id,
-                createdAt: comment3.createdAt.toISOString(),
+                id: comment4.id,
+                createdAt: comment4.createdAt.toISOString(),
                 replyCount: 0,
               },
             ],
@@ -323,7 +338,12 @@ test("notificationMessages endpoint", async () => {
               {
                 id: comment1.id,
                 createdAt: comment1.createdAt.toISOString(),
-                replyCount: 2,
+                replyCount: 3,
+              },
+              {
+                id: comment2.id,
+                createdAt: comment2.createdAt.toISOString(),
+                replyCount: 0,
               },
             ],
             previousCursor: null,
@@ -353,6 +373,91 @@ test("notificationMessages endpoint", async () => {
           annotationComments: {
             data: [
               {
+                id: replyComment2.id,
+                createdAt: replyComment2.createdAt.toISOString(),
+                replyCount: 0,
+              },
+              {
+                id: replyComment3.id,
+                createdAt: replyComment3.createdAt.toISOString(),
+                replyCount: 0,
+              },
+            ],
+            previousCursor: CursorService.createCursor({
+              id: replyComment1.id,
+              createdAt: replyComment1.createdAt,
+            }),
+            nextCursor: null,
+          },
+        },
+      },
+      "returns comments with a given parent id"
+    );
+
+    const [byCommentIdResponse, byCommentIdBody] = await post("/v2", {
+      body: buildRequest({
+        annotationId: annotation.id,
+        parentCommentId: null,
+        previousCursor: null,
+        nextCursor: null,
+        commentId: comment3.id,
+        limit: 2,
+      }),
+      headers: authHeader(session.id),
+    });
+
+    t.equal(byCommentIdResponse.status, 200);
+    t.deepEquals(
+      byCommentIdBody,
+      {
+        data: {
+          annotationComments: {
+            data: [
+              {
+                id: comment2.id,
+                createdAt: comment2.createdAt.toISOString(),
+                replyCount: 0,
+              },
+              {
+                id: comment3.id,
+                createdAt: comment3.createdAt.toISOString(),
+                replyCount: 0,
+              },
+            ],
+            previousCursor: CursorService.createCursor({
+              id: comment1.id,
+              createdAt: comment1.createdAt,
+            }),
+            nextCursor: CursorService.createCursor({
+              id: comment3.id,
+              createdAt: comment3.createdAt,
+            }),
+          },
+        },
+      },
+      "returns comments with a given comment id"
+    );
+
+    const [byReplyCommentIdResponse, byReplyCommentIdBody] = await post("/v2", {
+      body: buildRequest({
+        annotationId: annotation.id,
+        parentCommentId: comment1.id,
+        previousCursor: null,
+        nextCursor: null,
+        commentId: replyComment2.id,
+        limit: 2,
+      }),
+      headers: authHeader(session.id),
+    });
+
+    t.equal(byReplyCommentIdResponse.status, 200);
+    t.deepEquals(
+      byReplyCommentIdBody,
+      {
+        data: {
+          annotationComments: {
+            data: [
+              {
                 id: replyComment1.id,
                 createdAt: replyComment1.createdAt.toISOString(),
                 replyCount: 0,
@@ -364,11 +469,14 @@ test("notificationMessages endpoint", async () => {
               },
             ],
             previousCursor: null,
-            nextCursor: null,
+            nextCursor: CursorService.createCursor({
+              id: replyComment2.id,
+              createdAt: replyComment2.createdAt,
+            }),
           },
         },
       },
-      "returns comments with a given parent id"
+      "returns comments with a given reply comment id"
     );
   });
 });

@@ -1,14 +1,17 @@
 import {
   GraphQLContextAuthenticated,
   GraphQLEndpoint,
+  NotFoundError,
   requireAuth,
   UserInputError,
 } from "../../apollo";
 import * as CommentsGraphQLTypes from "../comments/graphql-types";
 import * as AssetsGraphQLTypes from "../assets/graphql-types";
-import { PaginatedComments } from "../comments/types";
+import Comment, { PaginatedComments } from "../comments/types";
+import * as CommentsDAO from "../comments/dao";
 import {
   createCommentPaginationModifier,
+  createCursor,
   Cursor,
   getNextPage,
   getPreviousPage,
@@ -22,6 +25,7 @@ interface GetAnnotationCommentsArg {
   nextCursor?: string;
   previousCursor?: string;
   parentCommentId?: string;
+  commentId?: string;
 }
 
 const annotationComments: GraphQLEndpoint<any, any, any> = {
@@ -37,7 +41,8 @@ const annotationComments: GraphQLEndpoint<any, any, any> = {
       limit: Int!,
       nextCursor: String,
       previousCursor: String,
-      parentCommentId: String
+      parentCommentId: String,
+      commentId: String
     ): PaginatedComments`,
   middleware: requireAuth,
   resolver: async (
@@ -48,6 +53,7 @@ const annotationComments: GraphQLEndpoint<any, any, any> = {
       previousCursor,
       nextCursor,
       parentCommentId,
+      commentId,
     }: GetAnnotationCommentsArg,
     context: GraphQLContextAuthenticated<PaginatedComments>
   ) => {
@@ -57,9 +63,17 @@ const annotationComments: GraphQLEndpoint<any, any, any> = {
       throw new UserInputError("Limit cannot be negative!");
     }
 
+    let comment: Comment | null;
+    comment = commentId ? await CommentsDAO.findById(commentId) : null;
+    if (commentId && !comment) {
+      throw new NotFoundError(`Could not find comment ${commentId}`);
+    }
+
     let cursor: Cursor | null;
     try {
-      cursor = nextCursor
+      cursor = comment
+        ? { id: comment.id, createdAt: comment.createdAt }
+        : nextCursor
         ? readCursor(nextCursor)
         : previousCursor
         ? readCursor(previousCursor)
@@ -71,8 +85,8 @@ const annotationComments: GraphQLEndpoint<any, any, any> = {
 
     const comments = await findByAnnotationId(trx, {
       annotationId,
-      // Prev (desc) is exclusive of the cursor create at time
-      // Next (asc) is inclusive of the cursor created at time
+      // Prev (desc) is exclusive of the cursor createdAt time
+      // Next (asc) is inclusive of the cursor createdAt time
       // An extra row must be fetched to correctly determine the next cursor value
       limit: limit + (sortOrder === "asc" ? 2 : 1),
       sortOrder,
@@ -96,7 +110,9 @@ const annotationComments: GraphQLEndpoint<any, any, any> = {
       trx,
       comments,
       limit,
-      currentCursor: previousCursor,
+      currentCursor: comment
+        ? createCursor({ id: comment.id, createdAt: comment.createdAt })
+        : previousCursor,
     });
   },
 };
