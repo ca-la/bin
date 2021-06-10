@@ -5,6 +5,7 @@ import db from "../../services/db";
 import { messageHandler } from "./message-handler";
 import { SQSMessage } from "./aws";
 import * as PostProcessUserCreation from "./tasks/post-process-user-creation";
+import * as MailchimpSubscribe from "./tasks/subscribe-to-mailchimp-users";
 import { HandlerResult } from "./types";
 import Logger from "../../services/logger";
 
@@ -89,7 +90,7 @@ test("message handler handle POST_PROCESS_USER_CREATION", async (t: Test) => {
         type: "SUCCESS",
         message: null,
       } as HandlerResult,
-      "reponse with post process user creation data"
+      "success response"
     );
   } catch (e) {
     t.fail("should not throw an error");
@@ -185,6 +186,75 @@ test("message handler handle POST_PROCESS_USER_CREATION which throws an error", 
     t.equal(
       errorLoggerStub.args[0][0],
       "Error in POST_PROCESS_USER_CREATION api worker task"
+    );
+  } catch (e) {
+    t.fail("should not throw an error");
+  }
+});
+
+test("message handler handle SUBSCRIBE_MAILCHIMP_TO_USERS", async (t: Test) => {
+  const mailchimpSubscribeStub = sandbox()
+    .stub(MailchimpSubscribe, "subscribeToMailchimpUsers")
+    .resolves({
+      type: "SUCCESS",
+      message: null,
+    } as HandlerResult);
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "SUBSCRIBE_MAILCHIMP_TO_USERS" }),
+  };
+  const handler = messageHandler();
+  try {
+    const response = await handler(message);
+
+    t.equal(mailchimpSubscribeStub.callCount, 1, "task has been called");
+
+    t.deepEqual(
+      mailchimpSubscribeStub.args,
+      [
+        [
+          {
+            type: "SUBSCRIBE_MAILCHIMP_TO_USERS",
+          },
+        ],
+      ],
+      "task has been called with right arguments"
+    );
+
+    t.deepEqual(
+      response,
+      {
+        type: "SUCCESS",
+        message: null,
+      } as HandlerResult,
+      "success response"
+    );
+  } catch (e) {
+    t.fail("should not throw an error");
+  }
+});
+
+test("message handler handle SUBSCRIBE_MAILCHIMP_TO_USERS unexpected thrown error", async (t: Test) => {
+  const mailchimpSubscribeStub = sandbox()
+    .stub(MailchimpSubscribe, "subscribeToMailchimpUsers")
+    .rejects(new Error("Unexpected error"));
+
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "SUBSCRIBE_MAILCHIMP_TO_USERS" }),
+  };
+
+  const handler = messageHandler();
+  try {
+    const response = await handler(message);
+
+    t.equal(mailchimpSubscribeStub.callCount, 1, "task has been called");
+
+    t.deepEqual(
+      response,
+      {
+        type: "FAILURE",
+        error: new Error("Unexpected error"),
+      } as HandlerResult,
+      "failure response"
     );
   } catch (e) {
     t.fail("should not throw an error");

@@ -1,5 +1,8 @@
 declare class InvalidDataError extends Error {
-  constructor(msg: string, code?: symbol);
+  public status: number;
+  public code: symbol | number;
+  public message: string;
+  constructor(msg: string, code?: symbol | number);
 }
 
 export = InvalidDataError;

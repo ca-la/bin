@@ -4,7 +4,7 @@ import db from "../../services/db";
 import { Task, HandlerResult, ApiMessages } from "./types";
 import { SQSMessage } from "./aws";
 import { logServerError, log } from "../../services/logger";
-import { postProcessUserCreation } from "./tasks/post-process-user-creation";
+import { postProcessUserCreation, subscribeToMailchimpUsers } from "./tasks";
 
 export type MessageHandler = (message: SQSMessage) => Promise<HandlerResult>;
 /**
@@ -42,6 +42,23 @@ export function messageHandler(): MessageHandler {
               error,
             };
           });
+      }
+
+      case "SUBSCRIBE_MAILCHIMP_TO_USERS": {
+        log(successMessage);
+        return await subscribeToMailchimpUsers(
+          task as Task<"SUBSCRIBE_MAILCHIMP_TO_USERS">
+        ).catch((error: Error) => {
+          logServerError(
+            "Error in SUBSCRIBE_MAILCHIMP_TO_USERS api worker task",
+            error
+          );
+
+          return {
+            type: "FAILURE",
+            error,
+          };
+        });
       }
 
       default: {

@@ -13,7 +13,6 @@ import { createSubscription } from "../subscriptions/create";
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import InvalidDataError from "../../errors/invalid-data";
-import MailChimp = require("../../services/mailchimp");
 import MultipleErrors from "../../errors/multiple-errors";
 import requireAuth = require("../../middleware/require-auth");
 import SessionsDAO = require("../../dao/sessions");
@@ -21,7 +20,6 @@ import User, { Role, ROLES } from "./domain-object";
 import { DEFAULT_DESIGN_IDS, REQUIRE_CALA_EMAIL } from "../../config";
 import { hasProperties } from "../../services/require-properties";
 import { isValidEmail } from "../../services/validation";
-import { logServerError } from "../../services/logger";
 import { validatePassword } from "./services/validate-password";
 import { createTeamWithOwner } from "../teams/service";
 import { check } from "../../services/check";
@@ -138,23 +136,6 @@ async function createUser(ctx: PublicContext) {
     await applyCode(user.id, promoCode);
   }
 
-  // Previously we had this *before* the user creation in the DB, effectively
-  // using it as a more powerful email validator. That has proven to be noisy as
-  // we attempt to subscribe lots of invalid and duplicate emails whenever
-  // someone makes a mistake signing up.
-  try {
-    await MailChimp.subscribeToUsers({
-      cohort: targetCohort && targetCohort.slug,
-      email: user.email,
-      name: user.name || "",
-      referralCode: user.referralCode,
-    });
-  } catch (err) {
-    // Not rethrowing since this shouldn't be fatal... but if we ever see this
-    // log line we need to investigate ASAP (and manually subscribe the user)
-    logServerError(`Failed to sign up user to Mailchimp: ${user.email}`);
-  }
-
   const designIdsToDuplicate =
     initialDesigns && Array.isArray(initialDesigns) && initialDesigns.length > 0
       ? initialDesigns
@@ -167,6 +148,17 @@ async function createUser(ctx: PublicContext) {
       userId: user.id,
       designIdsToDuplicate,
       email: body.email,
+    },
+  });
+
+  await sendApiWorkerMessage({
+    type: "SUBSCRIBE_MAILCHIMP_TO_USERS",
+    deduplicationId: user.id,
+    keys: {
+      cohort: targetCohort && targetCohort.slug,
+      email: user.email,
+      name: user.name || "",
+      referralCode: user.referralCode,
     },
   });
 

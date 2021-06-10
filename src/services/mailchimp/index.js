@@ -3,7 +3,7 @@
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
-const InvalidDataError = require("../../errors/invalid-data");
+const ThirdPartyCallError = require("../../errors/third-party-call-error");
 const ResourceNotFoundError = require("../../errors/resource-not-found")
   .default;
 const { logServerError } = require("../logger");
@@ -65,7 +65,7 @@ function makeRequest(method, path, requestBody) {
         if (response.status === 404) {
           throw new ResourceNotFoundError(`User not in list ${path}`);
         }
-        throw new InvalidDataError(message);
+        throw new ThirdPartyCallError(message, response.status);
       }
 
       return body;

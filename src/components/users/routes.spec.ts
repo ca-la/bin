@@ -14,7 +14,6 @@ import * as UsersDAO from "./dao";
 import Config from "../../config";
 import createUser from "../../test-helpers/create-user";
 import InvalidDataError from "../../errors/invalid-data";
-import MailChimp = require("../../services/mailchimp");
 import SessionsDAO from "../../dao/sessions";
 import Stripe = require("../../services/stripe");
 import { authHeader, get, patch, post, put } from "../../test-helpers/http";
@@ -36,9 +35,6 @@ const createBody = {
 };
 
 function stubUserDependencies() {
-  const mailchimpStub = sandbox()
-    .stub(MailChimp, "subscribeToUsers")
-    .returns(Promise.resolve());
   const createTeamStub = sandbox()
     .stub(TeamsService, "createTeamWithOwner")
     .resolves({
@@ -60,7 +56,6 @@ function stubUserDependencies() {
     .resolves();
 
   return {
-    mailchimpStub,
     createTeamStub,
     createSubscriptionStub,
     createSessionStub,
@@ -416,19 +411,18 @@ test("POST /users allows registration + design duplication", async (t: Test) => 
   });
 
   t.deepEqual(
-    sendApiWorkerMessageStub.args,
+    sendApiWorkerMessageStub.args[0],
     [
-      [
-        {
-          type: "POST_PROCESS_USER_CREATION",
-          deduplicationId: body.id,
-          keys: {
-            userId: body.id,
-            designIdsToDuplicate: ["d1", "d2"],
-            email: body.email,
-          },
+      {
+        type: "POST_PROCESS_USER_CREATION",
+        deduplicationId: body.id,
+        keys: {
+          userId: body.id,
+          designIdsToDuplicate: ["d1", "d2"],
+          email: body.email,
         },
-      ],
+      },
+      ,
     ],
     "calls api-worker with default design IDs"
   );
@@ -442,26 +436,25 @@ test("POST /users?initialDesigns= allows registration + design duplication", asy
   });
 
   t.deepEqual(
-    sendApiWorkerMessageStub.args,
+    sendApiWorkerMessageStub.args[0],
     [
-      [
-        {
-          type: "POST_PROCESS_USER_CREATION",
-          deduplicationId: body.id,
-          keys: {
-            userId: body.id,
-            designIdsToDuplicate: ["d1", "d2"],
-            email: body.email,
-          },
+      {
+        type: "POST_PROCESS_USER_CREATION",
+        deduplicationId: body.id,
+        keys: {
+          userId: body.id,
+          designIdsToDuplicate: ["d1", "d2"],
+          email: body.email,
         },
-      ],
+      },
+      ,
     ],
     "calls api-worker with provided deisigns IDs for duplication"
   );
 });
 
 test("POST /users?cohort allows registration + adding a cohort user", async (t: Test) => {
-  const { mailchimpStub } = stubUserDependencies();
+  const { sendApiWorkerMessageStub } = stubUserDependencies();
 
   const admin = await createUser({ role: "ADMIN" });
   const cohort = await CohortsDAO.create({
@@ -479,15 +472,25 @@ test("POST /users?cohort allows registration + adding a cohort user", async (t: 
 
   t.equal(response.status, 201, "status=201");
 
-  t.equal(mailchimpStub.callCount, 1, "Expect mailchimp to be called once");
+  t.equal(
+    sendApiWorkerMessageStub.callCount,
+    2,
+    "Expect send message to API worker has been called twice"
+  );
   t.deepEqual(
-    mailchimpStub.firstCall.args[0],
-    {
-      cohort: "moma-demo-june-2020",
-      email: newUser.email,
-      name: createBody.name,
-      referralCode: "FOOBAR",
-    },
+    sendApiWorkerMessageStub.args[1],
+    [
+      {
+        type: "SUBSCRIBE_MAILCHIMP_TO_USERS",
+        deduplicationId: newUser.id,
+        keys: {
+          cohort: "moma-demo-june-2020",
+          email: newUser.email,
+          name: createBody.name,
+          referralCode: "FOOBAR",
+        },
+      },
+    ],
     "Expect the correct tags for Mailchimp subscription"
   );
   t.deepEqual(
@@ -573,7 +576,6 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   const {
     sendApiWorkerMessageStub,
     createSubscriptionStub,
-    mailchimpStub,
   } = stubUserDependencies();
 
   sandbox().stub(Config, "DEFAULT_DESIGN_IDS").value("d1,d2");
@@ -594,19 +596,18 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   t.equal(response.status, 201);
 
   t.deepEqual(
-    sendApiWorkerMessageStub.args,
+    sendApiWorkerMessageStub.args[0],
     [
-      [
-        {
-          type: "POST_PROCESS_USER_CREATION",
-          deduplicationId: body.id,
-          keys: {
-            userId: body.id,
-            designIdsToDuplicate: ["d1", "d2"],
-            email: body.email,
-          },
+      {
+        type: "POST_PROCESS_USER_CREATION",
+        deduplicationId: body.id,
+        keys: {
+          userId: body.id,
+          designIdsToDuplicate: ["d1", "d2"],
+          email: body.email,
         },
-      ],
+      },
+      ,
     ],
     "calls api-worker with created user id and email to post process"
   );
@@ -619,18 +620,20 @@ test("POST /users allows subscribing to a plan", async (t: Test) => {
   );
 
   t.deepEqual(
-    mailchimpStub.args,
+    sendApiWorkerMessageStub.args[1],
     [
-      [
-        {
+      {
+        type: "SUBSCRIBE_MAILCHIMP_TO_USERS",
+        deduplicationId: body.id,
+        keys: {
           cohort: null,
           email: body.email,
           name: createBody.name,
           referralCode: "FOOBAR",
         },
-      ],
+      },
     ],
-    "Calls Mailchimp stub with valid data"
+    "Expect the correct message send to api-worker for Mailchimp subscription"
   );
 });
 
