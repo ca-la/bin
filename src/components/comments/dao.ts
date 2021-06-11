@@ -10,7 +10,6 @@ import {
 } from "./domain-object";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import Comment, { CommentRow, BaseComment } from "./types";
-import { CommentInputType } from "./graphql-types";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import { NotFoundError, UserInputError } from "../../apollo";
 import * as AnnotationsDAO from "../product-design-canvas-annotations/dao";
@@ -201,9 +200,9 @@ export async function deleteById(
   }
 }
 
-export async function extractDesignIdFromCommentInput(
+export async function extractDesignIdFromCommentParent(
   ktx: Knex,
-  input: CommentInputType
+  input: { approvalStepId: string | null; annotationId: string | null }
 ): Promise<string> {
   if (input.approvalStepId && input.annotationId) {
     throw new UserInputError(

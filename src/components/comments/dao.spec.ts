@@ -8,9 +8,8 @@ import {
   deleteById,
   findById,
   update,
-  extractDesignIdFromCommentInput,
+  extractDesignIdFromCommentParent,
 } from "./dao";
-import { CommentInputType } from "./graphql-types";
 import createUser from "../../test-helpers/create-user";
 import generateAsset from "../../test-helpers/factories/asset";
 import generateComment from "../../test-helpers/factories/comment";
@@ -222,22 +221,18 @@ test("Comment DAO supports delete", async (t: tape.Test) => {
 });
 
 test("extractDesignIdFromCommentInput requires approvalStepId/annotationId", async (t: tape.Test) => {
-  const input: CommentInputType = {
-    text: "hey",
-    parentCommentId: null,
-    isPinned: false,
+  const parentIds = {
     approvalStepId: null,
     annotationId: null,
   };
   try {
-    await extractDesignIdFromCommentInput(db, input);
+    await extractDesignIdFromCommentParent(db, parentIds);
     t.fail("Should throw if both approvalStepId and annotationId are empty");
   } catch (err) {
     t.is(err.message, "Comment should have approvalStepId or annotationId");
   }
   try {
-    await extractDesignIdFromCommentInput(db, {
-      ...input,
+    await extractDesignIdFromCommentParent(db, {
       approvalStepId: "s1",
       annotationId: "a1",
     });
@@ -255,10 +250,7 @@ test("extractDesignIdFromCommentInput should work for approvalStepId case", asyn
   try {
     const { approvalStep } = await generateApprovalStep(trx);
 
-    const designId = await extractDesignIdFromCommentInput(trx, {
-      text: "hey",
-      parentCommentId: null,
-      isPinned: false,
+    const designId = await extractDesignIdFromCommentParent(trx, {
       approvalStepId: approvalStep.id,
       annotationId: null,
     });
@@ -270,10 +262,7 @@ test("extractDesignIdFromCommentInput should work for approvalStepId case", asyn
 
 test("extractDesignIdFromCommentInput should work for annotation case", async (t: tape.Test) => {
   const { annotation, design } = await generateAnnotation();
-  const designId = await extractDesignIdFromCommentInput(db, {
-    text: "hey",
-    parentCommentId: null,
-    isPinned: false,
+  const designId = await extractDesignIdFromCommentParent(db, {
     approvalStepId: null,
     annotationId: annotation.id,
   });
