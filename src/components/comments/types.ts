@@ -1,4 +1,5 @@
 import * as z from "zod";
+import Knex from "knex";
 import { userRoleSchema } from "../users/types";
 import { assetLinksSchema, assetSchema } from "../assets/types";
 import {
@@ -108,4 +109,10 @@ export interface PaginatedComments {
   data: CommentWithResources[];
   previousCursor: string | null;
   nextCursor: string | null;
+}
+
+export interface FindCommentsByIdOptions {
+  limit?: number;
+  sortOrder?: "asc" | "desc";
+  modify?: (query: Knex.QueryBuilder) => Knex.QueryBuilder;
 }

@@ -1,4 +1,4 @@
-import Knex from "knex";
+import Knex, { QueryBuilder } from "knex";
 
 import ApprovalStepComment, {
   ApprovalStepCommentRow,
@@ -11,7 +11,10 @@ import {
   isCommentRow,
 } from "../comments/domain-object";
 import { queryComments } from "../comments/dao";
-import Comment, { CommentRow } from "../comments/types";
+import Comment, {
+  CommentRow,
+  FindCommentsByIdOptions,
+} from "../comments/types";
 
 const TABLE_NAME = "design_approval_step_comments";
 
@@ -38,12 +41,24 @@ export async function create(
   );
 }
 
+interface FindByStepIdOptions extends FindCommentsByIdOptions {
+  approvalStepId: string;
+}
+
 export async function findByStepId(
   ktx: Knex,
-  stepId: string
+  options: FindByStepIdOptions
 ): Promise<Comment[]> {
+  const {
+    approvalStepId,
+    limit,
+    sortOrder,
+    modify = (query: QueryBuilder) => query,
+  } = options;
+
   const comments: CommentRow[] = await queryComments(ktx, {
     includeDeletedParents: true,
+    sortOrder,
   })
     .join(
       "design_approval_step_comments",
@@ -51,7 +66,13 @@ export async function findByStepId(
       "comments.id"
     )
     .where({
-      "design_approval_step_comments.approval_step_id": stepId,
+      "design_approval_step_comments.approval_step_id": approvalStepId,
+    })
+    .modify(modify)
+    .modify((query: Knex.QueryBuilder) => {
+      if (limit) {
+        query.limit(limit);
+      }
     });
 
   return validateEvery<CommentRow, Comment>(

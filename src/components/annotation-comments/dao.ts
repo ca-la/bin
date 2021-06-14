@@ -4,7 +4,10 @@ import db from "../../services/db";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
-import { CommentWithMentions } from "../comments/types";
+import {
+  CommentWithMentions,
+  FindCommentsByIdOptions,
+} from "../comments/types";
 
 import AnnotationComment, {
   AnnotationCommentRow,
@@ -16,7 +19,6 @@ import AnnotationComment, {
   withMetaDataAdapter as commentWithMetaAdapter,
 } from "./domain-object";
 import { annotationCommentsView } from "./view";
-import { QueryModifier } from "../../services/cala-component/cala-dao";
 
 const TABLE_NAME = "product_design_canvas_annotation_comments";
 
@@ -47,18 +49,20 @@ export async function create(
   );
 }
 
-interface FindByAnnotationIdOptions {
+interface FindByAnnotationIdOptions extends FindCommentsByIdOptions {
   annotationId: string;
-  limit?: number;
-  sortOrder?: "asc" | "desc";
-  modify?: QueryModifier;
 }
 
 export async function findByAnnotationId(
   ktx: Knex,
   options: FindByAnnotationIdOptions
 ): Promise<CommentWithMeta[]> {
-  const { annotationId, limit, sortOrder, modify } = options;
+  const {
+    annotationId,
+    limit,
+    sortOrder,
+    modify = (query: Knex.QueryBuilder) => query,
+  } = options;
 
   const comments: CommentWithMetaRow[] = await annotationCommentsView(ktx, {
     includeDeletedParents: true,
@@ -69,12 +73,7 @@ export async function findByAnnotationId(
     })
     .orderBy("created_at", "asc")
     .groupBy("ac.annotation_id")
-    .modify(
-      modify ||
-        (() => {
-          /* no-op */
-        })
-    )
+    .modify(modify)
     .modify((query: Knex.QueryBuilder) => {
       if (limit) {
         query.limit(limit);

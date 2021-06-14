@@ -30,6 +30,7 @@ import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import { emit } from "../../services/pubsub";
 import { RouteUpdated } from "../../services/pubsub/cala-events";
+import { StrictContext } from "../../router-context";
 
 type StreamItem = CommentWithResources | DesignEventWithMeta;
 
@@ -123,6 +124,40 @@ async function update(ctx: UpdateContext) {
   ctx.body = updated;
 }
 
+interface GetApprovalStepStreamContext extends StrictContext<StreamItem[]> {
+  state: { designId: string };
+  params: { id: string };
+}
+
+async function getApprovalStepStream(ctx: GetApprovalStepStreamContext) {
+  const comments = await ApprovalStepCommentDAO.findByStepId(db, {
+    approvalStepId: ctx.params.id,
+  });
+
+  if (!comments) {
+    ctx.throw(404);
+  }
+
+  const commentsWithResources: CommentWithResources[] = (
+    await addAtMentionDetails(db, comments)
+  ).map(addAttachmentLinks);
+  const events: DesignEventWithMeta[] = (
+    await DesignEventsDAO.findApprovalStepEvents(
+      db,
+      ctx.state.designId,
+      ctx.params.id
+    )
+  ).reduce(subtractDesignEventPairs, []);
+
+  const streamItems: StreamItem[] = [...commentsWithResources, ...events].sort(
+    (a: StreamItem, b: StreamItem) =>
+      a.createdAt.getTime() - b.createdAt.getTime()
+  );
+
+  ctx.body = streamItems;
+  ctx.status = 200;
+}
+
 const router: CalaRouter = {
   ...standardRouter,
   routes: {
@@ -144,40 +179,7 @@ const router: CalaRouter = {
         requireAuth,
         requireDesignIdBy(getDesignIdFromStep),
         canAccessDesignInState,
-
-        function* getApprovalStepStream(
-          this: AuthedContext<{}, { designId: string }, { id: string }>
-        ): Iterator<any, any, any> {
-          const comments = yield ApprovalStepCommentDAO.findByStepId(
-            db,
-            this.params.id
-          );
-
-          if (!comments) {
-            this.throw(404);
-          }
-
-          const commentsWithResources: CommentWithResources[] = (yield addAtMentionDetails(
-            db,
-            comments
-          )).map(addAttachmentLinks);
-          const events: DesignEventWithMeta[] = (yield DesignEventsDAO.findApprovalStepEvents(
-            db,
-            this.state.designId,
-            this.params.id
-          )).reduce(subtractDesignEventPairs, []);
-
-          const streamItems: StreamItem[] = [
-            ...commentsWithResources,
-            ...events,
-          ].sort(
-            (a: StreamItem, b: StreamItem) =>
-              a.createdAt.getTime() - b.createdAt.getTime()
-          );
-
-          this.body = streamItems;
-          this.status = 200;
-        },
+        convert.back(getApprovalStepStream),
       ],
     },
   },
