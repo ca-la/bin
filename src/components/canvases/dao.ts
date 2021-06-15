@@ -2,12 +2,13 @@ import uuid from "node-uuid";
 import Knex from "knex";
 
 import db from "../../services/db";
-import Canvas, {
+import {
   CanvasRow,
   dataAdapter,
   isCanvasRow,
   partialDataAdapter,
 } from "./domain-object";
+import { Canvas, CanvasWithEnrichedComponents } from "./types";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import {
@@ -16,6 +17,8 @@ import {
   CreatorMetadataRow,
   isCreatorMetadataRow,
 } from "./domain-object/creator-metadata";
+import * as ComponentsDAO from "../components/dao";
+import * as EnrichmentService from "../../services/attach-asset-links";
 
 const TABLE_NAME = "canvases";
 
@@ -218,4 +221,19 @@ export async function getCreatorMetadata(
     creatorDataAdapter,
     creatorRow
   );
+}
+
+export async function findAllWithEnrichedComponentsByDesignId(
+  designId: string
+): Promise<CanvasWithEnrichedComponents[]> {
+  const canvases = await findAllByDesignId(designId);
+  const enrichedCanvasPromises = canvases.map(async (canvas: Canvas) => {
+    const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
+    const enrichedComponents = await Promise.all(
+      components.map(EnrichmentService.addAssetLink)
+    );
+    return { ...canvas, components: enrichedComponents };
+  });
+
+  return Promise.all(enrichedCanvasPromises);
 }

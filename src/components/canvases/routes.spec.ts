@@ -75,7 +75,9 @@ test("GET /product-design-canvases/?designId=:designId returns a list of Canvase
     },
   ];
 
-  sandbox().stub(ProductDesignCanvasesDAO, "findAllByDesignId").resolves(data);
+  sandbox()
+    .stub(ProductDesignCanvasesDAO, "findAllWithEnrichedComponentsByDesignId")
+    .resolves(data);
 
   const [response, body] = await get(
     `/product-design-canvases?designId=${id}`,

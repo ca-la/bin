@@ -278,14 +278,9 @@ function* getList(this: AuthedContext): Iterator<any, any, any> {
     this.throw(400, "Missing designId");
   }
 
-  const canvases = yield CanvasesDAO.findAllByDesignId(query.designId);
-  const enrichedCanvases = yield canvases.map(async (canvas: Canvas) => {
-    const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-    const enrichedComponents = await Promise.all(
-      components.map(EnrichmentService.addAssetLink)
-    );
-    return { ...canvas, components: enrichedComponents };
-  });
+  const enrichedCanvases = yield CanvasesDAO.findAllWithEnrichedComponentsByDesignId(
+    query.designId
+  );
 
   this.status = 200;
   this.body = enrichedCanvases;
