@@ -93,3 +93,13 @@ export const NotificationMessage: GraphQLType = {
     "NotificationFilter",
   ],
 };
+
+export const UnreadCounts: GraphQLType = {
+  name: "UnreadCounts",
+  type: "type",
+  body: {
+    INBOX: "Int!",
+    ARCHIVED: "Int!",
+    UNARCHIVED: "Int!",
+  },
+};

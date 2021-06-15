@@ -75,6 +75,42 @@ const notificationMessages: GraphQLEndpoint<
   },
 };
 
+interface UnreadNotificationsArgs {}
+type UnreadNotificationsResult = {
+  [key in NotificationFilter]: number;
+};
+
+const unreadNotificationsCount: GraphQLEndpoint<
+  UnreadNotificationsArgs,
+  UnreadNotificationsResult,
+  GraphQLContextAuthenticated<UnreadNotificationsResult>
+> = {
+  endpointType: "Query",
+  types: [GraphQLTypes.UnreadCounts],
+  name: "unreadNotificationsCount",
+  signature: ": UnreadCounts!",
+  middleware: requireAuth as Middleware<
+    UnreadNotificationsArgs,
+    GraphQLContextAuthenticated<UnreadNotificationsResult>,
+    UnreadNotificationsResult
+  >,
+  resolver: async (
+    _: unknown,
+    _args: UnreadNotificationsArgs,
+    context: GraphQLContextAuthenticated<UnreadNotificationsResult>
+  ) => {
+    const { trx, session } = context;
+    const { userId } = session;
+
+    const unreadCount = NotificationsDAO.findUnreadCountByFiltersByUserId(
+      trx,
+      userId
+    );
+
+    return unreadCount;
+  },
+};
+
 interface ArchiveNotificationsArgs {
   id: string;
   inboxOnly: boolean;
@@ -118,7 +154,7 @@ interface UpdateNotificationArgs {
   archivedAt: Date | null;
 }
 
-const updateNotificaion: GraphQLEndpoint<
+const updateNotification: GraphQLEndpoint<
   UpdateNotificationArgs,
   NotificationMessageForGraphQL,
   GraphQLContextAuthenticated<NotificationMessageForGraphQL>
@@ -209,6 +245,7 @@ const readNotifications: GraphQLEndpoint<
 export const NotificationEndpoints = [
   notificationMessages,
   archiveNotifications,
-  updateNotificaion,
+  updateNotification,
   readNotifications,
+  unreadNotificationsCount,
 ];

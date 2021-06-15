@@ -306,3 +306,54 @@ test("readNotifications endpoint", async (t: Test) => {
   );
   t.equal(forbiddenBody.errors[0].extensions.code, "FORBIDDEN");
 });
+
+test("unreadNotificationsCount endpoint", async () => {
+  function buildRequest() {
+    return {
+      query: `{
+        unreadNotificationsCount {
+          INBOX
+          ARCHIVED
+          UNARCHIVED
+        }
+      }`,
+    };
+  }
+
+  test("Requires authentication", async (t: Test) => {
+    const [response, body] = await post("/v2", {
+      body: buildRequest(),
+    });
+    t.equal(response.status, 200);
+    t.equal(body.errors[0].message, "Unauthorized");
+  });
+
+  test("Valid request", async (t: Test) => {
+    const { session, user } = await createUser({ role: "USER" });
+    const findStub = sandbox()
+      .stub(NotificationsDAO, "findUnreadCountByFiltersByUserId")
+      .resolves({
+        INBOX: 1,
+        ARCHIVED: 2,
+        UNARCHIVED: 3,
+      });
+
+    const [response, body] = await post("/v2", {
+      body: buildRequest(),
+      headers: authHeader(session.id),
+    });
+    t.equal(response.status, 200);
+
+    t.deepEqual(findStub.args, [[findStub.args[0][0], user.id]]);
+
+    t.deepEqual(body, {
+      data: {
+        unreadNotificationsCount: {
+          INBOX: 1,
+          ARCHIVED: 2,
+          UNARCHIVED: 3,
+        },
+      },
+    });
+  });
+});
