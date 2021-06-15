@@ -3,7 +3,8 @@ import { messageHandler } from "./message-handler";
 import { configureAWS } from "./aws";
 import { processMessagesLoop } from "./process-messages";
 
-function start(): void {
+async function start(): Promise<void> {
+  await import("./initialize-listeners");
   configureAWS();
   processMessagesLoop(messageHandler());
 }

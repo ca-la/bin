@@ -303,3 +303,83 @@ test("message handler handle POST_PROCESS_QUOTE_PAYMENT unexpected thrown error"
     "Error in POST_PROCESS_QUOTE_PAYMENT api worker task"
   );
 });
+
+test("message handler handle POST_PROCESS_QUOTE_PAYMENT", async (t: Test) => {
+  const quotePaymentTaskStub = sandbox()
+    .stub(QuotePayment, "postProcessQuotePayment")
+    .resolves({
+      type: "SUCCESS",
+      message: null,
+    } as HandlerResult);
+
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "POST_PROCESS_QUOTE_PAYMENT" }),
+  };
+
+  const handler = messageHandler();
+  let response;
+  try {
+    response = await handler(message);
+  } catch (e) {
+    t.fail("should not throw an error");
+  }
+
+  t.equal(quotePaymentTaskStub.callCount, 1, "task has been called");
+
+  t.deepEqual(
+    quotePaymentTaskStub.args,
+    [
+      [
+        {
+          type: "POST_PROCESS_QUOTE_PAYMENT",
+        },
+      ],
+    ],
+    "task has been called with right arguments"
+  );
+
+  t.deepEqual(
+    response,
+    {
+      type: "SUCCESS",
+      message: null,
+    } as HandlerResult,
+    "success response"
+  );
+});
+
+test("message handler handle POST_PROCESS_QUOTE_PAYMENT unexpected thrown error", async (t: Test) => {
+  const quotePaymentTaskStub = sandbox()
+    .stub(QuotePayment, "postProcessQuotePayment")
+    .rejects(new Error("Unexpected error"));
+  const errorLoggerStub = sandbox().stub(Logger, "logServerError");
+
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "POST_PROCESS_QUOTE_PAYMENT" }),
+  };
+
+  const handler = messageHandler();
+  let response;
+  try {
+    response = await handler(message);
+  } catch (e) {
+    t.fail("should not throw an error");
+  }
+
+  t.equal(quotePaymentTaskStub.callCount, 1, "task has been called");
+
+  t.deepEqual(
+    response,
+    {
+      type: "FAILURE",
+      error: new Error("Unexpected error"),
+    } as HandlerResult,
+    "failure response"
+  );
+
+  t.equal(errorLoggerStub.callCount, 1, "error logger is not called");
+  t.equal(
+    errorLoggerStub.args[0][0],
+    "Error in POST_PROCESS_QUOTE_PAYMENT api worker task"
+  );
+});

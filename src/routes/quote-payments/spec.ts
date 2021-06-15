@@ -31,6 +31,7 @@ import * as ApiWorker from "../../workers/api-worker/send-message";
 import * as RequestService from "../../services/stripe/make-request";
 import generateCollection from "../../test-helpers/factories/collection";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -212,6 +213,17 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       addressId: address.id,
     },
     headers: authHeader(session.id),
+  });
+
+  await postProcessQuotePayment({
+    type: "POST_PROCESS_QUOTE_PAYMENT",
+    deduplicationId: body.id,
+    keys: {
+      invoiceId: body.id,
+      userId: user.id,
+      collectionId: collection.id,
+      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
+    },
   });
 
   t.equal(
@@ -611,7 +623,7 @@ test("POST /quote-payments creates shopify products if connected to a storefront
   });
   const paymentMethodTokenId = uuid.v4();
 
-  const [postResponse] = await post("/quote-payments", {
+  const [postResponse, body] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
@@ -628,6 +640,17 @@ test("POST /quote-payments creates shopify products if connected to a storefront
       addressId: address.id,
     },
     headers: authHeader(session.id),
+  });
+
+  await postProcessQuotePayment({
+    type: "POST_PROCESS_QUOTE_PAYMENT",
+    deduplicationId: body.id,
+    keys: {
+      invoiceId: body.id,
+      userId: user.id,
+      collectionId: collection.id,
+      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
+    },
   });
 
   t.equal(postResponse.status, 201, "successful payment");
@@ -658,7 +681,7 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
   });
   const paymentMethodTokenId = uuid.v4();
 
-  const [postResponse] = await post("/quote-payments", {
+  const [postResponse, body] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
@@ -675,6 +698,17 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
       addressId: address.id,
     },
     headers: authHeader(session.id),
+  });
+
+  await postProcessQuotePayment({
+    type: "POST_PROCESS_QUOTE_PAYMENT",
+    deduplicationId: body.id,
+    keys: {
+      invoiceId: body.id,
+      userId: user.id,
+      collectionId: collection.id,
+      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
+    },
   });
 
   t.equal(postResponse.status, 201, "succesful payment");
