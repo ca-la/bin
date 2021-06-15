@@ -85,6 +85,7 @@ test("DELETE /comment/:id deletes a task comment", async (t: tape.Test) => {
         userName: user.name,
         userRole: user.role,
         attachments: [],
+        replyCount: 0,
       },
     ],
     "Comment retrieval returns the created comment in an array"

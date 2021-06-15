@@ -45,6 +45,18 @@ export function queryComments(
         '[]'
       ) as attachments`)
     )
+    .select(
+      ktx.raw(
+        `(SELECT
+            count(*)
+          FROM
+            comments AS replies
+          WHERE
+            replies.parent_comment_id = comments.id
+            AND replies.deleted_at IS NULL
+        ) as reply_count`
+      )
+    )
     .join("users", "users.id", "comments.user_id")
     .leftJoin(
       "comment_attachments",

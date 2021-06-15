@@ -38,5 +38,5 @@ export const withMetaDataAdapter = new DataAdapter<
 >();
 
 export function isCommentWithMetaRow(row: object): row is CommentWithMetaRow {
-  return isCommentRow && hasProperties(row, "ApprovalStep_id");
+  return isCommentRow(row) && hasProperties(row, "ApprovalStep_id");
 }

@@ -83,7 +83,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
   t.equal(found[0].userId, commenter.id);
   t.deepEqual(
     found,
-    [comment, deletedComment, reply],
+    [comment, { ...deletedComment, replyCount: 1 }, reply],
     "returned expected comments (with deleted with replies and without deleted comment without replies)"
   );
 
@@ -98,7 +98,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
   t.equal(limited.length, 2, "limit is supported");
   t.deepEqual(
     limited,
-    [reply, deletedComment],
+    [reply, { ...deletedComment, replyCount: 1 }],
     "returned expected subset of comments in desc order"
   );
 

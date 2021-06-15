@@ -41,7 +41,6 @@ export function encode(row: CommentWithMetaRow): CommentWithMeta {
   return {
     ...commentDataAdapter.parse(row),
     annotationId: row.annotation_id,
-    replyCount: Number(row.reply_count),
   };
 }
 
@@ -49,7 +48,6 @@ export function decode(data: CommentWithMeta): CommentWithMetaRow {
   return {
     ...commentDataAdapter.toDb(data),
     annotation_id: data.annotationId,
-    reply_count: data.replyCount,
   };
 }
 

@@ -120,6 +120,7 @@ test("sendCreationNotifications loops through mentions and sends notifications",
     userName: "Somebody cool",
     userRole: "USER" as Role,
     attachments: [],
+    replyCount: 0,
   };
   await db.transaction(async (trx: Knex.Transaction) => {
     await sendCreationNotifications(trx, {
@@ -360,6 +361,7 @@ test("sendCreationNotifications continues processing notifications once it hits 
     userName: "Somebody cool",
     userRole: "USER" as Role,
     attachments: [],
+    replyCount: 0,
   };
   await db.transaction(async (trx: Knex.Transaction) => {
     await sendCreationNotifications(trx, {

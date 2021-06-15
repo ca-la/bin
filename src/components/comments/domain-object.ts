@@ -1,9 +1,23 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
+import { toData } from "../assets/domain-object";
 import Comment, { CommentRow, BaseCommentRow, BaseComment } from "./types";
 
-export const dataAdapter = new DataAdapter<CommentRow, Comment>();
 export const baseDataAdapter = new DataAdapter<BaseCommentRow, BaseComment>();
+
+function encode(row: CommentRow): Comment {
+  return {
+    ...baseDataAdapter.parse(row),
+    replyCount: Number(row.reply_count),
+    userEmail: row.user_email,
+    userId: row.user_id,
+    userName: row.user_name,
+    userRole: row.user_role,
+    attachments: row.attachments.map(toData),
+  };
+}
+
+export const dataAdapter = new DataAdapter<CommentRow, Comment>(encode);
 
 export function isBaseComment(row: object): row is BaseComment {
   return hasProperties(

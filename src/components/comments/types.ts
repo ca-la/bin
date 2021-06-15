@@ -1,7 +1,7 @@
 import * as z from "zod";
 import Knex from "knex";
 import { userRoleSchema } from "../users/types";
-import { assetLinksSchema, assetSchema } from "../assets/types";
+import { assetLinksSchema, assetRowSchema, assetSchema } from "../assets/types";
 import {
   dateStringToDate,
   nullableDateStringToNullableDate,
@@ -23,6 +23,7 @@ export const commentSchema = baseCommentSchema.extend({
   userEmail: z.string().nullable(),
   userRole: userRoleSchema,
   attachments: z.array(assetSchema),
+  replyCount: z.number(),
 });
 export type Comment = z.infer<typeof commentSchema>;
 
@@ -41,7 +42,8 @@ export const commentRowSchema = baseCommentRowSchema.extend({
   user_name: z.string().nullable(),
   user_email: z.string().nullable(),
   user_role: userRoleSchema,
-  attachments: z.array(assetSchema),
+  attachments: z.array(assetRowSchema),
+  reply_count: z.number(),
 });
 export type CommentRow = z.infer<typeof commentRowSchema>;
 
@@ -55,23 +57,21 @@ export const commentWithResourcesSchema = commentWithMentionsSchema.extend({
 });
 export type CommentWithResources = z.infer<typeof commentWithResourcesSchema>;
 
-export const createCommentWithResourcesSchema = commentWithResourcesSchema.extend(
-  {
-    createdAt: dateStringToDate,
-    attachments: z.array(
-      assetSchema.extend({
-        createdAt: dateStringToDate,
-        uploadCompletedAt: nullableDateStringToNullableDate,
-      })
-    ),
-  }
-);
+export const createCommentWithAttachmentsSchema = baseCommentSchema.extend({
+  createdAt: dateStringToDate,
+  attachments: z.array(
+    assetSchema.extend({
+      createdAt: dateStringToDate,
+      uploadCompletedAt: nullableDateStringToNullableDate,
+    })
+  ),
+});
 
-export type CreateCommentWithResources = z.infer<
-  typeof createCommentWithResourcesSchema
+export type CreateCommentWithAttachments = z.infer<
+  typeof createCommentWithAttachmentsSchema
 >;
 
-export const serializedCreateCommentWithResourcesSchema = commentWithResourcesSchema.extend(
+export const serializedCreateCommentWithAttachmentsSchema = baseCommentSchema.extend(
   {
     createdAt: z.string(),
     attachments: z.array(
@@ -83,8 +83,8 @@ export const serializedCreateCommentWithResourcesSchema = commentWithResourcesSc
   }
 );
 
-export type SerializedCreateCommentWithResources = z.infer<
-  typeof serializedCreateCommentWithResourcesSchema
+export type SerializedCreateCommentWithAttachments = z.infer<
+  typeof serializedCreateCommentWithAttachmentsSchema
 >;
 
 export enum MentionType {

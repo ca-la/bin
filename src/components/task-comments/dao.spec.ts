@@ -74,7 +74,7 @@ test("TaskComment DAO supports creation/retrieval", async (t: tape.Test) => {
   const result = await findByTaskId(task.id);
   t.deepEqual(
     result,
-    [deletedComment, replyToDeleted1, comment2, comment1],
+    [{ ...deletedComment, replyCount: 1 }, replyToDeleted1, comment2, comment1],
     "Finds comments by task (even deleted if they have replies)"
   );
 });

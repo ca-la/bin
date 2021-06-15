@@ -24,7 +24,7 @@ import {
   getPreviousPage,
   readCursor,
 } from "../comments/cursor-service";
-import Comment, { PaginatedComments } from "./types";
+import Comment, { FindCommentsByIdOptions, PaginatedComments } from "./types";
 import { findByAnnotationId } from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
 
@@ -189,7 +189,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
     }
     const sortOrder: "asc" | "desc" = nextCursor ? "asc" : "desc";
 
-    const baseFindOptions = {
+    const baseFindOptions: FindCommentsByIdOptions = {
       // Prev (desc) is exclusive of the cursor createdAt time
       // Next (asc) is inclusive of the cursor createdAt time
       // An extra row must be fetched to correctly determine the next cursor value

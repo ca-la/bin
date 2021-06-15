@@ -16,7 +16,7 @@ import * as CreateNotifications from "../../services/create-notifications";
 import * as AnnounceCommentService from "../iris/messages/approval-step-comment";
 
 import generateCollaborator from "../../test-helpers/factories/collaborator";
-import { SerializedCreateCommentWithResources } from "../comments/types";
+import { SerializedCreateCommentWithAttachments } from "../comments/types";
 
 test("POST /design-approval-step-comments/:stepId can create a comment by team member or non-PREVIEW collaborator or admin admin", async (t: tape.Test) => {
   sandbox()
@@ -57,7 +57,7 @@ test("POST /design-approval-step-comments/:stepId can create a comment by team m
 
   const [approvalStep] = await ApprovalStepsDAO.findByDesign(db, design.id);
 
-  const comment: SerializedCreateCommentWithResources = {
+  const comment: SerializedCreateCommentWithAttachments = {
     createdAt: new Date().toISOString(),
     deletedAt: null,
     id: uuid.v4(),
@@ -65,10 +65,6 @@ test("POST /design-approval-step-comments/:stepId can create a comment by team m
     parentCommentId: null,
     text: "test comment",
     userId: user.id,
-    userRole: user.role,
-    userEmail: user.email,
-    userName: user.name,
-    mentions: {},
     attachments: [],
   };
 
@@ -158,7 +154,7 @@ test("POST /design-approval-step-comments/:stepId sends @mention notifications",
     ApprovalStepsDAO.createAll(trx, [approvalStep])
   );
 
-  const comment: SerializedCreateCommentWithResources = {
+  const comment: SerializedCreateCommentWithAttachments = {
     createdAt: new Date().toISOString(),
     deletedAt: null,
     id: uuid.v4(),
@@ -166,12 +162,6 @@ test("POST /design-approval-step-comments/:stepId sends @mention notifications",
     parentCommentId: null,
     text: `@<${collaborator.id}|collaborator> Hey`,
     userId: user.id,
-    userRole: user.role,
-    userEmail: user.email,
-    userName: user.name,
-    mentions: {
-      [collaborator.id]: user.name,
-    },
     attachments: [],
   };
 

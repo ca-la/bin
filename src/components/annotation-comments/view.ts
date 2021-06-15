@@ -13,18 +13,6 @@ export const annotationCommentsView = (
 ): Knex.QueryBuilder =>
   queryComments(ktx, options)
     .select("ac.annotation_id AS annotation_id")
-    .select(
-      ktx.raw(
-        `(SELECT
-            count(*)
-          FROM
-            comments AS replies
-          WHERE
-            replies.parent_comment_id = comments.id
-            AND replies.deleted_at IS NULL
-        ) as reply_count`
-      )
-    )
     .leftJoin(
       "product_design_canvas_annotation_comments AS ac",
       "ac.comment_id",

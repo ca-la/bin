@@ -8,8 +8,8 @@ import Asset from "../assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import {
   CommentWithResources,
-  CreateCommentWithResources,
-  createCommentWithResourcesSchema,
+  CreateCommentWithAttachments,
+  createCommentWithAttachmentsSchema,
 } from "../comments/types";
 import convert from "koa-convert";
 import { StrictContext } from "../../router-context";
@@ -30,7 +30,7 @@ const router = new Router();
 interface CreateCommentContext extends StrictContext<CommentWithResources> {
   state: AuthedState &
     TransactionState &
-    SafeBodyState<CreateCommentWithResources>;
+    SafeBodyState<CreateCommentWithAttachments>;
   params: { annotationId: string };
 }
 
@@ -78,8 +78,8 @@ async function createAnnotationComment(ctx: CreateCommentContext) {
 router.put(
   "/:commentId",
   requireAuth,
-  typeGuardFromSchema<CreateCommentWithResources>(
-    createCommentWithResourcesSchema
+  typeGuardFromSchema<CreateCommentWithAttachments>(
+    createCommentWithAttachmentsSchema
   ),
   useTransaction,
   convert.back(attachPermissions),

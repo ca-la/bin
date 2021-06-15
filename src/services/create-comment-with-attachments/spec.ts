@@ -67,6 +67,7 @@ test("createDesign service creates a collaborator", async (t: Test) => {
             link: "link-to-something",
           },
         ],
+        replyCount: 0,
       }
     );
   });

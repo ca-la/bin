@@ -15,8 +15,8 @@ import useTransaction, {
 import { Asset } from "../assets/types";
 import {
   CommentWithResources,
-  CreateCommentWithResources,
-  createCommentWithResourcesSchema,
+  CreateCommentWithAttachments,
+  createCommentWithAttachmentsSchema,
 } from "../comments/types";
 import convert from "koa-convert";
 import {
@@ -31,7 +31,7 @@ const router = new Router();
 interface CreateCommentContext extends StrictContext<CommentWithResources> {
   state: AuthedState &
     TransactionState & { permissions?: Permissions } & SafeBodyState<
-      CreateCommentWithResources
+      CreateCommentWithAttachments
     >;
   params: { approvalStepId: string };
 }
@@ -73,8 +73,8 @@ async function createApprovalStepComment(ctx: CreateCommentContext) {
 router.post(
   "/:approvalStepId",
   requireAuth,
-  typeGuardFromSchema<CreateCommentWithResources>(
-    createCommentWithResourcesSchema
+  typeGuardFromSchema<CreateCommentWithAttachments>(
+    createCommentWithAttachmentsSchema
   ),
   useTransaction,
   convert.back(attachPermissions),

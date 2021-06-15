@@ -10,8 +10,10 @@ import * as AnnounceCommentService from "../iris/messages/annotation-comment";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import { addDesign } from "../../test-helpers/collections";
 import * as AssetLinkAttachment from "../../services/attach-asset-links";
-import { SerializedCreateCommentWithResources } from "../comments/types";
+import { SerializedCreateCommentWithAttachments } from "../comments/types";
 import createDesign from "../../services/create-design";
+import Asset from "../assets/types";
+import { Serialized } from "../../types/serialized";
 
 const API_PATH = "/product-design-canvas-annotations";
 
@@ -68,7 +70,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
   const date1 = new Date();
   const date2 = new Date(date1.getTime() + 1000);
 
-  const attachment = {
+  const attachment: Serialized<Asset> = {
     createdAt: date1.toISOString(),
     description: null,
     id: uuid.v4(),
@@ -78,38 +80,27 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     title: "",
     userId: user.id,
     uploadCompletedAt: date1.toISOString(),
-    deletedAt: null,
   };
 
-  const commentBody: SerializedCreateCommentWithResources = {
+  const commentBody: SerializedCreateCommentWithAttachments = {
     createdAt: date1.toISOString(),
     deletedAt: null,
     id: commentId,
     isPinned: false,
-    mentions: {},
     parentCommentId: null,
     text: "A comment",
-    userEmail: "cool@me.me",
     userId: "purposefully incorrect",
-    userName: "Somebody cool",
-    userRole: "USER",
     attachments: [],
   };
 
-  const commentWithMentionBody: SerializedCreateCommentWithResources = {
+  const commentWithMentionBody: SerializedCreateCommentWithAttachments = {
     createdAt: date2.toISOString(),
     deletedAt: null,
     id: commentWithMentionId,
     isPinned: false,
-    mentions: {
-      [collaborator.id]: user.name,
-    },
     parentCommentId: null,
     text: `A comment @<${collaborator.id}|collaborator>`,
-    userEmail: "cool@me.me",
     userId: "purposefully incorrect",
-    userName: "Somebody cool",
-    userRole: "USER",
     attachments: [attachment],
   };
 
@@ -165,6 +156,8 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
       userEmail: user.email,
       userRole: user.role,
       attachments: [],
+      mentions: {},
+      replyCount: 0,
     },
     "returns attachments on create and attaches the real user"
   );
@@ -289,11 +282,14 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
           {
             ...attachment,
             createdAt: new Date(attachment.createdAt),
-            uploadCompletedAt: new Date(attachment.uploadCompletedAt),
+            uploadCompletedAt: new Date(attachment.uploadCompletedAt!),
             downloadLink: "a-very-download",
           },
         ],
         replyCount: 0,
+        mentions: {
+          [collaborator.id]: user.name,
+        },
       },
     ],
     "Comment retrieval returns all the comments for the annotation"

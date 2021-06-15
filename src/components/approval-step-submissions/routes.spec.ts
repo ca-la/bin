@@ -464,6 +464,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       userEmail: designer.user.email,
       userName: designer.user.name,
       userRole: "USER",
+      replyCount: 0,
     };
     t.deepEquals(
       irisStub.args.map((call: any) => call[0].type),

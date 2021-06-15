@@ -64,7 +64,7 @@ test("Comment DAO returns deleted comments those have replies", async (t: tape.T
   });
   t.deepEqual(
     deletedFound,
-    deletedComment.comment,
+    { ...deletedComment.comment, replyCount: 1 },
     "can find deleted comment which has replies"
   );
 
