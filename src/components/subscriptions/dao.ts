@@ -13,6 +13,7 @@ import {
 } from "./domain-object";
 import { dataAdapter as planDataAdapter } from "../plans/adapter";
 import { validate, validateEvery } from "../../services/validate-from-db";
+import db from "../../services/db";
 
 const TABLE_NAME = "subscriptions";
 
@@ -66,9 +67,9 @@ export async function findForUser(
 
 export async function findActive(
   userId: string,
-  trx: Knex.Transaction
+  ktx: Knex = db
 ): Promise<Subscription[]> {
-  const res = await trx
+  const res = await ktx
     .from("subscriptions as s")
     .joinRaw(
       "left join team_users as tu on s.team_id = tu.team_id and tu.deleted_at is null"

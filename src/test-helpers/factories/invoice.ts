@@ -34,18 +34,23 @@ export default async function generateInvoice(
     ? { collection: maybeCollection }
     : await generateCollection({ createdBy: user.id });
 
-  const invoice = await db.transaction(
-    async (trx: Knex.Transaction): Promise<Invoice> => {
-      const { id } = await InvoicesDAO.createTrx(trx, {
-        collectionId: collection.id,
-        title: options.title || "My First Invoice",
-        totalCents: options.totalCents || 1234,
-        userId: user.id,
-        invoiceAddressId: options.invoiceAddressId,
-      });
-      return await InvoicesDAO.findByIdTrx(trx, id);
+  const invoice = await db.transaction(async (trx: Knex.Transaction) => {
+    const created = await InvoicesDAO.createTrx(trx, {
+      collectionId: collection.id,
+      title: options.title || "My First Invoice",
+      totalCents: options.totalCents || 1234,
+      userId: user.id,
+      invoiceAddressId: options.invoiceAddressId,
+    });
+    if (!created) {
+      throw new Error("Could not create new invoice");
     }
-  );
+    return InvoicesDAO.findByIdTrx(trx, created.id);
+  });
+
+  if (!invoice) {
+    throw new Error("Could not find created invoice");
+  }
 
   return { invoice, userId: user, collection };
 }

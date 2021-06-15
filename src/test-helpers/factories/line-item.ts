@@ -5,7 +5,7 @@ import LineItem from "../../domain-objects/line-item";
 import * as InvoicesDAO from "../../dao/invoices";
 import generateInvoice from "./invoice";
 import ProductDesignsDAO from "../../components/product-designs/dao";
-import createUser = require("../create-user");
+import createUser from "../create-user";
 import createDesign from "../../services/create-design";
 
 interface LineItemWithResources {
@@ -19,6 +19,10 @@ export default async function generateLineItem(
   const { invoice } = options.invoiceId
     ? { invoice: await InvoicesDAO.findById(options.invoiceId) }
     : await generateInvoice();
+  if (!invoice) {
+    throw new Error("Could not find or generate invoice");
+  }
+
   const { user } = await createUser({ withSession: false });
   const design = options.designId
     ? await ProductDesignsDAO.findById(options.designId)

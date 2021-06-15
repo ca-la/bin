@@ -5,13 +5,13 @@ import rethrow = require("pg-rethrow");
 import * as InvoicesDAO from "../../dao/invoices";
 import * as LineItemsDAO from "../../dao/line-items";
 import filterError = require("../../services/filter-error");
-import InvalidDataError = require("../../errors/invalid-data");
+import InvalidDataError from "../../errors/invalid-data";
 import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
+import FinancingAccountsDAO from "../../components/financing-accounts/dao";
 import {
   findMinimalByIds,
   ProductDesignMinimalRow,
 } from "../../components/product-designs/dao/dao";
-import spendCredit from "../../components/credits/spend-credit";
 import createPaymentMethod from "../../components/payment-methods/create-payment-method";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import { setApprovalStepsDueAtByPricingQuote } from "../../components/approval-steps/service";
@@ -27,36 +27,101 @@ import { logServerError, time, timeLog, timeEnd } from "../../services/logger";
 import { PaymentMethod } from "../../components/payment-methods/types";
 import * as Stripe from "../stripe";
 import { getCartDetails } from "../../components/design-quotes/service";
+import { CartDetails } from "../../components/design-quotes/types";
+import { CreditsDAO, CreditType } from "../../components/credits";
 
 type CreateRequest = CreateQuotePayload[];
 
 async function payInvoice(
-  creditAppliedCents: number,
+  cartDetails: CartDetails,
   invoice: Invoice,
-  paymentMethod: PaymentMethod,
+  paymentMethod: PaymentMethod | null,
   userId: string,
   trx: Knex.Transaction
-) {
-  // We acquire an update lock on the relevant invoice row to make sure we can
-  // only be in the process of paying for one invoice at a given time.
-  await trx.raw("select * from invoices where id = ? for update", [invoice.id]);
+): Promise<Invoice> {
+  const { creditAppliedCents, financingItems, dueNowCents } = cartDetails;
 
   if (invoice.isPaid) {
     throw new InvalidDataError("This invoice is already paid");
   }
+  // We acquire an update lock on the relevant invoice row to make sure we can
+  // only be in the process of paying for one invoice at a given time.
+  await trx.raw("select * from invoices where id = ? for update", [invoice.id]);
 
-  const { nonCreditPaymentAmount } = await spendCredit(
-    creditAppliedCents,
-    userId,
-    invoice,
-    trx
-  );
+  if (creditAppliedCents > 0) {
+    const credit = await CreditsDAO.create(trx, {
+      type: CreditType.REMOVE,
+      createdBy: userId,
+      givenTo: userId,
+      creditDeltaCents: -creditAppliedCents,
+      description: `Spent credits on invoice ${invoice.id}`,
+      expiresAt: null,
+      financingAccountId: null,
+    });
+    await InvoicePaymentsDAO.createTrx(trx, {
+      creditUserId: userId,
+      creditTransactionId: credit.id,
+      deletedAt: null,
+      invoiceId: invoice.id,
+      paymentMethodId: null,
+      resolvePaymentId: null,
+      rumbleshipPurchaseHash: null,
+      stripeChargeId: null,
+      totalCents: creditAppliedCents,
+    });
+  }
 
-  if (nonCreditPaymentAmount > 0) {
+  if (financingItems.length > 0) {
+    for (const {
+      accountId,
+      financedAmountCents,
+      feeAmountCents,
+    } of financingItems) {
+      const totalFinancedCents = financedAmountCents + feeAmountCents;
+      const financingCredit = await CreditsDAO.create(trx, {
+        type: CreditType.REMOVE,
+        createdBy: userId,
+        givenTo: null,
+        creditDeltaCents: -totalFinancedCents,
+        description: `Financing on invoice ${invoice.id}`,
+        expiresAt: null,
+        financingAccountId: accountId,
+      });
+      const financingAccount = await FinancingAccountsDAO.findById(
+        trx,
+        accountId
+      );
+      if (!financingAccount || financingAccount.availableBalanceCents < 0) {
+        // This should be blocked by the service that calculates the
+        // `financingItems` but adding this safety check here
+        throw new Error("Attempting to finance with no available financing");
+      }
+
+      await InvoicePaymentsDAO.createTrx(trx, {
+        creditUserId: null,
+        creditTransactionId: financingCredit.id,
+        deletedAt: null,
+        invoiceId: invoice.id,
+        paymentMethodId: null,
+        resolvePaymentId: null,
+        rumbleshipPurchaseHash: null,
+        stripeChargeId: null,
+        totalCents: totalFinancedCents,
+      });
+    }
+  }
+
+  if (dueNowCents > 0) {
+    if (paymentMethod === null) {
+      throw new InvalidDataError(
+        "Missing paymentMethod for invoice with payment due now"
+      );
+    }
+
     const charge = await Stripe.charge({
       customerId: paymentMethod.stripeCustomerId,
       sourceId: paymentMethod.stripeSourceId,
-      amountCents: nonCreditPaymentAmount,
+      amountCents: dueNowCents,
       description:
         invoice.title ||
         invoice.collectionId ||
@@ -69,7 +134,7 @@ async function payInvoice(
       invoiceId: invoice.id,
       paymentMethodId: paymentMethod.id,
       stripeChargeId: charge.id,
-      totalCents: nonCreditPaymentAmount,
+      totalCents: dueNowCents,
       creditUserId: null,
       creditTransactionId: null,
       deletedAt: null,
@@ -78,10 +143,13 @@ async function payInvoice(
     });
   }
 
-  return {
-    invoice: await InvoicesDAO.findByIdTrx(trx, invoice.id),
-    nonCreditPaymentAmount,
-  };
+  const paidInvoice = await InvoicesDAO.findByIdTrx(trx, invoice.id);
+
+  if (!paidInvoice) {
+    throw new Error("There was a problem when retrieving the paid invoice");
+  }
+
+  return paidInvoice;
 }
 
 export function isCreateRequest(body: any): body is CreateRequest {
@@ -95,7 +163,7 @@ export function isCreateRequest(body: any): body is CreateRequest {
   );
 }
 
-function createInvoice(
+async function createInvoice(
   designNames: string[],
   collectionName: string,
   collectionId: string,
@@ -104,7 +172,7 @@ function createInvoice(
   invoiceAddressId: string | null,
   trx: Knex.Transaction
 ): Promise<Invoice> {
-  return InvoicesDAO.createTrx(trx, {
+  const created = await InvoicesDAO.createTrx(trx, {
     collectionId,
     description: `Payment for designs: ${designNames.join(", ")}`,
     title: `Collection: ${collectionName}`,
@@ -112,6 +180,12 @@ function createInvoice(
     userId,
     invoiceAddressId,
   });
+
+  if (!created) {
+    throw new Error("There was a problem when creating the invoice");
+  }
+
+  return created;
 }
 
 function createLineItems(
@@ -167,143 +241,76 @@ async function processQuotesAfterInvoice(
   }
 }
 
-/**
- * This Function enables a user to generate quotes and pay them in one step.
- * It will:
- *  1. create a paymentMethod for the stripe payment token
- *  2. create the quotes for the designs and unit amounts
- *  3. create an invoice for the total amount on the collection
- *  4. create lineItems for each design
- *  5. pay the invoice
- */
-export default async function payInvoiceWithNewPaymentMethod(
+export default async function createAndPayInvoice(
   trx: Knex.Transaction,
   quoteRequests: CreateRequest,
-  paymentMethodTokenId: string,
+  paymentMethodTokenId: string | null | undefined,
   userId: string,
   collection: CollectionDb,
   invoiceAddressId: string | null
-): Promise<{ invoice: Invoice; nonCreditPaymentAmount: number }> {
+): Promise<Invoice> {
   try {
-    time("payInvoiceWithNewPaymentMethod");
+    time("createAndPayInvoice");
     await createDesignPaymentLocks(trx, quoteRequests);
-    timeLog("payInvoiceWithNewPaymentMethod", "createDesignPaymentLocks");
+    timeLog("createAndPayInvoice", "createDesignPaymentLocks");
 
-    const paymentMethod = await createPaymentMethod({
-      token: paymentMethodTokenId,
-      userId,
-      teamId: null,
-      trx,
-    });
-    timeLog("payInvoiceWithNewPaymentMethod", "createPaymentMethod");
+    const cartDetails = await getCartDetails(trx, quoteRequests, userId);
+    const { dueNowCents, dueLaterCents, creditAppliedCents } = cartDetails;
+
+    let paymentMethod: PaymentMethod | null = null;
+    if (dueNowCents > 0) {
+      if (!paymentMethodTokenId) {
+        throw new InvalidDataError(
+          "Cannot find Stripe payment method token for invoice with balance due"
+        );
+      }
+
+      paymentMethod = await createPaymentMethod({
+        token: paymentMethodTokenId,
+        userId,
+        teamId: null,
+        trx,
+      });
+      timeLog("createAndPayInvoice", "createPaymentMethod");
+    }
     const quotes: PricingQuote[] = await createQuotes(
       quoteRequests,
       userId,
       trx
     );
-    const { dueNowCents, creditAppliedCents } = await getCartDetails(
-      trx,
-      quoteRequests,
-      userId
-    );
-    timeLog("payInvoiceWithNewPaymentMethod", "createQuotes");
+    timeLog("createAndPayInvoice", "createQuotes");
 
     const designNames = await getDesignNames(quotes);
-    timeLog("payInvoiceWithNewPaymentMethod", "designNames");
+    timeLog("createAndPayInvoice", "designNames");
     const collectionName = collection.title || "Untitled";
+    const invoiceTotal = dueNowCents + dueLaterCents + creditAppliedCents;
     const invoice = await createInvoice(
       designNames,
       collectionName,
       collection.id,
-      dueNowCents,
+      invoiceTotal,
       userId,
       invoiceAddressId,
       trx
     );
-    timeLog("payInvoiceWithNewPaymentMethod", "createInvoice");
+    timeLog("createAndPayInvoice", "createInvoice");
 
     await processQuotesAfterInvoice(trx, invoice.id, quotes);
-    timeLog("payInvoiceWithNewPaymentMethod", "processQuotesAfterInvoice");
+    timeLog("createAndPayInvoice", "processQuotesAfterInvoice");
 
-    const paidInvoice = payInvoice(
-      creditAppliedCents,
+    const paidInvoice = await payInvoice(
+      cartDetails,
       invoice,
       paymentMethod,
       userId,
       trx
     );
-    timeLog("payInvoiceWithNewPaymentMethod", "payInvoice");
+    timeLog("createAndPayInvoice", "payInvoice");
 
-    timeEnd("payInvoiceWithNewPaymentMethod");
+    timeEnd("createAndPayInvoice");
     return paidInvoice;
   } catch (err) {
-    timeEnd("payInvoiceWithNewPaymentMethod");
-    throw err;
-  }
-}
-
-export async function payWaivedQuote(
-  trx: Knex.Transaction,
-  quoteRequests: CreateRequest,
-  userId: string,
-  collection: CollectionDb,
-  invoiceAddressId: string | null,
-  trackTimeCallback: (
-    event: string,
-    callback: () => Promise<any>
-  ) => Promise<any>
-): Promise<Invoice> {
-  try {
-    await trackTimeCallback("createDesignPaymentLocks", () =>
-      createDesignPaymentLocks(trx, quoteRequests)
-    );
-
-    const quotes: PricingQuote[] = await createQuotes(
-      quoteRequests,
-      userId,
-      trx
-    );
-    const { dueNowCents, creditAppliedCents } = await getCartDetails(
-      trx,
-      quoteRequests,
-      userId
-    );
-    const designNames = await trackTimeCallback("getDesignNames", () =>
-      getDesignNames(quotes)
-    );
-    const collectionName = collection.title || "Untitled";
-
-    const invoice = await trackTimeCallback("createInvoice", () =>
-      createInvoice(
-        designNames,
-        collectionName,
-        collection.id,
-        dueNowCents,
-        userId,
-        invoiceAddressId,
-        trx
-      )
-    );
-
-    const spentResult = await trackTimeCallback("spendCredit", () =>
-      spendCredit(creditAppliedCents, userId, invoice, trx)
-    );
-
-    if (spentResult.nonCreditPaymentAmount) {
-      throw new InvalidDataError(
-        "Cannot waive payment for amounts greater than $0"
-      );
-    }
-
-    await trackTimeCallback("processQuotesAfterInvoice", () =>
-      processQuotesAfterInvoice(trx, invoice.id, quotes)
-    );
-
-    const invoiceFound = await trackTimeCallback("findInvoice", () =>
-      InvoicesDAO.findByIdTrx(trx, invoice.id)
-    );
-    return invoiceFound;
-  } catch (err) {
+    timeEnd("createAndPayInvoice");
     throw err;
   }
 }

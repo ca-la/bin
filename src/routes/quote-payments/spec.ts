@@ -9,6 +9,10 @@ import { CreditsDAO, CreditType } from "../../components/credits";
 import * as InvoicesDAO from "../../dao/invoices";
 import { create as createAddress } from "../../dao/addresses";
 import { findByAddressId } from "../../dao/invoice-addresses";
+import FinancingAccountsDAO, {
+  rawDao as RawFinancingAccountsDAO,
+} from "../../components/financing-accounts/dao";
+import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
 import * as LineItemsDAO from "../../dao/line-items";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
@@ -31,6 +35,7 @@ import * as ApiWorker from "../../workers/api-worker/send-message";
 import * as RequestService from "../../services/stripe/make-request";
 import generateCollection from "../../test-helpers/factories/collection";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { InvoicePayment } from "../../components/invoice-payments/domain-object";
 import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
 
 const ADDRESS_BLANK = {
@@ -191,9 +196,21 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     chargeStub,
     collection,
     designs: [d1, d2],
+    team,
     address,
     user,
   } = await setup();
+  await db.transaction((trx: Knex.Transaction) =>
+    RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 500000,
+      feeBasisPoints: 1000,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    })
+  );
   const paymentMethodTokenId = uuid.v4();
 
   const [postResponse, body] = await post("/quote-payments", {
@@ -222,7 +239,6 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
       invoiceId: body.id,
       userId: user.id,
       collectionId: collection.id,
-      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
     },
   });
 
@@ -250,11 +266,45 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems.length, 2, "Line Item exists for designs");
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
+
+  const payments = await InvoicePaymentsDAO.findByInvoiceId(body.id);
+  t.equals(
+    payments.reduce(
+      (total: number, payment: InvoicePayment) => total + payment.totalCents,
+      0
+    ),
+    body.totalPaid,
+    "invoice payments sum to the invoice total"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.paymentMethodId !== null && payment.stripeChargeId !== null
+    ),
+    "has a stripe payment"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId !== null && payment.creditTransactionId !== null
+    ),
+    "has a user credit payment"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId === null && payment.creditTransactionId !== null
+    ),
+    "has a team financing credit payment"
+  );
+
   t.assert(chargeStub.calledOnce, "Stripe was charged");
   t.equals(
     chargeStub.args[0][0].amountCents,
-    14_458_00 * 1.2 - CREDIT_AMOUNT_CENTS,
-    "Charge sum includes the production fee"
+    Math.round(14_458_00 * 1.2) - // Add production fee
+    CREDIT_AMOUNT_CENTS - // Remove credit
+      Math.round(5_000_00 / 1.1), // Remove financed amount
+    "Stripe charged correct amount"
   );
 
   const realtimeDesignEvents = irisStub.args.filter(
@@ -324,12 +374,270 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
           invoiceId: body.id,
           userId: user.id,
           collectionId: collection.id,
-          paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
         },
       },
-      ,
     ],
     "calls api-worker to postprocess the quote payment"
+  );
+
+  t.equals(
+    await CreditsDAO.getCreditAmount(user.id),
+    0,
+    "Spends all the credits"
+  );
+
+  t.equals(
+    (await FinancingAccountsDAO.findActive(db, { teamId: team.id }))!
+      .availableBalanceCents,
+    0,
+    "Reduces available credit"
+  );
+});
+
+test("/quote-payments POST with full financing", async (t: Test) => {
+  const {
+    sendApiWorkerMessageStub,
+    session,
+    chargeStub,
+    collection,
+    designs: [d1, d2],
+    team,
+    address,
+    user,
+  } = await setup();
+  await db.transaction((trx: Knex.Transaction) =>
+    RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 25_000_00,
+      feeBasisPoints: 10_00,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    })
+  );
+  const paymentMethodTokenId = uuid.v4();
+
+  const [postResponse, body] = await post("/quote-payments", {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [
+        {
+          designId: d1.id,
+          units: 300,
+        },
+        {
+          designId: d2.id,
+          units: 200,
+        },
+      ],
+      paymentMethodTokenId,
+      addressId: address.id,
+    },
+    headers: authHeader(session.id),
+  });
+
+  t.equal(
+    postResponse.status,
+    201,
+    "successfully pays the invoice created by quotes"
+  );
+
+  t.equals(body.isPaid, true, "Invoice is paid");
+
+  const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
+  t.equals(lineItems.length, 2, "Line Item exists for designs");
+  t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
+  t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
+
+  const payments = await InvoicePaymentsDAO.findByInvoiceId(body.id);
+  t.equals(
+    payments.reduce(
+      (total: number, payment: InvoicePayment) => total + payment.totalCents,
+      0
+    ),
+    body.totalPaid,
+    "invoice payments sum to the invoice total"
+  );
+  t.false(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.paymentMethodId !== null && payment.stripeChargeId !== null
+    ),
+    "has no stripe payment"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId !== null && payment.creditTransactionId !== null
+    ),
+    "has a user credit payment"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId === null && payment.creditTransactionId !== null
+    ),
+    "has a team financing credit payment"
+  );
+
+  t.equals(chargeStub.callCount, 0, "Stripe was not charged");
+  t.deepEqual(
+    sendApiWorkerMessageStub.args[0],
+    [
+      {
+        type: "POST_PROCESS_QUOTE_PAYMENT",
+        deduplicationId: body.id,
+        keys: {
+          invoiceId: body.id,
+          userId: user.id,
+          collectionId: collection.id,
+        },
+      },
+    ],
+    "calls api-worker to postprocess the quote payment"
+  );
+
+  t.equals(
+    await CreditsDAO.getCreditAmount(user.id),
+    0,
+    "Spends all the user credits"
+  );
+
+  t.equals(
+    (await FinancingAccountsDAO.findActive(db, { teamId: team.id }))!
+      .availableBalanceCents,
+    25_000_00 + CREDIT_AMOUNT_CENTS - body.totalCents,
+    "Reduces available team financing credit"
+  );
+});
+
+test("/quote-payments POST with full financing and full credit", async (t: Test) => {
+  const {
+    session,
+    sendApiWorkerMessageStub,
+    chargeStub,
+    collection,
+    designs: [d1, d2],
+    team,
+    address,
+    user,
+  } = await setup();
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 25_000_00,
+      feeBasisPoints: 10_00,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    });
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 25_000_00,
+      createdBy: user.id,
+      description: "Manual credit grant",
+      expiresAt: null,
+      givenTo: user.id,
+      financingAccountId: null,
+    });
+  });
+  const paymentMethodTokenId = uuid.v4();
+
+  const [postResponse, body] = await post("/quote-payments", {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [
+        {
+          designId: d1.id,
+          units: 300,
+        },
+        {
+          designId: d2.id,
+          units: 200,
+        },
+      ],
+      paymentMethodTokenId,
+      addressId: address.id,
+    },
+    headers: authHeader(session.id),
+  });
+
+  t.equal(
+    postResponse.status,
+    201,
+    "successfully pays the invoice created by quotes"
+  );
+
+  t.equals(body.isPaid, true, "Invoice is paid");
+
+  const lineItems = await LineItemsDAO.findByInvoiceId(body.id);
+  t.equals(lineItems.length, 2, "Line Item exists for designs");
+  t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
+  t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
+
+  const payments = await InvoicePaymentsDAO.findByInvoiceId(body.id);
+  t.equals(
+    payments.reduce(
+      (total: number, payment: InvoicePayment) => total + payment.totalCents,
+      0
+    ),
+    body.totalPaid,
+    "invoice payments sum to the invoice total"
+  );
+  t.false(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.paymentMethodId !== null && payment.stripeChargeId !== null
+    ),
+    "has no stripe payment"
+  );
+  t.true(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId !== null && payment.creditTransactionId !== null
+    ),
+    "has a user credit payment"
+  );
+  t.false(
+    payments.some(
+      (payment: InvoicePayment) =>
+        payment.creditUserId === null && payment.creditTransactionId !== null
+    ),
+    "has no team financing credit payment"
+  );
+
+  t.equals(chargeStub.callCount, 0, "Stripe was not charged");
+  t.deepEqual(
+    sendApiWorkerMessageStub.args,
+    [
+      [
+        {
+          type: "POST_PROCESS_QUOTE_PAYMENT",
+          deduplicationId: body.id,
+          keys: {
+            invoiceId: body.id,
+            userId: user.id,
+            collectionId: collection.id,
+          },
+        },
+      ],
+    ],
+    "calls api-worker to postprocess the quote payment"
+  );
+
+  t.equals(
+    await CreditsDAO.getCreditAmount(user.id),
+    25_200_00 - body.totalCents,
+    "Reduces available user credits"
+  );
+
+  t.equals(
+    (await FinancingAccountsDAO.findActive(db, { teamId: team.id }))!
+      .availableBalanceCents,
+    25_000_00,
+    "Does not reduce available team financing credit"
   );
 });
 
@@ -397,12 +705,12 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 
   t.equal(postResponse.status, 400, "response errors");
 
-  const invoice = await InvoicesDAO.findByUser(user.id);
-  t.deepEquals(invoice, [], "No invoice exists for design");
+  const invoices = await InvoicesDAO.findByUser(user.id);
+  t.deepEquals(invoices, [], "No invoice exists for design");
   t.assert(chargeStub.calledOnce, "Stripe was called");
 });
 
-test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
+test("POST /quote-payments with full credit", async (t: Test) => {
   const { user, session } = await createUser();
   const { sendApiWorkerMessageStub } = setupStubs();
 
@@ -457,7 +765,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
     });
   });
 
-  const [postResponse, body] = await post("/quote-payments?isWaived=true", {
+  const [postResponse, body] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
@@ -491,7 +799,6 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
           invoiceId: body.id,
           userId: user.id,
           collectionId: collection.id,
-          paymentAmountCents: 0,
         },
       },
     ],
@@ -499,7 +806,7 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
   );
 });
 
-test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) => {
+test("POST /quote-payments fails with no payment method with balance due", async (t: Test) => {
   const { user, session } = await createUser();
   setupStubs();
 
@@ -545,7 +852,7 @@ test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) =
     });
   });
 
-  const [postResponse, body] = await post("/quote-payments?isWaived=true", {
+  const [postResponse, body] = await post("/quote-payments", {
     body: {
       collectionId: collection.id,
       createQuotes: [
@@ -560,7 +867,10 @@ test("POST /quote-payments?isWaived=true fails if ineligible", async (t: Test) =
   });
 
   t.equal(postResponse.status, 400, "fails to pay the invoice");
-  t.equals(body.message, "Cannot waive payment for amounts greater than $0");
+  t.equals(
+    body.message,
+    "Cannot find Stripe payment method token for invoice with balance due"
+  );
 });
 
 test(
@@ -649,7 +959,6 @@ test("POST /quote-payments creates shopify products if connected to a storefront
       invoiceId: body.id,
       userId: user.id,
       collectionId: collection.id,
-      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
     },
   });
 
@@ -707,7 +1016,6 @@ test("POST /quote-payments still succeeds if creates shopify products fails", as
       invoiceId: body.id,
       userId: user.id,
       collectionId: collection.id,
-      paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
     },
   });
 

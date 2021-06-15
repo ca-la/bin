@@ -1,11 +1,16 @@
-import { test, Test, sandbox } from "../../test-helpers/fresh";
+import Knex from "knex";
+import uuid from "node-uuid";
+
+import { test, Test, sandbox, db } from "../../test-helpers/fresh";
 import { post, get, authHeader } from "../../test-helpers/http";
 import SessionsDAO from "../../dao/sessions";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
-import * as DesignQuoteService from "./service";
-import { DesignQuote } from "./types";
 import { costCollection } from "../../test-helpers/cost-collection";
 import ProductDesign from "../product-designs/domain-objects/product-design";
+import { rawDao as RawFinancingAccountsDAO } from "../financing-accounts/dao";
+
+import { DesignQuote } from "./types";
+import * as DesignQuoteService from "./service";
 
 test("GET /design-quotes?designId&units: no auth", async (t: Test) => {
   const [noAuth] = await get("/design-quotes?designId=a-design-id&units=100");
@@ -92,7 +97,20 @@ test("POST /design-quotes: valid", async (t: Test) => {
   const {
     user: { designer },
     collectionDesigns,
+    team,
   } = await costCollection();
+
+  const financingAccount = await db.transaction((trx: Knex.Transaction) =>
+    RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 5_000_00,
+      feeBasisPoints: 1000,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    })
+  );
 
   const [response, body] = await post("/design-quotes", {
     headers: authHeader(designer.session.id),
@@ -106,18 +124,24 @@ test("POST /design-quotes: valid", async (t: Test) => {
   t.deepEqual(
     body,
     {
-      balanceDueCents: 852720,
+      balanceDueCents: 8_527_20 - Math.round(5_000_00 / 1.1),
       combinedLineItems: [
         {
-          cents: 142120,
+          cents: 1_421_20,
           description: "Production Fee",
           explainerCopy:
             "A fee for what you produce with us, based on your plan",
         },
+        {
+          cents: Math.round((5_000_00 / 1.1) * 0.1),
+          description: "Financing Fee",
+          explainerCopy:
+            "CALA Financing allows you to defer payment for your designs. You owe the total amount to CALA within the term defined in your Agreement",
+        },
       ],
       creditAppliedCents: 0,
-      dueLaterCents: 0,
-      dueNowCents: 852720,
+      dueLaterCents: 5_000_00,
+      dueNowCents: 8_527_20 - Math.round(5_000_00 / 1.1),
       quotes: [
         {
           designId: collectionDesigns[0].id,
@@ -150,6 +174,14 @@ test("POST /design-quotes: valid", async (t: Test) => {
           payNowTotalCents: 214600,
           timeTotalMs: 711529412,
           units: 100,
+        },
+      ],
+      financingItems: [
+        {
+          accountId: financingAccount.id,
+          financedAmountCents: Math.round(5_000_00 / 1.1),
+          feeAmountCents: Math.round((5_000_00 / 1.1) * 0.1),
+          termLengthDays: financingAccount.termLengthDays,
         },
       ],
       subtotalCents: 710600,

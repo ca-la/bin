@@ -6,6 +6,8 @@ import AWS from "aws-sdk";
 
 import db from "../services/db";
 
+export { db };
+
 const TABLES = [
   "addresses",
   "approved_signups",

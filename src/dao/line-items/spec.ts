@@ -12,7 +12,6 @@ import {
 import { createTrx as createInvoice } from "../invoices";
 import db from "../../services/db";
 import LineItem from "../../domain-objects/line-item";
-import Invoice = require("../../domain-objects/invoice");
 import createUser from "../../test-helpers/create-user";
 import generateInvoice from "../../test-helpers/factories/invoice";
 import createDesign from "../../services/create-design";
@@ -44,6 +43,10 @@ test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
       totalCents: 10,
     })
   );
+
+  if (!invoice) {
+    return t.fail();
+  }
 
   const li1: LineItem = {
     createdAt: new Date(),
@@ -105,10 +108,9 @@ test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
     title: "Collection",
     totalCents: 10,
   };
-  let invoice: Invoice | undefined;
-  await db.transaction(async (trx: Knex.Transaction) => {
-    invoice = await createInvoice(trx, invoiceData);
-  });
+  const invoice = await db.transaction((trx: Knex.Transaction) =>
+    createInvoice(trx, invoiceData)
+  );
 
   if (!invoice) {
     return t.fail();

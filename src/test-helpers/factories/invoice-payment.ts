@@ -20,6 +20,10 @@ export default async function generateInvoicePayment(
     ? { invoice: await InvoicesDAO.findById(options.invoiceId) }
     : await generateInvoice();
 
+  if (!invoice) {
+    throw new Error("There was a problem retrieving or creating the invoice");
+  }
+
   const invoicePayment = await db.transaction(
     async (trx: Knex.Transaction): Promise<InvoicePayment> => {
       return InvoicePaymentsDAO.createTrx(trx, {

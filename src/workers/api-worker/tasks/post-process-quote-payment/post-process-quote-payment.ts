@@ -9,7 +9,7 @@ export async function postProcessQuotePayment(
   task: Task<"POST_PROCESS_QUOTE_PAYMENT">
 ): Promise<HandlerResult> {
   const {
-    keys: { invoiceId, userId, collectionId, paymentAmountCents },
+    keys: { invoiceId, userId, collectionId },
   } = task;
 
   await db.transaction(async (trx: Knex.Transaction) =>
@@ -18,9 +18,7 @@ export async function postProcessQuotePayment(
 
   await sendSlackUpdate({
     invoiceId,
-    userId,
     collectionId,
-    paymentAmountCents,
   });
 
   return {

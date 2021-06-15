@@ -23,3 +23,15 @@ export const financingAccountDbRowSchema = z.object({
     .transform((maybeNumber: number | string) => String(maybeNumber)),
 });
 export type FinancingAccountDbRow = z.infer<typeof financingAccountDbRowSchema>;
+
+export const financingAccountSchema = financingAccountDbSchema.extend({
+  availableBalanceCents: z.number(),
+});
+export type FinancingAccount = z.infer<typeof financingAccountSchema>;
+
+export const financingAccountRowSchema = financingAccountDbRowSchema.extend({
+  available_balance_cents: z
+    .union([z.number(), z.string()])
+    .transform((maybeNumber: number | string) => String(maybeNumber)),
+});
+export type FinancingAccountRow = z.infer<typeof financingAccountRowSchema>;

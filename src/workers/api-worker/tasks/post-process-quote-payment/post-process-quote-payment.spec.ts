@@ -15,7 +15,6 @@ const task: Task<"POST_PROCESS_QUOTE_PAYMENT"> = {
     invoiceId: "an-invoice-id",
     userId: "a-user-id",
     collectionId: "a-collection-id",
-    paymentAmountCents: 15_000,
   },
 };
 
@@ -51,9 +50,7 @@ test("postProcessQuotePayment", async (t: Test) => {
       [
         {
           invoiceId: "an-invoice-id",
-          userId: "a-user-id",
           collectionId: "a-collection-id",
-          paymentAmountCents: 15_000,
         },
       ],
     ],

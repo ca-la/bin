@@ -5,6 +5,10 @@ import {
   financingAccountDbRowSchema,
   FinancingAccountDbRow,
   FinancingAccountDb,
+  FinancingAccountRow,
+  FinancingAccount,
+  financingAccountSchema,
+  financingAccountRowSchema,
 } from "./types";
 
 export const rawAdapter = fromSchema({
@@ -13,5 +17,15 @@ export const rawAdapter = fromSchema({
   encodeTransformer: (row: FinancingAccountDbRow): FinancingAccountDb => ({
     ...defaultEncoder(row),
     creditLimitCents: parseInt(row.credit_limit_cents, 10),
+  }),
+});
+
+export const adapter = fromSchema({
+  modelSchema: financingAccountSchema,
+  rowSchema: financingAccountRowSchema,
+  encodeTransformer: (row: FinancingAccountRow): FinancingAccount => ({
+    ...defaultEncoder(row),
+    creditLimitCents: parseInt(row.credit_limit_cents, 10),
+    availableBalanceCents: parseInt(row.available_balance_cents, 10),
   }),
 });

@@ -18,6 +18,14 @@ export const designQuoteSchema = z.object({
 });
 export type DesignQuote = z.infer<typeof designQuoteSchema>;
 
+export const financingItemSchema = z.object({
+  accountId: z.string(),
+  financedAmountCents: z.number(),
+  feeAmountCents: z.number(),
+  termLengthDays: z.number(),
+});
+export type FinancingItem = z.infer<typeof financingItemSchema>;
+
 export const cartDetailsSchema = z.object({
   quotes: z.array(designQuoteSchema),
   combinedLineItems: z.array(designQuoteLineItemSchema),
@@ -27,5 +35,6 @@ export const cartDetailsSchema = z.object({
   creditAppliedCents: z.number(),
   balanceDueCents: z.number(),
   totalUnits: z.number(),
+  financingItems: z.array(financingItemSchema),
 });
 export type CartDetails = z.infer<typeof cartDetailsSchema>;

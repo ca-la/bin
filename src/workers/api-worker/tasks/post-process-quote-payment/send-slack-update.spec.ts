@@ -1,5 +1,6 @@
 import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 
+import InvoicesDAO from "../../../../dao/invoices";
 import * as UsersDAO from "../../../../components/users/dao";
 import * as CollectionsDAO from "../../../../components/collections/dao";
 import * as SlackService from "../../../../services/slack";
@@ -7,14 +8,17 @@ import { sendSlackUpdate } from "./send-slack-update";
 import Logger from "../../../../services/logger";
 
 test("sendSlackUpdate throws if we can't find a user for invoice", async (t: Test) => {
+  const findInvoiceStub = sandbox().stub(InvoicesDAO, "findById").resolves({
+    id: "an-invoice-id",
+    userId: "a-user-id",
+    totalCents: 15_000,
+  });
   const findUserByIdStub = sandbox().stub(UsersDAO, "findById").resolves(null);
 
   try {
     await sendSlackUpdate({
       invoiceId: "an-invoice-id",
-      userId: "a-user-id",
       collectionId: "a-collection-id",
-      paymentAmountCents: 15_000,
     });
     t.fail("Shouldn't get here");
   } catch (err) {
@@ -25,10 +29,16 @@ test("sendSlackUpdate throws if we can't find a user for invoice", async (t: Tes
     );
   }
 
+  t.equal(findInvoiceStub.callCount, 1);
   t.equal(findUserByIdStub.callCount, 1);
 });
 
 test("sendSlackUpdate throws if we can't find a collection for invoice", async (t: Test) => {
+  const findInvoiceStub = sandbox().stub(InvoicesDAO, "findById").resolves({
+    id: "an-invoice-id",
+    userId: "a-user-id",
+    totalCents: 15_000,
+  });
   sandbox().stub(UsersDAO, "findById").resolves({ id: "a-user-id" });
   const findCollectionByIdStub = sandbox()
     .stub(CollectionsDAO, "findById")
@@ -37,9 +47,7 @@ test("sendSlackUpdate throws if we can't find a collection for invoice", async (
   try {
     await sendSlackUpdate({
       invoiceId: "an-invoice-id",
-      userId: "a-user-id",
       collectionId: "a-collection-id",
-      paymentAmountCents: 15_000,
     });
     t.fail("Shouldn't get here");
   } catch (err) {
@@ -50,10 +58,16 @@ test("sendSlackUpdate throws if we can't find a collection for invoice", async (
     );
   }
 
+  t.equal(findInvoiceStub.callCount, 1);
   t.equal(findCollectionByIdStub.callCount, 1);
 });
 
 test("sendSlackUpdate", async (t: Test) => {
+  const findInvoiceStub = sandbox().stub(InvoicesDAO, "findById").resolves({
+    id: "an-invoice-id",
+    userId: "a-user-id",
+    totalCents: 15_000,
+  });
   const findByIdUserStub = sandbox()
     .stub(UsersDAO, "findById")
     .resolves({ id: "a-user-id" });
@@ -68,14 +82,17 @@ test("sendSlackUpdate", async (t: Test) => {
   try {
     await sendSlackUpdate({
       invoiceId: "an-invoice-id",
-      userId: "a-user-id",
       collectionId: "a-collection-id",
-      paymentAmountCents: 15_000,
     });
   } catch {
     t.fail("Shouldn't throw any errors");
   }
 
+  t.deepEqual(
+    findInvoiceStub.args,
+    [["an-invoice-id"]],
+    "InvoicesDAO findById is called with the invoie id"
+  );
   t.deepEqual(
     findByIdUserStub.args,
     [["a-user-id"]],
@@ -109,6 +126,11 @@ test("sendSlackUpdate", async (t: Test) => {
 });
 
 test("sendSlackUpdate log warning on slack service enqueue error ", async (t: Test) => {
+  sandbox().stub(InvoicesDAO, "findById").resolves({
+    id: "an-invoice-id",
+    userId: "a-user-id",
+    totalCents: 0,
+  });
   sandbox().stub(UsersDAO, "findById").resolves({ id: "a-user-id" });
   sandbox()
     .stub(CollectionsDAO, "findById")
@@ -121,9 +143,7 @@ test("sendSlackUpdate log warning on slack service enqueue error ", async (t: Te
   try {
     await sendSlackUpdate({
       invoiceId: "an-invoice-id",
-      userId: "a-user-id",
       collectionId: "a-collection-id",
-      paymentAmountCents: 0,
     });
   } catch {
     t.fail("Shouldn't throw any errors");

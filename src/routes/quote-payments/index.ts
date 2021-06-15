@@ -1,111 +1,64 @@
 import Router from "koa-router";
+import convert from "koa-convert";
+import Knex from "knex";
+import { z } from "zod";
 
-import filterError from "../../services/filter-error";
 import InvalidDataError from "../../errors/invalid-data";
 import StripeError from "../../errors/stripe";
 import requireAuth = require("../../middleware/require-auth");
+import db from "../../services/db";
 import {
   canAccessCollectionInRequestBody,
   canCheckOutCollection,
 } from "../../middleware/can-access-collection";
-import { typeGuard } from "../../middleware/type-guard";
-import payInvoiceWithNewPaymentMethod, {
-  isCreateRequest,
-  payWaivedQuote,
-} from "../../services/payment";
-import { CreateQuotePayload } from "../../services/generate-pricing-quote";
-import { hasProperties } from "../../services/require-properties";
-import { createFromAddress } from "../../dao/invoice-addresses";
+import createAndPayInvoice from "../../services/payment";
+import { Permissions } from "../../services/get-permissions";
 import { transitionCheckoutState } from "../../services/approval-step-state";
-import useTransaction from "../../middleware/use-transaction";
+import { createFromAddress } from "../../dao/invoice-addresses";
 import Invoice from "../../domain-objects/invoice";
 import { trackEvent, trackTime } from "../../middleware/tracking";
+import { createQuotePayloadSchema } from "../../services/generate-pricing-quote/types";
+import { StrictContext } from "../../router-context";
 import { sendMessage as sendApiWorkerMessage } from "../../workers/api-worker/send-message";
+import { CollectionDb } from "../../components/collections/types";
 
 const router = new Router();
 
-interface PayRequest {
-  addressId: string;
-  createQuotes: CreateQuotePayload[];
-  collectionId: string;
+const payQuoteBodySchema = z.object({
+  addressId: z.string(),
+  createQuotes: z.array(createQuotePayloadSchema),
+  collectionId: z.string(),
+  paymentMethodTokenId: z.string().optional().nullable(),
+});
+
+interface PayQuoteContext extends StrictContext<Invoice> {
+  state: AuthedState & { collection: CollectionDb; permissions: Permissions };
 }
 
-interface PayWithMethodRequest extends PayRequest {
-  paymentMethodTokenId: string;
-}
+async function payQuote(ctx: PayQuoteContext) {
+  const bodyResult = payQuoteBodySchema.safeParse(ctx.request.body);
+  ctx.assert(bodyResult.success, 400, "Request does not match schema");
 
-const isPayRequest = (data: any): data is PayRequest | PayWithMethodRequest => {
-  return (
-    (hasProperties(data, "createQuotes", "collectionId") ||
-      hasProperties(
-        data,
-        "paymentMethodTokenId",
-        "createQuotes",
-        "collectionId"
-      )) &&
-    isCreateRequest(data.createQuotes)
-  );
-};
+  const { data: body } = bodyResult;
+  const { userId, collection } = ctx.state;
 
-const isPayWithMethodRequest = (data: any): data is PayWithMethodRequest => {
-  return (
-    hasProperties(
-      data,
-      "paymentMethodTokenId",
-      "createQuotes",
-      "collectionId"
-    ) && isCreateRequest(data.createQuotes)
-  );
-};
-
-function* payQuote(
-  this: TrxContext<
-    AuthedContext<PayRequest | PayWithMethodRequest, CollectionsKoaState>
-  >
-): Iterator<any, any, any> {
-  const { body } = this.request;
-  const { isWaived } = this.query;
-  const { userId, collection, trx } = this.state;
   const trackEventPrefix = "quotePayments/payQuote";
-  if (!collection) {
-    this.throw(403, "Unable to access collection");
-  }
-  trackEvent(this, `${trackEventPrefix}/BEGIN`, {
+  trackEvent(ctx, `${trackEventPrefix}/BEGIN`, {
     body,
     userId,
     collectionId: collection.id,
-    isWaived,
   });
-  const trackQuotePaymentTime = (event: string, callback: () => Promise<any>) =>
-    trackTime(this, `quotePayment/handleQuotePayment/${event}`, callback);
 
-  const invoiceAddressId = body.addressId
-    ? (yield createFromAddress(trx, body.addressId)).id
-    : null;
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const invoiceAddressId = body.addressId
+      ? (await createFromAddress(trx, body.addressId)).id
+      : null;
 
-  let invoice: Invoice;
-  let paymentAmountCents = 0;
-  if (isWaived) {
-    invoice = yield trackTime(this, `${trackEventPrefix}/payWaivedQuote`, () =>
-      payWaivedQuote(
-        trx,
-        body.createQuotes,
-        userId,
-        collection,
-        invoiceAddressId,
-        trackQuotePaymentTime
-      ).catch(
-        filterError(InvalidDataError, (err: InvalidDataError) =>
-          this.throw(400, err.message)
-        )
-      )
-    );
-  } else if (isPayWithMethodRequest(body)) {
-    const { invoice: paidInvoice, nonCreditPaymentAmount } = yield trackTime(
-      this,
+    const invoice = await trackTime(
+      ctx,
       `${trackEventPrefix}/payInvoiceWithNewPaymentMethod`,
       () =>
-        payInvoiceWithNewPaymentMethod(
+        createAndPayInvoice(
           trx,
           body.createQuotes,
           body.paymentMethodTokenId,
@@ -114,45 +67,40 @@ function* payQuote(
           invoiceAddressId
         ).catch((err: Error) => {
           if (err instanceof InvalidDataError || err instanceof StripeError) {
-            this.throw(400, err.message);
+            ctx.throw(400, err.message);
           }
           throw err;
         })
     );
 
-    invoice = paidInvoice;
-    paymentAmountCents = nonCreditPaymentAmount;
-  } else {
-    this.throw("Request must match type");
-  }
+    await transitionCheckoutState(trx, collection.id);
 
-  yield transitionCheckoutState(trx, collection.id);
+    await trackTime(
+      ctx,
+      `${trackEventPrefix}/postProcessQuoteInApiWorker`,
+      () =>
+        sendApiWorkerMessage({
+          type: "POST_PROCESS_QUOTE_PAYMENT",
+          deduplicationId: invoice.id,
+          keys: {
+            invoiceId: invoice.id,
+            userId,
+            collectionId: collection.id,
+          },
+        })
+    );
 
-  yield trackTime(this, `${trackEventPrefix}/postProcessQuoteInApiWorker`, () =>
-    sendApiWorkerMessage({
-      type: "POST_PROCESS_QUOTE_PAYMENT",
-      deduplicationId: invoice.id,
-      keys: {
-        invoiceId: invoice.id,
-        userId,
-        collectionId: collection.id,
-        paymentAmountCents,
-      },
-    })
-  );
-
-  this.body = invoice;
-  this.status = 201;
+    ctx.body = invoice;
+    ctx.status = 201;
+  });
 }
 
 router.post(
   "/",
   requireAuth,
   canAccessCollectionInRequestBody,
-  useTransaction,
   canCheckOutCollection,
-  typeGuard<PayRequest | PayWithMethodRequest>(isPayRequest),
-  payQuote
+  convert.back(payQuote)
 );
 
 export = router.routes();

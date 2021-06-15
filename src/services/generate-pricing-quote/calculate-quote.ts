@@ -4,7 +4,8 @@ import { UncomittedCostInput } from "../../components/pricing-cost-inputs/types"
 import { Complexity, ProductType } from "../../domain-objects/pricing";
 import PricingProcess from "../../domain-objects/pricing-process";
 import { PricingQuoteValues } from "../../domain-objects/pricing-quote";
-import addMargin, { calculateBasisPoints } from "../add-margin";
+import addMargin from "../add-margin";
+import { basisPointToPercentage } from "../basis-point-to-percentage";
 import { UnsavedQuote } from "./types";
 
 function calculateBaseUnitCost(
@@ -129,9 +130,8 @@ export function calculateQuote(
   );
   const unitCostCents = addMargin(beforeMargin, values.margin.margin / 100);
   const totalCents = unitCostCents * units;
-  const productionFeeCents = calculateBasisPoints(
-    totalCents,
-    productionFeeBasisPoints
+  const productionFeeCents = Math.round(
+    totalCents * basisPointToPercentage(productionFeeBasisPoints)
   );
 
   return {

@@ -1,19 +1,21 @@
 import Knex from "knex";
+import uuid from "node-uuid";
 
-import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { sandbox, test, Test, db } from "../../test-helpers/fresh";
 import * as PlansDAO from "../plans/dao";
 import UnauthorizedError from "../../errors/unauthorized";
 import * as CreateQuoteService from "../../services/generate-pricing-quote/create-quote";
 import { UnsavedQuote } from "../../services/generate-pricing-quote";
-import db from "../../services/db";
 import createUser from "../../test-helpers/create-user";
 import { costCollection } from "../../test-helpers/cost-collection";
 import { CreditsDAO, CreditType } from "../credits";
+import { rawDao as RawFinancingAccountsDAO } from "../financing-accounts/dao";
 import { generateSubscription } from "../../test-helpers/factories/subscription";
 import * as SubscriptionsDAO from "../subscriptions/dao";
+import { PricingCostInput } from "../pricing-cost-inputs/types";
+import { FinancingAccountDb } from "../financing-accounts/types";
 
 import * as DesignQuoteService from "./service";
-import { PricingCostInput } from "../pricing-cost-inputs/types";
 
 const BASIS_POINTS = 205;
 const unsavedQuote: UnsavedQuote = {
@@ -155,6 +157,7 @@ test("getCartDetails: empty", async (t: Test) => {
   t.deepEqual(cartDetails, {
     quotes: [],
     combinedLineItems: [],
+    financingItems: [],
     subtotalCents: 0,
     dueNowCents: 0,
     dueLaterCents: 0,
@@ -221,6 +224,7 @@ test("getCartDetails: no credits, no production fee", async (t: Test) => {
         units: 100,
       },
     ],
+    financingItems: [],
     combinedLineItems: [],
     subtotalCents: 7_106_00,
     dueNowCents: 7_106_00,
@@ -290,11 +294,337 @@ test("getCartDetails: no credits", async (t: Test) => {
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
     ],
+    financingItems: [],
     subtotalCents: 7_106_00,
     dueNowCents: 7_106_00 * 1.2,
     dueLaterCents: 0,
     creditAppliedCents: 0,
     balanceDueCents: 7_106_00 * 1.2,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: with partial credit with no available financing", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer, admin },
+    team,
+  } = await costCollection();
+  let financingAccount: FinancingAccountDb;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 500000,
+      feeBasisPoints: 1000,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    });
+    await CreditsDAO.create(trx, {
+      type: CreditType.REMOVE,
+      creditDeltaCents: -5_000_00,
+      createdBy: admin.user.id,
+      description: "Payment",
+      expiresAt: null,
+      givenTo: null,
+      financingAccountId: financingAccount.id,
+    });
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 1230,
+      createdBy: admin.user.id,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: designer.user.id,
+      financingAccountId: null,
+    });
+  });
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: 4_960_00 * 1.2 - 4_960_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: 2_146_00 * 1.2 - 2_146_00,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: 7_106_00 * 1.2 - 7_106_00,
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+      {
+        cents: -12_30,
+        description: "Credit Applied",
+        explainerCopy: null,
+      },
+    ],
+    financingItems: [],
+    subtotalCents: 7_106_00,
+    dueNowCents: 7_106_00 * 1.2 - 12_30,
+    dueLaterCents: 0,
+    creditAppliedCents: 12_30,
+    balanceDueCents: 7_106_00 * 1.2 - 12_30,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: with partial credit and full financing", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer, admin },
+    team,
+  } = await costCollection();
+  let financingAccount: FinancingAccountDb;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 25_000_00,
+      feeBasisPoints: 1000,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    });
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 1230,
+      createdBy: admin.user.id,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: designer.user.id,
+      financingAccountId: null,
+    });
+  });
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: 4_960_00 * 0.2,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: 2_146_00 * 0.2,
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: 7_106_00 * 0.2,
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+      {
+        cents: -12_30,
+        description: "Credit Applied",
+        explainerCopy: null,
+      },
+      {
+        cents: Math.round((7_106_00 * 1.2 - 12_30) * 0.1),
+        description: "Financing Fee",
+        explainerCopy:
+          "CALA Financing allows you to defer payment for your designs. You owe the total amount to CALA within the term defined in your Agreement",
+      },
+    ],
+    financingItems: [
+      {
+        accountId: financingAccount!.id,
+        financedAmountCents: Math.round(7_106_00 * 1.2 - 12_30),
+        feeAmountCents: Math.round((7_106_00 * 1.2 - 12_30) * 0.1),
+        termLengthDays: financingAccount!.termLengthDays,
+      },
+    ],
+    subtotalCents: 7_106_00,
+    dueNowCents: 0,
+    dueLaterCents: Math.round((7_106_00 * 1.2 - 12_30) * 1.1),
+    creditAppliedCents: 12_30,
+    balanceDueCents: 0,
+    totalUnits: 100 + 100,
+  });
+});
+
+test("getCartDetails: with partial credit with partial financing", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer, admin },
+    team,
+  } = await costCollection();
+  let financingAccount: FinancingAccountDb;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+      closedAt: null,
+      createdAt: new Date(),
+      creditLimitCents: 500000,
+      feeBasisPoints: 1000,
+      id: uuid.v4(),
+      teamId: team.id,
+      termLengthDays: 90,
+    });
+    await CreditsDAO.create(trx, {
+      type: CreditType.MANUAL,
+      creditDeltaCents: 1230,
+      createdBy: admin.user.id,
+      description: "For being a good customer",
+      expiresAt: null,
+      givenTo: designer.user.id,
+      financingAccountId: null,
+    });
+  });
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 100 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [
+          {
+            cents: Math.round(4_960_00 * 0.2),
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [
+          {
+            cents: Math.round(2_146_00 * 0.2),
+            description: "Production Fee",
+            explainerCopy:
+              "A fee for what you produce with us, based on your plan",
+          },
+        ],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 2_282_98,
+        payNowTotalCents: 2_146_00,
+        timeTotalMs: 711529412,
+        units: 100,
+      },
+    ],
+    combinedLineItems: [
+      {
+        cents: Math.round(7_106_00 * 0.2),
+        description: "Production Fee",
+        explainerCopy: "A fee for what you produce with us, based on your plan",
+      },
+      {
+        cents: -12_30,
+        description: "Credit Applied",
+        explainerCopy: null,
+      },
+      {
+        cents: Math.round((5_000_00 / 1.1) * 0.1),
+        description: "Financing Fee",
+        explainerCopy:
+          "CALA Financing allows you to defer payment for your designs. You owe the total amount to CALA within the term defined in your Agreement",
+      },
+    ],
+    financingItems: [
+      {
+        accountId: financingAccount!.id,
+        financedAmountCents: Math.round(5_000_00 / 1.1),
+        feeAmountCents: Math.round((5_000_00 / 1.1) * 0.1),
+        termLengthDays: financingAccount!.termLengthDays,
+      },
+    ],
+    subtotalCents: 7_106_00,
+    dueNowCents:
+      Math.round(7_106_00 * 1.2) - 12_30 - Math.round(5_000_00 / 1.1),
+    dueLaterCents: 5_000_00,
+    creditAppliedCents: 12_30,
+    balanceDueCents:
+      Math.round(7_106_00 * 1.2) - 12_30 - Math.round(5_000_00 / 1.1),
     totalUnits: 100 + 100,
   });
 });
@@ -375,8 +705,9 @@ test("getCartDetails: with partial credits", async (t: Test) => {
         explainerCopy: null,
       },
     ],
+    financingItems: [],
     subtotalCents: 7_106_00,
-    dueNowCents: 7_106_00 * 1.2,
+    dueNowCents: 7_106_00 * 1.2 - 12_30,
     dueLaterCents: 0,
     creditAppliedCents: 12_30,
     balanceDueCents: 7_106_00 * 1.2 - 12_30,
@@ -460,8 +791,9 @@ test("getCartDetails: with full credits", async (t: Test) => {
         explainerCopy: null,
       },
     ],
+    financingItems: [],
     subtotalCents: 7_106_00,
-    dueNowCents: 7_106_00 * 1.2,
+    dueNowCents: 0,
     dueLaterCents: 0,
     creditAppliedCents: 7_106_00 * 1.2,
     balanceDueCents: 0,

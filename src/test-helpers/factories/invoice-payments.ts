@@ -53,8 +53,8 @@ async function createInvoicesWithPayments() {
 
     createdPayments = await Promise.all([
       InvoicePaymentsDAO.createTrx(trx, {
-        invoiceId: createdInvoices[0].id,
-        totalCents: createdInvoices[0].totalCents,
+        invoiceId: createdInvoices[0]!.id,
+        totalCents: createdInvoices[0]!.totalCents,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge",
         creditUserId: null,
@@ -64,7 +64,7 @@ async function createInvoicesWithPayments() {
         rumbleshipPurchaseHash: null,
       }),
       InvoicePaymentsDAO.createTrx(trx, {
-        invoiceId: createdInvoices[1].id,
+        invoiceId: createdInvoices[1]!.id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge-2",
@@ -132,8 +132,8 @@ async function createInvoicesWithOverPayments() {
 
     createdPayments = await Promise.all([
       InvoicePaymentsDAO.createTrx(trx, {
-        invoiceId: createdInvoices[0].id,
-        totalCents: createdInvoices[0].totalCents + 1000,
+        invoiceId: createdInvoices[0]!.id,
+        totalCents: createdInvoices[0]!.totalCents + 1000,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge",
         creditUserId: null,
@@ -143,7 +143,7 @@ async function createInvoicesWithOverPayments() {
         rumbleshipPurchaseHash: null,
       }),
       InvoicePaymentsDAO.createTrx(trx, {
-        invoiceId: createdInvoices[1].id,
+        invoiceId: createdInvoices[1]!.id,
         totalCents: 100,
         paymentMethodId: paymentMethod.id,
         stripeChargeId: "test-stripe-charge-2",

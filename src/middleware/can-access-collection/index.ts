@@ -16,6 +16,7 @@ import requireUserSubscription from "../../middleware/require-user-subscription"
 import { SafeBodyState } from "../../middleware/type-guard";
 import db from "../../services/db";
 import { StrictContext, UnknownRequest } from "../../router-context";
+import { logServerError } from "../../services/logger";
 
 interface CollectionAndPermissionsState {
   collection: CollectionDb;
@@ -209,49 +210,51 @@ export function* canSubmitCollection(
   yield next;
 }
 
-export function* canCheckOutCollection(
-  this: TrxContext<
-    AuthedContext<{}, PermissionsKoaState & CollectionsKoaState>
-  >,
-  next: () => any
-): any {
-  const { permissions, collection, trx, role } = this.state;
+interface CanCheckOutCollectionContext
+  extends StrictContext<TeamsService.UpgradeTeamBody> {
+  state: AuthedState & { collection: CollectionDb; permissions: Permissions };
+}
 
-  if (role === "ADMIN") {
-    return yield next;
-  }
+export const canCheckOutCollection = convert.back(
+  async (ctx: CanCheckOutCollectionContext, next: () => Promise<unknown>) => {
+    const { permissions, collection, role } = ctx.state;
 
-  if (!permissions || !collection) {
-    throw new Error(
-      "canCheckOutCollection must be chained with a canAccessCollection* call"
+    if (role === "ADMIN") {
+      return next();
+    }
+
+    if (!permissions || !collection) {
+      throw new Error(
+        "canCheckOutCollection must be chained with a canAccessCollection* call"
+      );
+    }
+
+    ctx.assert(
+      permissions.canSubmit,
+      403,
+      "You don't have permission to check out this collection"
     );
-  }
 
-  if (!trx) {
-    throw new Error(
-      "canCheckOutCollection must be chained with a useTransaction call"
-    );
-  }
+    if (!collection.teamId) {
+      logServerError(
+        "Attempting to check out a collection that is not in a team"
+      );
+      ctx.throw(
+        400,
+        "Attempting to check out a collection that is not in a team"
+      );
+    }
 
-  this.assert(
-    permissions.canSubmit,
-    403,
-    "You don't have permission to check out this collection"
-  );
-
-  if (collection.teamId) {
-    const canCheckOut = yield canCheckOutTeamCollection(trx, collection.id);
+    const canCheckOut = await canCheckOutTeamCollection(db, collection.id);
     if (!canCheckOut) {
-      this.status = 402;
-      this.body = yield TeamsService.generateUpgradeBodyDueToCheckoutAttempt(
-        trx,
+      ctx.status = 402;
+      ctx.body = await TeamsService.generateUpgradeBodyDueToCheckoutAttempt(
+        db,
         collection.teamId
       );
       return;
     }
-  } else {
-    yield requireUserSubscription.call(this, next);
-  }
 
-  yield next;
-}
+    return next();
+  }
+);

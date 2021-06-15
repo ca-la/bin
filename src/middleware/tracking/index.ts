@@ -1,3 +1,4 @@
+import { ParameterizedContext } from "koa";
 import uuid from "node-uuid";
 import { performance } from "perf_hooks";
 
@@ -9,6 +10,11 @@ export interface TrackingEvent {
   timestamp: string;
   event: string;
   payload: Record<string, any>;
+}
+
+export interface TrackingState {
+  tracking: TrackingEvent[];
+  trackingId: string;
 }
 
 export function* track(this: PublicContext, next: any) {
@@ -39,7 +45,7 @@ export function* track(this: PublicContext, next: any) {
 }
 
 export function trackEvent(
-  ctx: PublicContext,
+  ctx: ParameterizedContext<TrackingState>,
   event: string,
   payload?: Record<string, any>
 ) {
@@ -51,7 +57,7 @@ export function trackEvent(
 }
 
 export function trackTime<T>(
-  ctx: PublicContext,
+  ctx: ParameterizedContext<TrackingState>,
   event: string,
   callback: () => Promise<T>
 ): Promise<T> {

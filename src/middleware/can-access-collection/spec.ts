@@ -5,7 +5,6 @@ import { test, Test, sandbox } from "../../test-helpers/fresh";
 import * as TeamsService from "../../components/teams/service";
 import * as FindCollectionTeamPlans from "../../components/plans/find-collection-team-plans";
 import { canSubmitCollection, canCheckOutCollection } from ".";
-import * as RequireUserSubscription from "../require-user-subscription";
 
 const canSubmitPromise = convert(canSubmitCollection as any);
 const canCheckOutPromise = convert(canCheckOutCollection as any);
@@ -54,18 +53,6 @@ const ADMIN_CONTEXT = {
     role: "ADMIN",
   },
 };
-
-test("collection middleware can submit and check out with appropriate privileges", async (t: Test) => {
-  sandbox().stub(RequireUserSubscription, "default").resolves();
-  const submitNextStub = sandbox().stub().resolves();
-  const checkOutNextStub = sandbox().stub().resolves();
-
-  await canSubmitPromise(BASE_CONTEXT, submitNextStub);
-  await canCheckOutPromise(BASE_CONTEXT, checkOutNextStub);
-
-  t.equal(submitNextStub.callCount, 1);
-  t.equal(checkOutNextStub.callCount, 1);
-});
 
 test("collection middleware can submit and check out team collections with appropriate privileges", async (t: Test) => {
   sandbox()

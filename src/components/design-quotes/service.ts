@@ -3,19 +3,27 @@ import { sum } from "lodash";
 
 import UnauthorizedError from "../../errors/unauthorized";
 import * as PlansDAO from "../plans/dao";
-import { CartDetails, DesignQuote, DesignQuoteLineItem } from "./types";
+import {
+  CartDetails,
+  DesignQuote,
+  DesignQuoteLineItem,
+  FinancingItem,
+} from "./types";
 import {
   UnsavedQuote,
   CreateQuotePayload,
   createUnsavedQuote,
 } from "../../services/generate-pricing-quote";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
+import TeamsDAO from "../teams/dao";
 import { PricingCostInput } from "../pricing-cost-inputs/types";
 import db from "../../services/db";
 import { CreditsDAO } from "../credits";
 import addMargin from "../../services/add-margin";
 import { FINANCING_MARGIN } from "../../config";
 import addTimeBuffer from "../../services/add-time-buffer";
+import FinancingAccountsDAO from "../financing-accounts/dao";
+import { basisPointToPercentage } from "../../services/basis-point-to-percentage";
 
 export function calculateAmounts(
   quote: UnsavedQuote
@@ -96,17 +104,21 @@ export async function calculateDesignQuote(
   return fromUnsavedQuote(unsavedQuote, units, costInput.minimumOrderQuantity);
 }
 
-export async function getCartDetails(
+type CartSubtotal = Pick<
+  CartDetails,
+  "quotes" | "subtotalCents" | "combinedLineItems" | "totalUnits"
+> & { teamTotalsMap: Record<string, number> };
+
+function calculateSubtotal(
   trx: Knex.Transaction,
-  quoteRequests: CreateQuotePayload[],
-  userId: string
-): Promise<CartDetails> {
-  const quotes: DesignQuote[] = await quoteRequests.reduce(
+  quoteRequests: CreateQuotePayload[]
+): Promise<CartSubtotal> {
+  return quoteRequests.reduce(
     async (
-      designQuotes: Promise<DesignQuote[]>,
+      acc: Promise<CartSubtotal>,
       { designId, units }: CreateQuotePayload
     ) => {
-      const existing = await designQuotes;
+      const existing = await acc;
       const costInputs = await PricingCostInputsDAO.findByDesignId({
         designId,
         trx,
@@ -118,34 +130,28 @@ export async function getCartDetails(
 
       const latestCostInput = costInputs[0];
 
-      const designQuote = await calculateDesignQuote(latestCostInput, units);
-
-      return [...existing, designQuote];
-    },
-    Promise.resolve([])
-  );
-
-  const { subtotalCents, combinedLineItems, totalUnits } = quotes.reduce(
-    (
-      acc: {
-        subtotalCents: number;
-        combinedLineItems: DesignQuoteLineItem[];
-        totalUnits: number;
-      },
-      quote: DesignQuote
-    ) => {
-      let combined = acc.combinedLineItems;
-
-      for (const lineItem of quote.lineItems) {
-        const existingLineItemIndex = combined.findIndex(
-          (existing: DesignQuoteLineItem) =>
-            existing.description === lineItem.description
+      const designTeam = await TeamsDAO.findByDesign(trx, designId);
+      if (!designTeam) {
+        throw new Error(
+          "Cannot check out a design that does not belong to a team"
         );
+      }
+      const { id: teamId } = designTeam;
 
-        if (existingLineItemIndex === -1) {
-          combined = [...combined, lineItem];
-        } else {
-          combined = [
+      const quote = await calculateDesignQuote(latestCostInput, units);
+
+      const combinedLineItems = quote.lineItems.reduce(
+        (combined: DesignQuoteLineItem[], lineItem: DesignQuoteLineItem) => {
+          const existingLineItemIndex = combined.findIndex(
+            (item: DesignQuoteLineItem) =>
+              item.description === lineItem.description
+          );
+
+          if (existingLineItemIndex === -1) {
+            return [...combined, lineItem];
+          }
+
+          return [
             ...combined.slice(0, existingLineItemIndex),
             {
               description: lineItem.description,
@@ -154,32 +160,137 @@ export async function getCartDetails(
             },
             ...combined.slice(existingLineItemIndex + 1),
           ];
-        }
-      }
+        },
+        existing.combinedLineItems
+      );
+
       return {
-        subtotalCents: acc.subtotalCents + quote.payNowTotalCents,
-        totalUnits: acc.totalUnits + quote.units,
-        combinedLineItems: combined,
+        ...existing,
+        quotes: [...existing.quotes, quote],
+        subtotalCents: existing.subtotalCents + quote.payNowTotalCents,
+        totalUnits: existing.totalUnits + quote.units,
+        combinedLineItems,
+        teamTotalsMap: {
+          ...existing.teamTotalsMap,
+          [teamId]:
+            (existing.teamTotalsMap[teamId] || 0) +
+            quote.payNowTotalCents +
+            quote.lineItems.reduce(
+              (total: number, li: DesignQuoteLineItem) => total + li.cents,
+              0
+            ),
+        },
       };
     },
-    {
+    Promise.resolve({
+      quotes: [],
       subtotalCents: 0,
       combinedLineItems: [],
       totalUnits: 0,
-    }
+      teamTotalsMap: {},
+    })
   );
+}
 
-  const dueNowCents =
-    subtotalCents +
-    combinedLineItems.reduce(
+interface DueCents {
+  dueNowCents: number;
+  dueLaterCents: number;
+  balanceDueCents: number;
+  creditAppliedCents: number;
+  financingItems: FinancingItem[];
+}
+
+async function calculateDueCents(
+  trx: Knex.Transaction,
+  userId: string,
+  cartSubtotal: CartSubtotal
+): Promise<DueCents> {
+  const withFees =
+    cartSubtotal.subtotalCents +
+    cartSubtotal.combinedLineItems.reduce(
       (cents: number, li: DesignQuoteLineItem) => cents + li.cents,
       0
     );
-
   const availableCreditCents = await CreditsDAO.getCreditAmount(userId, trx);
-  const creditAppliedCents = Math.min(dueNowCents, availableCreditCents);
+  const creditAppliedCents = Math.min(withFees, availableCreditCents);
+  const teamEntries = Object.entries(cartSubtotal.teamTotalsMap);
+  const teamsCount = teamEntries.length;
 
-  const balanceDueCents = dueNowCents - creditAppliedCents;
+  return teamEntries.reduce(
+    async (
+      promiseAcc: Promise<DueCents>,
+      [teamId, total]: [string, number]
+    ): Promise<DueCents> => {
+      const acc = await promiseAcc;
+      const totalAfterCredits = total - creditAppliedCents / teamsCount;
+      const teamFinancingAccount = await FinancingAccountsDAO.findActive(trx, {
+        teamId,
+      });
+
+      if (
+        !teamFinancingAccount ||
+        teamFinancingAccount.availableBalanceCents === 0 ||
+        totalAfterCredits === 0
+      ) {
+        return acc;
+      }
+
+      // Since the financing fee lowers the available balance, we need to leave
+      // room in the financing account for the fee, which is why we're comparing
+      // the available balance less what would be the fee
+      const financingAppliedCents = Math.min(
+        totalAfterCredits,
+        Math.round(
+          teamFinancingAccount.availableBalanceCents /
+            (1 + basisPointToPercentage(teamFinancingAccount.feeBasisPoints))
+        )
+      );
+      const financingFee = Math.round(
+        financingAppliedCents *
+          basisPointToPercentage(teamFinancingAccount.feeBasisPoints)
+      );
+
+      return {
+        creditAppliedCents: acc.creditAppliedCents,
+        balanceDueCents: acc.dueNowCents - financingAppliedCents,
+        dueNowCents: acc.dueNowCents - financingAppliedCents,
+        dueLaterCents: acc.dueLaterCents + financingAppliedCents + financingFee,
+        financingItems: [
+          ...acc.financingItems,
+          {
+            accountId: teamFinancingAccount.id,
+            financedAmountCents: financingAppliedCents,
+            feeAmountCents: financingFee,
+            termLengthDays: teamFinancingAccount.termLengthDays,
+          },
+        ],
+      };
+    },
+    Promise.resolve({
+      creditAppliedCents,
+      balanceDueCents: withFees - creditAppliedCents,
+      dueNowCents: withFees - creditAppliedCents,
+      dueLaterCents: 0,
+      financingItems: [],
+    })
+  );
+}
+
+export async function getCartDetails(
+  trx: Knex.Transaction,
+  quoteRequests: CreateQuotePayload[],
+  userId: string
+): Promise<CartDetails> {
+  const cartSubtotal = await calculateSubtotal(trx, quoteRequests);
+  const { quotes, subtotalCents, combinedLineItems, totalUnits } = cartSubtotal;
+
+  const {
+    dueNowCents,
+    dueLaterCents,
+    balanceDueCents,
+    creditAppliedCents,
+    financingItems,
+  } = await calculateDueCents(trx, userId, cartSubtotal);
 
   if (creditAppliedCents > 0) {
     combinedLineItems.push({
@@ -189,14 +300,27 @@ export async function getCartDetails(
     });
   }
 
+  if (financingItems.length > 0) {
+    combinedLineItems.push({
+      description: "Financing Fee",
+      explainerCopy:
+        "CALA Financing allows you to defer payment for your designs. You owe the total amount to CALA within the term defined in your Agreement",
+      cents: financingItems.reduce(
+        (total: number, item: FinancingItem) => total + item.feeAmountCents,
+        0
+      ),
+    });
+  }
+
   return {
     quotes,
     combinedLineItems,
     subtotalCents,
     dueNowCents,
-    dueLaterCents: 0, // Placeholder for showing financing fees, etc
+    dueLaterCents,
     creditAppliedCents,
     balanceDueCents,
     totalUnits,
+    financingItems,
   };
 }

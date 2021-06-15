@@ -19,7 +19,6 @@ export interface ApiMessages {
       invoiceId: string;
       userId: string;
       collectionId: string;
-      paymentAmountCents: number;
     };
   };
 }
