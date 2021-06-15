@@ -4,7 +4,11 @@ import db from "../../services/db";
 import { Task, HandlerResult, ApiMessages } from "./types";
 import { SQSMessage } from "./aws";
 import { logServerError, log } from "../../services/logger";
-import { postProcessUserCreation, subscribeToMailchimpUsers } from "./tasks";
+import {
+  postProcessUserCreation,
+  subscribeToMailchimpUsers,
+  postProcessQuotePayment,
+} from "./tasks";
 
 export type MessageHandler = (message: SQSMessage) => Promise<HandlerResult>;
 /**
@@ -51,6 +55,23 @@ export function messageHandler(): MessageHandler {
         ).catch((error: Error) => {
           logServerError(
             "Error in SUBSCRIBE_MAILCHIMP_TO_USERS api worker task",
+            error
+          );
+
+          return {
+            type: "FAILURE",
+            error,
+          };
+        });
+      }
+
+      case "POST_PROCESS_QUOTE_PAYMENT": {
+        log(successMessage);
+        return await postProcessQuotePayment(
+          task as Task<"POST_PROCESS_QUOTE_PAYMENT">
+        ).catch((error: Error) => {
+          logServerError(
+            "Error in POST_PROCESS_QUOTE_PAYMENT api worker task",
             error
           );
 

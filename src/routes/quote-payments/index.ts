@@ -19,18 +19,16 @@ import { hasProperties } from "../../services/require-properties";
 import createUPCsForCollection from "../../services/create-upcs-for-collection";
 import createSKUsForCollection from "../../services/create-skus-for-collection";
 import { createShopifyProductsForCollection } from "../../services/create-shopify-products";
-import { logServerError, logWarning } from "../../services/logger";
+import { logServerError } from "../../services/logger";
 import { transitionCheckoutState } from "../../services/approval-step-state";
 import { createFromAddress } from "../../dao/invoice-addresses";
 import * as IrisService from "../../components/iris/send-message";
 import { determineSubmissionStatus } from "../../components/collections/services/determine-submission-status";
 import { realtimeCollectionStatusUpdated } from "../../components/collections/realtime";
 import useTransaction from "../../middleware/use-transaction";
-import * as SlackService from "../../services/slack";
-import * as UsersDAO from "../../components/users/dao";
 import Invoice from "../../domain-objects/invoice";
-import { CollectionDb } from "../../published-types";
 import { trackEvent, trackTime } from "../../middleware/tracking";
+import { sendMessage as sendApiWorkerMessage } from "../../workers/api-worker/send-message";
 
 const router = new Router();
 
@@ -84,39 +82,6 @@ async function sendCollectionStatusUpdated(
   await IrisService.sendMessage(
     realtimeCollectionStatusUpdated(collectionStatus)
   );
-}
-
-async function sendSlackUpdate({
-  invoice,
-  collection,
-  paymentAmountCents,
-}: {
-  invoice: Invoice;
-  collection: CollectionDb;
-  paymentAmountCents: number;
-}) {
-  if (!invoice.userId) {
-    throw new Error(`Invoice ${invoice.id} does not have a userId`);
-  }
-
-  const designer = await UsersDAO.findById(invoice.userId);
-
-  const notification: SlackService.SlackBody = {
-    channel: "designers",
-    templateName: "designer_payment",
-    params: {
-      collection,
-      designer,
-      paymentAmountCents,
-    },
-  };
-
-  await SlackService.enqueueSend(notification).catch((e: Error) => {
-    logWarning(
-      "There was a problem sending the payment notification to Slack",
-      e
-    );
-  });
 }
 
 async function handleQuotePayment(
@@ -225,8 +190,18 @@ function* payQuote(
   yield trackTime(this, `${trackEventPrefix}/handleQuotePayment`, () =>
     handleQuotePayment(trx, userId, collection.id, trackQuotePaymentTime)
   );
-  yield trackTime(this, `${trackEventPrefix}/sendSlackUpdate`, () =>
-    sendSlackUpdate({ invoice, collection, paymentAmountCents })
+
+  yield trackTime(this, `${trackEventPrefix}/postProcessQuoteInApiWorker`, () =>
+    sendApiWorkerMessage({
+      type: "POST_PROCESS_QUOTE_PAYMENT",
+      deduplicationId: invoice.id,
+      keys: {
+        invoiceId: invoice.id,
+        userId,
+        collectionId: collection.id,
+        paymentAmountCents,
+      },
+    })
   );
 
   this.body = invoice;

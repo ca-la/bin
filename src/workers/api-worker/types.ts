@@ -1,9 +1,4 @@
 export interface ApiMessages {
-  WORKER_TEST: {
-    keys: {
-      id: string;
-    };
-  };
   SUBSCRIBE_MAILCHIMP_TO_USERS: {
     keys: {
       cohort: string | null;
@@ -17,6 +12,14 @@ export interface ApiMessages {
       userId: string;
       designIdsToDuplicate: string[];
       email: string;
+    };
+  };
+  POST_PROCESS_QUOTE_PAYMENT: {
+    keys: {
+      invoiceId: string;
+      userId: string;
+      collectionId: string;
+      paymentAmountCents: number;
     };
   };
 }

@@ -17,7 +17,6 @@ import * as RequireUserSubscription from "../../middleware/require-user-subscrip
 import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
-import SlackService = require("../../services/slack");
 import Stripe = require("../../services/stripe");
 import { authHeader, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -28,6 +27,7 @@ import * as CreateShopifyProducts from "../../services/create-shopify-products";
 import { ApprovalStepState } from "../../components/approval-steps/types";
 import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
+import * as ApiWorker from "../../workers/api-worker/send-message";
 import * as RequestService from "../../services/stripe/make-request";
 import generateCollection from "../../test-helpers/factories/collection";
 import { generateTeam } from "../../test-helpers/factories/team";
@@ -56,9 +56,11 @@ function setupStubs() {
     .stub(Stripe, "charge")
     .resolves({ id: "chargeId" });
   const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
-  const slackStub = sandbox().stub(SlackService, "enqueueSend").resolves();
+  const sendApiWorkerMessageStub = sandbox()
+    .stub(ApiWorker, "sendMessage")
+    .resolves();
   const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
-  return { chargeStub, emailStub, slackStub, irisStub };
+  return { chargeStub, emailStub, sendApiWorkerMessageStub, irisStub };
 }
 
 async function setup() {
@@ -183,7 +185,7 @@ async function setup() {
 test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
   const {
     session,
-    slackStub,
+    sendApiWorkerMessageStub,
     irisStub,
     chargeStub,
     collection,
@@ -301,21 +303,21 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     t.is(blankSubmissions.length, 5, "adds blank approval submissions");
   });
   t.deepEqual(
-    slackStub.args,
+    sendApiWorkerMessageStub.args[0],
     [
-      [
-        {
-          channel: "designers",
-          templateName: "designer_payment",
-          params: {
-            collection,
-            designer: user,
-            paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
-          },
+      {
+        type: "POST_PROCESS_QUOTE_PAYMENT",
+        deduplicationId: body.id,
+        keys: {
+          invoiceId: body.id,
+          userId: user.id,
+          collectionId: collection.id,
+          paymentAmountCents: body.totalCents - CREDIT_AMOUNT_CENTS,
         },
-      ],
+      },
+      ,
     ],
-    "Slack message sent with correct values"
+    "calls api-worker to postprocess the quote payment"
   );
 });
 
@@ -390,7 +392,7 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 
 test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
   const { user, session } = await createUser();
-  const { slackStub } = setupStubs();
+  const { sendApiWorkerMessageStub } = setupStubs();
 
   const { team } = await generateTeam(user.id);
   const { collection } = await generateCollection({ teamId: team.id });
@@ -468,21 +470,20 @@ test("POST /quote-payments?isWaived=true waives payment", async (t: Test) => {
   t.equal(postResponse.status, 201, "successfully creates the invoice");
   t.equals(body.isPaid, true, "Invoice is paid");
   t.deepEqual(
-    slackStub.args,
+    sendApiWorkerMessageStub.args[0],
     [
-      [
-        {
-          channel: "designers",
-          templateName: "designer_payment",
-          params: {
-            collection,
-            designer: user,
-            paymentAmountCents: 0,
-          },
+      {
+        type: "POST_PROCESS_QUOTE_PAYMENT",
+        deduplicationId: body.id,
+        keys: {
+          invoiceId: body.id,
+          userId: user.id,
+          collectionId: collection.id,
+          paymentAmountCents: 0,
         },
-      ],
+      },
     ],
-    "Slack message sent with correct values"
+    "calls api-worker to postprocess the quote payment"
   );
 });
 
