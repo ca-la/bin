@@ -136,7 +136,7 @@ export type NotificationMessageAttachmentForGraphQL = Omit<
   NotificationMessageAttachment,
   "mentions"
 > & {
-  mentions?: MentionForGraphQL[];
+  mentions: MentionForGraphQL[] | null;
 };
 
 export type NotificationMessageForGraphQL = Omit<

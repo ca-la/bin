@@ -6,6 +6,7 @@ import {
   dateStringToDate,
   nullableDateStringToNullableDate,
 } from "../../services/zod-helpers";
+import { CommentWithResourcesGraphQLType } from "./graphql-types";
 
 export const baseCommentSchema = z.object({
   id: z.string(),
@@ -106,7 +107,7 @@ export function isMentionType(candidate: string): candidate is MentionType {
 export default Comment;
 
 export interface PaginatedComments {
-  data: CommentWithResources[];
+  data: CommentWithResourcesGraphQLType[];
   previousCursor: string | null;
   nextCursor: string | null;
 }

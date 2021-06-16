@@ -1,26 +1,20 @@
 import { z } from "zod";
 import { GraphQLType, schemaToGraphQLType } from "../../apollo/published-types";
-import { userRoleSchema } from "../users/types";
 import { Role } from "../users/graphql-types";
-import { attachmentSchema } from "../assets/types";
 import { Attachment } from "../assets/graphql-types";
+import { Mention } from "../notifications/graphql-types";
+import { commentSchema } from "./types";
 
-export const commentWithResourcesSchema = z.object({
+const mentionsSchema = z.object({
   id: z.string(),
-  createdAt: z.date(),
-  deletedAt: z.date().nullable(),
-  text: z.string(),
-  parentCommentId: z.string().nullable(),
-  userId: z.string().nullable(),
-  isPinned: z.boolean().nullable(),
-  userName: z.string().nullable(),
-  userEmail: z.string().nullable(),
-  userRole: userRoleSchema,
-  attachments: z.array(attachmentSchema),
-  replyCount: z.number().optional(),
+  name: z.string().optional(),
 });
 
-export type CommentWithResourcesType = z.infer<
+export const commentWithResourcesSchema = commentSchema.extend({
+  mentions: z.array(mentionsSchema).nullable(),
+});
+
+export type CommentWithResourcesGraphQLType = z.infer<
   typeof commentWithResourcesSchema
 >;
 
@@ -31,6 +25,7 @@ export const CommentWithResources = schemaToGraphQLType(
     depTypes: {
       userRole: Role,
       attachments: Attachment,
+      mentions: Mention,
     },
   }
 );

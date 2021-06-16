@@ -30,6 +30,7 @@ import {
 import Comment, { PaginatedComments } from "./types";
 import { findByAnnotationId } from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
+import { transformMentionsToGraphQL } from "./service";
 
 interface CreateCommentArgs {
   comment: GraphQLTypes.CommentInputType;
@@ -37,8 +38,8 @@ interface CreateCommentArgs {
 
 const createComment: GraphQLEndpoint<
   CreateCommentArgs,
-  GraphQLTypes.CommentWithResourcesType,
-  GraphQLContextBase<GraphQLTypes.CommentWithResourcesType>
+  GraphQLTypes.CommentWithResourcesGraphQLType,
+  GraphQLContextBase<GraphQLTypes.CommentWithResourcesGraphQLType>
 > = {
   endpointType: "Mutation",
   types: [
@@ -51,7 +52,7 @@ const createComment: GraphQLEndpoint<
   resolver: async (
     _: unknown,
     args: CreateCommentArgs,
-    context: GraphQLContextBase<GraphQLTypes.CommentWithResourcesType>
+    context: GraphQLContextBase<GraphQLTypes.CommentWithResourcesGraphQLType>
   ) => {
     const { comment: input } = args;
     const { trx, session } = useRequireAuth(context);
@@ -106,7 +107,10 @@ const createComment: GraphQLEndpoint<
       throw new Error("commentWithResources should not be empty");
     }
 
-    return commentWithResources;
+    return {
+      ...commentWithResources,
+      mentions: transformMentionsToGraphQL(commentWithResources.mentions),
+    };
   },
 };
 

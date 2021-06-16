@@ -1,32 +1,16 @@
 import Knex from "knex";
-import { toPairs, uniqWith } from "lodash";
+import { uniqWith } from "lodash";
 import {
   NotificationMessage,
   NotificationMessageAttachment,
   NotificationMessageForGraphQL,
-  NotificationMessageAttachmentForGraphQL,
 } from "./types";
 import { Recipient } from "../../services/cala-component/cala-notifications";
 import TeamUsersDao from "../team-users/dao";
 import { TeamUser, Role as TeamUserRole } from "../team-users/types";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/types";
-
-function transformAttachmentToGraphQL(
-  attachment: NotificationMessageAttachment
-): NotificationMessageAttachmentForGraphQL {
-  return {
-    ...attachment,
-    mentions: attachment.mentions
-      ? toPairs(attachment.mentions).map(
-          (pair: [string, string | undefined]) => ({
-            id: pair[0],
-            name: pair[1],
-          })
-        )
-      : undefined,
-  };
-}
+import { transformMentionsToGraphQL } from "../comments/service";
 
 export function transformNotificationMessageToGraphQL(
   notificationMessage: NotificationMessage
@@ -34,7 +18,10 @@ export function transformNotificationMessageToGraphQL(
   return {
     ...notificationMessage,
     attachments: notificationMessage.attachments.map(
-      transformAttachmentToGraphQL
+      (attachment: NotificationMessageAttachment) => ({
+        ...attachment,
+        mentions: transformMentionsToGraphQL(attachment.mentions),
+      })
     ),
   };
 }

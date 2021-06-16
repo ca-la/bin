@@ -39,3 +39,16 @@ export function parseAtMentions(text: string): MentionMeta[] {
     ];
   }, []);
 }
+
+export function transformMentionsToGraphQL(
+  mentions: Record<string, string | undefined> | undefined
+): { id: string; name: string | undefined }[] | null {
+  return mentions
+    ? Object.entries(mentions).map(
+        ([id, name]: [string, string | undefined]) => ({
+          id,
+          name,
+        })
+      )
+    : null;
+}

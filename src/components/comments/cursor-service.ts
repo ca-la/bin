@@ -3,15 +3,20 @@ import Knex from "knex";
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { QueryModifier } from "../../services/cala-component/cala-dao";
+import { CommentWithResourcesGraphQLType } from "./graphql-types";
+import { transformMentionsToGraphQL } from "./service";
 import Comment, { CommentWithResources, PaginatedComments } from "./types";
 
 export async function addCommentResources(
   trx: Knex.Transaction,
   comments: Comment[]
-): Promise<CommentWithResources[]> {
+): Promise<CommentWithResourcesGraphQLType[]> {
   const commentsWithMentions = await addAtMentionDetails(trx, comments);
   const commentsWithAttachments = commentsWithMentions.map(addAttachmentLinks);
-  return commentsWithAttachments;
+  return commentsWithAttachments.map((comment: CommentWithResources) => ({
+    ...comment,
+    mentions: transformMentionsToGraphQL(comment.mentions),
+  }));
 }
 
 export interface Cursor {

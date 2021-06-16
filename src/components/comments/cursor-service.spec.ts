@@ -1,7 +1,9 @@
 import Knex from "knex";
 import uuid from "node-uuid";
 import db from "../../services/db";
+import createUser from "../../test-helpers/create-user";
 import generateComment from "../../test-helpers/factories/comment";
+import { generateTeam } from "../../test-helpers/factories/team";
 import { test, Test } from "../../test-helpers/fresh";
 
 import * as CursorService from "./cursor-service";
@@ -117,4 +119,26 @@ test("CursorService.getNextPage", async (t: Test) => {
       "A partial next page has correct data and cursors"
     );
   });
+});
+
+test("addCommentResources - adds mention details", async (t: Test) => {
+  const testTime = new Date();
+  const commentId = uuid.v4();
+  const { user } = await createUser();
+  const { teamUser } = await generateTeam(user.id);
+  const { comment } = await generateComment({
+    id: commentId,
+    createdAt: testTime,
+    text: `A comment @<${teamUser.id}|teamUser>`,
+  });
+
+  const commentWithResources = await db.transaction((trx: Knex.Transaction) =>
+    CursorService.addCommentResources(trx, [comment])
+  );
+
+  t.deepEqual(
+    commentWithResources,
+    [{ ...comment, mentions: [{ id: teamUser.id, name: "Q User" }] }],
+    "adds mentions"
+  );
 });
