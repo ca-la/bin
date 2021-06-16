@@ -10,11 +10,8 @@ import {
   dataAdapter as commentDataAdapter,
   isCommentRow,
 } from "../comments/domain-object";
-import { queryComments } from "../comments/dao";
-import Comment, {
-  CommentRow,
-  FindCommentsByIdOptions,
-} from "../comments/types";
+import { FindCommentsByIdOptions, queryComments } from "../comments/dao";
+import Comment, { CommentRow } from "../comments/types";
 
 const TABLE_NAME = "design_approval_step_comments";
 

@@ -4,10 +4,7 @@ import db from "../../services/db";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import { addAtMentionDetailsForComment } from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
-import {
-  CommentWithMentions,
-  FindCommentsByIdOptions,
-} from "../comments/types";
+import { CommentWithMentions } from "../comments/types";
 
 import AnnotationComment, {
   AnnotationCommentRow,
@@ -19,6 +16,7 @@ import AnnotationComment, {
   withMetaDataAdapter as commentWithMetaAdapter,
 } from "./domain-object";
 import { annotationCommentsView } from "./view";
+import { FindCommentsByIdOptions } from "../comments/dao";
 
 const TABLE_NAME = "product_design_canvas_annotation_comments";
 

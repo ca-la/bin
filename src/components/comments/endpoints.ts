@@ -11,7 +11,10 @@ import {
 } from "../../apollo";
 import * as GraphQLTypes from "./graphql-types";
 import { Attachment } from "../assets/graphql-types";
-import { extractDesignIdFromCommentParent } from "./dao";
+import {
+  extractDesignIdFromCommentParent,
+  FindCommentsByIdOptions,
+} from "./dao";
 import { getDesignPermissions } from "../../services/get-permissions";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import * as ApprovalStepService from "../approval-step-comments/service";
@@ -24,7 +27,7 @@ import {
   getPreviousPage,
   readCursor,
 } from "../comments/cursor-service";
-import Comment, { FindCommentsByIdOptions, PaginatedComments } from "./types";
+import Comment, { PaginatedComments } from "./types";
 import { findByAnnotationId } from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
 

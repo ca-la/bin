@@ -17,6 +17,12 @@ import * as CanvasesDAO from "../canvases/dao";
 
 const TABLE_NAME = "comments";
 
+export interface FindCommentsByIdOptions {
+  limit?: number;
+  sortOrder?: "asc" | "desc";
+  modify?: (query: Knex.QueryBuilder) => Knex.QueryBuilder;
+}
+
 export interface CommentQueryOptions {
   includeDeletedParents?: boolean;
   excludeDeletedAt?: boolean;
