@@ -1,4 +1,4 @@
-import Knex from "knex";
+import Knex, { QueryBuilder } from "knex";
 import rethrow from "pg-rethrow";
 
 import db from "../../services/db";
@@ -11,6 +11,7 @@ import DesignEvent, {
   DesignEventWithMetaRow,
   withMetaDomain,
   activityStreamEventsSchema,
+  allEventsSchema,
 } from "./types";
 import { DuplicateAcceptRejectError } from "./errors";
 import { taskTypesById } from "../tasks/templates";
@@ -87,10 +88,14 @@ const withMetaDao = {
 const dao = {
   create: async (
     trx: Knex.Transaction,
-    data: DesignEvent
+    data: DesignEvent,
+    modifier?: (query: QueryBuilder) => QueryBuilder,
+    options?: {
+      shouldEmitEvent: boolean;
+    }
   ): Promise<DesignEvent> =>
     baseDao
-      .create(trx, data)
+      .create(trx, data, modifier, options)
       .catch(rethrow)
       .catch(
         filterError(
@@ -142,6 +147,22 @@ const dao = {
     });
     return withMetaAdapter.fromDbArray(designEventRows);
   },
+
+  findCommitQuoteByInvoiceEvents: async (
+    ktx: Knex,
+    invoiceId: string
+  ): Promise<DesignEventWithMeta[]> => {
+    const designEventRows = await ktx(TABLE_NAME)
+      .select("design_events.*")
+      .modify(addMeta)
+      .orderBy("design_events.created_at", "asc")
+      .join("line_items", "line_items.quote_id", "design_events.quote_id")
+      .where({
+        "line_items.invoice_id": invoiceId,
+        "design_events.type": allEventsSchema.enum.COMMIT_QUOTE,
+      });
+    return withMetaAdapter.fromDbArray(designEventRows);
+  },
 };
 
 export default dao;
@@ -153,4 +174,5 @@ export const {
   findOne,
   findById,
   findApprovalStepEvents,
+  findCommitQuoteByInvoiceEvents,
 } = dao;

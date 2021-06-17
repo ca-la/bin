@@ -40,7 +40,7 @@ test("postProcessQuotePayment", async (t: Test) => {
 
   t.deepEqual(
     handleQuotePaymentStub.args,
-    [[trxStub, "a-user-id", "a-collection-id", ,]],
+    [[trxStub, "a-user-id", "a-collection-id", "an-invoice-id"]],
     "handleQuotePayment is called inside transaction with correct args"
   );
 

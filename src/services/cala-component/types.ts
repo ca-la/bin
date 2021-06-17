@@ -60,9 +60,17 @@ export interface CalaDao<Model> {
   update: (
     trx: Transaction,
     id: string,
-    patch: Partial<Model>
+    patch: Partial<Model>,
+    options?: {
+      shouldEmitDaoUpdatedEvent: boolean;
+    }
   ) => Promise<UpdateResult<Model>>;
-  create: (trx: Transaction, blank: Model) => Promise<Model>;
+  create: (
+    trx: Transaction,
+    blank: Model,
+    modifier?: (query: QueryBuilder) => QueryBuilder,
+    options?: { shouldEmitEvent: boolean }
+  ) => Promise<Model>;
   createAll: (trx: Transaction, blanks: Model[]) => Promise<Model[]>;
 }
 

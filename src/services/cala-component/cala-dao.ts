@@ -126,7 +126,10 @@ export function buildDao<
   const create = async (
     trx: Transaction,
     blank: Model,
-    modifier: QueryModifier = identity
+    modifier: QueryModifier = identity,
+    options: {
+      shouldEmitEvent: boolean;
+    } = { shouldEmitEvent: true }
   ): Promise<Model> => {
     const rowData = adapter.forInsertion(blank);
     const createdRow = await trx(tableName)
@@ -142,12 +145,14 @@ export function buildDao<
 
     const created = adapter.fromDb(createdRow);
 
-    await emit<Model, DaoCreated<Model, typeof domain>>({
-      type: "dao.created",
-      domain,
-      trx,
-      created,
-    });
+    if (options.shouldEmitEvent) {
+      await emit<Model, DaoCreated<Model, typeof domain>>({
+        type: "dao.created",
+        domain,
+        trx,
+        created,
+      });
+    }
 
     return created;
   };
@@ -187,7 +192,12 @@ export function buildDao<
   const update = async (
     trx: Transaction,
     id: string,
-    patch: Partial<Model>
+    patch: Partial<Model>,
+    options: {
+      shouldEmitDaoUpdatedEvent: boolean;
+    } = {
+      shouldEmitDaoUpdatedEvent: true,
+    }
   ): Promise<UpdateResult<Model>> => {
     const before = await findById(trx, id);
     if (!before) {
@@ -216,13 +226,15 @@ export function buildDao<
     }
     const updated = listOfUpdated[0];
 
-    await emit<Model, DaoUpdated<Model, typeof domain>>({
-      type: "dao.updated",
-      domain,
-      trx,
-      before,
-      updated,
-    });
+    if (options.shouldEmitDaoUpdatedEvent) {
+      await emit<Model, DaoUpdated<Model, typeof domain>>({
+        type: "dao.updated",
+        domain,
+        trx,
+        before,
+        updated,
+      });
+    }
 
     return {
       before,

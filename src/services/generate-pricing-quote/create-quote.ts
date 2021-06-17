@@ -19,6 +19,7 @@ import {
   UncomittedCostInput,
 } from "../../components/pricing-cost-inputs/types";
 import DesignEventsDAO from "../../components/design-events/dao";
+import { identity } from "../../services/cala-component/cala-dao";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { ApprovalStepType } from "../../components/approval-steps/types";
 import { templateDesignEvent } from "../../components/design-events/types";
@@ -171,16 +172,25 @@ export async function createQuotes(
     );
     quotes.push(quote);
 
-    await DesignEventsDAO.create(trx, {
-      ...templateDesignEvent,
-      actorId: userId,
-      approvalStepId: checkoutStep.id,
-      createdAt: new Date(),
-      designId,
-      id: uuid.v4(),
-      quoteId: quote.id,
-      type: "COMMIT_QUOTE",
-    });
+    await DesignEventsDAO.create(
+      trx,
+      {
+        ...templateDesignEvent,
+        actorId: userId,
+        approvalStepId: checkoutStep.id,
+        createdAt: new Date(),
+        designId,
+        id: uuid.v4(),
+        quoteId: quote.id,
+        type: "COMMIT_QUOTE",
+      },
+      identity,
+      // we don't want to send real-time updates to the
+      // user on every design event creation
+      // this logic is moved to the API worker as
+      // otherwise this operation takes ~1s per quote
+      { shouldEmitEvent: false }
+    );
   }
 
   return quotes;

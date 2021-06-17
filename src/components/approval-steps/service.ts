@@ -52,8 +52,13 @@ export async function setApprovalStepsDueAtByPricingQuote(
       },
       0
     );
-    await update(trx, step.id, {
-      dueAt: new Date(baseDateMs + offsetMs),
-    });
+    await update(
+      trx,
+      step.id,
+      {
+        dueAt: new Date(baseDateMs + offsetMs),
+      },
+      { shouldEmitDaoUpdatedEvent: false }
+    );
   }
 }

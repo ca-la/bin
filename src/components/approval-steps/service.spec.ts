@@ -34,10 +34,18 @@ const describeSetApprovalStepsDueAtByPricingQuote = (): void => {
       title: "regular case",
       findStubCalls: [[{ designId: "d1" }]],
       updateStubCalls: [
-        ["s1", { dueAt: new Date(0) }],
-        ["s2", { dueAt: new Date(1) }],
-        ["s3", { dueAt: new Date(1 + 2 + 3) }],
-        ["s4", { dueAt: new Date(1 + 2 + 3 + 4 + 5 + 6) }],
+        ["s1", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s2", { dueAt: new Date(1) }, { shouldEmitDaoUpdatedEvent: false }],
+        [
+          "s3",
+          { dueAt: new Date(1 + 2 + 3) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
+        [
+          "s4",
+          { dueAt: new Date(1 + 2 + 3 + 4 + 5 + 6) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
       ],
     },
     {
@@ -51,10 +59,18 @@ const describeSetApprovalStepsDueAtByPricingQuote = (): void => {
       quotePatch: { samplingTimeMs: null, productionTimeMs: null },
       findStubCalls: [[{ designId: "d1" }]],
       updateStubCalls: [
-        ["s1", { dueAt: new Date(0) }],
-        ["s2", { dueAt: new Date(1) }],
-        ["s3", { dueAt: new Date(1 + 2) }],
-        ["s4", { dueAt: new Date(1 + 2 + 4 + 6) }],
+        ["s1", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s2", { dueAt: new Date(1) }, { shouldEmitDaoUpdatedEvent: false }],
+        [
+          "s3",
+          { dueAt: new Date(1 + 2) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
+        [
+          "s4",
+          { dueAt: new Date(1 + 2 + 4 + 6) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
       ],
     },
     {
@@ -69,10 +85,10 @@ const describeSetApprovalStepsDueAtByPricingQuote = (): void => {
       },
       findStubCalls: [[{ designId: "d1" }]],
       updateStubCalls: [
-        ["s1", { dueAt: new Date(0) }],
-        ["s2", { dueAt: new Date(0) }],
-        ["s3", { dueAt: new Date(0) }],
-        ["s4", { dueAt: new Date(0) }],
+        ["s1", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s2", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s3", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s4", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
       ],
     },
     {
@@ -82,10 +98,18 @@ const describeSetApprovalStepsDueAtByPricingQuote = (): void => {
       },
       findStubCalls: [[{ designId: "d1" }]],
       updateStubCalls: [
-        ["s1", { dueAt: new Date(0) }],
-        ["s2", { dueAt: new Date(1) }],
-        ["s3", { dueAt: new Date(1 + 2 + 3) }],
-        ["s4", { dueAt: new Date(1 + 2 + 3 + 4 + 5 + 6) }],
+        ["s1", { dueAt: new Date(0) }, { shouldEmitDaoUpdatedEvent: false }],
+        ["s2", { dueAt: new Date(1) }, { shouldEmitDaoUpdatedEvent: false }],
+        [
+          "s3",
+          { dueAt: new Date(1 + 2 + 3) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
+        [
+          "s4",
+          { dueAt: new Date(1 + 2 + 3 + 4 + 5 + 6) },
+          { shouldEmitDaoUpdatedEvent: false },
+        ],
       ],
     },
   ];

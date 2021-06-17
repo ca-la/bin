@@ -35,6 +35,28 @@ const dao = {
   async findByDesign(ktx: Knex, designId: string): Promise<ApprovalStep[]> {
     return dao.find(ktx, { designId });
   },
+  async findByCollection(
+    ktx: Knex,
+    collectionId: string
+  ): Promise<ApprovalStep[]> {
+    return ktx(tableName)
+      .select("design_approval_steps.*")
+      .join(
+        "collection_designs",
+        "collection_designs.design_id",
+        "design_approval_steps.design_id"
+      )
+      .join(
+        "product_designs",
+        "product_designs.id",
+        "collection_designs.design_id"
+      )
+      .where({
+        "collection_designs.collection_id": collectionId,
+        "product_designs.deleted_at": null,
+      })
+      .then(adapter.fromDbArray.bind(adapter));
+  },
 };
 
 export default dao;
@@ -46,5 +68,6 @@ export const {
   findBySubmissionId,
   findOne,
   findByDesign,
+  findByCollection,
   update,
 } = dao;

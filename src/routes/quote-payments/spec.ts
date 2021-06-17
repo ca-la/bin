@@ -36,6 +36,8 @@ import * as RequestService from "../../services/stripe/make-request";
 import generateCollection from "../../test-helpers/factories/collection";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { InvoicePayment } from "../../components/invoice-payments/domain-object";
+import DesignEventsDAO from "../../components/design-events/dao";
+import { DesignEventWithMeta } from "../../components/design-events/types";
 import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
 
 const ADDRESS_BLANK = {
@@ -307,6 +309,15 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     "Stripe charged correct amount"
   );
 
+  const createdQuoteDesigns = await db.transaction((trx: Knex.Transaction) =>
+    DesignEventsDAO.findCommitQuoteByInvoiceEvents(trx, body.id)
+  );
+  t.deepEquals(
+    createdQuoteDesigns.map((event: DesignEventWithMeta) => event.type),
+    ["COMMIT_QUOTE", "COMMIT_QUOTE"],
+    "design events were created for quotes"
+  );
+
   const realtimeDesignEvents = irisStub.args.filter(
     (arg: any) => arg[0].type === "design-event/created"
   );
@@ -321,10 +332,12 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     ["COMMIT_QUOTE", "COMMIT_QUOTE"],
     "Realtime message emitted for design checkout"
   );
+
   // (4 steps receiving due dates * 2 designs) + 2 CHECKOUT STEPS being COMPLETED
   t.equals(
     realtimeStepUpdates.length,
     10,
+    // 8 of them sent from the api-worker
     "Realtime message emitted for approval step status"
   );
   t.equals(

@@ -13,7 +13,7 @@ export async function postProcessQuotePayment(
   } = task;
 
   await db.transaction(async (trx: Knex.Transaction) =>
-    handleQuotePayment(trx, userId, collectionId)
+    handleQuotePayment(trx, userId, collectionId, invoiceId)
   );
 
   await sendSlackUpdate({
