@@ -1,7 +1,6 @@
 import Knex from "knex";
 import { sum } from "lodash";
 
-import UnauthorizedError from "../../errors/unauthorized";
 import * as PlansDAO from "../plans/dao";
 import {
   CartDetails,
@@ -24,6 +23,7 @@ import { FINANCING_MARGIN } from "../../config";
 import addTimeBuffer from "../../services/add-time-buffer";
 import FinancingAccountsDAO from "../financing-accounts/dao";
 import { basisPointToPercentage } from "../../services/basis-point-to-percentage";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 
 export function calculateAmounts(
   quote: UnsavedQuote
@@ -51,7 +51,7 @@ export function calculateAmounts(
 export async function getDesignProductionFeeBasisPoints(designId: string) {
   const plan = await PlansDAO.findLatestDesignTeamPlan(db, designId);
   if (!plan) {
-    throw new UnauthorizedError("No active subscriptions for this team");
+    throw new InsufficientPlanError("No active subscriptions for this team");
   }
 
   return plan.costOfGoodsShareBasisPoints;

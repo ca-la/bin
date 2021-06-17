@@ -21,6 +21,9 @@ import { createQuotePayloadSchema } from "../../services/generate-pricing-quote/
 import { StrictContext } from "../../router-context";
 import { sendMessage as sendApiWorkerMessage } from "../../workers/api-worker/send-message";
 import { CollectionDb } from "../../components/collections/types";
+import filterError = require("../../services/filter-error");
+import InsufficientPlanError from "../../errors/insufficient-plan";
+import { generateUpgradeBodyDueToMissingSubscription } from "../../components/teams";
 
 const router = new Router();
 
@@ -65,12 +68,29 @@ async function payQuote(ctx: PayQuoteContext) {
           userId,
           collection,
           invoiceAddressId
-        ).catch((err: Error) => {
-          if (err instanceof InvalidDataError || err instanceof StripeError) {
-            ctx.throw(400, err.message);
-          }
-          throw err;
-        })
+        )
+          .catch(
+            filterError(InvalidDataError, (err: InvalidDataError) => {
+              ctx.throw(400, err.message);
+            })
+          )
+          .catch(
+            filterError(StripeError, (err: StripeError) => {
+              ctx.throw(400, err.message);
+            })
+          )
+          .catch(
+            filterError(InsufficientPlanError, async () => {
+              if (!collection.teamId) {
+                ctx.throw(404, "Collection is not in a team");
+              }
+
+              ctx.throw(
+                402,
+                generateUpgradeBodyDueToMissingSubscription(collection.teamId)
+              );
+            })
+          )
     );
 
     await transitionCheckoutState(trx, collection.id);

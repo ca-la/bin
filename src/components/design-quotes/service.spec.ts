@@ -3,7 +3,7 @@ import uuid from "node-uuid";
 
 import { sandbox, test, Test, db } from "../../test-helpers/fresh";
 import * as PlansDAO from "../plans/dao";
-import UnauthorizedError from "../../errors/unauthorized";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 import * as CreateQuoteService from "../../services/generate-pricing-quote/create-quote";
 import { UnsavedQuote } from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
@@ -65,7 +65,10 @@ test("getDesignProductionFeeBasisPoints: invalid: missing active plan", async (t
     await DesignQuoteService.getDesignProductionFeeBasisPoints("a-design-id");
     t.fail("should not resolve");
   } catch (err) {
-    t.true(err instanceof UnauthorizedError, "throws an UnauthorizedError");
+    t.true(
+      err instanceof InsufficientPlanError,
+      "throws an InsufficientPlanError"
+    );
   }
 
   t.deepEqual(findLatestDesignTeamPlanStub.args, [[db, "a-design-id"]]);

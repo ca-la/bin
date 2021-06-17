@@ -18,6 +18,7 @@ import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao"
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 import * as RequireUserSubscription from "../../middleware/require-user-subscription";
+import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
@@ -652,6 +653,53 @@ test("/quote-payments POST with full financing and full credit", async (t: Test)
     25_000_00,
     "Does not reduce available team financing credit"
   );
+});
+
+test("/quote-payments POST does not generate quotes, payment method, invoice, lineItems when team missing active subscription", async (t: Test) => {
+  const { collection, user, session, designs, team } = await setup();
+  const paymentMethodTokenId = uuid.v4();
+  const address = await createAddress({
+    ...ADDRESS_BLANK,
+    userId: user.id,
+  });
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const active = await SubscriptionsDAO.findActiveByTeamId(trx, team.id);
+    if (!active) {
+      throw new Error("Could not find subscription after setup. Unexpected");
+    }
+
+    await SubscriptionsDAO.update(active.id, { cancelledAt: new Date() }, trx);
+  });
+
+  const [postResponse, body] = await post("/quote-payments", {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [
+        {
+          designId: designs[0].id,
+          units: 300,
+        },
+        {
+          designId: designs[1].id,
+          units: 200,
+        },
+      ],
+      paymentMethodTokenId,
+      addressId: address.id,
+    },
+    headers: authHeader(session.id),
+  });
+
+  t.equal(postResponse.status, 402, "response returns Payment Needed error");
+  t.equal(
+    body.actionUrl,
+    `/subscribe?upgradingTeamId=${team.id}`,
+    "returns a link to the upgrade page"
+  );
+
+  const invoices = await InvoicesDAO.findByUser(user.id);
+  t.deepEquals(invoices, [], "No invoice exists for design");
 });
 
 test("/quote-payments POST does not generate quotes, payment method, invoice, lineItems on payment failure", async (t: Test) => {
