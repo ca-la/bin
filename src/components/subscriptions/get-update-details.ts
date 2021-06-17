@@ -1,27 +1,24 @@
-import uuid from "node-uuid";
 import Knex from "knex";
 
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
-import { Subscription } from "./domain-object";
 import TeamUsersDAO from "../team-users/dao";
 import InvalidDataError from "../../errors/invalid-data";
-import { upgradeSubscription as upgradeStripeSubscription } from "../../services/stripe/upgrade-subscription";
-import createPaymentMethod from "../payment-methods/create-payment-method";
+import { prepareUpgrade } from "../../services/stripe/upgrade-subscription";
 import { logServerError } from "../../services/logger";
+import { SubscriptionUpdateDetails } from "../teams/types";
 
-import { createSubscription } from "./create";
+import { attachTeamOptionData } from "./service";
 
 interface UpgradeTeamOptions {
   planId: string;
   teamId: string;
-  stripeCardToken: string | null;
 }
 
-export async function upgradeTeamSubscription(
+export async function getTeamSubscriptionUpdateDetails(
   trx: Knex.Transaction,
-  { planId, teamId, stripeCardToken }: UpgradeTeamOptions
-): Promise<Subscription> {
+  { planId, teamId }: UpgradeTeamOptions
+): Promise<SubscriptionUpdateDetails> {
   const newPlan = await PlansDAO.findById(trx, planId);
   if (!newPlan) {
     logServerError(
@@ -36,15 +33,17 @@ export async function upgradeTeamSubscription(
     throw new Error(`Plan with id ${planId} doesn't have Stripe prices`);
   }
 
+  const seatCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
+
+  const teamPlan = attachTeamOptionData(newPlan, seatCount);
+
   const subscription = await SubscriptionsDAO.findActiveByTeamId(trx, teamId);
 
   if (!subscription) {
-    return createSubscription(trx, {
-      planId,
-      stripeCardToken,
-      teamId,
-      isPaymentWaived: false,
-    });
+    return {
+      proratedChargeCents: teamPlan.totalBillingIntervalCostCents,
+      prorationDate: new Date(),
+    };
   }
 
   if (!subscription.stripeSubscriptionId) {
@@ -61,14 +60,14 @@ export async function upgradeTeamSubscription(
     );
   }
 
-  const isPreviusPlanFree =
+  const isPreviousPlanFree =
     previousPlan.baseCostPerBillingIntervalCents === 0 &&
     previousPlan.perSeatCostPerBillingIntervalCents === 0;
   const isPlanFree =
     newPlan.baseCostPerBillingIntervalCents === 0 &&
     newPlan.perSeatCostPerBillingIntervalCents === 0;
 
-  const isUpgradeFromPaidPlanToFree = !isPreviusPlanFree && isPlanFree;
+  const isUpgradeFromPaidPlanToFree = !isPreviousPlanFree && isPlanFree;
   if (isUpgradeFromPaidPlanToFree) {
     logServerError(
       `Downgrade from paid plan (id ${previousPlan.id}) to a free plan (id ${newPlan.id}) is not supported. Subscription id: ${subscription.id}`
@@ -78,56 +77,24 @@ export async function upgradeTeamSubscription(
     );
   }
 
-  let paymentMethod = null;
-  if (!isPlanFree) {
-    if (stripeCardToken === null) {
-      throw new InvalidDataError("Missing stripe card token");
-    }
-
-    paymentMethod = await createPaymentMethod({
-      token: stripeCardToken,
-      userId: null,
-      teamId,
-      trx,
-    });
-  }
-
-  // cancel current team subscription in our DB
-  await SubscriptionsDAO.update(
-    subscription.id,
-    {
-      cancelledAt: new Date(),
-    },
-    trx
-  );
-
-  // create new team subscription
-  const newSubscription = SubscriptionsDAO.create(
-    {
-      cancelledAt: null,
-      id: uuid.v4(),
-      isPaymentWaived: subscription.isPaymentWaived,
-      paymentMethodId: paymentMethod
-        ? paymentMethod.id
-        : subscription.paymentMethodId,
-      planId,
-      stripeSubscriptionId: subscription.stripeSubscriptionId,
-      userId: null,
-      teamId,
-    },
-    trx
-  );
-
-  const seatCount = await TeamUsersDAO.countBilledUsers(trx, teamId);
-  // working with Stripe API after we finish with our DB
-  // to make sure we won't make successful request and update in Stripe and then
-  // graceful rollback in our DB on error.
-  await upgradeStripeSubscription({
+  const { upcomingInvoice } = await prepareUpgrade({
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     newPlan,
     seatCount,
-    stripeSourceId: paymentMethod ? paymentMethod.stripeSourceId : null,
   });
 
-  return newSubscription;
+  // No upcoming invoice means that the new plan is either the same or is free
+  if (!upcomingInvoice) {
+    return {
+      proratedChargeCents: 0,
+      prorationDate: new Date(),
+    };
+  }
+
+  return {
+    proratedChargeCents: upcomingInvoice.total,
+    prorationDate: upcomingInvoice.subscription_proration_date
+      ? new Date(upcomingInvoice.subscription_proration_date)
+      : new Date(),
+  };
 }

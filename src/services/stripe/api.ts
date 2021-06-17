@@ -272,6 +272,7 @@ export function updateStripeSubscriptionItem(
 const subscriptionUpdateSchema = subscriptionSchema.partial().extend({
   items: z.array(subscriptionItemUpdateSchema),
   proration_behavior: prorationBehaviourSchema.optional(),
+  proration_date: z.number().optional(),
   payment_behavior: z
     .enum(["allow_incomplete", "pending_if_incomplete", "error_if_incomplete"])
     .optional(),
@@ -299,25 +300,34 @@ const retrieveStripeInvoiceSchema = z.object({
   subscription: z.string(),
   subscription_items: z.array(subscriptionItemUpdateSchema),
   subscription_proration_behavior: prorationBehaviourSchema.optional(),
+  subscription_proration_date: z.date(),
 });
 
 type RetrieveStripeInvoice = z.infer<typeof retrieveStripeInvoiceSchema>;
 
 const stripeInvoiceSchema = z
   .object({
+    object: z.literal("invoice"),
     subtotal: z.number(),
     total: z.number(),
     status: z.string(),
+    subscription_proration_date: z.number(),
   })
   .passthrough();
 
-type StripeInvoice = z.infer<typeof stripeInvoiceSchema>;
+export type StripeInvoice = z.infer<typeof stripeInvoiceSchema>;
 
 export async function retrieveUpcomingInvoice(
   request: RetrieveStripeInvoice
 ): Promise<StripeInvoice> {
   const data = retrieveStripeInvoiceSchema.parse(request);
-  const queryParams = serializeRequestBody(data);
+  const queryParams = serializeRequestBody({
+    ...data,
+    // Stripe timestamps are unix epoch seconds not milliseconds
+    subscription_proration_date: Math.round(
+      data.subscription_proration_date.getTime() / 1000
+    ),
+  });
 
   return safeRequest({
     inputSchema: z.never(),

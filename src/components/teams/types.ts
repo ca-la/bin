@@ -53,6 +53,15 @@ export type TeamSubscriptionUpgrade = z.infer<
   typeof teamSubscriptionUpgradeSchema
 >;
 
+export const subscriptionUpdateDetailsSchema = z.object({
+  proratedChargeCents: z.number(),
+  prorationDate: z.date(),
+});
+
+export type SubscriptionUpdateDetails = z.infer<
+  typeof subscriptionUpdateDetailsSchema
+>;
+
 export const teamTestBlank: Team = {
   createdAt: new Date(2012, 11, 24),
   deletedAt: null,

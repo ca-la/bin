@@ -72,7 +72,7 @@ async function setup() {
     .stub(TeamUsersDAO, "countBilledUsers")
     .resolves(3);
   const upgradeStripeSubscriptionStub = sandbox()
-    .stub(UpgradeStripeSubscription, "default")
+    .stub(UpgradeStripeSubscription, "upgradeSubscription")
     .resolves({
       id: "a-stripe-subscription-id",
     });
@@ -290,7 +290,7 @@ test("upgradeTeamSubscription: upgrade from free plan to a free plan without str
     [
       [
         {
-          subscription: mockedCalaSubscription,
+          stripeSubscriptionId: mockedCalaSubscription.stripeSubscriptionId,
           newPlan: {
             ...mockedPlan,
             baseCostPerBillingIntervalCents: 0,
@@ -527,7 +527,7 @@ test("upgradeTeamSubscription: successful call stripe subscription upgrade and r
     [
       [
         {
-          subscription: mockedCalaSubscription,
+          stripeSubscriptionId: mockedCalaSubscription.stripeSubscriptionId,
           newPlan: mockedPlan,
           seatCount: 3,
           stripeSourceId: "a-stripe-source-id",

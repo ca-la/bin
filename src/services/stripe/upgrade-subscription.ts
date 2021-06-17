@@ -1,4 +1,3 @@
-import { Subscription } from "../../components/subscriptions/domain-object";
 import { Plan } from "../../components/plans/types";
 import {
   PlanStripePrice,
@@ -15,6 +14,7 @@ import {
   SubscriptionUpdate,
   SubscriptionItemUpdate as StripeSubscriptionItemToUpdate,
   retrieveUpcomingInvoice,
+  StripeInvoice,
 } from "./api";
 
 function hasPerSeatPriceWithoutSeatCount(
@@ -32,7 +32,10 @@ async function getProrationBehaviour(
   subscriptionId: string,
   request: SubscriptionUpdate,
   newPlan: Plan
-): Promise<ProrationBehaviour> {
+): Promise<{
+  upcomingInvoice: StripeInvoice | null;
+  prorationBehavior: ProrationBehaviour;
+}> {
   // use this as a way to update source (card information)
   const plansPricesAreIdentical = request.items.length === 0;
   const isFreePlan =
@@ -41,37 +44,41 @@ async function getProrationBehaviour(
 
   const isNoProration = plansPricesAreIdentical || isFreePlan;
   if (isNoProration) {
-    return "none";
+    return { prorationBehavior: "none", upcomingInvoice: null };
   }
+  const todayAtMidnightUtc = new Date();
+  todayAtMidnightUtc.setUTCHours(0);
+  todayAtMidnightUtc.setUTCMinutes(0);
+  todayAtMidnightUtc.setUTCSeconds(0);
+  todayAtMidnightUtc.setUTCMilliseconds(0);
 
   const upcomingInvoice = await retrieveUpcomingInvoice({
     subscription: subscriptionId,
     subscription_items: request.items,
     subscription_proration_behavior: request.proration_behavior,
+    subscription_proration_date: todayAtMidnightUtc,
   });
 
   const isRefundOrPlanIsFree = upcomingInvoice.total <= 0;
 
-  return isRefundOrPlanIsFree ? "none" : "always_invoice";
+  return {
+    prorationBehavior: isRefundOrPlanIsFree ? "none" : "always_invoice",
+    upcomingInvoice,
+  };
 }
 
-export default async function upgradeSubscription({
-  subscription,
+export async function prepareUpgrade({
+  stripeSubscriptionId,
   newPlan,
   seatCount,
-  stripeSourceId,
 }: {
-  subscription: Subscription;
+  stripeSubscriptionId: string;
   newPlan: Plan;
   seatCount: number | null;
-  stripeSourceId: string | null;
-}): Promise<StripeSubscription> {
-  if (!subscription.stripeSubscriptionId) {
-    throw new Error(
-      `Subscription with id ${subscription.id} doesn't have associated stripe subscription id`
-    );
-  }
-
+}): Promise<{
+  updateRequest: SubscriptionUpdate;
+  upcomingInvoice: StripeInvoice | null;
+}> {
   if (newPlan.stripePrices.length === 0) {
     throw new Error(
       `New plan with id ${newPlan.id} doesn't have stripe prices`
@@ -85,9 +92,7 @@ export default async function upgradeSubscription({
   }
 
   // retrieve the Stripe subscription
-  const stripeSubscription = await getStripeSubscription(
-    subscription.stripeSubscriptionId
-  );
+  const stripeSubscription = await getStripeSubscription(stripeSubscriptionId);
 
   // prepare Stripe subscriptionItems to update with new plan prices
   // find all items those stripe prices we don't have in the new plan and set their object property deleted: true
@@ -145,24 +150,52 @@ export default async function upgradeSubscription({
     ...newStripeSubscriptionItems,
   ];
 
-  const updateRequest: SubscriptionUpdate = {
+  const initialRequest: SubscriptionUpdate = {
     items: newSubscriptionItems,
     proration_behavior: "always_invoice",
-    ...(stripeSourceId ? { default_source: stripeSourceId } : null),
     payment_behavior: "error_if_incomplete",
   };
 
-  const prorationBehavior = await getProrationBehaviour(
-    subscription.stripeSubscriptionId,
-    updateRequest,
+  const { prorationBehavior, upcomingInvoice } = await getProrationBehaviour(
+    stripeSubscriptionId,
+    initialRequest,
     newPlan
   );
 
+  return {
+    updateRequest: {
+      ...initialRequest,
+      proration_behavior: prorationBehavior,
+      ...(upcomingInvoice
+        ? { proration_date: upcomingInvoice.subscription_proration_date }
+        : null),
+    },
+    upcomingInvoice,
+  };
+}
+
+export async function upgradeSubscription({
+  stripeSubscriptionId,
+  newPlan,
+  seatCount,
+  stripeSourceId,
+}: {
+  stripeSubscriptionId: string;
+  newPlan: Plan;
+  seatCount: number | null;
+  stripeSourceId: string | null;
+}): Promise<StripeSubscription> {
+  const { updateRequest } = await prepareUpgrade({
+    stripeSubscriptionId,
+    newPlan,
+    seatCount,
+  });
+
   const updatedStripeSubscription = await updateStripeSubscription(
-    subscription.stripeSubscriptionId,
+    stripeSubscriptionId,
     {
       ...updateRequest,
-      proration_behavior: prorationBehavior,
+      ...(stripeSourceId ? { default_source: stripeSourceId } : null),
     }
   );
 

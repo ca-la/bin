@@ -1,5 +1,6 @@
 import Knex from "knex";
 import convert from "koa-convert";
+import { z } from "zod";
 
 import db from "../../services/db";
 import { emit } from "../../services/pubsub";
@@ -23,6 +24,7 @@ import {
   teamSubscriptionUpgradeSchema,
   TeamSubscriptionUpgrade,
   teamDbSchema,
+  SubscriptionUpdateDetails,
 } from "./types";
 import {
   SafeBodyState,
@@ -38,6 +40,7 @@ import { Role as TeamUserRole } from "../team-users/types";
 import filterError from "../../services/filter-error";
 import InvalidDataError from "../../errors/invalid-data";
 import { StrictContext } from "../../router-context";
+import { getTeamSubscriptionUpdateDetails } from "../subscriptions/get-update-details";
 
 const domain = "Team" as "Team";
 
@@ -266,6 +269,34 @@ function* upgradeTeamSubscriptionRouteHandler(
   this.status = 200;
 }
 
+const getUpgradeDetailsQuerySchema = z.object({
+  planId: z.string(),
+});
+
+interface GetUpgradeDetailsContext
+  extends StrictContext<SubscriptionUpdateDetails> {
+  params: { id: string };
+}
+
+async function getSubscriptionUpdateDetails(ctx: GetUpgradeDetailsContext) {
+  const queryResult = getUpgradeDetailsQuerySchema.safeParse(ctx.query);
+  ctx.assert(queryResult.success, 400, "Must pass new plan ID in query");
+  const {
+    data: { planId },
+  } = queryResult;
+  const { id: teamId } = ctx.params;
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const updateDetails = await getTeamSubscriptionUpdateDetails(trx, {
+      teamId,
+      planId,
+    });
+
+    ctx.body = updateDetails;
+    ctx.status = 200;
+  });
+}
+
 export default {
   prefix: "/teams",
   routes: {
@@ -298,6 +329,14 @@ export default {
       ],
     },
     "/:id/subscription": {
+      get: [
+        requireAuth,
+        requireTeamRoles(
+          [TeamUserRole.EDITOR, TeamUserRole.ADMIN, TeamUserRole.OWNER],
+          findTeamById
+        ),
+        convert.back(getSubscriptionUpdateDetails),
+      ],
       patch: [
         useTransaction,
         requireAuth,
