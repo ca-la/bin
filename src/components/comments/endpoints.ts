@@ -30,6 +30,7 @@ import {
 import Comment, { PaginatedComments } from "./types";
 import { findByAnnotationId } from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
+import { findByStepId } from "../approval-step-comments/dao";
 import { transformMentionsToGraphQL } from "./service";
 
 interface CreateCommentArgs {
@@ -115,8 +116,8 @@ const createComment: GraphQLEndpoint<
 };
 
 interface GetCommentsArg {
-  annotationId: string;
-  approvalStepId: null;
+  annotationId: string | null;
+  approvalStepId: string | null;
   limit: number;
   nextCursor?: string;
   previousCursor?: string;
@@ -133,7 +134,8 @@ const getComments: GraphQLEndpoint<any, any, any> = {
   ],
   name: "comments",
   signature: `(
-      annotationId: String!,
+      annotationId: String,
+      approvalStepId: String,
       limit: Int!,
       nextCursor: String,
       previousCursor: String,
@@ -156,6 +158,15 @@ const getComments: GraphQLEndpoint<any, any, any> = {
   ) => {
     const { trx, session } = useRequireAuth(context);
     const { userId, role } = session;
+
+    if (
+      (approvalStepId && annotationId) ||
+      (!approvalStepId && !annotationId)
+    ) {
+      throw new UserInputError(
+        "Either an approval step id or annotation id is required"
+      );
+    }
 
     const designId = await extractDesignIdFromCommentParent(trx, {
       approvalStepId,
@@ -209,10 +220,14 @@ const getComments: GraphQLEndpoint<any, any, any> = {
       }),
     };
 
-    const comments = await findByAnnotationId(trx, {
-      annotationId,
-      ...baseFindOptions,
-    });
+    const comments = annotationId
+      ? await findByAnnotationId(trx, {
+          ...baseFindOptions,
+          annotationId,
+        })
+      : approvalStepId
+      ? await findByStepId(trx, { ...baseFindOptions, approvalStepId })
+      : [];
 
     if (nextCursor) {
       return getNextPage({

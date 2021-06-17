@@ -11,6 +11,7 @@ import * as ApprovalStepCommentService from "../approval-step-comments/service";
 import * as AnnotationCommentService from "../annotation-comments/service";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import * as AnnotationCommentsDAO from "../annotation-comments/dao";
+import * as ApprovalStepCommentsDAO from "../approval-step-comments/dao";
 import * as CommentsDAO from "../comments/dao";
 import * as CursorService from "../comments/cursor-service";
 import { omit } from "lodash";
@@ -128,8 +129,11 @@ test("createComment", async (t: Test) => {
 
 function setup() {
   return {
-    findByIdStub: sandbox()
+    findByAnnotationIdStub: sandbox()
       .stub(AnnotationCommentsDAO, "findByAnnotationId")
+      .resolves([]),
+    findByApprovalStepIdStub: sandbox()
+      .stub(ApprovalStepCommentsDAO, "findByStepId")
       .resolves([]),
     getPermissionsStub: sandbox()
       .stub(GetPermissionsService, "getDesignPermissions")
@@ -143,7 +147,8 @@ function setup() {
 test("comments endpoint", async () => {
   function buildRequest(
     options: {
-      annotationId?: string;
+      annotationId?: string | null;
+      approvalStepId?: string | null;
       parentCommentId?: string | null;
       previousCursor?: string | null;
       nextCursor?: string | null;
@@ -151,6 +156,7 @@ test("comments endpoint", async () => {
       limit?: number;
     } = {
       annotationId: "annotation-id",
+      approvalStepId: null,
       parentCommentId: null,
       previousCursor: null,
       nextCursor: null,
@@ -162,7 +168,8 @@ test("comments endpoint", async () => {
       operationName: "comments",
       query: `
       query comments(
-        $annotationId: String!,
+        $annotationId: String,
+        $approvalStepId: String,
         $parentCommentId: String,
         $limit: Int!,
         $nextCursor: String,
@@ -170,6 +177,7 @@ test("comments endpoint", async () => {
         $commentId: String) {
           comments(
             annotationId: $annotationId,
+            approvalStepId: $approvalStepId,
             parentCommentId: $parentCommentId,
             limit: $limit,
             nextCursor: $nextCursor,
@@ -247,7 +255,7 @@ test("comments endpoint", async () => {
   });
 
   test("Valid request for previous page", async (t: Test) => {
-    const { findByIdStub } = setup();
+    const { findByAnnotationIdStub: findByIdStub } = setup();
     const { session } = await createUser({ role: "USER" });
     const limit = 10;
     const [response, body] = await post("/v2", {
@@ -284,7 +292,7 @@ test("comments endpoint", async () => {
   });
 
   test("Valid request for next page", async (t: Test) => {
-    const { findByIdStub } = setup();
+    const { findByAnnotationIdStub: findByIdStub } = setup();
     const { session } = await createUser({ role: "USER" });
     const limit = 10;
     const [response, body] = await post("/v2", {
@@ -320,8 +328,8 @@ test("comments endpoint", async () => {
     });
   });
 
-  test("Valid request for page without cursors", async (t: Test) => {
-    const { findByIdStub } = setup();
+  test("Valid request for annotation comments page without cursors", async (t: Test) => {
+    const { findByAnnotationIdStub: findByIdStub } = setup();
     const { session } = await createUser({ role: "USER" });
     const limit = 10;
     const [response, body] = await post("/v2", {
@@ -349,6 +357,60 @@ test("comments endpoint", async () => {
         },
       },
     });
+  });
+
+  test("Valid request for approval step comments page without cursors", async (t: Test) => {
+    const { findByApprovalStepIdStub: findByIdStub } = setup();
+    const { session } = await createUser({ role: "USER" });
+    const limit = 10;
+    const [response, body] = await post("/v2", {
+      body: buildRequest({
+        approvalStepId: "approval-step-id",
+        annotationId: null,
+        previousCursor: null,
+        nextCursor: null,
+        limit,
+      }),
+      headers: authHeader(session.id),
+    });
+
+    t.deepEqual(omit(findByIdStub.args[0][1], "modify"), {
+      approvalStepId: "approval-step-id",
+      limit: limit + 1,
+      sortOrder: "desc",
+    });
+    t.equal(response.status, 200);
+    t.deepEquals(body, {
+      data: {
+        comments: {
+          data: [],
+          previousCursor: null,
+          nextCursor: null,
+        },
+      },
+    });
+  });
+
+  test("Approval step id or annotation id is required", async (t: Test) => {
+    setup();
+    const { session } = await createUser({ role: "USER" });
+    const limit = 10;
+    const [response, body] = await post("/v2", {
+      body: buildRequest({
+        approvalStepId: null,
+        annotationId: null,
+        previousCursor: null,
+        nextCursor: null,
+        limit,
+      }),
+      headers: authHeader(session.id),
+    });
+
+    t.equal(response.status, 200);
+    t.equal(
+      body.errors[0].message,
+      "Either an approval step id or annotation id is required"
+    );
   });
 
   test("End to end test", async (t: Test) => {
