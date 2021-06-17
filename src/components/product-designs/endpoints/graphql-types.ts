@@ -8,7 +8,7 @@ import {
   CanvasWithEnrichedComponents,
   canvasWithEnrichedComponentsSchema,
   componentWithAssetLinksSchema,
-} from "../../canvases";
+} from "../../canvases/types";
 
 export interface DesignAndEnvironmentParent {
   designId: string;

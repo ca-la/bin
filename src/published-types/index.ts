@@ -8,6 +8,7 @@ export { DesignEventWithMeta } from "../components/design-events/types";
 export * from "../components/plans/types";
 export * from "../components/plan-stripe-price/types";
 export * from "../components/permissions/types";
+export * from "../components/canvases/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
 export * from "../components/product-designs/types";
@@ -52,6 +53,7 @@ import * as UsersGraphQLTypes from "../components/users/graphql-types";
 import * as NotificationsGraphQLTypes from "../components/notifications/graphql-types";
 import * as CommentsGraphQLTypes from "../components/comments/graphql-types";
 import * as AssetsGraphQLTypes from "../components/assets/graphql-types";
+import * as ProductDesignGraphQLTypes from "../components/product-designs/endpoints/graphql-types";
 
 export const GraphQLTypes = {
   ...SessionsGraphQLTypes,
@@ -59,6 +61,7 @@ export const GraphQLTypes = {
   ...NotificationsGraphQLTypes,
   ...CommentsGraphQLTypes,
   ...AssetsGraphQLTypes,
+  ...ProductDesignGraphQLTypes,
 };
 
 export { z } from "zod";
