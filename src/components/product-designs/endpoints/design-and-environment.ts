@@ -7,12 +7,7 @@ import {
   GraphQLEndpoint,
   GraphQLContextBase,
 } from "../../../apollo";
-import {
-  gtDesignAndEnvironment,
-  gtBaseProductDesign,
-  DesignAndEnvironment,
-} from "./graphql-types";
-import { gtCollection } from "../../collections/graphql-types";
+import { gtDesignAndEnvironment, DesignAndEnvironment } from "./graphql-types";
 
 interface DesignAndEnvironmentArgs {
   designId: string;
@@ -24,7 +19,7 @@ export const DesignAndEnvironmentEndpoint: GraphQLEndpoint<
   GraphQLContextBase<DesignAndEnvironment>
 > = {
   endpointType: "Query",
-  types: [gtDesignAndEnvironment, gtBaseProductDesign, gtCollection],
+  types: [gtDesignAndEnvironment],
   name: "DesignAndEnvironment",
   signature: `(designId: String): DesignAndEnvironment`,
   middleware: composeMiddleware(

@@ -59,8 +59,14 @@ export const componentSchema = z.union([
   artworkComponentSchema,
   sketchComponentSchema,
 ]);
-
 export type Component = z.infer<typeof componentSchema>;
+
+export const tolerantComponentSchema = baseComponentSchema.extend({
+  type: z.nativeEnum(ComponentType),
+  materialId: z.string().nullable(),
+  artworkId: z.string().nullable(),
+  sketchId: z.string().nullable(),
+});
 
 const serialized = {
   createdAt: dateStringToDate,

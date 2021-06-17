@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { Component } from "../components/types";
-import { AssetLinks } from "../assets/types";
+import { tolerantComponentSchema } from "../components/types";
+import { assetLinksSchema } from "../assets/types";
 
 /**
  * @typedef {object} Canvas A canvas in a design space holding a view to a design
@@ -35,9 +35,17 @@ export const canvasSchema = z.object({
 
 export type Canvas = z.infer<typeof canvasSchema>;
 
-export type CanvasWithEnrichedComponents = Canvas & {
-  components: (Component & AssetLinks)[];
-};
+export const componentWithAssetLinksSchema = tolerantComponentSchema.merge(
+  assetLinksSchema
+);
+
+export const canvasWithEnrichedComponentsSchema = canvasSchema.extend({
+  components: z.array(componentWithAssetLinksSchema),
+});
+
+export type CanvasWithEnrichedComponents = z.infer<
+  typeof canvasWithEnrichedComponentsSchema
+>;
 
 export const unsavedCanvasSchema = canvasSchema.omit({
   id: true,

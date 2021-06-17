@@ -2,6 +2,7 @@ import { GraphQLContextBase, GraphQLEndpoint } from "../../../apollo";
 import { DesignAndEnvironmentParent } from "./graphql-types";
 import * as CollectionsDAO from "../../collections/dao";
 import { CollectionDb } from "../../collections/types";
+import { gtCollection } from "../../collections/graphql-types";
 
 export const CollectionEndpoint: GraphQLEndpoint<
   {},
@@ -10,7 +11,7 @@ export const CollectionEndpoint: GraphQLEndpoint<
   DesignAndEnvironmentParent
 > = {
   endpointType: "DesignAndEnvironment",
-  types: [],
+  types: [gtCollection],
   name: "collection",
   resolver: async (parent: DesignAndEnvironmentParent) => {
     const { designId } = parent;

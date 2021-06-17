@@ -4,6 +4,11 @@ import {
 } from "../../../apollo/published-types";
 import { baseProductDesignSchema, BaseProductDesign } from "../types";
 import { CollectionDb } from "../../collections/types";
+import {
+  CanvasWithEnrichedComponents,
+  canvasWithEnrichedComponentsSchema,
+  componentWithAssetLinksSchema,
+} from "../../canvases";
 
 export interface DesignAndEnvironmentParent {
   designId: string;
@@ -19,18 +24,35 @@ export const gtBaseProductDesign: GraphQLType = schemaToGraphQLType(
   }
 );
 
+export const gtComponentWithAssetLinks = schemaToGraphQLType(
+  "ComponentWithAssetLinks",
+  componentWithAssetLinksSchema
+);
+
+export const gtCanvasWithEnrichedComponents = schemaToGraphQLType(
+  "CanvasWithEnrichedComponents",
+  canvasWithEnrichedComponentsSchema,
+  {
+    depTypes: {
+      components: gtComponentWithAssetLinks,
+    },
+  }
+);
+
 export const gtDesignAndEnvironment: GraphQLType = {
   name: "DesignAndEnvironment",
   type: "type",
   body: {
     designId: "String!",
-    design: "BaseProductDesign!",
+    design: "BaseProductDesign",
     collection: "Collection",
+    canvases: "[CanvasWithEnrichedComponents]",
   },
-  requires: ["BaseProductDesign", "Collection"],
+  requires: ["BaseProductDesign", "Collection", "CanvasWithEnrichedComponents"],
 };
 
 export interface DesignAndEnvironment extends DesignAndEnvironmentParent {
   productDesign: BaseProductDesign;
   collection: CollectionDb;
+  canvases: CanvasWithEnrichedComponents[];
 }

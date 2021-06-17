@@ -4,6 +4,7 @@ import createUser from "../../../test-helpers/create-user";
 import { authHeader, post } from "../../../test-helpers/http";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import createCollectionDesign from "../../../test-helpers/factories/collection-design";
+import generateCanvas from "../../../test-helpers/factories/product-design-canvas";
 
 function buildRequest(designId: string) {
   return {
@@ -15,6 +16,10 @@ function buildRequest(designId: string) {
           title
         }
         collection {
+          id
+          title
+        }
+        canvases {
           id
           title
         }
@@ -50,9 +55,17 @@ test("DesignAndEnvironment is forbidden for arbitrary user", async (t: Test) => 
   );
 });
 
-test("DesignAndEnvironment returns design and collection", async (t: Test) => {
+test("DesignAndEnvironment returns design, collection and canvases", async (t: Test) => {
   const { session, user } = await createUser();
   const { design, collection } = await createCollectionDesign(user.id);
+  const { canvas: canvas1 } = await generateCanvas({
+    designId: design.id,
+    title: "canvas 1",
+  });
+  const { canvas: canvas2 } = await generateCanvas({
+    designId: design.id,
+    title: "canvas 2",
+  });
 
   const [response, body] = await post("/v2", {
     body: buildRequest(design.id),
@@ -65,6 +78,7 @@ test("DesignAndEnvironment returns design and collection", async (t: Test) => {
         designId: design.id,
         design: pick(design, "id", "title"),
         collection: pick(collection, "id", "title"),
+        canvases: [pick(canvas1, "id", "title"), pick(canvas2, "id", "title")],
       },
     },
   });

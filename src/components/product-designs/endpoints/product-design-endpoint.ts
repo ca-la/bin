@@ -4,7 +4,10 @@ import {
   GraphQLEndpoint,
   NotFoundError,
 } from "../../../apollo";
-import { DesignAndEnvironmentParent } from "./graphql-types";
+import {
+  DesignAndEnvironmentParent,
+  gtBaseProductDesign,
+} from "./graphql-types";
 import { BaseProductDesign } from "../types";
 import * as ProductDesignsDAO from "../dao/dao";
 import ResourceNotFoundError from "../../../errors/resource-not-found";
@@ -17,7 +20,7 @@ export const ProductDesignEndpoint: GraphQLEndpoint<
   DesignAndEnvironmentParent
 > = {
   endpointType: "DesignAndEnvironment",
-  types: [],
+  types: [gtBaseProductDesign],
   name: "design",
   resolver: async (parent: DesignAndEnvironmentParent) => {
     const { designId } = parent;
