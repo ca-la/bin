@@ -48,7 +48,14 @@ async function setup() {
     collection: c1,
     collectionDesigns: [d1],
     quotes: [q1],
+    stripeStubs,
   } = await checkout();
+
+  // Resetting the stubbing since it's wrapped in every call to checkout
+  stripeStubs.attachSource.restore();
+  stripeStubs.charge.restore();
+  stripeStubs.createCustomer.restore();
+
   const {
     user: {
       designer: { user: designer2 },
@@ -56,7 +63,7 @@ async function setup() {
     collection: c2,
     collectionDesigns: [d2],
     quotes: [q2],
-  } = await checkout();
+  } = await checkout(false);
   const { user: partner1 } = await createUser({
     role: "PARTNER",
     withSession: false,

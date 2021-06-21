@@ -13,12 +13,7 @@ import { createTrx as createInvoice } from "../invoices";
 import db from "../../services/db";
 import LineItem from "../../domain-objects/line-item";
 import createUser from "../../test-helpers/create-user";
-import generateInvoice from "../../test-helpers/factories/invoice";
 import createDesign from "../../services/create-design";
-import generateAsset from "../../test-helpers/factories/asset";
-import generateComponent from "../../test-helpers/factories/component";
-import generateCanvas from "../../test-helpers/factories/product-design-canvas";
-import generateLineItem from "../../test-helpers/factories/line-item";
 import { checkout } from "../../test-helpers/checkout-collection";
 
 test("LineItems DAO supports creation/retrieval", async (t: tape.Test) => {
@@ -153,53 +148,34 @@ test("LineItems DAO supports retrieval by invoice id", async (t: tape.Test) => {
 
 test("getLineItemsWithMetaByInvoiceId retrieves all line items with meta for an invoice", async (t: tape.Test) => {
   const {
-    user: {
-      designer: { user },
-    },
     collection,
-    collectionDesigns: [design1],
-    quotes: [quote],
+    collectionDesigns: [design1, design2],
+    quotes: [quote1, quote2],
+    invoice,
   } = await checkout();
-  const { invoice } = await generateInvoice({ userId: user.id });
-  const result1 = await getLineItemsWithMetaByInvoiceId(invoice.id);
-  t.deepEqual(result1, [], "Returns nothing if there are no line items");
 
-  // Create all the items necessary to return a line item with metadata
-
-  const { asset } = await generateAsset({ userId: user.id });
-  const { component } = await generateComponent({
-    createdBy: user.id,
-    sketchId: asset.id,
-  });
-  await generateCanvas({
-    componentId: component.id,
-    designId: design1.id,
-    createdBy: user.id,
-  });
-
-  const { invoice: invoice2 } = await generateInvoice({
-    collectionId: collection.id,
-    totalCents: 100000,
-    userId: user.id,
-  });
-  const { lineItem } = await generateLineItem(quote.id, {
-    designId: design1.id,
-    invoiceId: invoice2.id,
-  });
-
-  const result2 = await getLineItemsWithMetaByInvoiceId(invoice2.id);
+  const lineItems = await findByInvoiceId(invoice.id);
+  const result = await getLineItemsWithMetaByInvoiceId(invoice.id);
   t.deepEqual(
-    result2,
+    result,
     [
       {
-        ...lineItem,
+        ...lineItems[1],
+        designTitle: design2.title,
+        designCollections: [{ id: collection.id, title: collection.title }],
+        designImageIds: [],
+        quotedUnits: quote2.units,
+        quotedUnitCostCents: quote2.unitCostCents,
+      },
+      {
+        ...lineItems[0],
         designTitle: design1.title,
         designCollections: [{ id: collection.id, title: collection.title }],
-        designImageIds: [asset.id],
-        quotedUnits: quote.units,
-        quotedUnitCostCents: quote.unitCostCents,
+        designImageIds: [],
+        quotedUnits: quote1.units,
+        quotedUnitCostCents: quote1.unitCostCents,
       },
     ],
-    "Returns the line item"
+    "Attaches meta data to invoice lines"
   );
 });
