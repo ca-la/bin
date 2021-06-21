@@ -31,7 +31,8 @@ function hasPerSeatPriceWithoutSeatCount(
 async function getProrationBehaviour(
   subscriptionId: string,
   request: SubscriptionUpdate,
-  newPlan: Plan
+  newPlan: Plan,
+  subscriptionPeriodStart: Date
 ): Promise<{
   upcomingInvoice: StripeInvoice | null;
   prorationBehavior: ProrationBehaviour;
@@ -56,7 +57,10 @@ async function getProrationBehaviour(
     subscription: subscriptionId,
     subscription_items: request.items,
     subscription_proration_behavior: request.proration_behavior,
-    subscription_proration_date: todayAtMidnightUtc,
+    subscription_proration_date:
+      subscriptionPeriodStart > todayAtMidnightUtc
+        ? subscriptionPeriodStart
+        : todayAtMidnightUtc,
   });
 
   const isRefundOrPlanIsFree = upcomingInvoice.total <= 0;
@@ -156,10 +160,15 @@ export async function prepareUpgrade({
     payment_behavior: "error_if_incomplete",
   };
 
+  const subscriptionPeriodStart = new Date(
+    stripeSubscription.current_period_start * 1000
+  );
+
   const { prorationBehavior, upcomingInvoice } = await getProrationBehaviour(
     stripeSubscriptionId,
     initialRequest,
-    newPlan
+    newPlan,
+    subscriptionPeriodStart
   );
 
   return {

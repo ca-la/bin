@@ -37,31 +37,32 @@ const perSeatPrice = {
 
 const stripeSubscriptionId = "stripe-subscription-id";
 const stripeSourceId = "stripe-source-id";
+const defaultSubscriptionItems: SubscriptionItem[] = [
+  {
+    id: "subscription-item-id-to-delete",
+    price: {
+      id: baseCostPrice2.stripePriceId,
+    },
+    quantity: 1,
+  },
+  {
+    id: "subscription-item-id-to-leave",
+    price: {
+      id: baseCostPrice.stripePriceId,
+    },
+    quantity: 1,
+  },
+  {
+    id: "subscription-item-id-to-update",
+    price: {
+      id: perSeatPrice.stripePriceId,
+    },
+    quantity: 2,
+  },
+];
 
 async function setup({
-  subscriptionItems = [
-    {
-      id: "subscription-item-id-to-delete",
-      price: {
-        id: baseCostPrice2.stripePriceId,
-      },
-      quantity: 1,
-    },
-    {
-      id: "subscription-item-id-to-leave",
-      price: {
-        id: baseCostPrice.stripePriceId,
-      },
-      quantity: 1,
-    },
-    {
-      id: "subscription-item-id-to-update",
-      price: {
-        id: perSeatPrice.stripePriceId,
-      },
-      quantity: 2,
-    },
-  ],
+  subscriptionItems = defaultSubscriptionItems,
   newPlanPrices = null,
   newPlanData = {},
   subscriptionData = {},
@@ -84,6 +85,7 @@ async function setup({
     id: stripeSubscriptionId,
     latest_invoice: null,
     customer: "cus_123456789",
+    current_period_start: Math.round(testDateAtMidnight.getTime() / 1000) - 1,
     items: {
       object: "list",
       data: subscriptionItems,
@@ -116,6 +118,8 @@ async function setup({
         id: "a-stripe-subscription-id",
         latest_invoice: null,
         customer: "cus_123456789",
+        current_period_start:
+          Math.round(testDateAtMidnight.getTime() / 1000) - 1,
         items: {
           object: "list",
           data: [
@@ -978,6 +982,97 @@ test("prepareUpgrade: valid", async (t: Test) => {
       ],
       subscription_proration_behavior: "always_invoice",
       subscription_proration_date: testDateAtMidnight,
+    },
+    "retrieve upcoming invoice with correct args"
+  );
+
+  t.equal(
+    updateStripeSubscriptionStub.callCount,
+    0,
+    "does not actually upgrade the stripe subscription"
+  );
+});
+
+test("prepareUpgrade: valid with a brand new subscription", async (t: Test) => {
+  const {
+    subscription,
+    newPlan,
+    getStripeSubscriptionStub,
+    updateStripeSubscriptionStub,
+    retrieveUpcomingInvoiceStub,
+    testDateAtMidnight,
+  } = await setup({
+    subscriptionItems: [
+      {
+        id: "subscription-item-id-to-delete",
+        price: {
+          id: baseCostPrice2.stripePriceId,
+        },
+        quantity: 1,
+      },
+      {
+        id: "subscription-item-id-to-leave",
+        price: {
+          id: baseCostPrice.stripePriceId,
+        },
+        quantity: 1,
+      },
+      {
+        id: "subscription-item-id-to-update",
+        price: {
+          id: perSeatPrice.stripePriceId,
+        },
+        quantity: 2,
+      },
+    ],
+    newPlanPrices: [baseCostPrice, baseCostPrice3, perSeatPrice],
+  });
+  getStripeSubscriptionStub.resolves({
+    id: stripeSubscriptionId,
+    latest_invoice: null,
+    customer: "cus_123456789",
+    current_period_start: Math.round(testDateAtMidnight.getTime() / 1000) + 1,
+    items: {
+      object: "list",
+      data: defaultSubscriptionItems,
+    },
+  });
+
+  const seatCount = 4;
+  await prepareUpgrade({
+    stripeSubscriptionId: subscription.stripeSubscriptionId!,
+    newPlan,
+    seatCount,
+  });
+
+  t.deepEqual(
+    getStripeSubscriptionStub.callCount,
+    1,
+    "calls get Stripe subscription"
+  );
+  t.deepEqual(
+    getStripeSubscriptionStub.args[0][0],
+    stripeSubscriptionId,
+    "calls get Stripe subscription with stripe id from the CALA subscription"
+  );
+
+  t.deepEqual(
+    retrieveUpcomingInvoiceStub.args[0][0],
+    {
+      subscription: stripeSubscriptionId,
+      subscription_items: [
+        { deleted: true, id: "subscription-item-id-to-delete" }, // deleted because this item price doesn't exist in the new plan
+        { price: baseCostPrice3.stripePriceId }, // new price from the new plan
+        {
+          id: "subscription-item-id-to-update",
+          price: perSeatPrice.stripePriceId,
+          quantity: seatCount,
+        },
+      ],
+      subscription_proration_behavior: "always_invoice",
+      subscription_proration_date: new Date(
+        testDateAtMidnight.getTime() + 1_000
+      ),
     },
     "retrieve upcoming invoice with correct args"
   );

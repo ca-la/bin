@@ -84,6 +84,7 @@ export const subscriptionSchema = z
     id: z.string(),
     latest_invoice: z.string().nullable(),
     customer: z.string(),
+    current_period_start: z.number(),
     items: z.object({
       object: z.literal("list"),
       data: z.array(subscriptionItemSchema),

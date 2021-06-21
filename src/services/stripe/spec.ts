@@ -283,6 +283,7 @@ test("addSeatCharge", async (t: Test) => {
     id: "a-stripe-subscription-id",
     latest_invoice: null,
     customer: "cus_123456789",
+    current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
     items: {
       object: "list",
       data: [
@@ -489,6 +490,7 @@ test("addSeatCharge: failed payment", async (t: Test) => {
     id: "a-stripe-subscription-id",
     latest_invoice: null,
     customer: "cus_123456789",
+    current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
     items: {
       object: "list",
       data: [
@@ -659,6 +661,7 @@ test("removeSeatCharge", async (t: Test) => {
     id: "a-stripe-subscription-id",
     latest_invoice: null,
     customer: "cus_123456789",
+    current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
     items: {
       object: "list",
       data: [
@@ -865,6 +868,7 @@ test("removeSeatCharge: failed payment", async (t: Test) => {
     id: "a-stripe-subscription-id",
     latest_invoice: null,
     customer: "cus_123456789",
+    current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
     items: {
       object: "list",
       data: [
