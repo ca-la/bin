@@ -934,38 +934,3 @@ test("GET /teams/:id/subscription: not team user with correct permissions", asyn
 
   t.equal(viewer.status, 403, `responds with expected status 403`);
 });
-
-test("GET /teams/:id/subscription: invalid data", async (t: Test) => {
-  setup({ role: "USER" });
-  sandbox()
-    .stub(TeamUsersDAO, "findOne")
-    .resolves({ role: TeamUserRole.OWNER });
-  const getUpdateDetailsStub = sandbox()
-    .stub(GetUpdateDetailsService, "getTeamSubscriptionUpdateDetails")
-    .rejects(
-      new InvalidDataError("Can't downgrade from paid plan to free plan")
-    );
-
-  const [response, body] = await get(
-    "/teams/a-team-id/subscription?planId=a-new-plan-id",
-    {
-      headers: authHeader("a-session-id"),
-    }
-  );
-
-  t.deepEqual(getUpdateDetailsStub.args[0][1], {
-    teamId: "a-team-id",
-    planId: "a-new-plan-id",
-  });
-
-  t.equal(
-    response.status,
-    400,
-    `responds with expected status 400 on InvalidDataError`
-  );
-  t.equal(
-    body.message,
-    "Can't downgrade from paid plan to free plan",
-    "with correct error message in body"
-  );
-});

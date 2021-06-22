@@ -114,8 +114,8 @@ test("throws error if plan doesn't exists", async (t: Test) => {
   );
 });
 
-test("throws error when tries to downgrade from paid plan to a free plan", async (t: Test) => {
-  const { trxStub, findPlanStub, prepareUpgradeStub, loggerStub } = setup();
+test("returns 0 when downgrading from paid plan to a free plan", async (t: Test) => {
+  const { trxStub, findPlanStub, prepareUpgradeStub, testDate } = setup();
   // retrieve new plan
   findPlanStub.onFirstCall().resolves({
     ...mockedPlan,
@@ -130,25 +130,19 @@ test("throws error when tries to downgrade from paid plan to a free plan", async
     perSeatCostPerBillingIntervalCents: 200,
   });
 
-  try {
-    await getTeamSubscriptionUpdateDetails(trxStub, {
-      planId: "a-plan-id",
-      teamId: "a-team-id",
-    });
-    t.fail("should not succeed");
-  } catch (err) {
-    t.equal(err instanceof InvalidDataError, true);
-    t.equal(
-      err.message,
-      "Please contact support@ca.la to downgrade from a paid to a free plan",
-      "throws correct client error message when team's subscription doesn't have a stripe id"
-    );
-    t.equal(
-      loggerStub.args[0][0],
-      "Downgrade from paid plan (id an-old-plan-id) to a free plan (id a-plan-id) is not supported. Subscription id: a-subscription-id",
-      "log correct server error message when team's subscription doesn't have a stripe id)"
-    );
-  }
+  const updateDetails = await getTeamSubscriptionUpdateDetails(trxStub, {
+    planId: "a-plan-id",
+    teamId: "a-team-id",
+  });
+
+  t.deepEqual(
+    updateDetails,
+    {
+      proratedChargeCents: 0,
+      prorationDate: testDate,
+    },
+    "returns correct prorated update details"
+  );
 
   t.deepEqual(
     findPlanStub.args,

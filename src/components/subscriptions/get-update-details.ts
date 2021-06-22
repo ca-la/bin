@@ -69,12 +69,10 @@ export async function getTeamSubscriptionUpdateDetails(
 
   const isUpgradeFromPaidPlanToFree = !isPreviousPlanFree && isPlanFree;
   if (isUpgradeFromPaidPlanToFree) {
-    logServerError(
-      `Downgrade from paid plan (id ${previousPlan.id}) to a free plan (id ${newPlan.id}) is not supported. Subscription id: ${subscription.id}`
-    );
-    throw new InvalidDataError(
-      `Please contact support@ca.la to downgrade from a paid to a free plan`
-    );
+    return {
+      proratedChargeCents: 0,
+      prorationDate: new Date(),
+    };
   }
 
   const { upcomingInvoice, updateRequest } = await prepareUpgrade({
