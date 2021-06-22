@@ -53,12 +53,48 @@ async function find(ctx: StrictContext<FinancingAccountDb[]>) {
   ctx.status = 200;
 }
 
+const updateAccountRequestSchema = z.object({
+  closedAt: z
+    .string()
+    .nullable()
+    .transform((maybeDateString: string | null) =>
+      maybeDateString ? new Date(maybeDateString) : null
+    ),
+});
+
+interface UpdateAccountContext extends StrictContext<FinancingAccountDb> {
+  params: { accountId: string };
+}
+
+async function update(ctx: UpdateAccountContext) {
+  const result = updateAccountRequestSchema.safeParse(ctx.request.body);
+  ctx.assert(result.success, 400, "Request does not match type.");
+
+  const { data: patch } = result;
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const { updated } = await FinancingAccountsRawDAO.update(
+      trx,
+      ctx.params.accountId,
+      {
+        closedAt: patch.closedAt,
+      }
+    );
+
+    ctx.body = updated;
+    ctx.status = 200;
+  });
+}
+
 export default {
   prefix: "/financing-accounts",
   routes: {
     "/": {
       post: [requireAuth, requireAdmin, convert.back(create)],
       get: [requireAuth, requireAdmin, convert.back(find)],
+    },
+    "/:accountId": {
+      patch: [requireAuth, requireAdmin, convert.back(update)],
     },
   },
 };

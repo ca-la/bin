@@ -1,22 +1,114 @@
 import uuid from "node-uuid";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
-import { authHeader, post, get } from "../../test-helpers/http";
+import { authHeader, patch, post, get } from "../../test-helpers/http";
 import createUser from "../../test-helpers/create-user";
 import { generateTeam } from "../../test-helpers/factories/team";
 import SessionsDAO from "../../dao/sessions";
 
 import { rawDao } from "./dao";
 
+const valid = {
+  teamId: "a-team-id",
+  termLengthDays: 30,
+  feeBasisPoints: 10_00,
+  creditLimitCents: 100_000_00,
+};
+
+test("PATCH /financing-accounts", async (t: Test) => {
+  const testDate = new Date(2012, 11, 23);
+  sandbox().useFakeTimers(testDate);
+  const sessionStub = sandbox()
+    .stub(SessionsDAO, "findById")
+    .resolves({ role: "ADMIN", userId: "a-user-id" });
+  const updateStub = sandbox()
+    .stub(rawDao, "update")
+    .resolves({
+      updated: {
+        ...valid,
+        id: "a-financing-account-id",
+        createdAt: testDate,
+        closedAt: testDate,
+      },
+    });
+
+  const [response, body] = await patch(
+    "/financing-accounts/a-financing-account-id",
+    {
+      headers: authHeader("a-session-id"),
+      body: {
+        closedAt: testDate,
+      },
+    }
+  );
+
+  t.equal(response.status, 200, "responds with OK response");
+  t.deepEqual(
+    body,
+    JSON.parse(
+      JSON.stringify({
+        ...valid,
+        id: "a-financing-account-id",
+        createdAt: testDate,
+        closedAt: testDate,
+      })
+    ),
+    "responds with the updated account"
+  );
+  t.deepEqual(
+    updateStub.args[0].slice(1),
+    [
+      "a-financing-account-id",
+      {
+        closedAt: testDate,
+      },
+    ],
+    "calls the update DAO method with the closedAt date"
+  );
+
+  sessionStub.resolves(null);
+  const [notAuthed] = await patch(
+    "/financing-accounts/a-financing-account-id",
+    {
+      headers: authHeader("a-session-id"),
+      body: {
+        closedAt: testDate,
+      },
+    }
+  );
+
+  t.equal(notAuthed.status, 401, "responds with unauthorized response");
+
+  sessionStub.resolves({
+    role: "USER",
+    userId: "a-user-id",
+  });
+  const [notAdmin] = await patch("/financing-accounts/a-financing-account-id", {
+    headers: authHeader("a-session-id"),
+    body: {
+      closedAt: testDate,
+    },
+  });
+
+  t.equal(notAdmin.status, 403, "responds with forbidden response");
+
+  sessionStub.resolves({
+    role: "ADMIN",
+    userId: "a-user-id",
+  });
+  const [notValid] = await patch("/financing-accounts/a-financing-account-id", {
+    headers: authHeader("a-session-id"),
+    body: {
+      foo: "not a valid property",
+    },
+  });
+
+  t.equal(notValid.status, 400, "responds with invalid response");
+});
+
 test("POST /financing-accounts", async (t: Test) => {
   const testDate = new Date(2012, 11, 23);
   sandbox().useFakeTimers(testDate);
   sandbox().stub(uuid, "v4").returns("a-financing-account-id");
-  const valid = {
-    teamId: "a-team-id",
-    termLengthDays: 30,
-    feeBasisPoints: 10_00,
-    creditLimitCents: 100_000_00,
-  };
   const sessionStub = sandbox()
     .stub(SessionsDAO, "findById")
     .resolves({ role: "ADMIN", userId: "a-user-id" });
@@ -167,7 +259,7 @@ test("GET /financing-accounts?teamId", async (t: Test) => {
   t.equal(notValid.status, 400, "responds with invalid response");
 });
 
-test("GET -> POST -> GET: end to end", async (t: Test) => {
+test("GET -> POST -> PATCH -> GET: end to end", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
   const designer = await createUser();
   const { team } = await generateTeam(designer.user.id);
@@ -187,9 +279,25 @@ test("GET -> POST -> GET: end to end", async (t: Test) => {
       creditLimitCents: 100_000_00,
     },
   });
+
+  const testDate = new Date();
+
+  const [, updated] = await patch(`/financing-accounts/${created.id}`, {
+    headers: authHeader(admin.session.id),
+    body: {
+      closedAt: testDate,
+    },
+  });
+
+  t.deepEqual(
+    updated,
+    { ...created, closedAt: testDate.toISOString() },
+    "returns updated account"
+  );
+
   const [, found] = await get(`/financing-accounts?teamId=${team.id}`, {
     headers: authHeader(admin.session.id),
   });
 
-  t.deepEqual(found, [created], "finds the created account");
+  t.deepEqual(found, [updated], "finds the updated account");
 });
