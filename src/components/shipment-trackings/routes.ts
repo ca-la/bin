@@ -149,7 +149,7 @@ function* receiveShipmentTracking(this: TrxContext<PublicContext>) {
     )
     .catch(
       filterError(ResourceNotFoundError, (err: ResourceNotFoundError) => {
-        Logger.logServerError(
+        Logger.logWarning(
           "Aftership webhook attempting to update unknown ShipmentTracking",
           err.message,
           JSON.stringify(this.request.body, null, 2)
