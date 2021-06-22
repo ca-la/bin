@@ -2,6 +2,7 @@ import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
 import { omit, pick } from "lodash";
+import convert from "koa-convert";
 
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
@@ -24,7 +25,9 @@ import {
   requireDesignIdBy,
 } from "../../middleware/can-access-design";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
-import { getCollaboratorsFromCommentMentions } from "../../services/add-at-mention-details";
+import addAtMentionDetails, {
+  getCollaboratorsFromCommentMentions,
+} from "../../services/add-at-mention-details";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
@@ -34,11 +37,14 @@ import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
 import * as NotificationsService from "../../services/create-notifications";
-import Comment from "../comments/types";
+import Comment, { CommentWithResources } from "../comments/types";
 import { RouteUpdated, RouteDeleted } from "../../services/pubsub/cala-events";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import Asset from "../assets/types";
+import { StrictContext } from "../../router-context";
+import { addAttachmentLinks } from "../../services/add-attachments-links";
+import * as SubmissionCommentsDAO from "../submission-comments/dao";
 
 const router = new Router();
 
@@ -542,6 +548,24 @@ export function* createRevisionRequest(
   this.status = 204;
 }
 
+interface ListSubmissionStreamItemsContext
+  extends StrictContext<CommentWithResources[]> {
+  state: AuthedState;
+  params: { submissionId: string };
+}
+
+async function listSubmissionStreamItems(
+  ctx: ListSubmissionStreamItemsContext
+) {
+  const { submissionId } = ctx.params;
+
+  const comments = await SubmissionCommentsDAO.findBySubmissionId(db, {
+    submissionId,
+  });
+  ctx.body = (await addAtMentionDetails(db, comments)).map(addAttachmentLinks);
+  ctx.status = 200;
+}
+
 router.get(
   "/",
   requireAuth,
@@ -625,6 +649,15 @@ router.del(
   canAccessDesignInState,
   useTransaction,
   deleteApprovalSubmission
+);
+
+router.get(
+  "/:submissionId/stream-items",
+  requireAuth,
+  injectSubmission,
+  requireDesignIdBy(getDesignIdFromSubmission),
+  canAccessDesignInState,
+  convert.back(listSubmissionStreamItems)
 );
 
 export default router.routes();

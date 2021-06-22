@@ -32,6 +32,8 @@ import { templateDesignEventWithMeta } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { generateTeamUser } from "../../test-helpers/factories/team-user";
 import { Role as TeamUserRole } from "../team-users/types";
+import * as SubmissionCommentsDAO from "../submission-comments/dao";
+import generateComment from "../../test-helpers/factories/comment";
 
 async function setupSubmission(
   approvalSubmission: Partial<ApprovalStepSubmission> = {}
@@ -1285,4 +1287,57 @@ test("DELETE /design-approval-step-submissions fail for submission with changed 
   );
 
   t.equal(deleteSkippedSubmissionBody.message, expectedErrorMessage);
+});
+
+test("GET /design-approval-step-submissions/:submissionId/stream-items", async (t: Test) => {
+  const { designer, submission } = await setupSubmission();
+  const admin = await createUser({ role: "ADMIN" });
+  const other = await createUser();
+
+  const { comment } = await generateComment({
+    text: "Take a look at this when you can and let me know what you think",
+    userId: designer.user.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    SubmissionCommentsDAO.create(trx, {
+      submissionId: submission.id,
+      commentId: comment.id,
+    })
+  );
+
+  const [response, body] = await get(
+    `/design-approval-step-submissions/${submission.id}/stream-items`,
+    {
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.is(response.status, 200, "returns OK response");
+  t.deepEqual(
+    body,
+    JSON.parse(
+      JSON.stringify([
+        { ...comment, mentions: {}, submissionId: submission.id },
+      ])
+    ),
+    "returns the submission comment"
+  );
+
+  const [adminResponse] = await get(
+    `/design-approval-step-submissions/${submission.id}/stream-items`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.is(adminResponse.status, 200, "returns OK response");
+
+  const [forbidden] = await get(
+    `/design-approval-step-submissions/${submission.id}/stream-items`,
+    {
+      headers: authHeader(other.session.id),
+    }
+  );
+
+  t.is(forbidden.status, 403, "returns Forbidden response");
 });
