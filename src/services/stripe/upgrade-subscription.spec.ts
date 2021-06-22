@@ -908,7 +908,6 @@ test("upgradeSubscription sets proration_behavior to `none` when we downgrade fr
       proration_behavior: "none",
       default_source: stripeSourceId,
       payment_behavior: "error_if_incomplete",
-      proration_date: Math.round(testDateAtMidnight.getTime() / 1000),
     },
     "calls with the proration none as we don't want to refund and correct subscription data to update"
   );

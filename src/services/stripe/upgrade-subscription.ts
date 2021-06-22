@@ -6,7 +6,6 @@ import {
 import {
   SubscriptionItem as StripeSubscriptionItem,
   Subscription as StripeSubscription,
-  ProrationBehaviour,
 } from "./types";
 import {
   getSubscription as getStripeSubscription,
@@ -28,15 +27,16 @@ function hasPerSeatPriceWithoutSeatCount(
   return hasPerSeatPrice && seatCount === null;
 }
 
+type ProrationData =
+  | { prorationBehavior: "none"; upcomingInvoice: null }
+  | { prorationBehavior: "always_invoice"; upcomingInvoice: StripeInvoice };
+
 async function getProrationBehaviour(
   subscriptionId: string,
   request: SubscriptionUpdate,
   newPlan: Plan,
   subscriptionPeriodStart: Date
-): Promise<{
-  upcomingInvoice: StripeInvoice | null;
-  prorationBehavior: ProrationBehaviour;
-}> {
+): Promise<ProrationData> {
   // use this as a way to update source (card information)
   const plansPricesAreIdentical = request.items.length === 0;
   const isFreePlan =
@@ -44,9 +44,11 @@ async function getProrationBehaviour(
     newPlan.perSeatCostPerBillingIntervalCents === 0;
 
   const isNoProration = plansPricesAreIdentical || isFreePlan;
+
   if (isNoProration) {
     return { prorationBehavior: "none", upcomingInvoice: null };
   }
+
   const todayAtMidnightUtc = new Date();
   todayAtMidnightUtc.setUTCHours(0);
   todayAtMidnightUtc.setUTCMinutes(0);
@@ -65,10 +67,15 @@ async function getProrationBehaviour(
 
   const isRefundOrPlanIsFree = upcomingInvoice.total <= 0;
 
-  return {
-    prorationBehavior: isRefundOrPlanIsFree ? "none" : "always_invoice",
-    upcomingInvoice,
-  };
+  return isRefundOrPlanIsFree
+    ? {
+        prorationBehavior: "none",
+        upcomingInvoice: null,
+      }
+    : {
+        prorationBehavior: "always_invoice",
+        upcomingInvoice,
+      };
 }
 
 export async function prepareUpgrade({
@@ -175,7 +182,7 @@ export async function prepareUpgrade({
     updateRequest: {
       ...initialRequest,
       proration_behavior: prorationBehavior,
-      ...(upcomingInvoice
+      ...(upcomingInvoice && upcomingInvoice.total > 0
         ? { proration_date: upcomingInvoice.subscription_proration_date }
         : null),
     },

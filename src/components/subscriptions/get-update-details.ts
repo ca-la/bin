@@ -77,14 +77,13 @@ export async function getTeamSubscriptionUpdateDetails(
     );
   }
 
-  const { upcomingInvoice } = await prepareUpgrade({
+  const { upcomingInvoice, updateRequest } = await prepareUpgrade({
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     newPlan,
     seatCount,
   });
 
-  // No upcoming invoice means that the new plan is either the same or is free
-  if (!upcomingInvoice) {
+  if (!upcomingInvoice || updateRequest.proration_behavior === "none") {
     return {
       proratedChargeCents: 0,
       prorationDate: new Date(),

@@ -40,7 +40,7 @@ const mockedCalaSubscription = {
   teamId: "a-team-id",
 };
 
-async function setup() {
+function setup() {
   const testDate = new Date(2012, 11, 25);
   const clock = sandbox().useFakeTimers(testDate);
   const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
@@ -66,6 +66,9 @@ async function setup() {
         status: "active",
         subscription_proration_date: new Date(2012, 11, 24).getTime(),
       },
+      updateRequest: {
+        proration_behavior: "always_invoice",
+      },
     });
   const loggerStub = sandbox().stub(Logger, "logServerError");
   return {
@@ -81,12 +84,7 @@ async function setup() {
 }
 
 test("throws error if plan doesn't exists", async (t: Test) => {
-  const {
-    trxStub,
-    findPlanStub,
-    prepareUpgradeStub,
-    loggerStub,
-  } = await setup();
+  const { trxStub, findPlanStub, prepareUpgradeStub, loggerStub } = setup();
   findPlanStub.onFirstCall().resolves(null);
 
   try {
@@ -117,12 +115,7 @@ test("throws error if plan doesn't exists", async (t: Test) => {
 });
 
 test("throws error when tries to downgrade from paid plan to a free plan", async (t: Test) => {
-  const {
-    trxStub,
-    findPlanStub,
-    prepareUpgradeStub,
-    loggerStub,
-  } = await setup();
+  const { trxStub, findPlanStub, prepareUpgradeStub, loggerStub } = setup();
   // retrieve new plan
   findPlanStub.onFirstCall().resolves({
     ...mockedPlan,
@@ -179,7 +172,7 @@ test("returns plan price if no active subscription", async (t: Test) => {
     findActiveTeamSubscriptionStub,
     prepareUpgradeStub,
     testDate,
-  } = await setup();
+  } = setup();
   findActiveTeamSubscriptionStub.resolves(null);
 
   const updateDetails = await getTeamSubscriptionUpdateDetails(trxStub, {
@@ -210,7 +203,7 @@ test("gets prorated upgrade details", async (t: Test) => {
     findActiveTeamSubscriptionStub,
     countBilledUsersTeamUsersStub,
     prepareUpgradeStub,
-  } = await setup();
+  } = setup();
 
   const updateDetails = await getTeamSubscriptionUpdateDetails(trxStub, {
     planId: "a-plan-id",
@@ -222,6 +215,76 @@ test("gets prorated upgrade details", async (t: Test) => {
     {
       proratedChargeCents: 100_00,
       prorationDate: new Date(2012, 11, 24),
+    },
+    "returns correct prorated update details"
+  );
+
+  t.deepEqual(
+    findPlanStub.args,
+    [
+      [trxStub, "a-plan-id"],
+      [trxStub, "an-old-plan-id"],
+    ],
+    "calls findPlan with correct args and planId"
+  );
+  t.deepEqual(
+    findActiveTeamSubscriptionStub.args,
+    [[trxStub, "a-team-id"]],
+    "calls find active team subscription with correct args and team id"
+  );
+  t.deepEqual(
+    countBilledUsersTeamUsersStub.args,
+    [[trxStub, "a-team-id"]],
+    "calls method to get count of non viewers team users with correct team id"
+  );
+  t.deepEqual(
+    prepareUpgradeStub.args,
+    [
+      [
+        {
+          stripeSubscriptionId: mockedCalaSubscription.stripeSubscriptionId,
+          newPlan: mockedPlan,
+          seatCount: 3,
+        },
+      ],
+    ],
+    "calls upgrade stripe subscription with correct args"
+  );
+});
+
+test("returns 0 cost when not prorating", async (t: Test) => {
+  const {
+    trxStub,
+    findPlanStub,
+    findActiveTeamSubscriptionStub,
+    countBilledUsersTeamUsersStub,
+    prepareUpgradeStub,
+    testDate,
+  } = setup();
+
+  prepareUpgradeStub.resolves({
+    upcomingInvoice: {
+      id: "a-stripe-invoice-id",
+      subtotal: -100_00,
+      total: -100_00,
+      status: "active",
+      subscription_proration_date: new Date(2012, 11, 24).getTime(),
+    },
+    updateRequest: {
+      proration_behavior: "none",
+    },
+  });
+
+  const updateDetails = await getTeamSubscriptionUpdateDetails(trxStub, {
+    planId: "a-plan-id",
+    teamId: "a-team-id",
+  });
+
+  t.deepEqual(
+    updateDetails,
+    {
+      proratedChargeCents: 0,
+      prorationDate: testDate,
     },
     "returns correct prorated update details"
   );
