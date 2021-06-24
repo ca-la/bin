@@ -2,6 +2,7 @@ import Koa from "koa";
 import convert from "koa-convert";
 
 import Logger = require("../../services/logger");
+import { ImgixResponseTypeError } from "../../services/imgix";
 
 // Handle non-500 controller errors gracefully. Instead of outputting to
 // stdout/stderr, just return them in a JSON response body.
@@ -23,6 +24,19 @@ export default convert.back(
         name: _name,
         ...error
       } = err;
+
+      if (err instanceof ImgixResponseTypeError) {
+        Logger.logClientError(stack);
+        ctx.status = 400;
+        ctx.body = {
+          ...error,
+          // For custom errors, `message` is on the prototype (Error) so it does
+          // not end up on the error object due to destructuring only using own
+          // enumerable properties
+          message: err.message,
+        };
+        return;
+      }
 
       ctx.status = status || statusCode || 500;
 

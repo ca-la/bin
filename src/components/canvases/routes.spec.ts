@@ -8,6 +8,7 @@ import ProductDesignOptionsDAO from "../../dao/product-design-options";
 import ProductDesignsDAO from "../product-designs/dao";
 import * as ComponentsDAO from "../components/dao";
 import * as CanvasSplitService from "./services/split";
+import Logger from "../../services/logger";
 import { Component, ComponentType } from "../components/types";
 
 import createUser from "../../test-helpers/create-user";
@@ -25,6 +26,7 @@ import * as EnrichmentService from "../../services/attach-asset-links";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import * as Changes from "./services/gather-changes";
 import generateAsset from "../../test-helpers/factories/asset";
+import { ImgixResponseTypeError } from "../../services/imgix";
 
 test("GET /product-design-canvases/:canvasId returns Canvas", async (t: tape.Test) => {
   const { session } = await createUser();
@@ -775,4 +777,43 @@ test("POST /:canvasId/split-pages splits pages", async (t: tape.Test) => {
   t.deepEqual(body[0].components[0].id, "component1");
   t.deepEqual(body[1].id, "canvas2");
   t.deepEqual(body[1].components[0].id, "component2");
+});
+
+test("POST /:canvasId/split-pages returns and logs client error in case of ImgixResponseTypeError", async (t: tape.Test) => {
+  sandbox()
+    .stub(CanvasSplitService, "splitCanvas")
+    .throws(
+      new ImgixResponseTypeError({
+        message: "Unexpected Imgix response type",
+        status: 500,
+        text: "",
+      })
+    );
+
+  const logServerErrorStub = sandbox().stub(Logger, "logServerError");
+  const logClientErrorStub = sandbox().stub(Logger, "logClientError");
+
+  sandbox()
+    .stub(EnrichmentService, "addAssetLink")
+    .callsFake(
+      async (component: Component): Promise<any> => {
+        return component;
+      }
+    );
+
+  const { session, user } = await createUser();
+  const { canvas } = await generateCanvas({ createdBy: user.id });
+
+  const [response, body] = await post(
+    `/product-design-canvases/${canvas.id}/split-pages`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+
+  t.equal(response.status, 400);
+  t.equal(body.message, "Unexpected Imgix response type");
+
+  t.equal(logServerErrorStub.callCount, 0, "doesn't call logServerError");
+  t.equal(logClientErrorStub.callCount, 1, "calls logClientError");
 });

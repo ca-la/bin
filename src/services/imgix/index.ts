@@ -1,6 +1,6 @@
 import { fetch } from "../fetch";
 import { IMGIX_PURGE_API_KEY, USER_UPLOADS_IMGIX_URL } from "../../config";
-import { logServerError } from "../logger";
+import { logServerError, logWarning } from "../logger";
 import filterError = require("../filter-error");
 
 const API_BASE = "https://api.imgix.com/api/v1";
@@ -113,7 +113,7 @@ export async function getPageCount(assetId: string): Promise<number> {
     filterError(ImgixResponseTypeError, (err: ImgixResponseTypeError) => {
       // Not logging the body, as imgix `fm=json` requests can return the entire
       // asset payload in some cases
-      logServerError(`Asset ID: ${assetId}. Status: ${err.status}`);
+      logWarning(`Asset ID: ${assetId}. Status: ${err.status}`);
       throw err;
     })
   );
