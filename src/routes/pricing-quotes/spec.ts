@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 
 import createUser from "../../test-helpers/create-user";
@@ -6,6 +7,7 @@ import { authHeader, get, post } from "../../test-helpers/http";
 import { test, Test } from "../../test-helpers/fresh";
 import db from "../../services/db";
 import PricingCostInput from "../../components/pricing-cost-inputs/domain-object";
+import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import generateProductTypes from "../../services/generate-product-types";
 import { Dollars } from "../../services/dollars";
 import { checkout } from "../../test-helpers/checkout-collection";
@@ -42,7 +44,7 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
   await generatePricingValues();
   const { user, session } = await createUser({ role: "ADMIN" });
 
-  const { collection } = await generateCollection();
+  const { collection, team } = await generateCollection();
   const design = await createDesign({
     title: "A design",
     userId: user.id,
@@ -132,6 +134,35 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
       timeTotalMs: 1423058824,
     },
     "quote is on new pricing"
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const active = await SubscriptionsDAO.findActiveByTeamId(trx, team.id);
+    if (!active) {
+      throw new Error("Could not find subscription after setup. Unexpected");
+    }
+
+    await SubscriptionsDAO.update(active.id, { cancelledAt: new Date() }, trx);
+  });
+
+  const [, noActiveSubscription] = await post("/pricing-quotes/preview", {
+    body: {
+      uncommittedCostInput,
+      units: 100,
+    },
+    headers: authHeader(session.id),
+  });
+
+  t.deepEqual(
+    noActiveSubscription,
+    {
+      payLaterTotalCents: 659575,
+      payLaterTotalCentsPerUnit: 6596,
+      payNowTotalCents: 620000,
+      payNowTotalCentsPerUnit: 6200,
+      timeTotalMs: 1423058824,
+    },
+    "returns quote even with no active subscription on the team"
   );
 });
 

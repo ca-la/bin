@@ -22,6 +22,7 @@ import {
 import { StrictContext } from "../../router-context";
 import { safeQuery, SafeQueryState } from "../../middleware/type-guard";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 
 const router = new Router();
 
@@ -91,7 +92,7 @@ function* previewQuote(this: AuthedContext): Iterator<any, any, any> {
 
   const productionFeeBasisPoints = yield getDesignProductionFeeBasisPoints(
     uncommittedCostInput.designId
-  );
+  ).catch(filterError(InsufficientPlanError, () => 0));
   const unsavedQuote = yield createUnsavedQuoteWithLatest(
     {
       minimumOrderQuantity,
