@@ -1,4 +1,3 @@
-import uuid from "node-uuid";
 import {
   GraphQLEndpoint,
   ForbiddenError,
@@ -75,7 +74,7 @@ const createComment: GraphQLEndpoint<
 
     const comment = await createCommentWithAttachments(trx, {
       comment: {
-        id: uuid.v4(),
+        id: input.id,
         createdAt: new Date(),
         deletedAt: null,
         text: input.text,

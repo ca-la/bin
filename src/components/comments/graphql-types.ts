@@ -31,6 +31,7 @@ export const CommentWithResources = schemaToGraphQLType(
 );
 
 const commentInputSchema = z.object({
+  id: z.string(),
   text: z.string(),
   parentCommentId: z.string().nullable(),
   isPinned: z.boolean(),

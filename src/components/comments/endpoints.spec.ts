@@ -34,6 +34,7 @@ test("createComment", async (t: Test) => {
       }`,
         variables: {
           comment: {
+            id: uuid.v4(),
             text: "hey",
             parentCommentId: null,
             isPinned: false,
@@ -101,6 +102,7 @@ test("createComment", async (t: Test) => {
   });
   const [, withApprovalStepBody] = await sendRequest(
     {
+      id: uuid.v4(),
       approvalStepId: approvalStep.id,
     },
     authHeader(session.id)
@@ -116,6 +118,7 @@ test("createComment", async (t: Test) => {
   });
   const [, withAnnotationBody] = await sendRequest(
     {
+      id: uuid.v4(),
       annotationId: annotation.id,
     },
     authHeader(session.id)
