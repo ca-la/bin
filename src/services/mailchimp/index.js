@@ -3,7 +3,8 @@
 const fetch = require("node-fetch");
 const crypto = require("crypto");
 
-const ThirdPartyCallError = require("../../errors/third-party-call-error");
+const ThirdPartyCallError = require("../../errors/third-party-call-error")
+  .default;
 const ResourceNotFoundError = require("../../errors/resource-not-found")
   .default;
 const { logServerError } = require("../logger");
