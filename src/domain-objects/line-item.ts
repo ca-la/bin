@@ -1,8 +1,5 @@
 import DataAdapter from "../services/data-adapter";
-import {
-  hasOnlyProperties,
-  hasProperties,
-} from "../services/require-properties";
+import { hasProperties } from "../services/require-properties";
 
 export default interface LineItem {
   id: string;
@@ -27,7 +24,7 @@ export interface LineItemRow {
 export const dataAdapter = new DataAdapter<LineItemRow, LineItem>();
 
 export function isLineItem(candidate: object): candidate is LineItem {
-  return hasOnlyProperties(
+  return hasProperties(
     candidate,
     "id",
     "createdAt",
@@ -40,7 +37,7 @@ export function isLineItem(candidate: object): candidate is LineItem {
 }
 
 export function isLineItemRow(row: object): row is LineItemRow {
-  return hasOnlyProperties(
+  return hasProperties(
     row,
     "id",
     "created_at",
