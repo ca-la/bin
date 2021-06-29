@@ -10,12 +10,14 @@ import createUser from "../../test-helpers/create-user";
 import { costCollection } from "../../test-helpers/cost-collection";
 import { CreditsDAO, CreditType } from "../credits";
 import { rawDao as RawFinancingAccountsDAO } from "../financing-accounts/dao";
+import * as ProductDesignsDAO from "../product-designs/dao/dao";
 import { generateSubscription } from "../../test-helpers/factories/subscription";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import { PricingCostInput } from "../pricing-cost-inputs/types";
 import { FinancingAccountDb } from "../financing-accounts/types";
 
 import * as DesignQuoteService from "./service";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const BASIS_POINTS = 205;
 const unsavedQuote: UnsavedQuote = {
@@ -168,6 +170,36 @@ test("getCartDetails: empty", async (t: Test) => {
     balanceDueCents: 0,
     totalUnits: 0,
   });
+});
+
+test("getCartDetails: invalid: deleted design", async (t: Test) => {
+  const {
+    collectionDesigns,
+    user: { designer },
+  } = await costCollection();
+
+  await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignsDAO.deleteByIds({ designIds: [collectionDesigns[0].id], trx })
+  );
+
+  try {
+    await db.transaction((trx: Knex.Transaction) =>
+      DesignQuoteService.getCartDetails(
+        trx,
+        [
+          { designId: collectionDesigns[0].id, units: 100 },
+          { designId: collectionDesigns[1].id, units: 100 },
+        ],
+        designer.user.id
+      )
+    );
+    t.fail("Should not succeed");
+  } catch (err) {
+    t.true(
+      err instanceof ResourceNotFoundError,
+      "throws ResourceNotFoundError if design is deleted"
+    );
+  }
 });
 
 test("getCartDetails: no credits, no production fee", async (t: Test) => {

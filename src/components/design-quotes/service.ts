@@ -24,6 +24,7 @@ import addTimeBuffer from "../../services/add-time-buffer";
 import FinancingAccountsDAO from "../financing-accounts/dao";
 import { basisPointToPercentage } from "../../services/basis-point-to-percentage";
 import InsufficientPlanError from "../../errors/insufficient-plan";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 export function calculateAmounts(
   quote: UnsavedQuote
@@ -132,8 +133,8 @@ function calculateSubtotal(
 
       const designTeam = await TeamsDAO.findByDesign(trx, designId);
       if (!designTeam) {
-        throw new Error(
-          "Cannot check out a design that does not belong to a team"
+        throw new ResourceNotFoundError(
+          `Could not find a team for the design: ${designId}`
         );
       }
       const { id: teamId } = designTeam;
