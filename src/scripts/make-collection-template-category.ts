@@ -26,6 +26,22 @@ function main() {
       throw new Error(`Could not find category with ID ${categoryId}`);
     }
 
+    log(`Category: ${JSON.stringify(category, null, 2)}`);
+
+    const existingCategoryDesigns = await TemplateDesignsDAO.getAll(trx, {
+      templateCategoryIds: [categoryId],
+      limit: 1000,
+      offset: 0,
+    });
+
+    if (existingCategoryDesigns.length > 0) {
+      log(`Removing existing ${existingCategoryDesigns.length} templates`);
+      await TemplateDesignsDAO.removeList(
+        existingCategoryDesigns.map((d: ProductDesign) => d.id),
+        trx
+      );
+    }
+
     const designs = await ProductDesignsDAO.findByCollectionId(
       collectionId,
       trx
@@ -36,12 +52,6 @@ function main() {
       );
     }
 
-    log(`Category: ${JSON.stringify(category, null, 2)}`);
-
-    await TemplateDesignsDAO.removeList(
-      designs.map((d: ProductDesign) => d.id),
-      trx
-    );
     const created = await TemplateDesignsDAO.createList(
       designs.map((d: ProductDesign) => ({
         designId: d.id,
