@@ -4,15 +4,14 @@ import * as Fetch from "../fetch";
 import { purgeImage, getPageCount } from ".";
 
 test("purgeImage makes purge request", async (t: Test) => {
-  const fetchStub = sandbox()
-    .stub(Fetch, "fetch")
-    .resolves({
-      json: (): Promise<void> => Promise.resolve(),
-      text: (): string => "hi",
-      headers: {
-        get: (): string => "application/json",
-      },
-    });
+  const fetchObject = {
+    json: () => Promise.resolve({}),
+    headers: {
+      get: (): string => "application/json",
+    },
+    status: 200,
+  };
+  const fetchStub = sandbox().stub(Fetch, "fetch").resolves(fetchObject);
 
   await purgeImage("https://example.com");
 
@@ -33,13 +32,32 @@ test("purgeImage makes purge request", async (t: Test) => {
     },
     "request body is correct"
   );
+
+  fetchStub.resolves({
+    ...fetchObject,
+    status: 409,
+  });
+  await purgeImage("https://example.com");
+  t.pass("409 status should still succeed");
+
+  fetchStub.resolves({
+    ...fetchObject,
+    status: 404,
+  });
+
+  try {
+    await purgeImage("https://example.com");
+    t.fail("Should not succeed");
+  } catch (err) {
+    t.true(err instanceof Error, "Should throw generic Error");
+  }
 });
 
 test("getPageCount counts pages", async (t: Test) => {
   const fetchStub = sandbox()
     .stub(Fetch, "fetch")
     .resolves({
-      json: (): Promise<object> =>
+      json: () =>
         Promise.resolve({
           PDF: {
             PageCount: 2,

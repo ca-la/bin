@@ -2,6 +2,7 @@ import { fetch } from "../fetch";
 import { IMGIX_PURGE_API_KEY, USER_UPLOADS_IMGIX_URL } from "../../config";
 import { logServerError, logWarning } from "../logger";
 import filterError = require("../filter-error");
+import ConflictError from "../../errors/conflict";
 
 const API_BASE = "https://api.imgix.com/api/v1";
 
@@ -58,6 +59,10 @@ async function makeRequest<T extends object>(options: {
   const json = await response.json();
 
   if (response.status < 200 || response.status >= 300) {
+    if (response.status === 409) {
+      throw new ConflictError("Imgix responded with a conflict");
+    }
+
     logServerError("Imgix response:", json);
     throw new Error(`Unexpected Imgix response code: ${response.status}`);
   }
@@ -93,7 +98,11 @@ export async function purgeImage(imageUrl: string): Promise<void> {
       },
       type: "purges",
     },
-  });
+  }).catch(
+    filterError(ConflictError, () => {
+      logWarning("Cache purge is already in progress.");
+    })
+  );
 }
 
 interface MetadataResponse {
