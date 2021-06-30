@@ -1,6 +1,6 @@
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, get } from "../../test-helpers/http";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import * as HistoryService from "./services/get-order-history";
 
 const API_PATH = "/order-history";
@@ -12,7 +12,7 @@ test(`GET ${API_PATH}/ returns the order history of the logged in user`, async (
 
   const { session } = await createUser();
 
-  const [response, body] = await get(`${API_PATH}/?type=designs`, {
+  const [response, body] = await get(`${API_PATH}?type=designs`, {
     headers: authHeader(session.id),
   });
 
@@ -28,10 +28,9 @@ test(`GET ${API_PATH}/ returns the order history of the logged in user`, async (
 test(`GET ${API_PATH}/ throws for incorrect query params`, async (t: Test) => {
   const { session } = await createUser();
 
-  const [response, body] = await get(`${API_PATH}/`, {
+  const [response] = await get(`${API_PATH}?type=some-other-type`, {
     headers: authHeader(session.id),
   });
 
-  t.equal(response.status, 400, "Responds successfully");
-  t.true(body.message.includes('Must specify a query param "type"'));
+  t.equal(response.status, 400, "returns Invalid Data response");
 });

@@ -5,6 +5,7 @@ import * as PaymentsDAO from "../../invoice-payments/dao";
 import * as AssetLinksService from "../../../services/attach-asset-links";
 import * as InvoicesDAO from "../../../dao/invoices/search";
 import * as LineItemsDAO from "../../../dao/line-items";
+import InvoiceFeesDAO from "../../invoice-fee/dao";
 
 import generateInvoice from "../../../test-helpers/factories/invoice";
 import { LineItemWithMeta } from "../../../domain-objects/line-item";
@@ -36,11 +37,18 @@ test("getOrderHistory returns a list", async (t: Test) => {
   const getPaymentsStub = sandbox()
     .stub(PaymentsDAO, "findByInvoiceId")
     .resolves([]);
+  const getFeesStub = sandbox()
+    .stub(InvoiceFeesDAO, "findByInvoiceId")
+    .resolves([]);
   const getLinksStub = sandbox()
     .stub(AssetLinksService, "generatePreviewLinks")
     .returns([]);
 
-  const result = await getOrderHistory({ userId: user.id });
+  const result = await getOrderHistory({
+    userId: user.id,
+    limit: null,
+    offset: null,
+  });
 
   t.deepEqual(
     result,
@@ -48,7 +56,7 @@ test("getOrderHistory returns a list", async (t: Test) => {
       {
         ...invoice1,
         amountCreditApplied: 0,
-        isPayLater: true,
+        isPayLater: false,
         lineItems: [
           {
             ...lineItemWithMeta,
@@ -56,6 +64,7 @@ test("getOrderHistory returns a list", async (t: Test) => {
           },
         ],
         payments: [],
+        fees: [],
         totalUnits: 100,
       },
     ],
@@ -65,5 +74,6 @@ test("getOrderHistory returns a list", async (t: Test) => {
   t.equal(getInvoicesStub.callCount, 1);
   t.equal(getLineItemsStub.callCount, 1);
   t.equal(getPaymentsStub.callCount, 1);
+  t.equal(getFeesStub.callCount, 1);
   t.equal(getLinksStub.callCount, 1);
 });

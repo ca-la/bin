@@ -25,8 +25,8 @@ const instantiate = (row: any): Invoice => {
 };
 
 export async function getInvoicesByUser(options: {
-  limit?: number;
-  offset?: number;
+  limit: number | null;
+  offset: number | null;
   trx?: Knex.Transaction;
   userId: string;
 }): Promise<Invoice[]> {

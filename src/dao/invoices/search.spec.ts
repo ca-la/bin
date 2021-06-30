@@ -20,7 +20,11 @@ test("getInvoicesByUser returns a list of undeleted invoices", async (t: Test) =
     userId: user.id,
     invoiceAddressId: invoiceAddress.id,
   });
-  const result = await getInvoicesByUser({ userId: user.id });
+  const result = await getInvoicesByUser({
+    userId: user.id,
+    limit: null,
+    offset: null,
+  });
 
   t.deepEqual(
     result,

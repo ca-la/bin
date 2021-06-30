@@ -27,8 +27,13 @@ import { logServerError, time, timeLog, timeEnd } from "../../services/logger";
 import { PaymentMethod } from "../../components/payment-methods/types";
 import * as Stripe from "../stripe";
 import { getCartDetails } from "../../components/design-quotes/service";
-import { CartDetails } from "../../components/design-quotes/types";
+import {
+  CartDetails,
+  FinancingItem,
+} from "../../components/design-quotes/types";
 import { CreditsDAO, CreditType } from "../../components/credits";
+import InvoiceFeesDAO from "../../components/invoice-fee/dao";
+import { InvoiceFeeType } from "../../components/invoice-fee/types";
 
 type CreateRequest = CreateQuotePayload[];
 
@@ -220,6 +225,27 @@ function createLineItems(
     );
 }
 
+async function createFees(
+  trx: Knex.Transaction,
+  invoiceId: string,
+  cartDetails: CartDetails
+) {
+  const fees = cartDetails.financingItems.map((item: FinancingItem) => ({
+    createdAt: new Date(),
+    deletedAt: null,
+    description: `Account ID: ${item.accountId}`,
+    id: uuid.v4(),
+    invoiceId,
+    title: "Financing fee",
+    totalCents: item.feeAmountCents,
+    type: InvoiceFeeType.FINANCING,
+  }));
+
+  if (fees.length > 0) {
+    await InvoiceFeesDAO.createAll(trx, fees);
+  }
+}
+
 const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
   const designIds = quotes.reduce(
     (acc: string[], quote: PricingQuote) =>
@@ -233,9 +259,11 @@ const getDesignNames = async (quotes: PricingQuote[]): Promise<string[]> => {
 async function processQuotesAfterInvoice(
   trx: Knex.Transaction,
   invoiceId: string,
-  quotes: PricingQuote[]
+  quotes: PricingQuote[],
+  cartDetails: CartDetails
 ): Promise<void> {
   await createLineItems(quotes, invoiceId, trx);
+  await createFees(trx, invoiceId, cartDetails);
   for (const quote of quotes) {
     await setApprovalStepsDueAtByPricingQuote(trx, quote);
   }
@@ -295,7 +323,7 @@ export default async function createAndPayInvoice(
     );
     timeLog("createAndPayInvoice", "createInvoice");
 
-    await processQuotesAfterInvoice(trx, invoice.id, quotes);
+    await processQuotesAfterInvoice(trx, invoice.id, quotes, cartDetails);
     timeLog("createAndPayInvoice", "processQuotesAfterInvoice");
 
     const paidInvoice = await payInvoice(

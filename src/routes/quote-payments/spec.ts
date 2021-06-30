@@ -40,6 +40,8 @@ import { InvoicePayment } from "../../components/invoice-payments/domain-object"
 import DesignEventsDAO from "../../components/design-events/dao";
 import { DesignEventWithMeta } from "../../components/design-events/types";
 import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
+import InvoiceFeesDAO from "../../components/invoice-fee/dao";
+import { InvoiceFeeType } from "../../components/invoice-fee/types";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -269,6 +271,16 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   t.equals(lineItems.length, 2, "Line Item exists for designs");
   t.equals(lineItems[0].designId, d1.id, "Line Item has correct design");
   t.equals(lineItems[1].designId, d2.id, "Line Item has correct design");
+
+  const fees = await InvoiceFeesDAO.findByInvoiceId(db, body.id);
+  t.equals(fees.length, 1, "Invoice Fees exist for designs");
+  t.equals(fees[0].invoiceId, body.id, "Fee has correct invoice ID");
+  t.equals(fees[0].type, InvoiceFeeType.FINANCING, "Fee has correct type");
+  t.equals(
+    fees[0].totalCents,
+    Math.round((5_000_00 / 1.1) * 0.1),
+    "Fee has correct amount"
+  );
 
   const payments = await InvoicePaymentsDAO.findByInvoiceId(body.id);
   t.equals(

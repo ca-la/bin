@@ -2,19 +2,22 @@ import {
   generatePreviewLinks,
   ThumbnailAndPreviewLinks,
 } from "../../../services/attach-asset-links";
+import db from "../../../services/db";
 import { findByInvoiceId as findPaymentsByInvoiceId } from "../../invoice-payments/dao";
 import { InvoicePayment } from "../../invoice-payments/domain-object";
-import { isFinanced } from "./is-financed";
 import { getInvoicesByUser } from "../../../dao/invoices/search";
 import { getLineItemsWithMetaByInvoiceId } from "../../../dao/line-items";
 import { LineItemWithMeta } from "../../../domain-objects/line-item";
 import Invoice = require("../../../domain-objects/invoice");
+import { InvoiceFee } from "../../invoice-fee/types";
+import InvoiceFeesDAO from "../../invoice-fee/dao";
 
 export interface InvoiceWithMeta extends Invoice {
   amountCreditApplied: number;
   isPayLater: boolean;
   lineItems: LineItemWithImageLinks[];
   payments: InvoicePayment[];
+  fees: InvoiceFee[];
   totalUnits: number;
 }
 
@@ -26,8 +29,8 @@ interface LineItemWithImageLinks extends LineItemWithMeta {
  * Retrieves all purchase history information for the given user.
  */
 export async function getOrderHistory(options: {
-  limit?: number;
-  offset?: number;
+  limit: number | null;
+  offset: number | null;
   userId: string;
 }): Promise<InvoiceWithMeta[]> {
   const invoices = await getInvoicesByUser(options);
@@ -50,7 +53,11 @@ export async function getOrderHistory(options: {
       },
       0
     );
-    const isPayLater = isFinanced(invoice.totalCents, invoicePayments);
+    // Financed payments are ones with no user ID that point to a credit trx
+    const isPayLater = invoicePayments.some(
+      (payment: InvoicePayment) =>
+        payment.creditTransactionId !== null && payment.creditUserId === null
+    );
     const amountCreditApplied = invoicePayments.reduce(
       (accumulator: number, invoicePayment: InvoicePayment): number => {
         if (invoicePayment.creditUserId) {
@@ -61,6 +68,7 @@ export async function getOrderHistory(options: {
       },
       0
     );
+    const invoiceFees = await InvoiceFeesDAO.findByInvoiceId(db, invoice.id);
 
     invoicesWithMeta.push({
       ...invoice,
@@ -68,6 +76,7 @@ export async function getOrderHistory(options: {
       isPayLater,
       lineItems: lineItemsWithImageLinks,
       payments: invoicePayments,
+      fees: invoiceFees,
       totalUnits,
     });
   }

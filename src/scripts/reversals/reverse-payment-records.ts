@@ -34,7 +34,7 @@ async function reversePaymentRecords(): Promise<void> {
   }
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    const lineItems = await db
+    const lineItems = await trx
       .select("id")
       .from("line_items")
       .whereIn("invoice_id", (query: Knex.QueryBuilder) => {
@@ -42,16 +42,24 @@ async function reversePaymentRecords(): Promise<void> {
           .select("id")
           .from("invoices")
           .where({ collection_id: collectionId });
-      })
-      .transacting(trx);
+      });
 
-    const invoices = await db
+    const fees = await trx
+      .select("id")
+      .from("invoice_fees")
+      .whereIn("invoice_id", (query: Knex.QueryBuilder) =>
+        query
+          .select("id")
+          .from("invoices")
+          .where({ collection_id: collectionId })
+      );
+
+    const invoices = await trx
       .select("id")
       .from("invoices")
-      .where({ collection_id: collectionId })
-      .transacting(trx);
+      .where({ collection_id: collectionId });
 
-    const designEvents = await db
+    const designEvents = await trx
       .select("id")
       .from("design_events")
       .whereIn("design_id", (query: Knex.QueryBuilder) => {
@@ -60,8 +68,7 @@ async function reversePaymentRecords(): Promise<void> {
           .from("collection_designs")
           .where({ collection_id: collectionId });
       })
-      .andWhere({ type: "COMMIT_QUOTE" })
-      .transacting(trx);
+      .andWhere({ type: "COMMIT_QUOTE" });
 
     Logger.log(
       `Found: ${lineItems.length} Invoice Line Items, ${invoices.length} Invoices, and ${designEvents.length} Design Events`
@@ -79,7 +86,7 @@ async function reversePaymentRecords(): Promise<void> {
       throw new Error(`No design events found for collection ${collectionId}`);
     }
 
-    const steps = await db
+    const steps = await trx
       .select("*")
       .from("design_approval_steps")
       .join(
@@ -118,21 +125,19 @@ async function reversePaymentRecords(): Promise<void> {
       }
     }
 
-    const invoicePayments = await db
+    const invoicePayments = await trx
       .select("id")
       .from("invoice_payments")
-      .whereIn("invoice_id", map(invoices, "id"))
-      .transacting(trx);
+      .whereIn("invoice_id", map(invoices, "id"));
 
     Logger.log(`Found: ${invoicePayments.length} Invoice Payments`);
 
     let invoicePaymentsDeleted = 0;
     if (isRowsOfIds(invoicePayments)) {
-      invoicePaymentsDeleted = await db
+      invoicePaymentsDeleted = await trx
         .del()
         .from("invoice_payments")
-        .whereIn("id", map(invoicePayments, "id"))
-        .transacting(trx);
+        .whereIn("id", map(invoicePayments, "id"));
       Logger.log(`Deleted ${invoicePaymentsDeleted} invoice payments`);
 
       if (invoicePaymentsDeleted !== invoicePayments.length) {
@@ -142,11 +147,10 @@ async function reversePaymentRecords(): Promise<void> {
       }
     }
 
-    const lineItemsDeleted: number = await db
+    const lineItemsDeleted: number = await trx
       .del()
       .from("line_items")
-      .whereIn("id", map(lineItems, "id"))
-      .transacting(trx);
+      .whereIn("id", map(lineItems, "id"));
     Logger.log(`Deleted ${lineItemsDeleted} line items`);
 
     if (lineItemsDeleted !== lineItems.length) {
@@ -155,11 +159,18 @@ async function reversePaymentRecords(): Promise<void> {
       );
     }
 
-    const invoicesDeleted: number = await db
+    if (fees.length > 0) {
+      const feesDeleted: number = await trx
+        .del()
+        .from("invoice_fees")
+        .whereIn("id", map(fees, "id"));
+      Logger.log(`Deleted ${feesDeleted} fees`);
+    }
+
+    const invoicesDeleted: number = await trx
       .del()
       .from("invoices")
-      .whereIn("id", map(invoices, "id"))
-      .transacting(trx);
+      .whereIn("id", map(invoices, "id"));
     Logger.log(`Deleted ${invoicesDeleted} invoices`);
 
     if (invoicesDeleted !== invoices.length) {
@@ -168,11 +179,10 @@ async function reversePaymentRecords(): Promise<void> {
       );
     }
 
-    const designEventsDeleted: number = await db
+    const designEventsDeleted: number = await trx
       .del()
       .from("design_events")
-      .whereIn("id", map(designEvents, "id"))
-      .transacting(trx);
+      .whereIn("id", map(designEvents, "id"));
     Logger.log(`Deleted ${designEventsDeleted} design events`);
 
     if (designEventsDeleted !== designEvents.length) {
