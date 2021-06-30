@@ -4,15 +4,19 @@ import { Role } from "../users/graphql-types";
 import { Attachment } from "../assets/graphql-types";
 import { Mention } from "../notifications/graphql-types";
 import { commentSchema } from "./types";
+import { assetLinksSchema, assetSchema } from "../assets/types";
 
 const mentionsSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
 });
 
-export const commentWithResourcesSchema = commentSchema.extend({
-  mentions: z.array(mentionsSchema).nullable(),
-});
+export const commentWithResourcesSchema = commentSchema
+  .omit({ attachments: true })
+  .extend({
+    mentions: z.array(mentionsSchema).nullable(),
+    attachments: z.array(z.intersection(assetSchema, assetLinksSchema)),
+  });
 
 export type CommentWithResourcesGraphQLType = z.infer<
   typeof commentWithResourcesSchema

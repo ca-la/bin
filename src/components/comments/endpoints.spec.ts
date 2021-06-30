@@ -30,6 +30,10 @@ test("createComment", async (t: Test) => {
         query: `mutation n($comment: CommentInput!) {
         createComment(comment: $comment) {
           id
+          attachments {
+            id
+            thumbnailLink
+          }
         }
       }`,
         variables: {
@@ -97,9 +101,17 @@ test("createComment", async (t: Test) => {
     "Should throw BAD_USER_INPUT if no approvalStepId or annotationId is provided"
   );
 
-  sandbox().stub(ApprovalStepCommentService, "createAndAnnounce").resolves({
-    id: "withApprovalStepId",
-  });
+  sandbox()
+    .stub(ApprovalStepCommentService, "createAndAnnounce")
+    .resolves({
+      id: "withApprovalStepId",
+      attachments: [
+        {
+          id: "attachment-id",
+          thumbnailLink: "tl",
+        },
+      ],
+    });
   const [, withApprovalStepBody] = await sendRequest(
     {
       id: uuid.v4(),
@@ -112,9 +124,15 @@ test("createComment", async (t: Test) => {
     "withApprovalStepId",
     "Should create a comment and return result of ApprovalStepCommentService.createAndAnnounce"
   );
+  t.is(
+    withApprovalStepBody.data.createComment.attachments[0].thumbnailLink,
+    "tl",
+    "Should return thumbnailLink"
+  );
 
   sandbox().stub(AnnotationCommentService, "createAndAnnounce").resolves({
     id: "withAnnotationId",
+    attachments: [],
   });
   const [, withAnnotationBody] = await sendRequest(
     {
