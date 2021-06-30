@@ -43,7 +43,10 @@ export function* canViewComponentInQueryParam(
   const rootCanvas = yield findByComponentId(componentRoot.id);
 
   if (!rootCanvas) {
-    throw new Error(`Component ${componentId} has no canvas!`);
+    this.throw(
+      404,
+      `Canvas for component ${componentId} is missing or deleted.`
+    );
   }
 
   yield attachDesignPermissions(this, rootCanvas.designId);

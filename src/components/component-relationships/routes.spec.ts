@@ -1,7 +1,8 @@
-import tape from "tape";
+import Knex from "knex";
 import uuid from "node-uuid";
 
-import { test } from "../../test-helpers/fresh";
+import { db, test, Test } from "../../test-helpers/fresh";
+import * as CanvasesDAO from "../../components/canvases/dao";
 import generateComponentRelationship from "../../test-helpers/factories/component-relationship";
 import generateComponent from "../../test-helpers/factories/component";
 import generateProcess from "../../test-helpers/factories/process";
@@ -9,7 +10,7 @@ import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createUser = require("../../test-helpers/create-user");
 import API from "../../test-helpers/http";
 
-test("GET /component-relationships/?componentId returns a list of relationships", async (t: tape.Test) => {
+test("GET /component-relationships/?componentId returns a list of relationships", async (t: Test) => {
   const { session, user } = await createUser();
   const { session: sessionTwo } = await createUser();
   const {
@@ -22,7 +23,10 @@ test("GET /component-relationships/?componentId returns a list of relationships"
     createdBy: user.id,
     targetComponentId: component.id,
   });
-  await generateCanvas({ componentId: component.id, createdBy: user.id });
+  const { canvas } = await generateCanvas({
+    componentId: component.id,
+    createdBy: user.id,
+  });
 
   const [getResponse, getBody] = await API.get(
     `/component-relationships/?componentId=${component.id}`,
@@ -58,9 +62,21 @@ test("GET /component-relationships/?componentId returns a list of relationships"
     403,
     "GET returns a 403 status when a random user attempts to fetch the list"
   );
+
+  await db.transaction((trx: Knex.Transaction) =>
+    CanvasesDAO.del(trx, canvas.id)
+  );
+
+  const [deletedCanvas] = await API.get(
+    `/component-relationships/?componentId=${component.id}`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+  t.equal(deletedCanvas.status, 404, "responds with Not Found status");
 });
 
-test("GET /component-relationships/:relationshipId returns a relationship", async (t: tape.Test) => {
+test("GET /component-relationships/:relationshipId returns a relationship", async (t: Test) => {
   const { session } = await createUser();
   const {
     componentRelationship: relationship,
@@ -81,7 +97,7 @@ test("GET /component-relationships/:relationshipId returns a relationship", asyn
   );
 });
 
-test("PUT /component-relationships/:relationshipId creates a relationship", async (t: tape.Test) => {
+test("PUT /component-relationships/:relationshipId creates a relationship", async (t: Test) => {
   const { session, user } = await createUser();
   const { session: sessionTwo } = await createUser();
   const { component } = await generateComponent({ createdBy: user.id });
@@ -127,7 +143,7 @@ test("PUT /component-relationships/:relationshipId creates a relationship", asyn
   t.equal(putResponseTwo.status, 403);
 });
 
-test("PATCH /component-relationships/:relationshipId updates a relationship", async (t: tape.Test) => {
+test("PATCH /component-relationships/:relationshipId updates a relationship", async (t: Test) => {
   const { session, user } = await createUser();
   const { session: sessionTwo } = await createUser();
   const { component } = await generateComponent({ createdBy: user.id });
@@ -171,7 +187,7 @@ test("PATCH /component-relationships/:relationshipId updates a relationship", as
   t.equal(patchResponseTwo.status, 403);
 });
 
-test("DEL /component-relationships/:relationshipId deletes a relationship", async (t: tape.Test) => {
+test("DEL /component-relationships/:relationshipId deletes a relationship", async (t: Test) => {
   const { session, user } = await createUser();
   const { session: sessionTwo } = await createUser();
   const { component } = await generateCanvas({ createdBy: user.id });
