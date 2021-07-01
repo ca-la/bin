@@ -29,11 +29,11 @@ export default async function generateApprovalStep(
     ? { user: await findUserById(createdBy) }
     : await createUser({ withSession: false });
   const { design } = step.designId
-    ? { design: await findDesignById(step.designId) }
+    ? { design: await findDesignById(step.designId, undefined, undefined, trx) }
     : { design: await generateDesign({ userId: user.id }, trx) };
 
   if (!design) {
-    throw new Error("Canvas was unable to be found or created!");
+    throw new Error("Design was unable to be found or created!");
   }
 
   const defaultStep: ApprovalUnstarted = {

@@ -23,11 +23,11 @@ const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
 export const dao = {
   ...standardDao,
   async findByDesign(
-    trx: Knex.Transaction,
+    ktx: Knex,
     designId: string
   ): Promise<ApprovalStepSubmission[]> {
     return adapter.fromDbArray(
-      await trx(TABLE_NAME)
+      await ktx(TABLE_NAME)
         .select("design_approval_submissions.*")
         .join(
           "design_approval_steps",
@@ -41,10 +41,10 @@ export const dao = {
     );
   },
   async findByStep(
-    trx: Knex.Transaction,
+    ktx: Knex,
     stepId: string
   ): Promise<ApprovalStepSubmission[]> {
-    return standardDao.find(trx, { stepId });
+    return standardDao.find(ktx, { stepId });
   },
   async deleteById(
     trx: Knex.Transaction,

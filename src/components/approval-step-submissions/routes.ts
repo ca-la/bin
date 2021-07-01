@@ -3,6 +3,7 @@ import Router from "koa-router";
 import uuid from "node-uuid";
 import { omit, pick } from "lodash";
 import convert from "koa-convert";
+import { z } from "zod";
 
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
@@ -45,8 +46,79 @@ import Asset from "../assets/types";
 import { StrictContext } from "../../router-context";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
+import { getDesignPermissions } from "../../services/get-permissions";
 
 const router = new Router();
+
+const getSubmissionQuerySchema = z.union([
+  z.object({ stepId: z.string() }),
+  z.object({ designId: z.string() }),
+]);
+
+interface GetSubmissionsContext
+  extends StrictContext<ApprovalStepSubmission[]> {
+  state: AuthedState;
+}
+
+async function getSubmissions(ctx: GetSubmissionsContext) {
+  const queryResult = getSubmissionQuerySchema.safeParse(ctx.query);
+
+  ctx.assert(
+    queryResult.success,
+    400,
+    "Must provide either a stepId or designId in query"
+  );
+
+  const { data } = queryResult;
+
+  if ("stepId" in data) {
+    return getSubmissionsByStepId(ctx, data.stepId);
+  }
+
+  return getSubmissionsByDesignId(ctx, data.designId);
+}
+
+async function getSubmissionsByStepId(
+  ctx: GetSubmissionsContext,
+  stepId: string
+) {
+  const approvalStep = await ApprovalStepsDAO.findById(db, stepId);
+  ctx.assert(approvalStep, 404, `Could not find step with ID ${stepId}`);
+  ctx.assert(
+    (
+      await getDesignPermissions({
+        designId: approvalStep.designId,
+        sessionRole: ctx.state.role,
+        sessionUserId: ctx.state.userId,
+      })
+    ).canView,
+    403,
+    "You do not have permission to view submissions for this step"
+  );
+
+  ctx.body = await ApprovalSubmissionsDAO.findByStep(db, stepId);
+  ctx.status = 200;
+}
+
+async function getSubmissionsByDesignId(
+  ctx: GetSubmissionsContext,
+  designId: string
+) {
+  ctx.assert(
+    (
+      await getDesignPermissions({
+        designId,
+        sessionRole: ctx.state.role,
+        sessionUserId: ctx.state.userId,
+      })
+    ).canView,
+    403,
+    "You do not have permission to view submissions for this design"
+  );
+
+  ctx.body = await ApprovalSubmissionsDAO.findByDesign(db, designId);
+  ctx.status = 200;
+}
 
 interface GetApprovalSubmissionsQuery {
   stepId: string;
@@ -55,27 +127,11 @@ interface GetApprovalSubmissionsQuery {
 interface SubmissionState {
   submission: ApprovalStepSubmission;
 }
+
 interface DesignIdState {
   designId: string;
 }
 type SubmissionStateContext = AuthedContext<{}, SubmissionState>;
-
-export function* getApprovalSubmissionsForStep(
-  this: AuthedContext<{}, PermittedState>
-): Iterator<any, any, any> {
-  const { stepId }: GetApprovalSubmissionsQuery = this.query;
-
-  if (!this.state.permissions.canView) {
-    this.throw(403, `Cannot view design for step ${stepId}`);
-  }
-
-  const found = yield db.transaction(async (trx: Knex.Transaction) => {
-    return ApprovalSubmissionsDAO.findByStep(trx, stepId);
-  });
-
-  this.body = found;
-  this.status = 200;
-}
 
 function* createApproval(
   this: TrxContext<
@@ -308,6 +364,17 @@ export function* deleteApprovalSubmission(
   });
 
   this.status = 204;
+}
+
+interface GetSubmissionByIdContext
+  extends StrictContext<ApprovalStepSubmission> {
+  state: SubmissionState;
+}
+
+async function getSubmissionById(ctx: GetSubmissionByIdContext) {
+  const { submission } = ctx.state;
+  ctx.body = submission;
+  ctx.status = 200;
 }
 
 const ALLOWED_UPDATE_KEYS = ["collaboratorId", "teamUserId"];
@@ -566,18 +633,7 @@ async function listSubmissionStreamItems(
   ctx.status = 200;
 }
 
-router.get(
-  "/",
-  requireAuth,
-  requireQueryParam<GetApprovalSubmissionsQuery>("stepId"),
-  requireDesignIdBy(
-    getDesignIdFromStep(function (this: AuthedContext): string {
-      return this.query.stepId;
-    })
-  ),
-  canAccessDesignInState,
-  getApprovalSubmissionsForStep
-);
+router.get("/", requireAuth, convert.back(getSubmissions));
 
 router.post(
   "/:submissionId/revision-requests",
@@ -604,6 +660,21 @@ router.post(
   canAccessDesignInState,
   useTransaction,
   createReReviewRequest
+);
+
+router.get(
+  "/:submissionId",
+  requireAuth,
+  injectSubmission,
+  requireDesignIdBy<{}, SubmissionState>(
+    getDesignIdFromStep<SubmissionState>(function (
+      this: SubmissionStateContext
+    ): string {
+      return this.state.submission.stepId;
+    })
+  ),
+  canAccessDesignInState,
+  convert.back(getSubmissionById)
 );
 
 router.patch(

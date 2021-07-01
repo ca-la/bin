@@ -19,11 +19,6 @@ import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
 import { moveDesign } from "../../test-helpers/collections";
 import { NotificationType } from "../notifications/domain-object";
-import ApprovalStep from "../approval-steps/types";
-import User from "../users/types";
-import { CollaboratorWithUser } from "../../components/collaborators/types";
-import ProductDesign from "../product-designs/domain-objects/product-design";
-import Session from "../../domain-objects/session";
 import SessionsDAO from "../../dao/sessions";
 import { DesignEventWithMeta } from "../../published-types";
 import * as NotificationService from "../../services/create-notifications";
@@ -37,20 +32,17 @@ import generateComment from "../../test-helpers/factories/comment";
 
 async function setupSubmission(
   approvalSubmission: Partial<ApprovalStepSubmission> = {}
-): Promise<{
-  approvalStep: ApprovalStep;
-  designer: { user: User; session: Session };
-  collaborator: CollaboratorWithUser;
-  collaboratorSession: Session;
-  design: ProductDesign;
-  submission: ApprovalStepSubmission;
-}> {
+) {
   const designer = await createUser();
   const collab = await createUser();
   const trx = await db.transaction();
   try {
     const { approvalStep, design } = await generateApprovalStep(trx, {
       createdBy: designer.user.id,
+    });
+    const { approvalStep: approvalStep2 } = await generateApprovalStep(trx, {
+      createdBy: designer.user.id,
+      designId: design.id,
     });
 
     const { collaborator } = await generateCollaborator(
@@ -67,22 +59,114 @@ async function setupSubmission(
       collaboratorId: collaborator.id,
       ...approvalSubmission,
     });
+    const { submission: submission2 } = await generateApprovalSubmission(trx, {
+      title: "Battleship",
+      stepId: approvalStep2.id,
+      collaboratorId: collaborator.id,
+      ...approvalSubmission,
+    });
 
     await trx.commit();
 
     return {
       approvalStep,
+      approvalStep2,
       designer,
       collaborator,
       collaboratorSession: collab.session,
       design,
       submission,
+      submission2,
     };
   } catch (err) {
     await trx.rollback();
     throw err;
   }
 }
+
+test("GET /design-approval-step-submissions?:designId", async (t: Test) => {
+  const { designer, design, submission, submission2 } = await setupSubmission();
+  const admin = await createUser({ role: "ADMIN" });
+  const other = await createUser();
+
+  const [response, body] = await get(
+    `/design-approval-step-submissions?designId=${design.id}`,
+    {
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.equal(response.status, 200);
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify([submission, submission2])),
+    "returns saved submission"
+  );
+
+  const [adminResponse] = await get(
+    `/design-approval-step-submissions?designId=${design.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(adminResponse.status, 200, "allows admin");
+
+  const [forbidden] = await get(
+    `/design-approval-step-submissions?designId=${design.id}`,
+    {
+      headers: authHeader(other.session.id),
+    }
+  );
+
+  t.equal(
+    forbidden.status,
+    403,
+    "returns Forbidden response for unrelated user"
+  );
+});
+
+test("GET /design-approval-step-submissions/:submissionId", async (t: Test) => {
+  const { designer, submission } = await setupSubmission();
+  const admin = await createUser({ role: "ADMIN" });
+  const other = await createUser();
+
+  const [response, body] = await get(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.equal(response.status, 200, "returns OK response");
+  t.deepEqual(
+    body,
+    JSON.parse(JSON.stringify(submission)),
+    "returns submission in body"
+  );
+
+  const [adminResponse] = await get(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(adminResponse.status, 200, "allows admins");
+
+  const [forbidden] = await get(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(other.session.id),
+    }
+  );
+
+  t.equal(
+    forbidden.status,
+    403,
+    "returns Forbidden response for unrelated user"
+  );
+});
 
 test("GET /design-approval-step-submissions?stepId=:stepId", async (t: Test) => {
   const { designer, approvalStep, submission } = await setupSubmission();
@@ -472,6 +556,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       irisStub.args.map((call: any) => call[0].type),
       [
         "approval-step-submission/created",
+        "approval-step-submission/created",
         "approval-step-submission/updated",
         "approval-step-submission/revision-request",
         "notification/created",
@@ -479,13 +564,13 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       "Sends realtime messages"
     );
     t.deepEquals(
-      irisStub.args[2][0].resource.comment,
+      irisStub.args[3][0].resource.comment,
       fullComment,
       "Realtime message has a comment"
     );
 
     t.deepEquals(
-      omit(irisStub.args[2][0].resource.event, "id"),
+      omit(irisStub.args[3][0].resource.event, "id"),
       {
         ...templateDesignEventWithMeta,
         actorEmail: designer.user.email,
