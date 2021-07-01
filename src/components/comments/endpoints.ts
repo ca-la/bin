@@ -19,6 +19,7 @@ import { createCommentWithAttachments } from "../../services/create-comment-with
 import * as ApprovalStepService from "../approval-step-comments/service";
 import * as AnnotationService from "../annotation-comments/service";
 import {
+  addCommentResources,
   createCommentPaginationModifier,
   createCursor,
   Cursor,
@@ -26,11 +27,13 @@ import {
   getPreviousPage,
   readCursor,
 } from "../comments/cursor-service";
-import Comment, { PaginatedComments } from "./types";
+import { BaseComment, PaginatedComments } from "./types";
 import { findByAnnotationId } from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
 import { findByStepId } from "../approval-step-comments/dao";
 import { transformMentionsToGraphQL } from "./service";
+import { sliceAroundIndex } from "../../services/slice-around-index";
+import Knex from "knex";
 
 interface CreateCommentArgs {
   comment: GraphQLTypes.CommentInputType;
@@ -114,6 +117,113 @@ const createComment: GraphQLEndpoint<
   },
 };
 
+async function getPageByCommentId({
+  trx,
+  limit,
+  commentId,
+  annotationId,
+  approvalStepId,
+  parentCommentId,
+}: {
+  trx: Knex.Transaction;
+  limit: number;
+  annotationId: string | null;
+  approvalStepId: string | null;
+  commentId: string;
+  parentCommentId: string | null;
+}) {
+  // get comment
+  const comment = await CommentsDAO.findById(commentId);
+  if (!comment) {
+    throw new NotFoundError(`Could not find comment ${commentId}`);
+  }
+
+  // get comments before
+  const baseBeforeOptions: FindCommentsByIdOptions = {
+    limit: limit + 1,
+    sortOrder: "desc",
+    modify: createCommentPaginationModifier({
+      cursor: { id: commentId, createdAt: comment.createdAt },
+      sortOrder: "desc",
+      parentCommentId,
+    }),
+  };
+  const beforeComments = annotationId
+    ? await findByAnnotationId(trx, {
+        ...baseBeforeOptions,
+        annotationId,
+      })
+    : approvalStepId
+    ? await findByStepId(trx, {
+        ...baseBeforeOptions,
+        approvalStepId,
+      })
+    : [];
+
+  // get comments after
+  const baseAfterOptions: FindCommentsByIdOptions = {
+    limit: limit + 2,
+    sortOrder: "asc",
+    modify: createCommentPaginationModifier({
+      cursor: { id: commentId, createdAt: comment.createdAt },
+      sortOrder: "asc",
+      parentCommentId,
+    }),
+  };
+  const afterComments = annotationId
+    ? await findByAnnotationId(trx, {
+        ...baseAfterOptions,
+        annotationId,
+      })
+    : approvalStepId
+    ? await findByStepId(trx, {
+        ...baseAfterOptions,
+        approvalStepId,
+      })
+    : [];
+
+  // combine
+  const comments = beforeComments.reverse().concat(afterComments.slice(1));
+  const slicedComments = sliceAroundIndex({
+    index: comments.findIndex((c: BaseComment) => c.id === commentId),
+    array: comments,
+    limit,
+  });
+
+  // create next and previous cursors from the list
+  let previousCursor = null;
+  if (comments[0].id !== slicedComments[0].id) {
+    const commentIndex = comments.findIndex(
+      (c: BaseComment) => c.id === slicedComments[0].id
+    );
+    if (commentIndex <= -1) {
+      throw new Error(
+        `Could not find comment ${slicedComments[0].id} in original list`
+      );
+    }
+    previousCursor = createCursor({
+      id: comments[commentIndex - 1].id,
+      createdAt: comments[commentIndex - 1].createdAt,
+    });
+  }
+
+  const nextCursor =
+    comments[comments.length - 1].id ===
+    slicedComments[slicedComments.length - 1].id
+      ? null
+      : createCursor({
+          id: slicedComments[slicedComments.length - 1].id,
+          createdAt: slicedComments[slicedComments.length - 1].createdAt,
+        });
+
+  return {
+    previousCursor,
+    nextCursor,
+
+    data: await addCommentResources(trx, slicedComments),
+  };
+}
+
 interface GetCommentsArg {
   annotationId: string | null;
   approvalStepId: string | null;
@@ -186,17 +296,20 @@ const getComments: GraphQLEndpoint<any, any, any> = {
       throw new UserInputError("Limit cannot be negative!");
     }
 
-    let comment: Comment | null;
-    comment = commentId ? await CommentsDAO.findById(commentId) : null;
-    if (commentId && !comment) {
-      throw new NotFoundError(`Could not find comment ${commentId}`);
+    if (commentId) {
+      return getPageByCommentId({
+        trx,
+        limit,
+        commentId,
+        annotationId,
+        approvalStepId,
+        parentCommentId: parentCommentId || null,
+      });
     }
 
     let cursor: Cursor | null;
     try {
-      cursor = comment
-        ? { id: comment.id, createdAt: comment.createdAt }
-        : nextCursor
+      cursor = nextCursor
         ? readCursor(nextCursor)
         : previousCursor
         ? readCursor(previousCursor)
@@ -241,9 +354,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
       trx,
       comments,
       limit,
-      currentCursor: comment
-        ? createCursor({ id: comment.id, createdAt: comment.createdAt })
-        : previousCursor,
+      currentCursor: previousCursor,
     });
   },
 };
