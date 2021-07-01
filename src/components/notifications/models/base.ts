@@ -82,6 +82,7 @@ export interface BaseFullNotificationRow {
   tracking_id: null;
   team_title: null;
   team_user_email: null;
+  parent_comment_id: null;
 }
 
 export interface BaseNotification {
@@ -162,6 +163,7 @@ export interface BaseFullNotification {
   trackingId: null;
   trackingEventTag: null;
   trackingEventSubtag: null;
+  parentCommentId: null;
 }
 
 export const templateNotification = {

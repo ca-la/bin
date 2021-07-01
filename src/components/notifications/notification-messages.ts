@@ -435,6 +435,7 @@ export async function createNotificationMessage(
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
             parentCommentId: commentId,
+            commentId,
             designId,
           },
         ],
@@ -461,6 +462,7 @@ export async function createNotificationMessage(
         commentText,
         hasAttachments,
         componentType,
+        parentCommentId,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -483,7 +485,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -510,6 +513,7 @@ export async function createNotificationMessage(
         commentText,
         hasAttachments,
         componentType,
+        parentCommentId,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -532,7 +536,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
             annotationId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -587,6 +592,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -613,7 +619,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -641,6 +648,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -663,7 +671,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -691,6 +700,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
       const design = { id: designId, title: notification.designTitle };
       const collection = collectionId
@@ -713,7 +723,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.TASK_COMMENT_REPLY,
             taskId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -987,6 +998,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
 
       if (!collectionId) {
@@ -1022,7 +1034,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -1053,6 +1066,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
 
       if (!collectionId) {
@@ -1088,7 +1102,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],
@@ -1119,6 +1134,7 @@ export async function createNotificationMessage(
         commentId,
         commentText,
         hasAttachments,
+        parentCommentId,
       } = notification;
 
       if (!collectionId) {
@@ -1154,7 +1170,8 @@ export async function createNotificationMessage(
           {
             type: NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
             approvalStepId: notification.approvalStepId,
-            parentCommentId: commentId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
             designId,
           },
         ],

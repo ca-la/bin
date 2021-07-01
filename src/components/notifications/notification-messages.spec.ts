@@ -27,6 +27,7 @@ import generateApprovalSubmission from "../../test-helpers/factories/design-appr
 import { registerMessageBuilders } from "../cala-components";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { generateDesign } from "../../test-helpers/factories/product-design";
+import generateComment from "../../test-helpers/factories/comment";
 
 registerMessageBuilders();
 
@@ -110,8 +111,22 @@ test("annotation comment notification message", async (t: tape.Test) => {
     "message attachments contains one mention"
   );
   t.is(hasAttachments, false, "Notification does not have attachments");
-  const { designId } = annCommCreateMessage.actions[0];
+  const {
+    designId,
+    parentCommentId,
+    commentId,
+  } = annCommCreateMessage.actions[0];
   t.is(designId, design.id, "action contains design ID");
+  t.is(
+    parentCommentId,
+    annCommCreateDesignNotification.commentId,
+    "action contains parent comment id"
+  );
+  t.is(
+    commentId,
+    annCommCreateDesignNotification.commentId,
+    "action contains comment id"
+  );
 
   const notificationWithAttachment = notifications[0];
   const withAttachmentsMessage = await createNotificationMessage(
@@ -934,8 +949,15 @@ test("approval step reply notification message", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
+
+  const { comment: parentComment } = await generateComment();
+  const { comment } = await generateComment({
+    parentCommentId: parentComment.id,
+  });
   const { design, actor, recipient, approvalStep } = await generateNotification(
     {
+      commentId: comment.id,
+
       type: NotificationType.APPROVAL_STEP_COMMENT_REPLY,
     }
   );
@@ -945,7 +967,7 @@ test("approval step reply notification message", async (t: tape.Test) => {
   });
   await deleteById(mentionDesign.id);
 
-  const { comment } = await generateNotification({
+  await generateNotification({
     recipientUserId: recipient.id,
     type: NotificationType.APPROVAL_STEP_COMMENT_REPLY,
   });
@@ -985,20 +1007,21 @@ test("approval step reply notification message", async (t: tape.Test) => {
   );
   t.assert(message.actor && message.actor.id === actor.id, "actor is correct");
   const { hasAttachments } = message.attachments[0];
-  t.is(hasAttachments, false, "Notification does not have attachments");
-  const { designId } = message.actions[0];
+  t.true(hasAttachments, "Notification has attachments");
+  const { designId, parentCommentId, commentId } = message.actions[0];
   t.is(designId, design.id, "action contains design ID");
-
+  t.is(parentCommentId, parentComment.id, "action contains parent comment id");
+  t.is(commentId, comment.id, "action contains comment id");
   const notificationWithAttachment = notifications[0];
-  const withAttachmentsMessage = await createNotificationMessage(
+  const withoutAttachmentsMessage = await createNotificationMessage(
     notificationWithAttachment
   );
-  if (!withAttachmentsMessage) {
+  if (!withoutAttachmentsMessage) {
     throw new Error("Did not create message");
   }
-  t.true(
-    withAttachmentsMessage.attachments[0].hasAttachments,
-    "Notification has attachments"
+  t.false(
+    withoutAttachmentsMessage.attachments[0].hasAttachments,
+    "Notification has no attachments"
   );
 });
 

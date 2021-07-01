@@ -111,9 +111,10 @@ function addDesignImages(query: Knex.QueryBuilder): Knex.QueryBuilder {
   );
 }
 
-function addCommentText(query: Knex.QueryBuilder): Knex.QueryBuilder {
+function addCommentMeta(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
     .select("co.text as comment_text")
+    .select("co.parent_comment_id as parent_comment_id")
     .leftJoin("comments as co", "co.id", "n.comment_id")
     .whereNull("co.deleted_at");
 }
@@ -284,7 +285,7 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
     .modify(addCollectionTitle)
     .modify(addDesignTitle)
     .modify(addDesignImages)
-    .modify(addCommentText)
+    .modify(addCommentMeta)
     .modify(addHasAttachments)
     .modify(addMeasurement)
     .modify(addAnnotation)

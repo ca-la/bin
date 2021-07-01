@@ -38,6 +38,7 @@ export type NotificationMessageActionBase = z.infer<
 
 const commentActionBaseSchema = notificationMessageActionBaseSchema.extend({
   parentCommentId: z.string(),
+  commentId: z.string(),
   designId: z.string(),
 });
 

@@ -26,7 +26,11 @@ export interface ApprovalStepCommentMentionNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & ApprovalStepCommentMentionNotificationRow,
-  "collection_title" | "comment_text" | "design_title" | "approval_step_title"
+  | "collection_title"
+  | "comment_text"
+  | "design_title"
+  | "approval_step_title"
+  | "parent_comment_id"
 >;
 
 export interface FullApprovalStepCommentMentionNotificationRow
@@ -35,6 +39,7 @@ export interface FullApprovalStepCommentMentionNotificationRow
   comment_text: string;
   design_title: string | null;
   approval_step_title: string;
+  parent_comment_id: string | null;
 }
 
 type Base = Omit<
@@ -57,7 +62,11 @@ export interface ApprovalStepCommentMentionNotification extends Base {
 
 type BaseFull = Omit<
   BaseFullNotification & ApprovalStepCommentMentionNotification,
-  "collectionTitle" | "commentText" | "designTitle" | "approvalStepTitle"
+  | "collectionTitle"
+  | "commentText"
+  | "designTitle"
+  | "approvalStepTitle"
+  | "parentCommentId"
 >;
 
 export interface FullApprovalStepCommentMentionNotification extends BaseFull {
@@ -65,6 +74,7 @@ export interface FullApprovalStepCommentMentionNotification extends BaseFull {
   commentText: string;
   designTitle: string | null;
   approvalStepTitle: string;
+  parentCommentId: string | null;
 }
 
 export function isApprovalStepCommentMentionNotification(

@@ -28,7 +28,11 @@ export interface AnnotationCommentReplyNotificationRow extends BaseRow {
 
 type BaseFullRow = Omit<
   BaseFullNotificationRow & AnnotationCommentReplyNotificationRow,
-  "collection_title" | "comment_text" | "design_title" | "task_title"
+  | "collection_title"
+  | "comment_text"
+  | "design_title"
+  | "task_title"
+  | "parent_comment_id"
 >;
 
 export interface FullAnnotationCommentReplyNotificationRow extends BaseFullRow {
@@ -36,6 +40,7 @@ export interface FullAnnotationCommentReplyNotificationRow extends BaseFullRow {
   comment_text: string;
   design_title: string | null;
   task_title: string;
+  parent_comment_id: string | null;
 }
 
 type Base = Omit<
@@ -65,6 +70,7 @@ type BaseFull = Omit<
   | "designTitle"
   | "taskTitle"
   | "componentType"
+  | "parentCommentId"
 >;
 
 export interface FullAnnotationCommentReplyNotification extends BaseFull {
@@ -73,6 +79,7 @@ export interface FullAnnotationCommentReplyNotification extends BaseFull {
   designTitle: string | null;
   taskTitle: string;
   componentType: string;
+  parentCommentId: string | null;
 }
 
 export function isAnnotationCommentReplyNotification(

@@ -380,7 +380,8 @@ export function isFullNotificationRow(
       "has_attachments",
       "task_title",
       "annotation_image_id",
-      "approval_step_title"
+      "approval_step_title",
+      "parent_comment_id"
     )
   );
 }
@@ -422,6 +423,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     hasAttachments: rowData.has_attachments,
     id: rowData.id,
     measurementId: rowData.measurement_id,
+    parentCommentId: rowData.parent_comment_id,
     readAt: rowData.read_at ? new Date(rowData.read_at) : null,
     recipientUserId: rowData.recipient_user_id,
     recipientTeamUserId: rowData.recipient_team_user_id,
