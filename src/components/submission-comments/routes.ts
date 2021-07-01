@@ -1,6 +1,7 @@
 import Knex from "knex";
 import convert from "koa-convert";
 import Router from "koa-router";
+import { z } from "zod";
 
 import requireAuth from "../../middleware/require-auth";
 import { StrictContext } from "../../router-context";
@@ -14,6 +15,7 @@ import {
   Permissions,
 } from "../../services/get-permissions";
 import { createAndAnnounce } from "./service";
+import { parseContext } from "../../services/parse-context";
 
 const router = new Router();
 
@@ -50,26 +52,32 @@ async function getPermissionsBySubmission(
   });
 }
 
-interface CreateSubmissionCommentContext
-  extends StrictContext<CommentWithResources> {
-  state: AuthedState;
-  params: { submissionId: string };
-}
+const createSubmissionCommentContext = z.object({
+  state: z.object({
+    userId: z.string(),
+  }),
+  params: z.object({
+    submissionId: z.string(),
+  }),
+  request: z.object({
+    body: createCommentWithAttachmentsSchema,
+  }),
+});
 
-async function createSubmissionComment(ctx: CreateSubmissionCommentContext) {
-  const { submissionId } = ctx.params;
+async function createSubmissionComment(
+  ctx: StrictContext<CommentWithResources> & { state: AuthedState }
+) {
+  const {
+    state: { userId },
+    request: { body },
+    params: { submissionId },
+  } = parseContext(ctx, createSubmissionCommentContext);
 
   ctx.assert(
     (await getPermissionsBySubmission(ctx, submissionId)).canComment,
     403,
     "You don't have permission to comment on this design"
   );
-
-  const result = createCommentWithAttachmentsSchema.safeParse(ctx.request.body);
-  ctx.assert(result.success, 400, "Request body did not match expected type");
-
-  const { data: body } = result;
-  const { userId } = ctx.state;
 
   return db.transaction(async (trx: Knex.Transaction) => {
     ctx.body = await createAndAnnounce(trx, {

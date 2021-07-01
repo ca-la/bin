@@ -58,6 +58,27 @@ test("POST /:submissionId: cannot comment", async (t: Test) => {
   t.equal(cannotComment.status, 403, "returns Forbidden status");
 });
 
+test("POST /:submissionId: invalid data", async (t: Test) => {
+  const {
+    submissions,
+    user: { designer },
+  } = await setup();
+
+  const [cannotComment, body] = await post(
+    `/submission-comments/${submissions[0].id}`,
+    {
+      body: {
+        foo: "bar",
+      },
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.equal(cannotComment.status, 400, "returns Invalid Data status");
+  t.true(body.hasOwnProperty("message"), "Body contains a message param");
+  t.true(body.hasOwnProperty("issues"), "Body contains an issues param");
+});
+
 test("End-to-end: POST -> GET", async (t: Test) => {
   const {
     submissions,
