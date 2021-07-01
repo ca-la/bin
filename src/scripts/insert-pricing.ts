@@ -16,6 +16,11 @@ import { PricingMarginRow } from "../domain-objects/pricing-margin";
 import { PricingProcessRow } from "../domain-objects/pricing-process";
 import { PricingProcessTimelineRow } from "../components/pricing-process-timeline/domain-object";
 import { PricingProductMaterialRow } from "../domain-objects/pricing-product-material";
+import {
+  PricingUnitMaterialMultipleRow,
+  PricingUnitMaterialMultipleCreationPayload,
+  isPricingUnitMaterialCreationPayload,
+} from "../components/pricing-unit-material-multiple/types";
 import { PricingProductTypeRow } from "../components/pricing-product-types/domain-object";
 import { ProductType, validProductTypes } from "../domain-objects/pricing";
 import ResourceNotFoundError from "../errors/resource-not-found";
@@ -45,7 +50,8 @@ type DomainObject =
   | PricingMarginRow
   | PricingProcessRow
   | PricingProcessTimelineRow
-  | PricingProductMaterialRow;
+  | PricingProductMaterialRow
+  | PricingUnitMaterialMultipleRow;
 
 // tslint:disable:max-line-length
 const HELP_TEXT = `
@@ -90,6 +96,7 @@ interface TableMap {
   labels: string;
   margins: string;
   materials: string;
+  unitMaterialMultiples: string;
   processTimelines: string;
   processes: string;
   types: string;
@@ -99,6 +106,7 @@ const tableMap: TableMap = {
   labels: "pricing_care_labels",
   margins: "pricing_margins",
   materials: "pricing_product_materials",
+  unitMaterialMultiples: "pricing_unit_material_multiples",
   processTimelines: "pricing_process_timelines",
   processes: "pricing_processes",
   types: "pricing_product_types",
@@ -256,6 +264,13 @@ function castFromRaw(
     return raw.map(toMaterial.bind(null, latestVersion));
   }
 
+  if (
+    tableName === "pricing_unit_material_multiples" &&
+    isEveryUnitMaterialMultipleCreationPayload(raw)
+  ) {
+    return raw.map(toUnitMaterialMultiple.bind(null, latestVersion));
+  }
+
   return null;
 }
 
@@ -324,6 +339,12 @@ function isRawMaterial(candidate: object): candidate is RawMaterial {
 }
 function isEveryRawMaterial(candidate: object[]): candidate is RawMaterial[] {
   return candidate.every(isRawMaterial);
+}
+
+function isEveryUnitMaterialMultipleCreationPayload(
+  candidate: object[]
+): candidate is PricingUnitMaterialMultipleCreationPayload[] {
+  return candidate.every(isPricingUnitMaterialCreationPayload);
 }
 
 function isRawProcess(candidate: object): candidate is RawProcess {
@@ -441,6 +462,19 @@ function toMaterial(
     minimum_units: parseInt(raw.minimum_units, 10),
     unit_cents: parseInt(raw.unit_cents, 10),
     version: latestVersion + 1,
+  };
+}
+
+function toUnitMaterialMultiple(
+  latestVersion: number,
+  raw: PricingUnitMaterialMultipleCreationPayload
+): PricingUnitMaterialMultipleRow {
+  return {
+    id: uuid.v4(),
+    created_at: new Date(),
+    version: latestVersion + 1,
+    minimum_units: Number(raw.minimum_units),
+    multiple: Number(raw.multiple),
   };
 }
 
