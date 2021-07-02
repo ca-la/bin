@@ -1156,43 +1156,45 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
     "Three notifications are created, including one to the unregistered collaborator"
   );
 
-  t.deepEqual(
-    [
-      {
-        type: notifications[0].type,
-        actorUserId: notifications[0].actorUserId,
-        recipientUserId: notifications[0].recipientUserId,
-      },
-      {
-        type: notifications[1].type,
-        actorUserId: notifications[1].actorUserId,
-        recipientUserId: notifications[1].recipientUserId,
-      },
-      {
-        type: notifications[2].type,
-        actorUserId: notifications[2].actorUserId,
-        recipientUserId: notifications[2].recipientUserId,
-        recipientCollaboratorId: notifications[2].recipientCollaboratorId,
-      },
-    ],
-    [
-      {
-        type: NotificationType.COMMIT_COST_INPUTS,
-        actorUserId: admin.user.id,
-        recipientUserId: userOne.user.id,
-      },
-      {
-        type: NotificationType.COMMIT_COST_INPUTS,
-        actorUserId: admin.user.id,
-        recipientUserId: userTwo.user.id,
-      },
-      {
-        type: NotificationType.COMMIT_COST_INPUTS,
-        actorUserId: admin.user.id,
-        recipientUserId: null,
-        recipientCollaboratorId: c2.id,
-      },
-    ]
+  t.true(
+    isEqual(
+      new Set([
+        {
+          type: notifications[0].type,
+          actorUserId: notifications[0].actorUserId,
+          recipientUserId: notifications[0].recipientUserId,
+        },
+        {
+          type: notifications[1].type,
+          actorUserId: notifications[1].actorUserId,
+          recipientUserId: notifications[1].recipientUserId,
+        },
+        {
+          type: notifications[2].type,
+          actorUserId: notifications[2].actorUserId,
+          recipientUserId: notifications[2].recipientUserId,
+          recipientCollaboratorId: notifications[2].recipientCollaboratorId,
+        },
+      ]),
+      new Set([
+        {
+          type: NotificationType.COMMIT_COST_INPUTS,
+          actorUserId: admin.user.id,
+          recipientUserId: userOne.user.id,
+        },
+        {
+          type: NotificationType.COMMIT_COST_INPUTS,
+          actorUserId: admin.user.id,
+          recipientUserId: userTwo.user.id,
+        },
+        {
+          type: NotificationType.COMMIT_COST_INPUTS,
+          actorUserId: admin.user.id,
+          recipientUserId: null,
+          recipientCollaboratorId: c2.id,
+        },
+      ])
+    )
   );
 
   t.false(
