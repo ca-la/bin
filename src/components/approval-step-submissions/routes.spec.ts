@@ -370,23 +370,24 @@ test("PATCH /design-approval-step-submissions/:submissionId with teamUserId", as
   t.is(otherRes[0].status, 403);
 });
 
-test("POST /design-approval-step-submissions?stepId=:stepId", async (t: Test) => {
+test("POST /design-approval-step-submissions", async (t: Test) => {
   const { design, designer } = await setupSubmission();
   const steps = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findByDesign(trx, design.id)
   );
-  const [response, body] = await post(
-    `/design-approval-step-submissions?stepId=${steps[1].id}`,
-    {
-      headers: authHeader(designer.session.id),
-      body: {
-        id: uuid.v4(),
-        state: ApprovalStepSubmissionState.UNSUBMITTED,
-        artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
-        title: "Submarine",
-      },
-    }
-  );
+  const [response, body] = await post(`/design-approval-step-submissions`, {
+    headers: authHeader(designer.session.id),
+    body: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      stepId: steps[1].id,
+      state: ApprovalStepSubmissionState.UNSUBMITTED,
+      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+      title: "Submarine",
+      collaboratorId: null,
+      teamUserId: null,
+    },
+  });
 
   t.is(response.status, 200);
   t.is(body.title, "Submarine");
@@ -978,14 +979,18 @@ test("DELETE /design-approval-step-submissions success for clean submission as c
   );
 
   const [createSubmissionResponse, createSubmissionBody] = await post(
-    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    `/design-approval-step-submissions`,
     {
       headers: authHeader(collabCreator.session.id),
       body: {
         id: uuid.v4(),
+        createdAt: new Date(),
+        stepId: approvalStep.id,
         state: ApprovalStepSubmissionState.UNSUBMITTED,
         artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
         title: "Submarine",
+        collaboratorId: null,
+        teamUserId: null,
       },
     }
   );
@@ -1026,14 +1031,18 @@ test("DELETE /design-approval-step-submissions success for clean submission as c
   );
 
   const [createSubmissionResponse, createSubmissionBody] = await post(
-    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    `/design-approval-step-submissions`,
     {
       headers: authHeader(collabCreator.session.id),
       body: {
         id: uuid.v4(),
+        createdAt: new Date(),
+        stepId: approvalStep.id,
         state: ApprovalStepSubmissionState.UNSUBMITTED,
         artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
         title: "Submarine",
+        collaboratorId: null,
+        teamUserId: null,
       },
     }
   );
@@ -1074,14 +1083,18 @@ test("DELETE /design-approval-step-submissions success for clean submission as c
   );
 
   const [createSubmissionResponse, createSubmissionBody] = await post(
-    `/design-approval-step-submissions?stepId=${approvalStep.id}`,
+    `/design-approval-step-submissions`,
     {
       headers: authHeader(collabCreator.session.id),
       body: {
         id: uuid.v4(),
+        createdAt: new Date(),
+        stepId: approvalStep.id,
         state: ApprovalStepSubmissionState.UNSUBMITTED,
         artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
         title: "Submarine",
+        collaboratorId: null,
+        teamUserId: null,
       },
     }
   );

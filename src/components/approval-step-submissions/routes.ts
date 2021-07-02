@@ -13,6 +13,7 @@ import DesignEventsDAO from "../design-events/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
   approvalStepSubmissionDomain,
+  ApprovalStepSubmissionArtifactType,
 } from "./types";
 import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
@@ -29,7 +30,6 @@ import { createCommentWithAttachments } from "../../services/create-comment-with
 import addAtMentionDetails, {
   getCollaboratorsFromCommentMentions,
 } from "../../services/add-at-mention-details";
-import { requireQueryParam } from "../../middleware/require-query-param";
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import DesignsDAO from "../product-designs/dao";
@@ -47,6 +47,8 @@ import { StrictContext } from "../../router-context";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import { getDesignPermissions } from "../../services/get-permissions";
+import { dateStringToDate } from "../../services/zod-helpers";
+import { parseContext } from "../../services/parse-context";
 
 const router = new Router();
 
@@ -118,10 +120,6 @@ async function getSubmissionsByDesignId(
 
   ctx.body = await ApprovalSubmissionsDAO.findByDesign(db, designId);
   ctx.status = 200;
-}
-
-interface GetApprovalSubmissionsQuery {
-  stepId: string;
 }
 
 interface SubmissionState {
@@ -289,26 +287,57 @@ function* createReReviewRequest(
   this.status = 200;
 }
 
-export function* createApprovalSubmission(
-  this: AuthedContext
-): Iterator<any, any, any> {
-  const { stepId }: GetApprovalSubmissionsQuery = this.query;
-  const { userId } = this.state;
+const createSubmissionContextSchema = z.object({
+  request: z.object({
+    body: z.object({
+      id: z.string(),
+      createdAt: dateStringToDate,
+      stepId: z.string(),
+      state: z.nativeEnum(ApprovalStepSubmissionState),
+      title: z.string(),
+      collaboratorId: z.string().nullable(),
+      teamUserId: z.string().nullable(),
+      artifactType: z.nativeEnum(ApprovalStepSubmissionArtifactType),
+    }),
+  }),
+  state: z.object({
+    userId: z.string(),
+  }),
+});
 
-  const [approvalSubmission] = yield db.transaction(
-    async (trx: Knex.Transaction) => {
-      return ApprovalSubmissionsDAO.createAll(trx, [
-        {
-          ...((this.request.body as unknown) as ApprovalStepSubmission),
-          stepId,
-          createdBy: userId,
-          deletedAt: null,
-        },
-      ]);
-    }
+interface CreateSubmissionContext
+  extends StrictContext<ApprovalStepSubmission> {
+  state: AuthedState;
+}
+
+async function createApprovalSubmission(ctx: CreateSubmissionContext) {
+  const {
+    request: { body },
+    state: { userId },
+  } = parseContext(ctx, createSubmissionContextSchema);
+
+  const approvalStep = await ApprovalStepsDAO.findById(db, body.stepId);
+  ctx.assert(approvalStep, 404, `Could not find step with ID ${body.stepId}`);
+  ctx.assert(
+    (
+      await getDesignPermissions({
+        designId: approvalStep.designId,
+        sessionRole: ctx.state.role,
+        sessionUserId: ctx.state.userId,
+      })
+    ).canView,
+    403,
+    "You do not have permission to create submissions for this step"
   );
-  this.body = approvalSubmission;
-  this.status = 200;
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    ctx.body = await ApprovalSubmissionsDAO.create(trx, {
+      ...body,
+      createdBy: userId,
+      deletedAt: null,
+    });
+    ctx.status = 200;
+  });
 }
 
 export function* deleteApprovalSubmission(
@@ -693,18 +722,7 @@ router.patch(
   updateApprovalSubmission
 );
 
-router.post(
-  "/",
-  requireAuth,
-  requireQueryParam<GetApprovalSubmissionsQuery>("stepId"),
-  requireDesignIdBy(
-    getDesignIdFromStep(function (this: AuthedContext): string {
-      return this.query.stepId;
-    })
-  ),
-  canAccessDesignInState,
-  createApprovalSubmission
-);
+router.post("/", requireAuth, convert.back(createApprovalSubmission));
 
 router.del(
   "/:submissionId",

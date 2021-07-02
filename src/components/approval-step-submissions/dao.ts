@@ -66,6 +66,7 @@ export const dao = {
 
 export default dao;
 export const {
+  create,
   createAll,
   find,
   findById,
