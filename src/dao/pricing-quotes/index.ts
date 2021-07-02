@@ -632,7 +632,7 @@ function findAtVersionOrLatest(
   return db(from)
     .first()
     .modify((modifyQuery: Knex.QueryBuilder) => {
-      if (version) {
+      if (typeof version === "number") {
         modifyQuery.where({ version });
       } else {
         modifyQuery.whereIn("version", db(from).max("version"));

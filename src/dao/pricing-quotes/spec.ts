@@ -1,4 +1,5 @@
 import tape from "tape";
+import uuid from "node-uuid";
 import { omit } from "lodash";
 
 import { test } from "../../test-helpers/fresh";
@@ -355,5 +356,50 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       workingSessionCents: 2500,
     },
     "Returns the latest values for a request"
+  );
+});
+
+test("PricingQuotes DAO supports finding the specific 0 version of unitMaterialMultiple", async (t: tape.Test) => {
+  await generatePricingValues();
+  const { user } = await createUser({ withSession: false });
+  const design = await generateDesign({ userId: user.id });
+  const valueRequest = await PricingQuotesDAO.findVersionValuesForRequest(
+    {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      deletedAt: null,
+      expiresAt: null,
+      designId: design.id,
+      materialCategory: "BASIC",
+      processes: [
+        {
+          complexity: "2_COLORS",
+          name: "SCREEN_PRINTING",
+        },
+      ],
+      productComplexity: "SIMPLE",
+      productType: "TEESHIRT",
+      materialBudgetCents: 0,
+      minimumOrderQuantity: 1,
+      processTimelinesVersion: 0,
+      processesVersion: 0,
+      productMaterialsVersion: 0,
+      productTypeVersion: 0,
+      marginVersion: 0,
+      constantsVersion: 0,
+      careLabelsVersion: 0,
+      unitMaterialMultipleVersion: 0,
+    },
+    4000
+  );
+
+  t.deepEqual(
+    omit(valueRequest.unitMaterialMultiple, "createdAt", "id"),
+    {
+      version: 0,
+      minimumUnits: 3000,
+      multiple: 0.95,
+    },
+    "Returns the specified version of unitMaterialMultiple"
   );
 });
