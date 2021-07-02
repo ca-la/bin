@@ -47,6 +47,7 @@ export const NotificationMessageAction: GraphQLType = {
   body: {
     type: "NotificationMessageActionType!",
     parentCommentId: "String",
+    commentId: "String",
     designId: "String",
     taskId: "String",
     annotationId: "String",
