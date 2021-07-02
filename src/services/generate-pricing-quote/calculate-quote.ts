@@ -101,12 +101,16 @@ export function calculateQuote(
     ? calculateBaseUnitCost(units, values)
     : 0;
 
+  const baseMaterialCostCents = Math.max(
+    calculateMaterialCents(values),
+    costInput.materialBudgetCents || 0
+  );
+
+  const materialCostCentsWithMultiple =
+    baseMaterialCostCents * values.unitMaterialMultiple.multiple;
   const baseCost = {
     baseCostCents,
-    materialCostCents: Math.max(
-      calculateMaterialCents(values),
-      costInput.materialBudgetCents || 0
-    ),
+    materialCostCents: materialCostCentsWithMultiple,
     processCostCents: calculateProcessCents(units, values),
   };
 

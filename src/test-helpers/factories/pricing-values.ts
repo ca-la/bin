@@ -11,6 +11,7 @@ import { PricingProductMaterialRow } from "../../domain-objects/pricing-product-
 import { PricingMarginRow } from "../../domain-objects/pricing-margin";
 import { PricingCareLabelRow } from "../../domain-objects/pricing-care-label";
 import { PricingProcessTimelineRow } from "../../components/pricing-process-timeline/domain-object";
+import { PricingUnitMaterialMultipleRow } from "../../components/pricing-unit-material-multiple/types";
 import { daysToMs } from "../../services/time-conversion";
 
 export default async function generatePricingValues(): Promise<any> {
@@ -343,12 +344,54 @@ export default async function generatePricingValues(): Promise<any> {
     },
   ];
 
+  const pricingUnitMaterialMultiples: Uninserted<
+    PricingUnitMaterialMultipleRow
+  >[] = [
+    {
+      id: uuid.v4(),
+      version: 0,
+      minimum_units: 1,
+      multiple: 1,
+    },
+    {
+      id: uuid.v4(),
+      version: 0,
+      minimum_units: 3000,
+      multiple: 0.95,
+    },
+    {
+      id: uuid.v4(),
+      version: 0,
+      minimum_units: 30000,
+      multiple: 0.5,
+    },
+    {
+      id: uuid.v4(),
+      version: 1,
+      minimum_units: 1,
+      multiple: 1,
+    },
+    {
+      id: uuid.v4(),
+      version: 1,
+      minimum_units: 1000,
+      multiple: 0.95,
+    },
+    {
+      id: uuid.v4(),
+      version: 1,
+      minimum_units: 2000,
+      multiple: 0.5,
+    },
+  ];
+
   const expectedCount = sum([
     pricingProcessScreenPrinting.length,
     pricingCareLabels.length,
     pricingConstants.length,
     pricingMargins.length,
     pricingMaterials.length,
+    pricingUnitMaterialMultiples.length,
     pricingProcessTimelines.length,
     pricingProductTypeTee.length,
   ]);
@@ -359,6 +402,9 @@ export default async function generatePricingValues(): Promise<any> {
       await trx.insert(pricingConstants).into("pricing_constants"),
       await trx.insert(pricingCareLabels).into("pricing_care_labels"),
       await trx.insert(pricingMargins).into("pricing_margins"),
+      await trx
+        .insert(pricingUnitMaterialMultiples)
+        .into("pricing_unit_material_multiples"),
       await trx
         .insert(pricingProcessTimelines)
         .into("pricing_process_timelines"),

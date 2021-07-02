@@ -23,6 +23,7 @@ export interface PricingCostInputDb {
   productMaterialsVersion: number;
   productType: ProductType;
   productTypeVersion: number;
+  unitMaterialMultipleVersion: number;
 }
 
 export interface PricingCostInputDbRow {
@@ -43,6 +44,7 @@ export interface PricingCostInputDbRow {
   product_materials_version: number;
   product_type: ProductType;
   product_type_version: number;
+  unit_material_multiple_version: number;
 }
 
 export interface PricingCostInput extends PricingCostInputDb {
@@ -89,6 +91,7 @@ export type PricingCostInputWithoutVersions = Omit<
   | "productMaterialsVersion"
   | "careLabelsVersion"
   | "processTimelinesVersion"
+  | "unitMaterialMultipleVersion"
 >;
 
 export type UncomittedCostInput = Omit<

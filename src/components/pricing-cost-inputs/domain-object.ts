@@ -25,6 +25,7 @@ function encodeDb(row: PricingCostInputDbRow): PricingCostInputDb {
     processTimelinesVersion: row.process_timelines_version,
     processesVersion: row.processes_version,
     productMaterialsVersion: row.product_materials_version,
+    unitMaterialMultipleVersion: row.unit_material_multiple_version,
     productTypeVersion: row.product_type_version,
     minimumOrderQuantity: row.minimum_order_quantity,
   };
@@ -47,6 +48,7 @@ function decodeDb(data: PricingCostInputDb): PricingCostInputDbRow {
     process_timelines_version: data.processTimelinesVersion,
     processes_version: data.processesVersion,
     product_materials_version: data.productMaterialsVersion,
+    unit_material_multiple_version: data.unitMaterialMultipleVersion,
     product_type_version: data.productTypeVersion,
     minimum_order_quantity: data.minimumOrderQuantity,
   };

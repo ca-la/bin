@@ -31,6 +31,8 @@ SELECT (
 ) as care_labels_version, (
   SELECT MAX(version) FROM pricing_product_materials
 ) as product_materials_version, (
+  SELECT MAX(version) FROM pricing_unit_material_multiples
+) as unit_material_multiple_version, (
   SELECT MAX(version) FROM pricing_product_types
 ) as product_type_version, (
   SELECT MAX(version) FROM pricing_margins
@@ -53,6 +55,7 @@ LIMIT 1;
       process_timelines_version,
       care_labels_version,
       product_materials_version,
+      unit_material_multiple_version,
       product_type_version,
       margin_version,
       constants_version,
@@ -77,6 +80,7 @@ LIMIT 1;
     product_type_version,
     margin_version,
     constants_version,
+    unit_material_multiple_version,
   };
   const inputsCreated: WithoutProcesses | undefined = await trx(TABLE_NAME)
     .insert(rowData)

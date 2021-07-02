@@ -49,6 +49,7 @@ const quoteRequestOne: PricingCostInput = {
   marginVersion: 0,
   constantsVersion: 0,
   careLabelsVersion: 0,
+  unitMaterialMultipleVersion: 0,
 };
 
 test("createUnsavedQuote failure", async (t: Test) => {
@@ -166,6 +167,13 @@ test("createUnsavedQuote", async (t: Test) => {
       yield: 1.5,
     },
     workingSessionCents: 2500,
+    unitMaterialMultiple: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      version: 0,
+      minimumUnits: 1,
+      multiple: 1,
+    },
   };
 
   sandbox()
@@ -175,6 +183,13 @@ test("createUnsavedQuote", async (t: Test) => {
   const unsavedQuote = await createUnsavedQuote(quoteRequestOne, 100_000, 200);
 
   t.equal(unsavedQuote.baseCostCents, 386, "calculates base cost correctly");
+
+  t.equal(
+    unsavedQuote.materialCostCents,
+    12_00,
+    "calculates the materialCostCents correctly"
+  );
+
   t.equal(
     unsavedQuote.processCostCents,
     1_01,
@@ -189,6 +204,151 @@ test("createUnsavedQuote", async (t: Test) => {
   t.equal(
     unsavedQuote.productionFeeCents,
     35_540_00,
+    "calculates the production fee cents correctly"
+  );
+});
+
+test("createUnsavedQuote prices are correct with a specific unit material cost multiple", async (t: Test) => {
+  const latestValues: PricingQuoteValues = {
+    brandedLabelsAdditionalCents: 5,
+    brandedLabelsMinimumCents: 255,
+    brandedLabelsMinimumUnits: 1000,
+    careLabel: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 4000,
+      unitCents: 5,
+      version: 0,
+    },
+    constantId: uuid.v4(),
+    gradingCents: 5000,
+    margin: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      margin: 5,
+      minimumUnits: 4500,
+      version: 0,
+    },
+    markingCents: 5000,
+    material: {
+      category: "BASIC",
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 500,
+      unitCents: 200,
+      version: 0,
+    },
+    patternRevisionCents: 5000,
+    processTimeline: {
+      createdAt: new Date(),
+      id: uuid.v4(),
+      minimumUnits: 2000,
+      timeMs: daysToMs(4),
+      uniqueProcesses: 1,
+      version: 0,
+    },
+    processes: [
+      {
+        complexity: "1_COLOR",
+        createdAt: new Date(),
+        id: uuid.v4(),
+        minimumUnits: 2000,
+        name: "SCREEN_PRINTING",
+        displayName: "screen printing",
+        setupCents: 3000,
+        unitCents: 50,
+        version: 0,
+      },
+      {
+        complexity: "1_COLOR",
+        createdAt: new Date(),
+        id: uuid.v4(),
+        minimumUnits: 2000,
+        name: "SCREEN_PRINTING",
+        displayName: "screen printing",
+        setupCents: 3000,
+        unitCents: 50,
+        version: 0,
+      },
+    ],
+    sample: {
+      complexity: "SIMPLE",
+      contrast: 0.15,
+      createdAt: new Date(),
+      creationTimeMs: daysToMs(0),
+      fulfillmentTimeMs: daysToMs(8),
+      id: uuid.v4(),
+      minimumUnits: 1,
+      name: "TEESHIRT",
+      patternMinimumCents: 10000,
+      preProductionTimeMs: daysToMs(7),
+      productionTimeMs: daysToMs(6),
+      samplingTimeMs: daysToMs(5),
+      sourcingTimeMs: daysToMs(4),
+      specificationTimeMs: daysToMs(3),
+      unitCents: 15000,
+      version: 0,
+      yield: 1.5,
+    },
+    sampleMinimumCents: 7500,
+    technicalDesignCents: 5000,
+    type: {
+      complexity: "SIMPLE",
+      contrast: 0.15,
+      createdAt: new Date(),
+      creationTimeMs: daysToMs(0),
+      fulfillmentTimeMs: daysToMs(8),
+      id: uuid.v4(),
+      minimumUnits: 1500,
+      name: "TEESHIRT",
+      patternMinimumCents: 10000,
+      preProductionTimeMs: daysToMs(7),
+      productionTimeMs: daysToMs(6),
+      samplingTimeMs: daysToMs(5),
+      sourcingTimeMs: daysToMs(4),
+      specificationTimeMs: daysToMs(3),
+      unitCents: 375,
+      version: 0,
+      yield: 1.5,
+    },
+    workingSessionCents: 2500,
+    unitMaterialMultiple: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      version: 0,
+      minimumUnits: 1,
+      multiple: 0.5,
+    },
+  };
+
+  sandbox()
+    .stub(PricingQuotesDAO, "findVersionValuesForRequest")
+    .resolves(latestValues);
+
+  const unsavedQuote = await createUnsavedQuote(quoteRequestOne, 100_000, 200);
+
+  t.equal(unsavedQuote.baseCostCents, 386, "calculates base cost correctly");
+
+  t.equal(
+    unsavedQuote.materialCostCents,
+    12_00 * 0.5,
+    "calculates the materialCostCents correctly"
+  );
+
+  t.equal(
+    unsavedQuote.processCostCents,
+    1_01,
+    "calculates process cost correctly"
+  );
+  t.equal(
+    unsavedQuote.unitCostCents,
+    11_46,
+    "calculates total unit cost correctly"
+  );
+
+  t.equal(
+    unsavedQuote.productionFeeCents,
+    22_920_00,
     "calculates the production fee cents correctly"
   );
 });
@@ -286,6 +446,13 @@ test("createUnsavedQuote for blank", async (t: Test) => {
       yield: 1,
     },
     workingSessionCents: 2500,
+    unitMaterialMultiple: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      version: 0,
+      minimumUnits: 1,
+      multiple: 1,
+    },
   };
 
   sandbox()
@@ -319,6 +486,7 @@ test("createUnsavedQuote for blank", async (t: Test) => {
       marginVersion: 0,
       constantsVersion: 0,
       careLabelsVersion: 0,
+      unitMaterialMultipleVersion: 0,
     },
     100,
     0
@@ -418,6 +586,13 @@ test("createUnsavedQuote for packaging", async (t: Test) => {
       yield: 1,
     },
     workingSessionCents: 0,
+    unitMaterialMultiple: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      version: 0,
+      minimumUnits: 1,
+      multiple: 1,
+    },
   };
 
   sandbox()
@@ -446,6 +621,7 @@ test("createUnsavedQuote for packaging", async (t: Test) => {
       marginVersion: 0,
       constantsVersion: 0,
       careLabelsVersion: 0,
+      unitMaterialMultipleVersion: 0,
     },
     1,
     0

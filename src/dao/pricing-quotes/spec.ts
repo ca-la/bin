@@ -123,6 +123,9 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         material: {
           ...omit(latestValueRequest.material, "createdAt", "id"),
         },
+        unitMaterialMultiple: {
+          ...omit(latestValueRequest.unitMaterialMultiple, "createdAt", "id"),
+        },
         sample: {
           ...omit(latestValueRequest.sample, "createdAt", "id"),
         },
@@ -153,6 +156,11 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         minimumUnits: 500,
         unitCents: 400,
         version: 0,
+      },
+      unitMaterialMultiple: {
+        version: 1,
+        minimumUnits: 1000,
+        multiple: 0.95,
       },
       patternRevisionCents: 5000,
       processTimeline: null,
@@ -231,6 +239,13 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         material: {
           ...omit(latestValueRequestWithProcesses.material, "createdAt", "id"),
         },
+        unitMaterialMultiple: {
+          ...omit(
+            latestValueRequestWithProcesses.unitMaterialMultiple,
+            "createdAt",
+            "id"
+          ),
+        },
         processTimeline: {
           ...omit(
             latestValueRequestWithProcesses.processTimeline,
@@ -277,6 +292,11 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         minimumUnits: 500,
         unitCents: 400,
         version: 0,
+      },
+      unitMaterialMultiple: {
+        version: 1,
+        minimumUnits: 1000,
+        multiple: 0.95,
       },
       patternRevisionCents: 5000,
       processTimeline: {

@@ -19,6 +19,11 @@ import PricingProductMaterial, {
   dataAdapter as materialDataAdapter,
   isPricingProductMaterialRow,
 } from "../../domain-objects/pricing-product-material";
+import {
+  isPricingUnitMaterialRow,
+  PricingUnitMaterialMultiple,
+} from "../../components/pricing-unit-material-multiple/types";
+import { dataAdapter as pricingUnitMaterialMultipleDataAdapter } from "../../components/pricing-unit-material-multiple/adapter";
 import PricingProductType, {
   dataAdapter as typeDataAdapter,
   isPricingProductTypeRow,
@@ -44,6 +49,7 @@ import { PricingQuoteValues } from "../../domain-objects/pricing-quote";
 export interface QuoteValuesPool {
   constants: PricingConstant[];
   materials: PricingProductMaterial[];
+  unitMaterialMultiples: PricingUnitMaterialMultiple[];
   productTypes: PricingProductType[];
   processes: PricingProcess[];
   processTimelines: PricingProcessTimeline[];
@@ -208,6 +214,7 @@ export async function buildQuoteValuesPool(
     }
   >();
   const marginFilter = new DeepEqualSet<QuoteValueFilterBase>();
+  const unitMaterialMultipleFilter = new DeepEqualSet<QuoteValueFilterBase>();
   const processFilter = new DeepEqualSet<QuoteValueFilterBase & Process>();
   const processTimelineFilter = new DeepEqualSet<ProcessTimeLinePoolFilter>();
   for (const payload of quotePayloads) {
@@ -313,10 +320,19 @@ export async function buildQuoteValuesPool(
     marginDataAdapter
   );
 
+  const unitMaterialMultiples = await getValuesPool(
+    ktx,
+    unitMaterialMultipleFilter.toArray(),
+    "pricing_unit_material_multiples",
+    isPricingUnitMaterialRow,
+    pricingUnitMaterialMultipleDataAdapter
+  );
+
   return {
     constants,
     careLabels,
     materials,
+    unitMaterialMultiples,
     productTypes,
     processes,
     processTimelines,
@@ -442,6 +458,12 @@ export function getQuoteValuesFromPool(
     pool.margins
   );
 
+  const unitMaterialMultiple = findQuoteItemFromPool(
+    units,
+    { version: costInput.unitMaterialMultipleVersion },
+    pool.unitMaterialMultiples
+  );
+
   const careLabel = findQuoteItemFromPool(
     units,
     { version: costInput.careLabelsVersion },
@@ -453,6 +475,7 @@ export function getQuoteValuesFromPool(
   return {
     constantId,
     material,
+    unitMaterialMultiple,
     type,
     sample,
     processes,

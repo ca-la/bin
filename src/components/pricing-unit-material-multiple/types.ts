@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { check } from "../../services/check";
+import { hasProperties } from "../../services/require-properties";
 
 export const pricingUnitMaterialMultipleSchema = z.object({
   id: z.string(),
@@ -36,3 +37,15 @@ export const isPricingUnitMaterialCreationPayload = (
   candidate: unknown
 ): candidate is PricingUnitMaterialMultipleCreationPayload =>
   check(pricingUnitMaterialMultipleCreationPayloadSchema, candidate);
+
+export const isPricingUnitMaterialRow = (
+  candidate: unknown
+): candidate is PricingUnitMaterialMultipleRow =>
+  hasProperties(
+    candidate,
+    "id",
+    "created_at",
+    "version",
+    "minimum_units",
+    "multiple"
+  );

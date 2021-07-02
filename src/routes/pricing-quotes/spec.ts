@@ -202,6 +202,7 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    unitMaterialMultipleVersion: 0,
     minimumOrderQuantity: 1,
   };
 

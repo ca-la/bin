@@ -30,6 +30,12 @@ import PricingProductMaterial, {
   isPricingProductMaterialRow,
   PricingProductMaterialRow,
 } from "../../domain-objects/pricing-product-material";
+import {
+  isPricingUnitMaterialRow,
+  PricingUnitMaterialMultiple,
+  PricingUnitMaterialMultipleRow,
+} from "../../components/pricing-unit-material-multiple/types";
+import { dataAdapter as pricingUnitMaterialMultipleDataAdapter } from "../../components/pricing-unit-material-multiple/adapter";
 import PricingProductType, {
   dataAdapter as typeDataAdapter,
   isPricingProductTypeRow,
@@ -67,6 +73,7 @@ type TableName =
   | "pricing_care_labels"
   | "pricing_constants"
   | "pricing_product_materials"
+  | "pricing_unit_material_multiples"
   | "pricing_product_types"
   | "pricing_processes"
   | "pricing_margins"
@@ -168,6 +175,10 @@ export async function findVersionValuesForRequest(
     units,
     costInput.productMaterialsVersion
   );
+  const unitMaterialMultiple = await findProductUnitMaterialMultiple(
+    units,
+    costInput.unitMaterialMultipleVersion
+  );
   const type = await findProductType(
     costInput.productType,
     costInput.productComplexity,
@@ -200,6 +211,7 @@ export async function findVersionValuesForRequest(
     constantId,
     margin,
     material,
+    unitMaterialMultiple,
     processTimeline,
     processes,
     sample,
@@ -215,6 +227,7 @@ export async function findLatestValuesForRequest(
   const latestConstant = await findConstants();
   const careLabel = await findCareLabel(units);
   const material = await findProductMaterial(costInput.materialCategory, units);
+  const unitMaterialMultiple = await findProductUnitMaterialMultiple(units);
   const type = await findProductType(
     costInput.productType,
     costInput.productComplexity,
@@ -236,6 +249,7 @@ export async function findLatestValuesForRequest(
     constantId,
     margin,
     material,
+    unitMaterialMultiple,
     processTimeline,
     processes,
     sample,
@@ -402,6 +416,31 @@ async function findProductMaterial(
     isPricingProductMaterialRow,
     materialDataAdapter,
     materialRow
+  );
+}
+
+async function findProductUnitMaterialMultiple(
+  units: number,
+  version?: number
+): Promise<PricingUnitMaterialMultiple> {
+  const TABLE_NAME = "pricing_unit_material_multiples";
+  const unitMaterialMultipleRow: PricingUnitMaterialMultipleRow | null = await findAtVersionOrLatest(
+    TABLE_NAME,
+    units,
+    version
+  );
+
+  if (!unitMaterialMultipleRow) {
+    throw new ResourceNotFoundError(
+      "Pricing unit material multiple could not be found!"
+    );
+  }
+
+  return validate(
+    TABLE_NAME,
+    isPricingUnitMaterialRow,
+    pricingUnitMaterialMultipleDataAdapter,
+    unitMaterialMultipleRow
   );
 }
 

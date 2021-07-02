@@ -48,6 +48,7 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    unitMaterialMultipleVersion: 1,
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -91,6 +92,7 @@ test("supports creation without processes", async (t: Test) => {
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    unitMaterialMultipleVersion: 1,
   };
 
   const created = await db.transaction((trx: Knex.Transaction) =>
@@ -164,6 +166,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    unitMaterialMultipleVersion: 1,
   };
   const anotherInput: PricingCostInput = {
     createdAt: new Date(),
@@ -193,6 +196,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     marginVersion: 0,
     constantsVersion: 0,
     careLabelsVersion: 0,
+    unitMaterialMultipleVersion: 1,
   };
   await db.transaction(async (trx: Knex.Transaction) => {
     await PricingCostInputsDAO.create(trx, input);

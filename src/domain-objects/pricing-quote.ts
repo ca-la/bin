@@ -1,6 +1,7 @@
 import { Complexity, MaterialCategory, Process, ProductType } from "./pricing";
 import PricingConstant from "./pricing-constant";
 import PricingProductMaterial from "./pricing-product-material";
+import { PricingUnitMaterialMultiple } from "../components/pricing-unit-material-multiple/types";
 import PricingProductType from "../components/pricing-product-types/domain-object";
 import PricingProcess from "./pricing-process";
 import { hasProperties } from "../services/require-properties";
@@ -159,6 +160,7 @@ export interface PricingQuoteValues
   extends Omit<PricingConstant, "id" | "createdAt" | "version"> {
   constantId: string;
   material: PricingProductMaterial;
+  unitMaterialMultiple: PricingUnitMaterialMultiple;
   type: PricingProductType;
   sample: PricingProductType;
   processes: PricingProcess[];
