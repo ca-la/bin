@@ -119,6 +119,7 @@ have access to the CALA apps. Please run \`heroku login\` to sign in as a user w
   pg_dump --data-only \
     --table=pricing_margins \
     --table=pricing_product_materials \
+    --table=pricing_unit_material_multiples \
     --table=pricing_process_timelines \
     --table=pricing_processes \
     --table=pricing_product_types \
