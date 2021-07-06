@@ -13,6 +13,7 @@ import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as TaskEventsDAO from "../../dao/task-events";
 import * as UsersDAO from "../../components/users/dao";
+import TeamsDAO from "../../components/teams/dao";
 import ProductDesign from "../../components/product-designs/domain-objects/product-design";
 import ApprovalStep from "../../components/approval-steps/domain-object";
 
@@ -933,11 +934,16 @@ export async function sendDesignerSubmitCollection(
   collectionId: string,
   actorId: string
 ): Promise<CollectionSubmitNotification> {
+  const collection = await CollectionsDAO.findById(collectionId);
   SlackService.enqueueSend({
     channel: "designers",
     params: {
-      collection: await CollectionsDAO.findById(collectionId),
+      collection,
       designer: await UsersDAO.findById(actorId),
+      team:
+        collection && collection.teamId
+          ? await TeamsDAO.findById(db, collection.teamId)
+          : null,
     },
     templateName: "collection_submission",
   });

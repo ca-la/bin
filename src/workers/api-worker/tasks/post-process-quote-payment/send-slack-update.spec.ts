@@ -3,7 +3,9 @@ import { sandbox, test, Test } from "../../../../test-helpers/fresh";
 import InvoicesDAO from "../../../../dao/invoices";
 import * as UsersDAO from "../../../../components/users/dao";
 import * as CollectionsDAO from "../../../../components/collections/dao";
+import TeamsDAO from "../../../../components/teams/dao";
 import * as SlackService from "../../../../services/slack";
+import db from "../../../../services/db";
 import { sendSlackUpdate } from "./send-slack-update";
 import Logger from "../../../../services/logger";
 
@@ -73,7 +75,10 @@ test("sendSlackUpdate", async (t: Test) => {
     .resolves({ id: "a-user-id" });
   const findCollectionByIdStub = sandbox()
     .stub(CollectionsDAO, "findById")
-    .resolves({ id: "a-collection-id" });
+    .resolves({ id: "a-collection-id", teamId: "a-team-id" });
+  const findTeamStub = sandbox()
+    .stub(TeamsDAO, "findById")
+    .resolves({ id: "a-team-id" });
   const slackEnqueueSendStub = sandbox()
     .stub(SlackService, "enqueueSend")
     .resolves();
@@ -103,6 +108,11 @@ test("sendSlackUpdate", async (t: Test) => {
     [["a-collection-id"]],
     "collectionsDAO findById is called with invoice collection"
   );
+  t.deepEqual(
+    findTeamStub.args,
+    [[db, "a-team-id"]],
+    "TeamsDAO.findById is called with collection team"
+  );
 
   t.deepEqual(
     slackEnqueueSendStub.args,
@@ -112,8 +122,9 @@ test("sendSlackUpdate", async (t: Test) => {
           channel: "designers",
           templateName: "designer_payment",
           params: {
-            collection: { id: "a-collection-id" },
+            collection: { id: "a-collection-id", teamId: "a-team-id" },
             designer: { id: "a-user-id" },
+            team: { id: "a-team-id" },
             paymentAmountCents: 15_000,
           },
         },
@@ -134,7 +145,8 @@ test("sendSlackUpdate log warning on slack service enqueue error ", async (t: Te
   sandbox().stub(UsersDAO, "findById").resolves({ id: "a-user-id" });
   sandbox()
     .stub(CollectionsDAO, "findById")
-    .resolves({ id: "a-collection-id" });
+    .resolves({ id: "a-collection-id", teamId: "a-team-id" });
+  sandbox().stub(TeamsDAO, "findById").resolves({ id: "a-team-id" });
   const slackEnqueueSendStub = sandbox()
     .stub(SlackService, "enqueueSend")
     .rejects(new Error("Cannot send Slack message"));
@@ -157,8 +169,9 @@ test("sendSlackUpdate log warning on slack service enqueue error ", async (t: Te
           channel: "designers",
           templateName: "designer_payment",
           params: {
-            collection: { id: "a-collection-id" },
+            collection: { id: "a-collection-id", teamId: "a-team-id" },
             designer: { id: "a-user-id" },
+            team: { id: "a-team-id" },
             paymentAmountCents: 0,
           },
         },

@@ -1,8 +1,10 @@
+import db from "../../../../services/db";
 import * as SlackService from "../../../../services/slack";
 import * as UsersDAO from "../../../../components/users/dao";
 import { logWarning } from "../../../../services/logger";
 import InvoicesDAO from "../../../../dao/invoices";
 import * as CollectionsDAO from "../../../../components/collections/dao";
+import TeamsDAO from "../../../../components/teams/dao";
 import ResourceNotFoundError from "../../../../errors/resource-not-found";
 
 export async function sendSlackUpdate({
@@ -44,6 +46,10 @@ export async function sendSlackUpdate({
     params: {
       collection,
       designer,
+      team:
+        collection && collection.teamId
+          ? await TeamsDAO.findById(db, collection.teamId)
+          : null,
       paymentAmountCents: invoice.totalCents,
     },
   };
