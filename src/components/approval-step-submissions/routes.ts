@@ -1,10 +1,14 @@
 import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
-import { omit, pick } from "lodash";
+import { pick } from "lodash";
 import convert from "koa-convert";
 import { z } from "zod";
 
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
@@ -13,6 +17,8 @@ import DesignEventsDAO from "../design-events/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
   approvalStepSubmissionDomain,
+  ApprovalStepSubmissionUpdate,
+  approvalStepSubmissionUpdateSchema,
   ApprovalStepSubmissionArtifactType,
 } from "./types";
 import db from "../../services/db";
@@ -33,7 +39,9 @@ import addAtMentionDetails, {
 import notifications from "./notifications";
 import { NotificationType } from "../notifications/domain-object";
 import DesignsDAO from "../product-designs/dao";
-import useTransaction from "../../middleware/use-transaction";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
@@ -406,45 +414,44 @@ async function getSubmissionById(ctx: GetSubmissionByIdContext) {
   ctx.status = 200;
 }
 
-const ALLOWED_UPDATE_KEYS = ["collaboratorId", "teamUserId"];
+interface UpdateApprovalStepSubmissionContext
+  extends StrictContext<ApprovalStepSubmission> {
+  state: AuthedState &
+    TransactionState &
+    PermittedState &
+    SubmissionState &
+    DesignIdState &
+    SafeBodyState<ApprovalStepSubmissionUpdate>;
+}
 
-export function* updateApprovalSubmission(
-  this: TrxContext<
-    AuthedContext<
-      { collaboratorId?: string | null; teamUserId?: string | null },
-      PermittedState & SubmissionState & DesignIdState
-    >
-  >
-): Iterator<any, any, any> {
-  const { submission, trx } = this.state;
-  if (!this.state.permissions.canView) {
-    this.throw(403, `Cannot view design for step ${submission.stepId}`);
-  }
+async function updateApprovalSubmission(
+  ctx: UpdateApprovalStepSubmissionContext
+) {
+  const { submission, trx } = ctx.state;
 
-  const restKeys = omit(this.request.body, ALLOWED_UPDATE_KEYS);
-  if (Object.keys(restKeys).length > 0) {
-    this.throw(400, `Keys ${Object.keys(restKeys).join(", ")} are not allowed`);
+  if (!ctx.state.permissions.canView) {
+    ctx.throw(403, `Cannot view design for step ${submission.stepId}`);
   }
 
   if (submission.state === ApprovalStepSubmissionState.APPROVED) {
-    this.throw(
+    ctx.throw(
       400,
       "Changing assignee is not allowed after submission has been approved"
     );
   }
 
-  const { collaboratorId = null, teamUserId = null } = this.request.body;
+  const { collaboratorId = null, teamUserId = null } = ctx.state.safeBody;
 
   if (
     submission.collaboratorId === collaboratorId &&
     submission.teamUserId === teamUserId
   ) {
-    this.body = submission;
-    this.status = 200;
+    ctx.body = submission;
+    ctx.status = 200;
     return;
   }
 
-  const { before, updated } = yield ApprovalSubmissionsDAO.update(
+  const { before, updated } = await ApprovalSubmissionsDAO.update(
     trx,
     submission.id,
     {
@@ -453,20 +460,20 @@ export function* updateApprovalSubmission(
     }
   );
 
-  yield emit<
+  await emit<
     ApprovalStepSubmission,
     RouteUpdated<ApprovalStepSubmission, typeof approvalStepSubmissionDomain>
   >({
     type: "route.updated",
     domain: approvalStepSubmissionDomain,
-    actorId: this.state.userId,
+    actorId: ctx.state.userId,
     trx,
     before,
     updated,
   });
 
-  this.status = 200;
-  this.body = updated;
+  ctx.status = 200;
+  ctx.body = updated;
 }
 
 type StringGetter<State> = (this: AuthedContext<{}, State>) => string;
@@ -709,6 +716,7 @@ router.get(
 router.patch(
   "/:submissionId",
   requireAuth,
+  typeGuardFromSchema(approvalStepSubmissionUpdateSchema),
   injectSubmission,
   requireDesignIdBy<{}, SubmissionState>(
     getDesignIdFromStep<SubmissionState>(function (
@@ -719,7 +727,7 @@ router.patch(
   ),
   canAccessDesignInState,
   useTransaction,
-  updateApprovalSubmission
+  convert.back(updateApprovalSubmission)
 );
 
 router.post("/", requireAuth, convert.back(createApprovalSubmission));

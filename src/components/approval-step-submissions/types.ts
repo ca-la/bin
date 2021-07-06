@@ -1,3 +1,4 @@
+import * as z from "zod";
 import {
   BaseNotification,
   BaseFullNotification,
@@ -80,3 +81,14 @@ export interface FullApprovalStepSubmissionAssignmentNotification
   designTitle: string | null;
   type: NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT;
 }
+
+export const approvalStepSubmissionUpdateSchema = z
+  .object({
+    collaboratorId: z.string().nullable(),
+    teamUserId: z.string().nullable(),
+  })
+  .partial();
+
+export type ApprovalStepSubmissionUpdate = z.infer<
+  typeof approvalStepSubmissionUpdateSchema
+>;
