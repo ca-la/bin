@@ -85,6 +85,7 @@ export function calculateQuote(
   productionFeeBasisPoints: number
 ): UnsavedQuote {
   const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
+  const SKIP_MATERIAL_COST_MULTIPLE_COMPLEXITIES: Complexity[] = ["BLANK"];
   const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = [
     "PACKAGING",
     "OTHER - PACKAGING",
@@ -106,11 +107,16 @@ export function calculateQuote(
     costInput.materialBudgetCents || 0
   );
 
-  const materialCostCentsWithMultiple =
-    baseMaterialCostCents * values.unitMaterialMultiple.multiple;
+  const useMaterialCostMultiple = !SKIP_MATERIAL_COST_MULTIPLE_COMPLEXITIES.includes(
+    costInput.productComplexity
+  );
+  const materialCostCents = useMaterialCostMultiple
+    ? baseMaterialCostCents * values.unitMaterialMultiple.multiple
+    : baseMaterialCostCents;
+
   const baseCost = {
     baseCostCents,
-    materialCostCents: materialCostCentsWithMultiple,
+    materialCostCents,
     processCostCents: calculateProcessCents(units, values),
   };
 

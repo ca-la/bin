@@ -451,7 +451,7 @@ test("createUnsavedQuote for blank", async (t: Test) => {
       createdAt: new Date(),
       version: 0,
       minimumUnits: 1,
-      multiple: 1,
+      multiple: 0.5, // should not affect the price for "BLANK" complexity
     },
   };
 
