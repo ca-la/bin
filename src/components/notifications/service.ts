@@ -26,7 +26,7 @@ export function transformNotificationMessageToGraphQL(
   };
 }
 
-function deduplicateRecipients(recipients: Recipient[]): Recipient[] {
+export function deduplicateRecipients(recipients: Recipient[]): Recipient[] {
   return uniqWith(
     recipients,
     (recipient: Recipient, otherRecipient: Recipient) => {
@@ -42,7 +42,7 @@ function deduplicateRecipients(recipients: Recipient[]): Recipient[] {
   );
 }
 
-function recipientsFromTeamUsers(teamUsers: TeamUser[]): Recipient[] {
+export function recipientsFromTeamUsers(teamUsers: TeamUser[]): Recipient[] {
   return teamUsers.map((teamUser: TeamUser) => {
     return {
       recipientUserId: teamUser.userId,
@@ -52,7 +52,7 @@ function recipientsFromTeamUsers(teamUsers: TeamUser[]): Recipient[] {
   });
 }
 
-function recipientsFromCollaborators(
+export function recipientsFromCollaborators(
   collaborators: Collaborator[]
 ): Recipient[] {
   return collaborators.map((collaborator: Collaborator) => {

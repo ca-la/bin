@@ -20,6 +20,10 @@ export interface NotificationLayerSchema {
     required: "designId" | "approvalStepId" | "approvalSubmissionId";
     optional: "collectionId";
   };
+  [NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED]: {
+    required: "designId" | "approvalStepId" | "approvalSubmissionId";
+    optional: "collectionId";
+  };
   [NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST]: {
     required: "designId" | "approvalStepId" | "approvalSubmissionId";
     optional: "collectionId";
@@ -72,6 +76,29 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
         }`,
         title: `${assets.actorName} approved ${notification.approvalSubmissionTitle}`,
         text: `Approved ${notification.approvalSubmissionTitle}`,
+      };
+    }
+  ),
+  APPROVAL_STEP_SUBMISSION_UNSTARTED: buildNotificationComponent<
+    NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED,
+    NotificationLayerSchema[NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED]["required"],
+    NotificationLayerSchema[NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED]["optional"]
+  >(
+    NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED,
+    async (notification: FullNotification) => {
+      const assets = getApprovalBaseWithAssets(notification);
+      if (!assets) {
+        return null;
+      }
+
+      return {
+        ...assets.base,
+        html: `${span(
+          assets.actorName,
+          "user-name"
+        )} changed status to Unstarted on ${assets.submissionHtmlLink}`,
+        title: `${assets.actorName} changed status to Unstarted on ${notification.approvalSubmissionTitle}`,
+        text: `changed status to Unstarted on ${notification.approvalSubmissionTitle}`,
       };
     }
   ),

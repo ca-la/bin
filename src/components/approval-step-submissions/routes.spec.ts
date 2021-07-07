@@ -7,14 +7,13 @@ import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 import db from "../../services/db";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
-import ApprovalStepSubmission, {
+import {
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
 } from "./types";
 import * as NotificationsDAO from "../notifications/dao";
 import DesignEventsDAO from "../design-events/dao";
-import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
-import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import { setupSubmission } from "../../test-helpers/factories/design-approval-submission";
 import generateCollaborator from "../../test-helpers/factories/collaborator";
 import generateCollection from "../../test-helpers/factories/collection";
 import { moveDesign } from "../../test-helpers/collections";
@@ -29,60 +28,6 @@ import { generateTeamUser } from "../../test-helpers/factories/team-user";
 import { Role as TeamUserRole } from "../team-users/types";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import generateComment from "../../test-helpers/factories/comment";
-
-async function setupSubmission(
-  approvalSubmission: Partial<ApprovalStepSubmission> = {}
-) {
-  const designer = await createUser();
-  const collab = await createUser();
-  const trx = await db.transaction();
-  try {
-    const { approvalStep, design } = await generateApprovalStep(trx, {
-      createdBy: designer.user.id,
-    });
-    const { approvalStep: approvalStep2 } = await generateApprovalStep(trx, {
-      createdBy: designer.user.id,
-      designId: design.id,
-    });
-
-    const { collaborator } = await generateCollaborator(
-      {
-        designId: design.id,
-        userId: collab.user.id,
-      },
-      trx
-    );
-
-    const { submission } = await generateApprovalSubmission(trx, {
-      title: "Submarine",
-      stepId: approvalStep.id,
-      collaboratorId: collaborator.id,
-      ...approvalSubmission,
-    });
-    const { submission: submission2 } = await generateApprovalSubmission(trx, {
-      title: "Battleship",
-      stepId: approvalStep2.id,
-      collaboratorId: collaborator.id,
-      ...approvalSubmission,
-    });
-
-    await trx.commit();
-
-    return {
-      approvalStep,
-      approvalStep2,
-      designer,
-      collaborator,
-      collaboratorSession: collab.session,
-      design,
-      submission,
-      submission2,
-    };
-  } catch (err) {
-    await trx.rollback();
-    throw err;
-  }
-}
 
 test("GET /design-approval-step-submissions?:designId", async (t: Test) => {
   const { designer, design, submission, submission2 } = await setupSubmission();
@@ -368,6 +313,103 @@ test("PATCH /design-approval-step-submissions/:submissionId with teamUserId", as
   );
 
   t.is(otherRes[0].status, 403);
+});
+
+test("PATCH /design-approval-step-submissions/:submissionId with step", async (t: Test) => {
+  const { design, designer, submission, collaborator } = await setupSubmission({
+    state: ApprovalStepSubmissionState.APPROVED,
+  });
+
+  const [response] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.REVISION_REQUESTED,
+      },
+    }
+  );
+  t.equal(
+    response.status,
+    400,
+    "It's not possible to update the step state using this route to any value other than Unstarted"
+  );
+
+  const [response2, body2] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+      },
+    }
+  );
+  t.is(response2.status, 200);
+  t.is(
+    body2.state,
+    ApprovalStepSubmissionState.UNSUBMITTED,
+    "submission state is updated"
+  );
+  t.is(
+    body2.collaboratorId,
+    collaborator.id,
+    "submission collaboratorId is not changed"
+  );
+  t.is(body2.teamUserId, null, "sumission teamUserId is not changed");
+
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const unstartedEvents = events.filter(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_UNSTARTED"
+  );
+  if (unstartedEvents.length === 0) {
+    return t.fail("Could not find design event for review set to Unstarted");
+  }
+  t.is(unstartedEvents.length, 1);
+  t.is(
+    unstartedEvents[0].approvalSubmissionId,
+    submission.id,
+    "Submission event has an approvalSubmissionId"
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const notifications = await NotificationsDAO.findByUserId(
+      trx,
+      collaborator.userId!,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(notifications.length, 1);
+    t.is(notifications[0].approvalSubmissionId, submission.id);
+  });
+
+  const otherRes = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+      },
+    }
+  );
+
+  t.is(otherRes[0].status, 200);
+  const designEvents = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const unstartedDesignEvents = designEvents.filter(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_UNSTARTED"
+  );
+  t.is(
+    unstartedDesignEvents.length,
+    1,
+    "There is still one design event even though we called the endpoint twice with the same Unstarted state in Body"
+  );
 });
 
 test("POST /design-approval-step-submissions", async (t: Test) => {

@@ -12,7 +12,6 @@ import {
 import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
-import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
 import ApprovalStepSubmission, {
   ApprovalStepSubmissionState,
@@ -57,6 +56,7 @@ import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import { getDesignPermissions } from "../../services/get-permissions";
 import { dateStringToDate } from "../../services/zod-helpers";
 import { parseContext } from "../../services/parse-context";
+import { getRecipientsByStepSubmissionAndDesign } from "./service";
 
 const router = new Router();
 
@@ -183,44 +183,22 @@ function* createApproval(
     throw new Error(`Could not find a design with id: ${this.state.designId}`);
   }
 
-  const collaborator = submission.collaboratorId
-    ? yield CollaboratorsDAO.findById(submission.collaboratorId)
-    : null;
+  const recipients = yield getRecipientsByStepSubmissionAndDesign(
+    trx,
+    submission,
+    design
+  );
 
-  if (collaborator) {
+  for (const recipient of recipients) {
     yield notifications[
       NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL
-    ].send(
-      trx,
-      this.state.userId,
-      {
-        recipientUserId: collaborator.userId,
-        recipientCollaboratorId: collaborator.id,
-        recipientTeamUserId: null,
-      },
-      {
-        approvalStepId: submission.stepId,
-        approvalSubmissionId: submission.id,
-        designId: this.state.designId,
-        collectionId: design.collectionIds[0] || null,
-      }
-    );
-  }
-  yield notifications[NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL].send(
-    trx,
-    this.state.userId,
-    {
-      recipientUserId: design.userId,
-      recipientCollaboratorId: null,
-      recipientTeamUserId: null,
-    },
-    {
+    ].send(trx, this.state.userId, recipient, {
       approvalStepId: submission.stepId,
       approvalSubmissionId: submission.id,
       designId: this.state.designId,
       collectionId: design.collectionIds[0] || null,
-    }
-  );
+    });
+  }
 
   this.body = designEventWithMeta;
   this.status = 200;
@@ -433,18 +411,22 @@ async function updateApprovalSubmission(
     ctx.throw(403, `Cannot view design for step ${submission.stepId}`);
   }
 
-  if (submission.state === ApprovalStepSubmissionState.APPROVED) {
+  const { collaboratorId, teamUserId, state } = ctx.state.safeBody;
+
+  if (
+    (collaboratorId || teamUserId) &&
+    submission.state === ApprovalStepSubmissionState.APPROVED
+  ) {
     ctx.throw(
       400,
       "Changing assignee is not allowed after submission has been approved"
     );
   }
 
-  const { collaboratorId = null, teamUserId = null } = ctx.state.safeBody;
-
   if (
-    submission.collaboratorId === collaboratorId &&
-    submission.teamUserId === teamUserId
+    (collaboratorId && submission.collaboratorId === collaboratorId) ||
+    (teamUserId && submission.teamUserId === teamUserId) ||
+    submission.state === state
   ) {
     ctx.body = submission;
     ctx.status = 200;
@@ -455,8 +437,9 @@ async function updateApprovalSubmission(
     trx,
     submission.id,
     {
-      collaboratorId,
-      teamUserId,
+      collaboratorId: collaboratorId || (teamUserId ? null : undefined),
+      teamUserId: teamUserId || (collaboratorId ? null : undefined),
+      state,
     }
   );
 
@@ -624,28 +607,20 @@ export function* createRevisionRequest(
     throw new Error(`Could not find a design with id: ${this.state.designId}`);
   }
 
-  const collaborator = submission.collaboratorId
-    ? yield CollaboratorsDAO.findById(submission.collaboratorId)
-    : null;
-
-  if (collaborator) {
+  const recipients = yield getRecipientsByStepSubmissionAndDesign(
+    trx,
+    submission,
+    design
+  );
+  for (const recipient of recipients) {
     yield notifications[
       NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST
-    ].send(
-      trx,
-      this.state.userId,
-      {
-        recipientUserId: collaborator.userId,
-        recipientCollaboratorId: collaborator.id,
-        recipientTeamUserId: null,
-      },
-      {
-        approvalStepId: submission.stepId,
-        approvalSubmissionId: submission.id,
-        designId: this.state.designId,
-        collectionId: design.collectionIds[0] || null,
-      }
-    );
+    ].send(trx, this.state.userId, recipient, {
+      approvalStepId: submission.stepId,
+      approvalSubmissionId: submission.id,
+      designId: this.state.designId,
+      collectionId: design.collectionIds[0] || null,
+    });
   }
 
   this.status = 204;

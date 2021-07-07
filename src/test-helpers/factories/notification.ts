@@ -511,7 +511,8 @@ export default async function generateNotification(
     case NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT:
     case NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL:
     case NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST:
-    case NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST: {
+    case NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED: {
       const notification = await create({
         ...baseNotification,
         collectionId: collection.id,

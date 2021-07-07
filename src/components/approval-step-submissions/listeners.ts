@@ -22,10 +22,14 @@ import {
   realtimeApprovalSubmissionCreated,
   realtimeApprovalSubmissionDeleted,
 } from "./realtime";
-import ApprovalStepSubmission, { approvalStepSubmissionDomain } from "./types";
+import ApprovalStepSubmission, {
+  approvalStepSubmissionDomain,
+  ApprovalStepSubmissionState,
+} from "./types";
 import { templateDesignEvent } from "../design-events/types";
 import { NotificationType } from "../notifications/domain-object";
 import notifications from "./notifications";
+import { getRecipientsByStepSubmissionAndDesign } from "./service";
 
 export const listeners: Listeners<
   ApprovalStepSubmission,
@@ -105,6 +109,70 @@ export const listeners: Listeners<
   },
 
   "route.updated.*": {
+    state: async (
+      event: RouteUpdated<
+        ApprovalStepSubmission,
+        typeof approvalStepSubmissionDomain
+      >
+    ) => {
+      const state = event.updated.state;
+
+      if (state !== ApprovalStepSubmissionState.UNSUBMITTED) {
+        return;
+      }
+
+      const approvalStep = await ApprovalStepsDAO.findById(
+        event.trx,
+        event.updated.stepId
+      );
+
+      if (!approvalStep) {
+        throw new Error(
+          `Could not find an approval step with id: ${event.updated.stepId}`
+        );
+      }
+
+      const design = await DesignsDAO.findById(
+        approvalStep.designId,
+        undefined,
+        undefined,
+        event.trx
+      );
+
+      if (!design) {
+        throw new Error(
+          `Could not find a design with id: ${approvalStep.designId}`
+        );
+      }
+
+      await DesignEventsDAO.create(event.trx, {
+        ...templateDesignEvent,
+        actorId: event.actorId,
+        approvalStepId: event.updated.stepId,
+        approvalSubmissionId: event.updated.id,
+        createdAt: new Date(),
+        designId: design.id,
+        id: uuid.v4(),
+        type: "STEP_SUBMISSION_UNSTARTED",
+      });
+
+      const recipients = await getRecipientsByStepSubmissionAndDesign(
+        event.trx,
+        event.updated,
+        design
+      );
+
+      for (const recipient of recipients) {
+        await notifications[
+          NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED
+        ].send(event.trx, event.actorId, recipient, {
+          approvalStepId: event.updated.stepId,
+          approvalSubmissionId: event.updated.id,
+          designId: design.id,
+          collectionId: design.collectionIds[0] || null,
+        });
+      }
+    },
     collaboratorId: async (
       event: RouteUpdated<
         ApprovalStepSubmission,
