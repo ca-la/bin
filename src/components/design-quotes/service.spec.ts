@@ -835,3 +835,71 @@ test("getCartDetails: with full credits", async (t: Test) => {
     totalUnits: 100 + 100,
   });
 });
+
+test("getCartDetails: design with no units", async (t: Test) => {
+  const {
+    team,
+    collectionDesigns,
+    user: { designer },
+  } = await costCollection();
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const activePlan = await SubscriptionsDAO.findActiveByTeamId(trx, team.id);
+
+    if (activePlan) {
+      await SubscriptionsDAO.update(
+        activePlan.id,
+        { cancelledAt: new Date() },
+        trx
+      );
+    }
+
+    await generateSubscription(
+      trx,
+      { teamId: team.id },
+      { costOfGoodsShareBasisPoints: 0 }
+    );
+  });
+
+  const cartDetails = await db.transaction((trx: Knex.Transaction) =>
+    DesignQuoteService.getCartDetails(
+      trx,
+      [
+        { designId: collectionDesigns[0].id, units: 100 },
+        { designId: collectionDesigns[1].id, units: 0 },
+      ],
+      designer.user.id
+    )
+  );
+
+  t.deepEqual(cartDetails, {
+    quotes: [
+      {
+        designId: collectionDesigns[0].id,
+        lineItems: [],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 5_276_60,
+        payNowTotalCents: 4_960_00,
+        timeTotalMs: 1219764706,
+        units: 100,
+      },
+      {
+        designId: collectionDesigns[1].id,
+        lineItems: [],
+        minimumOrderQuantity: 1,
+        payLaterTotalCents: 0,
+        payNowTotalCents: 0,
+        timeTotalMs: 0,
+        units: 0,
+      },
+    ],
+    financingItems: [],
+    combinedLineItems: [],
+    subtotalCents: 4_960_00,
+    dueNowCents: 4_960_00,
+    dueLaterCents: 0,
+    creditAppliedCents: 0,
+    balanceDueCents: 4_960_00,
+    totalUnits: 100,
+  });
+});

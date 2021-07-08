@@ -131,6 +131,24 @@ function calculateSubtotal(
 
       const latestCostInput = costInputs[0];
 
+      if (units === 0) {
+        return {
+          ...existing,
+          quotes: [
+            ...existing.quotes,
+            {
+              designId,
+              payLaterTotalCents: 0,
+              payNowTotalCents: 0,
+              timeTotalMs: 0,
+              units,
+              minimumOrderQuantity: latestCostInput.minimumOrderQuantity,
+              lineItems: [],
+            },
+          ],
+        };
+      }
+
       const designTeam = await TeamsDAO.findByDesign(trx, designId);
       if (!designTeam) {
         throw new ResourceNotFoundError(
