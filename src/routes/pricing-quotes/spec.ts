@@ -63,11 +63,11 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
     ],
     productComplexity: Complexity.SIMPLE,
@@ -192,11 +192,11 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
     ],
     productComplexity: Complexity.SIMPLE,

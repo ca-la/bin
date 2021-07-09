@@ -150,11 +150,11 @@ export async function costCollection(generatePricing: boolean = true) {
         processes: [
           {
             complexity: ScreenPrintingComplexity["1_COLOR"],
-            name: "SCREEN_PRINTING",
+            name: "SCREEN_PRINT",
           },
           {
             complexity: ScreenPrintingComplexity["1_COLOR"],
-            name: "SCREEN_PRINTING",
+            name: "SCREEN_PRINT",
           },
         ],
         productComplexity: Complexity.SIMPLE,
@@ -172,11 +172,11 @@ export async function costCollection(generatePricing: boolean = true) {
         processes: [
           {
             complexity: ScreenPrintingComplexity["1_COLOR"],
-            name: "SCREEN_PRINTING",
+            name: "SCREEN_PRINT",
           },
           {
             complexity: ScreenPrintingComplexity["1_COLOR"],
-            name: "SCREEN_PRINTING",
+            name: "SCREEN_PRINT",
           },
         ],
         productComplexity: Complexity.BLANK,

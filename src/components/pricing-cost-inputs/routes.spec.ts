@@ -64,7 +64,7 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: EmbroideryComplexity["SMALL"],
@@ -100,7 +100,7 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
       processes: [
         {
           complexity: "1_COLOR",
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: "SMALL",

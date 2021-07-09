@@ -217,7 +217,7 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       processes: [
         {
           complexity: ScreenPrintingComplexity["2_COLORS"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,
@@ -311,7 +311,7 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         {
           complexity: ScreenPrintingComplexity["2_COLORS"],
           minimumUnits: 1000,
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
           displayName: "screen printing",
           setupCents: 6000,
           unitCents: 105,
@@ -375,7 +375,7 @@ test("PricingQuotes DAO supports finding the specific 0 version of unitMaterialM
       processes: [
         {
           complexity: ScreenPrintingComplexity["2_COLORS"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,

@@ -132,11 +132,11 @@ async function setup() {
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,
@@ -154,11 +154,11 @@ async function setup() {
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,
@@ -176,11 +176,11 @@ async function setup() {
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.BLANK,
@@ -755,11 +755,11 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,
@@ -822,11 +822,11 @@ test("POST /quote-payments with full credit", async (t: Test) => {
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,
@@ -919,11 +919,11 @@ test("POST /quote-payments fails with no payment method with balance due", async
       processes: [
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
         {
           complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINTING",
+          name: "SCREEN_PRINT",
         },
       ],
       productComplexity: Complexity.SIMPLE,

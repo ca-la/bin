@@ -35,7 +35,7 @@ export enum EmbroideryComplexity {
 
 export const processSchema = z.union([
   z.object({
-    name: z.literal("SCREEN_PRINTING"),
+    name: z.literal("SCREEN_PRINT"),
     complexity: z.nativeEnum(ScreenPrintingComplexity),
   }),
   z.object({

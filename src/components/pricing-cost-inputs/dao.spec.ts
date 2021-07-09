@@ -39,7 +39,7 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: EmbroideryComplexity.SMALL,
@@ -157,7 +157,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: EmbroideryComplexity.SMALL,
@@ -187,7 +187,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     processes: [
       {
         complexity: ScreenPrintingComplexity["1_COLOR"],
-        name: "SCREEN_PRINTING",
+        name: "SCREEN_PRINT",
       },
       {
         complexity: EmbroideryComplexity.SMALL,
