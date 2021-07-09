@@ -24,22 +24,22 @@ test("DeepEqualSet", async (t: Test) => {
     {
       version: 1,
       units: 10,
-      category: "BASIC",
+      category: MaterialCategory.BASIC,
     },
     {
       version: 1,
       units: 10,
-      category: "STANDARD",
+      category: MaterialCategory.STANDARD,
     },
     {
       version: 4,
       units: 10,
-      category: "STANDARD",
+      category: MaterialCategory.STANDARD,
     },
     {
       version: 4,
       units: 11,
-      category: "STANDARD",
+      category: MaterialCategory.STANDARD,
     },
   ];
   for (const item of items) {
@@ -71,12 +71,12 @@ test("basicValuePoolQuery", async (t: Test) => {
         {
           version: 1,
           units: 10,
-          category: "BASIC",
+          category: MaterialCategory.BASIC,
         },
         {
           version: 1,
           units: 7,
-          category: "STANDARD",
+          category: MaterialCategory.STANDARD,
         },
       ],
       sql: `select * from "${TABLE_NAME}" where minimum_units <= 10
@@ -218,34 +218,69 @@ test("findQuoteItemFromPool", async (t: Test) => {
     {
       title: "Simplest case",
       minimumUnits: 5,
-      filter: { category: "BASIC", version: 1 },
+      filter: { category: MaterialCategory.BASIC, version: 1 },
       list: [
-        { category: "BASIC", version: 1, minimumUnits: 2, id: 1 },
-        { category: "BASIC", version: 1, minimumUnits: 1, id: 2 },
+        {
+          category: MaterialCategory.BASIC,
+          version: 1,
+          minimumUnits: 2,
+          id: 1,
+        },
+        {
+          category: MaterialCategory.BASIC,
+          version: 1,
+          minimumUnits: 1,
+          id: 2,
+        },
       ],
       result: 1,
     },
     {
       title: "Not found",
       minimumUnits: 5,
-      filter: { category: "BASIC", version: 2 },
+      filter: { category: MaterialCategory.BASIC, version: 2 },
       list: [
-        { category: "BASIC", version: 1, minimumUnits: 2, id: 1 },
-        { category: "BASIC", version: 1, minimumUnits: 1, id: 2 },
+        {
+          category: MaterialCategory.BASIC,
+          version: 1,
+          minimumUnits: 2,
+          id: 1,
+        },
+        {
+          category: MaterialCategory.BASIC,
+          version: 1,
+          minimumUnits: 1,
+          id: 2,
+        },
       ],
       result: null,
     },
     {
       title: "Big pool case",
       minimumUnits: 5,
-      filter: { category: "LUXE", version: 2 },
+      filter: { category: MaterialCategory.LUXE, version: 2 },
       list: [
-        { category: "LUXE", version: 2, minimumUnits: 10, id: 1 },
-        { category: "LUXE", version: 1, minimumUnits: 1, id: 2 },
-        { category: "BASIC", version: 2, minimumUnits: 4, id: 3 },
-        { category: "LUXE", version: 2, minimumUnits: 10, id: 4 },
-        { category: "LUXE", version: 2, minimumUnits: 4, id: 5 },
-        { category: "LUXE", version: 2, minimumUnits: 3, id: 6 },
+        {
+          category: MaterialCategory.LUXE,
+          version: 2,
+          minimumUnits: 10,
+          id: 1,
+        },
+        { category: MaterialCategory.LUXE, version: 1, minimumUnits: 1, id: 2 },
+        {
+          category: MaterialCategory.BASIC,
+          version: 2,
+          minimumUnits: 4,
+          id: 3,
+        },
+        {
+          category: MaterialCategory.LUXE,
+          version: 2,
+          minimumUnits: 10,
+          id: 4,
+        },
+        { category: MaterialCategory.LUXE, version: 2, minimumUnits: 4, id: 5 },
+        { category: MaterialCategory.LUXE, version: 2, minimumUnits: 3, id: 6 },
       ],
       result: 5,
     },

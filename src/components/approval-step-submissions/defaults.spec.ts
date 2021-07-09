@@ -5,7 +5,11 @@ import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import PricingProductType from "../pricing-product-types/domain-object";
 import db from "../../services/db";
-import { Complexity, ProductType } from "../../domain-objects/pricing";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import ApprovalStep, {
   ApprovalStepType,
@@ -120,9 +124,9 @@ function createProductType(
     processTimeMs: 0,
     productionTimeMs: 0,
     fulfillmentTimeMs: 0,
-    productType: "COAT",
+    productType: ProductType.COAT,
     productComplexity: complexity,
-    materialCategory: "BASIC",
+    materialCategory: MaterialCategory.BASIC,
     units: 1,
     designId: "designid",
   };
@@ -145,17 +149,23 @@ test("approvalStepSubmissions defaults creates the right number of submissions f
     .callsFake(() => Promise.resolve(approvalSteps));
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    [productType, pricingQuote] = createProductType("BACKPACK", "MEDIUM");
+    [productType, pricingQuote] = createProductType(
+      ProductType.BACKPACK,
+      Complexity.MEDIUM
+    );
     const backpackDefaults = await getDefaultsByDesign(trx, "designid");
     t.equal(backpackDefaults.length, 9);
 
-    [productType, pricingQuote] = createProductType("BACKPACK", "BLANK");
+    [productType, pricingQuote] = createProductType(
+      ProductType.BACKPACK,
+      Complexity.BLANK
+    );
     const blankDefaults = await getDefaultsByDesign(trx, "designid");
     t.equal(blankDefaults.length, 4);
 
     [productType, pricingQuote] = createProductType(
-      "OTHER - NOVELTY LABELS",
-      "MEDIUM"
+      ProductType["OTHER - NOVELTY LABELS"],
+      Complexity.MEDIUM
     );
     const labelDefaults = await getDefaultsByDesign(trx, "designid");
     t.equal(labelDefaults.length, 3);

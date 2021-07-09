@@ -8,6 +8,13 @@ import ProductDesignsDAO from "../product-designs/dao";
 import SessionsDAO from "../../dao/sessions";
 import * as ApprovalStepStateService from "../../services/approval-step-state";
 import { CreatePricingCostInputRequest } from "./types";
+import {
+  Complexity,
+  EmbroideryComplexity,
+  MaterialCategory,
+  ProductType,
+  ScreenPrintingComplexity,
+} from "../../domain-objects/pricing";
 
 const now = new Date();
 
@@ -51,21 +58,21 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
   const input: CreatePricingCostInputRequest = {
     designId: "a-design-id",
     materialBudgetCents: 12000,
-    materialCategory: "STANDARD",
+    materialCategory: MaterialCategory.STANDARD,
     minimumOrderQuantity: 200,
     needsTechnicalDesigner: true,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "SMALL",
+        complexity: EmbroideryComplexity["SMALL"],
         name: "EMBROIDERY",
       },
     ],
-    productComplexity: "MEDIUM",
-    productType: "DRESS",
+    productComplexity: Complexity.MEDIUM,
+    productType: ProductType.DRESS,
   };
 
   const [response, costInputs] = await post("/pricing-cost-inputs", {

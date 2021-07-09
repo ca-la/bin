@@ -11,6 +11,11 @@ import createDesign from "../../services/create-design";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser from "../create-user";
 import User from "../../components/users/domain-object";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 
 interface PricingCostInputWithResources {
   design: any;
@@ -40,9 +45,9 @@ export default async function generatePricingCostInput(
       deletedAt: null,
       designId: design!.id,
       expiresAt: null,
-      productType: "PANTS",
-      productComplexity: "COMPLEX",
-      materialCategory: "SPECIFY",
+      productType: ProductType.PANTS,
+      productComplexity: Complexity.COMPLEX,
+      materialCategory: MaterialCategory.SPECIFY,
       materialBudgetCents: 10000,
       minimumOrderQuantity: 1,
       processes: [],

@@ -15,6 +15,12 @@ import { CreatePricingCostInputRequest } from "../../components/pricing-cost-inp
 import generateBid from "../../test-helpers/factories/bid";
 import createDesign from "../../services/create-design";
 import generateCollection from "../../test-helpers/factories/collection";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+  ScreenPrintingComplexity,
+} from "../../domain-objects/pricing";
 
 test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
@@ -53,19 +59,19 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
   const uncommittedCostInput: CreatePricingCostInputRequest = {
     designId: design.id,
     materialBudgetCents: 1200,
-    materialCategory: "BASIC",
+    materialCategory: MaterialCategory.BASIC,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
     ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
+    productComplexity: Complexity.SIMPLE,
+    productType: ProductType.TEESHIRT,
   };
 
   const [badRequest, notFoundMessage] = await post("/pricing-quotes/preview", {
@@ -109,7 +115,7 @@ test("POST /pricing-quotes/preview returns an unsaved quote from an uncommitted 
     contrast: [0.15, 0.5, 1, 0],
     typeMediumCents: Dollars(30),
     typeMediumDays: 10,
-    typeName: "TEESHIRT",
+    typeName: ProductType.TEESHIRT,
     typeYield: 1.5,
     version: 1,
   });
@@ -182,19 +188,19 @@ test("POST /pricing-quotes/preview fails if there are no pricing values for the 
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 1200,
-    materialCategory: "BASIC",
+    materialCategory: MaterialCategory.BASIC,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
     ],
-    productComplexity: "SIMPLE",
-    productType: "TEESHIRT",
+    productComplexity: Complexity.SIMPLE,
+    productType: ProductType.TEESHIRT,
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,

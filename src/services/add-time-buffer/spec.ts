@@ -1,5 +1,10 @@
 import { test, Test } from "../../test-helpers/simple";
 import addTimeBuffer, { getTimeBuffer } from ".";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 
 test("addTimeBuffer adds the correct amount of buffer", (t: Test) => {
   const actual = addTimeBuffer(72);
@@ -32,10 +37,10 @@ test("getTimeBuffer gets correct buffer to 1000", (t: Test) => {
     pricingQuoteInputId: "123",
     createdAt: new Date(),
     processes: [],
-    productType: "BATHROBE",
+    productType: ProductType.BATHROBE,
     processCostCents: 0,
-    productComplexity: "COMPLEX",
-    materialCategory: "BASIC",
+    productComplexity: Complexity.COMPLEX,
+    materialCategory: MaterialCategory.BASIC,
     materialBudgetCents: 0,
     materialCostCents: 12,
     units: 50,
@@ -62,10 +67,10 @@ test("getTimeBuffer rounds buffer to nearest int", (t: Test) => {
     pricingQuoteInputId: "123",
     createdAt: new Date(),
     processes: [],
-    productType: "BATHROBE",
+    productType: ProductType.BATHROBE,
     processCostCents: 0,
-    productComplexity: "COMPLEX",
-    materialCategory: "BASIC",
+    productComplexity: Complexity.COMPLEX,
+    materialCategory: MaterialCategory.BASIC,
     materialBudgetCents: 0,
     materialCostCents: 12,
     units: 50,
@@ -92,10 +97,10 @@ test("getTimeBuffer returns 0", (t: Test) => {
     pricingQuoteInputId: "123",
     createdAt: new Date(),
     processes: [],
-    productType: "BATHROBE",
+    productType: ProductType.BATHROBE,
     processCostCents: 0,
-    productComplexity: "COMPLEX",
-    materialCategory: "BASIC",
+    productComplexity: Complexity.COMPLEX,
+    materialCategory: MaterialCategory.BASIC,
     materialBudgetCents: 0,
     materialCostCents: 12,
     productionFeeCents: 0,

@@ -42,6 +42,12 @@ import { DesignEventWithMeta } from "../../components/design-events/types";
 import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
 import InvoiceFeesDAO from "../../components/invoice-fee/dao";
 import { InvoiceFeeType } from "../../components/invoice-fee/types";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+  ScreenPrintingComplexity,
+} from "../../domain-objects/pricing";
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -87,13 +93,13 @@ async function setup() {
   );
   const { collection } = await generateCollection({ teamId: team.id });
   const d1 = await createDesign({
-    productType: "A product type",
+    productType: ProductType["ACCESSORIES - BACKPACK"],
     title: "A design",
     userId: user.id,
     collectionIds: [collection.id],
   });
   const d2 = await createDesign({
-    productType: "Another product type",
+    productType: ProductType["ACCESSORIES - BANDANNA"],
     title: "A design",
     userId: user.id,
     collectionIds: [collection.id],
@@ -121,20 +127,20 @@ async function setup() {
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1000,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
     });
     await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
@@ -143,20 +149,20 @@ async function setup() {
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
     });
     await PricingCostInputsDAO.create(trx, {
       createdAt: new Date(),
@@ -165,20 +171,20 @@ async function setup() {
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "BLANK",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.BLANK,
+      productType: ProductType.TEESHIRT,
     });
   });
 
@@ -725,7 +731,7 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
   const { team } = await generateTeam(user.id);
   const { collection } = await generateCollection({ teamId: team.id });
   const design = await createDesign({
-    productType: "A product type",
+    productType: ProductType["ACCESSORIES - BANDANNA"],
     title: "A design",
     userId: user.id,
     collectionIds: [collection.id],
@@ -744,20 +750,20 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
     });
   });
 
@@ -791,7 +797,7 @@ test("POST /quote-payments with full credit", async (t: Test) => {
   const { collection } = await generateCollection({ teamId: team.id });
 
   const design = await createDesign({
-    productType: "A product type",
+    productType: ProductType["ACCESSORIES - BANDANNA"],
     title: "A design",
     userId: user.id,
     collectionIds: [collection.id],
@@ -811,20 +817,20 @@ test("POST /quote-payments with full credit", async (t: Test) => {
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
     });
 
     await CreditsDAO.create(trx, {
@@ -887,7 +893,7 @@ test("POST /quote-payments fails with no payment method with balance due", async
   const { collection } = await generateCollection({ teamId: team.id });
 
   const design = await createDesign({
-    productType: "A product type",
+    productType: ProductType["ACCESSORIES - BANDANNA"],
     title: "A design",
     userId: user.id,
     collectionIds: [collection.id],
@@ -908,20 +914,20 @@ test("POST /quote-payments fails with no payment method with balance due", async
       expiresAt: null,
       id: uuid.v4(),
       materialBudgetCents: 1200,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       minimumOrderQuantity: 1,
       processes: [
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
         {
-          complexity: "1_COLOR",
+          complexity: ScreenPrintingComplexity["1_COLOR"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
     });
   });
 

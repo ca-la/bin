@@ -18,6 +18,11 @@ import { FinancingAccountDb } from "../financing-accounts/types";
 
 import * as DesignQuoteService from "./service";
 import ResourceNotFoundError from "../../errors/resource-not-found";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 
 const BASIS_POINTS = 205;
 const unsavedQuote: UnsavedQuote = {
@@ -26,13 +31,13 @@ const unsavedQuote: UnsavedQuote = {
   designId: "a-design-id",
   fulfillmentTimeMs: 5,
   materialBudgetCents: 1000,
-  materialCategory: "SPECIFY",
+  materialCategory: MaterialCategory.SPECIFY,
   materialCostCents: 0,
   preProductionTimeMs: 5,
   processCostCents: 0,
   processTimeMs: 0,
-  productComplexity: "SIMPLE",
-  productType: "ACCESSORIES - BACKPACK",
+  productComplexity: Complexity.SIMPLE,
+  productType: ProductType["ACCESSORIES - BACKPACK"],
   productionFeeCents: 2050,
   productionTimeMs: 5,
   samplingTimeMs: 5,

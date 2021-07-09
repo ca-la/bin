@@ -23,6 +23,11 @@ import { BidTaskTypeId } from "../../components/bid-task-types/types";
 import generateCollection from "./collection";
 import { createQuotes } from "../../services/generate-pricing-quote";
 import ProductDesign from "../../components/product-designs/domain-objects/product-design";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 
 interface BidInterface {
   user: User;
@@ -87,10 +92,10 @@ export default async function generateBid({
             minimumOrderQuantity: 1,
             designId: design.id,
             materialBudgetCents: 1200,
-            materialCategory: "BASIC",
+            materialCategory: MaterialCategory.BASIC,
             processes: [],
-            productComplexity: "SIMPLE",
-            productType: "TEESHIRT",
+            productComplexity: Complexity.SIMPLE,
+            productType: ProductType.TEESHIRT,
           });
 
           return createQuotes(
@@ -155,10 +160,10 @@ export async function bidDesign({
             minimumOrderQuantity: 1,
             designId,
             materialBudgetCents: 1200,
-            materialCategory: "BASIC",
+            materialCategory: MaterialCategory.BASIC,
             processes: [],
-            productComplexity: "SIMPLE",
-            productType: "TEESHIRT",
+            productComplexity: Complexity.SIMPLE,
+            productType: ProductType.TEESHIRT,
           });
           return createQuotes([{ designId, units: 200 }], actorId, trx);
         })

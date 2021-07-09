@@ -6,17 +6,18 @@ import PricingProductType, {
   PricingProductTypeRow,
 } from "./domain-object";
 import { daysToMs } from "../../services/time-conversion";
+import { Complexity, ProductType } from "../../domain-objects/pricing";
 
 const now = new Date();
 const validRowData: PricingProductTypeRow = {
-  complexity: "MEDIUM",
+  complexity: Complexity.MEDIUM,
   contrast: 0,
   created_at: now.toISOString(),
   creation_time_ms: daysToMs(0).toString(),
   fulfillment_time_ms: daysToMs(8).toString(),
   id: "string",
   minimum_units: 0,
-  name: "BACKPACK",
+  name: ProductType.BACKPACK,
   pattern_minimum_cents: 0,
   pre_production_time_ms: daysToMs(7).toString(),
   production_time_ms: daysToMs(6).toString(),
@@ -34,14 +35,14 @@ const invalidRowData = {
   yield: 0,
 };
 const equivalentUserData: PricingProductType = {
-  complexity: "MEDIUM",
+  complexity: Complexity.MEDIUM,
   contrast: 0,
   createdAt: now,
   creationTimeMs: daysToMs(0),
   fulfillmentTimeMs: daysToMs(8),
   id: "string",
   minimumUnits: 0,
-  name: "BACKPACK",
+  name: ProductType.BACKPACK,
   patternMinimumCents: 0,
   preProductionTimeMs: daysToMs(7),
   productionTimeMs: daysToMs(6),

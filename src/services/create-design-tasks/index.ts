@@ -12,6 +12,7 @@ import { DesignPhase } from "../../domain-objects/task-template";
 import { createTasks } from "../create-task";
 import { findByDesignId as findProductTypeByDesignId } from "../../components/pricing-product-types/dao";
 import ProductDesignStage from "../../domain-objects/product-design-stage";
+import { Complexity } from "../../domain-objects/pricing";
 
 async function createTasksFromTemplates(
   designId: string,
@@ -68,7 +69,7 @@ async function retrieveStageTemplates(
 ): Promise<StageTemplate[]> {
   if (designPhase === "POST_CREATION") {
     // TODO Fix once we can tell upon creation what kind of design this is,
-    return getTemplatesFor("POST_CREATION", "BLANK");
+    return getTemplatesFor("POST_CREATION", Complexity.BLANK);
   }
 
   const productType = await findProductTypeByDesignId(designId);

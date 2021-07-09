@@ -9,6 +9,7 @@ import {
   Complexity,
   MaterialCategory,
   ProductType,
+  ScreenPrintingComplexity,
 } from "../../domain-objects/pricing";
 import createUser from "../../test-helpers/create-user";
 import { generateDesign } from "../../test-helpers/factories/product-design";
@@ -18,10 +19,10 @@ test("PricingQuotes DAO with no data", async (t: tape.Test) => {
     await PricingQuotesDAO.findLatestValuesForRequest(
       {
         designId: "a-design-id",
-        materialCategory: "SPECIFY",
+        materialCategory: MaterialCategory.SPECIFY,
         processes: [],
-        productComplexity: "COMPLEX",
-        productType: "BLAZER",
+        productComplexity: Complexity.COMPLEX,
+        productType: ProductType.BLAZER,
         materialBudgetCents: 0,
         minimumOrderQuantity: 1,
       },
@@ -46,9 +47,9 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       {
         minimumOrderQuantity: 1,
         designId: design.id,
-        materialCategory: "BASIC",
+        materialCategory: MaterialCategory.BASIC,
         processes: [],
-        productComplexity: "SIMPLE",
+        productComplexity: Complexity.SIMPLE,
         productType: "LONG_JOHNS" as ProductType,
         materialBudgetCents: 0,
       },
@@ -65,10 +66,10 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       {
         minimumOrderQuantity: 1,
         designId: design.id,
-        materialCategory: "BASIC",
+        materialCategory: MaterialCategory.BASIC,
         processes: [],
         productComplexity: "SIMPLE FOO" as Complexity,
-        productType: "TEESHIRT",
+        productType: ProductType.TEESHIRT,
         materialBudgetCents: 0,
       },
       1000
@@ -86,8 +87,8 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
         designId: design.id,
         materialCategory: "BASIC FOO" as MaterialCategory,
         processes: [],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
+        productComplexity: Complexity.SIMPLE,
+        productType: ProductType.TEESHIRT,
         materialBudgetCents: 0,
       },
       1000
@@ -102,10 +103,10 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
     {
       minimumOrderQuantity: 1,
       designId: design.id,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       processes: [],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
       materialBudgetCents: 0,
     },
     1000
@@ -212,15 +213,15 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
   const latestValueRequestWithProcesses = await PricingQuotesDAO.findLatestValuesForRequest(
     {
       designId: design.id,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       processes: [
         {
-          complexity: "2_COLORS",
+          complexity: ScreenPrintingComplexity["2_COLORS"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
       materialBudgetCents: 0,
       minimumOrderQuantity: 1,
     },
@@ -308,7 +309,7 @@ test("PricingQuotes DAO supports finding the latest values", async (t: tape.Test
       },
       processes: [
         {
-          complexity: "2_COLORS",
+          complexity: ScreenPrintingComplexity["2_COLORS"],
           minimumUnits: 1000,
           name: "SCREEN_PRINTING",
           displayName: "screen printing",
@@ -370,15 +371,15 @@ test("PricingQuotes DAO supports finding the specific 0 version of unitMaterialM
       deletedAt: null,
       expiresAt: null,
       designId: design.id,
-      materialCategory: "BASIC",
+      materialCategory: MaterialCategory.BASIC,
       processes: [
         {
-          complexity: "2_COLORS",
+          complexity: ScreenPrintingComplexity["2_COLORS"],
           name: "SCREEN_PRINTING",
         },
       ],
-      productComplexity: "SIMPLE",
-      productType: "TEESHIRT",
+      productComplexity: Complexity.SIMPLE,
+      productType: ProductType.TEESHIRT,
       materialBudgetCents: 0,
       minimumOrderQuantity: 1,
       processTimelinesVersion: 0,

@@ -16,6 +16,7 @@ import createCollaborator from "../../test-helpers/factories/collaborator";
 import Collaborator from "../../components/collaborators/types";
 import { getTemplatesFor, taskTypes } from "../../components/tasks/templates";
 import createDesign from "../create-design";
+import { Complexity } from "../../domain-objects/pricing";
 
 async function createResources(): Promise<{
   user: User;
@@ -85,7 +86,7 @@ test("createDesignTasks creates POST_CREATION tasks", async (t: Test) => {
 
   return db.transaction(async (trx: Knex.Transaction) => {
     await createDesignTasks(design.id, "POST_CREATION", trx);
-    const stages = getTemplatesFor("POST_CREATION", "BLANK");
+    const stages = getTemplatesFor("POST_CREATION", Complexity.BLANK);
 
     t.equal(stagesStub.callCount, 1, "creates all stages");
     t.ok(

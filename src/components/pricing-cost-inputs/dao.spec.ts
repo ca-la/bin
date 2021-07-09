@@ -10,13 +10,20 @@ import generatePricingValues from "../../test-helpers/factories/pricing-values";
 import generatePricingCostInput from "../../test-helpers/factories/pricing-cost-input";
 import db from "./../../services/db";
 import createDesign from "../../services/create-design";
-import { Process } from "../../domain-objects/pricing";
+import {
+  Complexity,
+  EmbroideryComplexity,
+  MaterialCategory,
+  Process,
+  ProductType,
+  ScreenPrintingComplexity,
+} from "../../domain-objects/pricing";
 
 test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "DRESS",
+    productType: ProductType.DRESS,
     title: "A design",
     userId: user.id,
   });
@@ -27,20 +34,20 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: "STANDARD",
+    materialCategory: MaterialCategory.STANDARD,
     minimumOrderQuantity: 200,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "SMALL",
+        complexity: EmbroideryComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
-    productComplexity: "MEDIUM",
-    productType: "DRESS",
+    productComplexity: Complexity.MEDIUM,
+    productType: ProductType.DRESS,
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
@@ -69,7 +76,7 @@ test("supports creation without processes", async (t: Test) => {
   await generatePricingValues();
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "DRESS",
+    productType: ProductType.DRESS,
     title: "A design",
     userId: user.id,
   });
@@ -80,11 +87,11 @@ test("supports creation without processes", async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: "STANDARD",
+    materialCategory: MaterialCategory.STANDARD,
     minimumOrderQuantity: 200,
     processes: [],
-    productComplexity: "MEDIUM",
-    productType: "DRESS",
+    productComplexity: Complexity.MEDIUM,
+    productType: ProductType.DRESS,
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
@@ -106,7 +113,7 @@ test("findById does not return expired cost inputs", async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
-    productType: "PANTALOONES",
+    productType: "PANTALOONES" as ProductType,
     title: "I ripped my Pants",
     userId: u1.id,
   });
@@ -134,7 +141,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
 
   const { user } = await createUser();
   const design = await createDesign({
-    productType: "DRESS",
+    productType: ProductType.DRESS,
     title: "A design",
     userId: user.id,
   });
@@ -145,20 +152,20 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12000,
-    materialCategory: "STANDARD",
+    materialCategory: MaterialCategory.STANDARD,
     minimumOrderQuantity: 200,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "SMALL",
+        complexity: EmbroideryComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
-    productComplexity: "MEDIUM",
-    productType: "DRESS",
+    productComplexity: Complexity.MEDIUM,
+    productType: ProductType.DRESS,
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
@@ -175,20 +182,20 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
     expiresAt: null,
     id: uuid.v4(),
     materialBudgetCents: 12500,
-    materialCategory: "SPECIFY",
+    materialCategory: MaterialCategory.SPECIFY,
     minimumOrderQuantity: 200,
     processes: [
       {
-        complexity: "1_COLOR",
+        complexity: ScreenPrintingComplexity["1_COLOR"],
         name: "SCREEN_PRINTING",
       },
       {
-        complexity: "SMALL",
+        complexity: EmbroideryComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
-    productComplexity: "MEDIUM",
-    productType: "DRESS",
+    productComplexity: Complexity.MEDIUM,
+    productType: ProductType.DRESS,
     processTimelinesVersion: 0,
     processesVersion: 0,
     productMaterialsVersion: 0,
@@ -216,7 +223,7 @@ test("findByDesignId can filter expired cost inputs", async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
-    productType: "PANTALOONES",
+    productType: "PANTALOONES" as ProductType,
     title: "I ripped my Pants",
     userId: u1.id,
   });
@@ -250,12 +257,12 @@ test("findLatestForEachDesignId", async (t: Test) => {
   await generatePricingValues();
   const { user: u1 } = await createUser({ withSession: false });
   const design1 = await createDesign({
-    productType: "PANTALOONES",
+    productType: "PANTALOONES" as ProductType,
     title: "I ripped my Pants",
     userId: u1.id,
   });
   const design2 = await createDesign({
-    productType: "HOODIE",
+    productType: "HOODIE" as ProductType,
     title: "Hoodie",
     userId: u1.id,
   });
@@ -264,11 +271,11 @@ test("findLatestForEachDesignId", async (t: Test) => {
   const processes: Process[] = [
     {
       name: "WASH",
-      complexity: "SIMPLE",
+      complexity: Complexity.SIMPLE,
     },
     {
       name: "EMBROIDERY",
-      complexity: "SMALL",
+      complexity: EmbroideryComplexity.SMALL,
     },
   ];
   const { pricingCostInput: ci11 } = await generatePricingCostInput({

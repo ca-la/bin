@@ -75,6 +75,7 @@ import { Role as TeamUserRole } from "../../team-users/types";
 import { TeamType } from "../../teams/types";
 import ProductDesign = require("../domain-objects/product-design");
 import { checkout } from "../../../test-helpers/checkout-collection";
+import { ProductType } from "../../../domain-objects/pricing";
 
 test("ProductDesignsDAO supports creation/retrieval, enriched with image links", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -1845,13 +1846,13 @@ test("findPaidDesigns allows filtering by product type", async (t: Test) => {
   await checkout();
 
   const paid = await db.transaction((trx: Knex.Transaction) =>
-    findPaidDesigns(trx, { productType: "TEESHIRT" })
+    findPaidDesigns(trx, { productType: ProductType.TEESHIRT })
   );
 
   t.equal(paid.length, 2, "Returns paid designs");
 
   const empty = await db.transaction((trx: Knex.Transaction) =>
-    findPaidDesigns(trx, { productType: "DRESS" })
+    findPaidDesigns(trx, { productType: ProductType.DRESS })
   );
 
   t.equal(empty.length, 0, "Does not find non-matching products");

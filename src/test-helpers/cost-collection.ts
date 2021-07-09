@@ -8,6 +8,12 @@ import createUser from "./create-user";
 import createDesign from "../services/create-design";
 import generatePricingValues from "./factories/pricing-values";
 import generateCollection from "./factories/collection";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+  ScreenPrintingComplexity,
+} from "../domain-objects/pricing";
 
 const variantBlank = {
   colorName: "Black",
@@ -139,20 +145,20 @@ export async function costCollection(generatePricing: boolean = true) {
         expiresAt: null,
         id: uuid.v4(),
         materialBudgetCents: 1200,
-        materialCategory: "BASIC",
+        materialCategory: MaterialCategory.BASIC,
         minimumOrderQuantity: 1,
         processes: [
           {
-            complexity: "1_COLOR",
+            complexity: ScreenPrintingComplexity["1_COLOR"],
             name: "SCREEN_PRINTING",
           },
           {
-            complexity: "1_COLOR",
+            complexity: ScreenPrintingComplexity["1_COLOR"],
             name: "SCREEN_PRINTING",
           },
         ],
-        productComplexity: "SIMPLE",
-        productType: "TEESHIRT",
+        productComplexity: Complexity.SIMPLE,
+        productType: ProductType.TEESHIRT,
       }),
       PricingCostInputsDAO.create(trx, {
         createdAt: new Date(),
@@ -161,20 +167,20 @@ export async function costCollection(generatePricing: boolean = true) {
         expiresAt: null,
         id: uuid.v4(),
         materialBudgetCents: 1200,
-        materialCategory: "BASIC",
+        materialCategory: MaterialCategory.BASIC,
         minimumOrderQuantity: 1,
         processes: [
           {
-            complexity: "1_COLOR",
+            complexity: ScreenPrintingComplexity["1_COLOR"],
             name: "SCREEN_PRINTING",
           },
           {
-            complexity: "1_COLOR",
+            complexity: ScreenPrintingComplexity["1_COLOR"],
             name: "SCREEN_PRINTING",
           },
         ],
-        productComplexity: "BLANK",
-        productType: "TEESHIRT",
+        productComplexity: Complexity.BLANK,
+        productType: ProductType.TEESHIRT,
       }),
     ]);
   });

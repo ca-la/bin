@@ -6,6 +6,11 @@ import { test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 import { PricingQuote } from "../../domain-objects/pricing-quote";
 import createDesign from "../../services/create-design";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../domain-objects/pricing";
 
 test("format timelines only returns valid timelines", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
@@ -24,9 +29,9 @@ test("format timelines only returns valid timelines", async (t: tape.Test) => {
     processes: [],
     createdAt: new Date(),
     pricingQuoteInputId: "",
-    productType: "BLAZER",
-    productComplexity: "COMPLEX",
-    materialCategory: "BASIC",
+    productType: ProductType.BLAZER,
+    productComplexity: Complexity.COMPLEX,
+    materialCategory: MaterialCategory.BASIC,
     materialBudgetCents: 0,
     units: 0,
     baseCostCents: 0,

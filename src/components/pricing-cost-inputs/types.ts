@@ -1,71 +1,86 @@
+import { z } from "zod";
 import {
   Complexity,
   MaterialCategory,
-  Process,
+  processSchema,
   ProductType,
 } from "../../domain-objects/pricing";
 
-export interface PricingCostInputDb {
-  careLabelsVersion: number;
-  constantsVersion: number;
-  createdAt: Date;
-  deletedAt: Date | null;
-  designId: string;
-  expiresAt: Date | null;
-  id: string;
-  marginVersion: number;
-  materialBudgetCents: number;
-  materialCategory: MaterialCategory;
-  minimumOrderQuantity: number;
-  processTimelinesVersion: number;
-  processesVersion: number;
-  productComplexity: Complexity;
-  productMaterialsVersion: number;
-  productType: ProductType;
-  productTypeVersion: number;
-  unitMaterialMultipleVersion: number;
-}
+const pricingCostInputDbSchema = z.object({
+  careLabelsVersion: z.number(),
+  constantsVersion: z.number(),
+  createdAt: z.date(),
+  deletedAt: z.date().nullable(),
+  designId: z.string(),
+  expiresAt: z.date().nullable(),
+  id: z.string(),
+  marginVersion: z.number(),
+  materialBudgetCents: z.number(),
+  materialCategory: z.nativeEnum(MaterialCategory),
+  minimumOrderQuantity: z.number(),
+  processTimelinesVersion: z.number(),
+  processesVersion: z.number(),
+  productComplexity: z.nativeEnum(Complexity),
+  productMaterialsVersion: z.number(),
+  productType: z.nativeEnum(ProductType),
+  productTypeVersion: z.number(),
+  unitMaterialMultipleVersion: z.number(),
+});
 
-export interface PricingCostInputDbRow {
-  care_labels_version: number;
-  constants_version: number;
-  created_at: Date;
-  deleted_at: Date | null;
-  design_id: string;
-  expires_at: Date | null;
-  id: string;
-  margin_version: number;
-  material_budget_cents: number;
-  material_category: MaterialCategory;
-  minimum_order_quantity: number;
-  process_timelines_version: number;
-  processes_version: number;
-  product_complexity: Complexity;
-  product_materials_version: number;
-  product_type: ProductType;
-  product_type_version: number;
-  unit_material_multiple_version: number;
-}
+export type PricingCostInputDb = z.infer<typeof pricingCostInputDbSchema>;
 
-export interface PricingCostInput extends PricingCostInputDb {
-  processes: Process[];
-}
+const pricingCostInputDbRowSchema = z.object({
+  care_labels_version: z.number(),
+  constants_version: z.number(),
+  created_at: z.date(),
+  deleted_at: z.date().nullable(),
+  design_id: z.string(),
+  expires_at: z.date().nullable(),
+  id: z.string(),
+  margin_version: z.number(),
+  material_budget_cents: z.number(),
+  material_category: z.nativeEnum(MaterialCategory),
+  minimum_order_quantity: z.number(),
+  process_timelines_version: z.number(),
+  processes_version: z.number(),
+  product_complexity: z.nativeEnum(Complexity),
+  product_materials_version: z.number(),
+  product_type: z.nativeEnum(ProductType),
+  product_type_version: z.number(),
+  unit_material_multiple_version: z.number(),
+});
 
-export interface PricingCostInputRow extends PricingCostInputDbRow {
-  processes: Process[];
-}
+export type PricingCostInputDbRow = z.infer<typeof pricingCostInputDbRowSchema>;
 
-export interface CreatePricingCostInputRequest {
-  designId: PricingCostInput["designId"];
-  materialBudgetCents: PricingCostInput["materialBudgetCents"];
-  materialCategory: PricingCostInput["materialCategory"];
-  processes: PricingCostInput["processes"];
-  productComplexity: PricingCostInput["productComplexity"];
-  productType: PricingCostInput["productType"];
+const pricingCostInputSchema = pricingCostInputDbSchema.extend({
+  processes: processSchema.array(),
+});
 
-  needsTechnicalDesigner?: boolean;
-  minimumOrderQuantity?: PricingCostInput["minimumOrderQuantity"];
-}
+const pricingCostInputRowSchema = pricingCostInputDbRowSchema.extend({
+  processes: processSchema.array(),
+});
+
+export type PricingCostInput = z.infer<typeof pricingCostInputSchema>;
+export type PricingCostInputRow = z.infer<typeof pricingCostInputRowSchema>;
+
+export const createPricingCostInputRequestSchema = pricingCostInputSchema
+  .pick({
+    designId: true,
+    materialBudgetCents: true,
+    materialCategory: true,
+    processes: true,
+    productComplexity: true,
+    productType: true,
+    minimumOrderQuantity: true,
+  })
+  .extend({
+    needsTechnicalDesigner: z.boolean().optional(),
+    minimumOrderQuantity: z.number().optional(),
+  });
+
+export type CreatePricingCostInputRequest = z.infer<
+  typeof createPricingCostInputRequestSchema
+>;
 
 export function isCreatePricingCostInputRequest(
   candidate: Record<string, any>

@@ -1,63 +1,72 @@
-import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
 
-import db from "../../services/db";
 import requireAdmin = require("../../middleware/require-admin");
 import ProductDesignsDAO from "../product-designs/dao";
 import { updateTechnicalDesignStepForDesign } from "../../services/approval-step-state";
 import * as PricingCostInputsDAO from "./dao";
-import { isCreatePricingCostInputRequest, PricingCostInput } from "./types";
+import {
+  CreatePricingCostInputRequest,
+  createPricingCostInputRequestSchema,
+  PricingCostInput,
+} from "./types";
+import convert from "koa-convert";
+import {
+  SafeBodyState,
+  typeGuardFromSchema,
+} from "../../middleware/type-guard";
+import { StrictContext } from "../../router-context";
+import useTransaction, {
+  TransactionState,
+} from "../../middleware/use-transaction";
 
 const router = new Router();
 
-function* createCostInputs(this: AuthedContext): Iterator<any, any, any> {
-  const { body: inputs } = this.request;
-  if (!inputs) {
-    this.throw(400, "Must include a request body");
-  }
+interface CreateContext extends StrictContext<PricingCostInput> {
+  state: AuthedState &
+    SafeBodyState<CreatePricingCostInputRequest> &
+    TransactionState;
+}
 
-  if (!isCreatePricingCostInputRequest(inputs)) {
-    this.throw(400, "Request does not match model");
+async function createCostInputs(ctx: CreateContext) {
+  const {
+    state: { trx, safeBody },
+  } = ctx;
+  const design = await ProductDesignsDAO.findById(
+    safeBody.designId,
+    undefined,
+    undefined,
+    trx
+  );
+  if (!design) {
+    ctx.throw(404, `No design found for ID: ${safeBody.designId}`);
   }
-
-  const created = yield db.transaction(async (trx: Knex.Transaction) => {
-    const design = await ProductDesignsDAO.findById(
-      inputs.designId,
-      undefined,
-      undefined,
-      trx
-    );
-    if (!design) {
-      this.throw(404, `No design found for ID: ${inputs.designId}`);
-    }
-    const {
-      needsTechnicalDesigner = false,
-      minimumOrderQuantity = 1,
-      ...unsavedInputs
-    } = inputs;
-    await updateTechnicalDesignStepForDesign(
-      trx,
-      design.id,
-      needsTechnicalDesigner
-    );
-    return PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: unsavedInputs.designId,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: unsavedInputs.materialBudgetCents,
-      materialCategory: unsavedInputs.materialCategory,
-      minimumOrderQuantity,
-      processes: unsavedInputs.processes,
-      productComplexity: unsavedInputs.productComplexity,
-      productType: unsavedInputs.productType,
-    });
+  const {
+    needsTechnicalDesigner = false,
+    minimumOrderQuantity = 1,
+    ...unsavedInputs
+  } = safeBody;
+  await updateTechnicalDesignStepForDesign(
+    trx,
+    design.id,
+    needsTechnicalDesigner
+  );
+  const created = await PricingCostInputsDAO.create(trx, {
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: unsavedInputs.designId,
+    expiresAt: null,
+    id: uuid.v4(),
+    materialBudgetCents: unsavedInputs.materialBudgetCents,
+    materialCategory: unsavedInputs.materialCategory,
+    minimumOrderQuantity,
+    processes: unsavedInputs.processes,
+    productComplexity: unsavedInputs.productComplexity,
+    productType: unsavedInputs.productType,
   });
 
-  this.body = created;
-  this.status = 201;
+  ctx.body = created;
+  ctx.status = 201;
 }
 
 function* getCostInputs(this: AuthedContext): Iterator<any, any, any> {
@@ -86,7 +95,13 @@ function* getCostInputs(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
-router.post("/", requireAdmin, createCostInputs);
+router.post(
+  "/",
+  requireAdmin,
+  typeGuardFromSchema(createPricingCostInputRequestSchema),
+  useTransaction,
+  convert.back(createCostInputs)
+);
 router.get("/", requireAdmin, getCostInputs);
 
 export default router.routes();

@@ -13,6 +13,7 @@ import { PricingCareLabelRow } from "../../domain-objects/pricing-care-label";
 import { PricingProcessTimelineRow } from "../../components/pricing-process-timeline/domain-object";
 import { PricingUnitMaterialMultipleRow } from "../../components/pricing-unit-material-multiple/types";
 import { daysToMs } from "../../services/time-conversion";
+import { ProductType } from "../../domain-objects/pricing";
 
 export default async function generatePricingValues(): Promise<any> {
   const pricingProcessScreenPrinting = generateScreenPrintingProcess(
@@ -33,7 +34,7 @@ export default async function generatePricingValues(): Promise<any> {
     contrast: [0.15, 0.5, 1, 0],
     typeMediumCents: Dollars(20),
     typeMediumDays: 5,
-    typeName: "TEESHIRT",
+    typeName: ProductType.TEESHIRT,
     typeYield: 1.5,
     version: 0,
   });

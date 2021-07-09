@@ -84,11 +84,13 @@ export function calculateQuote(
   values: PricingQuoteValues,
   productionFeeBasisPoints: number
 ): UnsavedQuote {
-  const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = ["BLANK"];
-  const SKIP_MATERIAL_COST_MULTIPLE_COMPLEXITIES: Complexity[] = ["BLANK"];
+  const SKIP_DEVELOPMENT_COST_COMPLEXITIES: Complexity[] = [Complexity.BLANK];
+  const SKIP_MATERIAL_COST_MULTIPLE_COMPLEXITIES: Complexity[] = [
+    Complexity.BLANK,
+  ];
   const SKIP_BASE_COST_PRODUCT_TYPES: ProductType[] = [
-    "PACKAGING",
-    "OTHER - PACKAGING",
+    ProductType.PACKAGING,
+    ProductType["OTHER - PACKAGING"],
   ];
 
   const chargeBaseCosts = !SKIP_BASE_COST_PRODUCT_TYPES.includes(
