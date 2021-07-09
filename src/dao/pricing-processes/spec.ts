@@ -15,7 +15,5 @@ test("PricingProcessesDAO.findLatestProcesses", async (t: Test) => {
     { name: "SCREEN_PRINT", complexity: "5_COLORS" },
     { name: "SCREEN_PRINT", complexity: "6_COLORS" },
     { name: "SCREEN_PRINT", complexity: "7_COLORS" },
-    { name: "SCREEN_PRINT", complexity: "8_COLORS" },
-    { name: "SCREEN_PRINT", complexity: "9_COLORS" },
   ]);
 });

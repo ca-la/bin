@@ -12,11 +12,12 @@ import db from "./../../services/db";
 import createDesign from "../../services/create-design";
 import {
   Complexity,
-  EmbroideryComplexity,
+  ProcessSizeComplexity,
   MaterialCategory,
   Process,
   ProductType,
   ScreenPrintingComplexity,
+  ProcessComplexity,
 } from "../../domain-objects/pricing";
 
 test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => {
@@ -42,7 +43,7 @@ test("PricingCostInputsDAO supports creation and retrieval", async (t: Test) => 
         name: "SCREEN_PRINT",
       },
       {
-        complexity: EmbroideryComplexity.SMALL,
+        complexity: ProcessSizeComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
@@ -160,7 +161,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
         name: "SCREEN_PRINT",
       },
       {
-        complexity: EmbroideryComplexity.SMALL,
+        complexity: ProcessSizeComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
@@ -190,7 +191,7 @@ test("PricingCostInputsDAO supports retrieval by designID", async (t: Test) => {
         name: "SCREEN_PRINT",
       },
       {
-        complexity: EmbroideryComplexity.SMALL,
+        complexity: ProcessSizeComplexity.SMALL,
         name: "EMBROIDERY",
       },
     ],
@@ -271,11 +272,11 @@ test("findLatestForEachDesignId", async (t: Test) => {
   const processes: Process[] = [
     {
       name: "WASH",
-      complexity: Complexity.SIMPLE,
+      complexity: ProcessComplexity.SIMPLE,
     },
     {
       name: "EMBROIDERY",
-      complexity: EmbroideryComplexity.SMALL,
+      complexity: ProcessSizeComplexity.SMALL,
     },
   ];
   const { pricingCostInput: ci11 } = await generatePricingCostInput({

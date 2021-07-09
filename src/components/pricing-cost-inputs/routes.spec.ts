@@ -10,7 +10,7 @@ import * as ApprovalStepStateService from "../../services/approval-step-state";
 import { CreatePricingCostInputRequest } from "./types";
 import {
   Complexity,
-  EmbroideryComplexity,
+  ProcessSizeComplexity,
   MaterialCategory,
   ProductType,
   ScreenPrintingComplexity,
@@ -67,7 +67,7 @@ test("POST /pricing-cost-inputs", async (t: Test) => {
         name: "SCREEN_PRINT",
       },
       {
-        complexity: EmbroideryComplexity["SMALL"],
+        complexity: ProcessSizeComplexity["SMALL"],
         name: "EMBROIDERY",
       },
     ],

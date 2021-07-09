@@ -19,7 +19,7 @@ export default function generateScreenPrintingProcess(
       [units, base]: [number, number]
     ): UninsertedPricingProcessRow[] => {
       return acc.concat(
-        range(1, 10).reduce(
+        range(1, 8).reduce(
           (
             rowsForUnits: UninsertedPricingProcessRow[],
             colorCount: number

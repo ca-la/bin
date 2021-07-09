@@ -7,6 +7,12 @@ export enum Complexity {
   COMPLEX = "COMPLEX",
 }
 
+export enum ProcessComplexity {
+  SIMPLE = "SIMPLE",
+  MEDIUM = "MEDIUM",
+  COMPLEX = "COMPLEX",
+}
+
 export enum MaterialCategory {
   SPECIFY = "SPECIFY",
   BASIC = "BASIC",
@@ -25,9 +31,11 @@ export enum ScreenPrintingComplexity {
   "7_COLORS" = "7_COLORS",
   "8_COLORS" = "8_COLORS",
   "9_COLORS" = "9_COLORS",
+  "10_COLORS" = "10_COLORS",
+  "11_COLORS" = "11_COLORS",
 }
 
-export enum EmbroideryComplexity {
+export enum ProcessSizeComplexity {
   "SMALL" = "SMALL",
   "MEDIUM" = "MEDIUM",
   "LARGE" = "LARGE",
@@ -35,23 +43,52 @@ export enum EmbroideryComplexity {
 
 export const processSchema = z.union([
   z.object({
+    name: z.literal("CUSTOM_METAL_HARDWARE"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("DISTRESS"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("DTG_PRINT"),
+    complexity: z.nativeEnum(ProcessSizeComplexity),
+  }),
+  z.object({
+    name: z.literal("DYE"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("EMBELLISH"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("EMBROIDERY"),
+    complexity: z.nativeEnum(ProcessSizeComplexity),
+  }),
+  z.object({
+    name: z.literal("FABRIC_PRINT"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("LABEL_APPLICATION"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
+    name: z.literal("PLEATING"),
+    complexity: z.nativeEnum(ProcessComplexity),
+  }),
+  z.object({
     name: z.literal("SCREEN_PRINT"),
     complexity: z.nativeEnum(ScreenPrintingComplexity),
   }),
   z.object({
-    name: z.literal("EMBROIDERY"),
-    complexity: z.nativeEnum(EmbroideryComplexity),
-  }),
-  z.object({ name: z.literal("WASH"), complexity: z.nativeEnum(Complexity) }),
-  z.object({ name: z.literal("WASH"), complexity: z.nativeEnum(Complexity) }),
-  z.object({ name: z.literal("DYE"), complexity: z.nativeEnum(Complexity) }),
-  z.object({
-    name: z.literal("DISTRESS"),
-    complexity: z.nativeEnum(Complexity),
+    name: z.literal("SCREEN_PRINT_PROCESS"),
+    complexity: z.literal("PUFF or FOIL or REFLECTIVE"),
   }),
   z.object({
-    name: z.literal("EMBELLISH"),
-    complexity: z.nativeEnum(Complexity),
+    name: z.literal("WASH"),
+    complexity: z.nativeEnum(ProcessComplexity),
   }),
 ]);
 
