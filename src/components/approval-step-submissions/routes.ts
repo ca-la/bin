@@ -1,7 +1,6 @@
 import Knex from "knex";
 import Router from "koa-router";
 import uuid from "node-uuid";
-import { pick } from "lodash";
 import convert from "koa-convert";
 import { z } from "zod";
 
@@ -24,10 +23,6 @@ import db from "../../services/db";
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
 import {
-  BASE_COMMENT_PROPERTIES,
-  isBaseComment,
-} from "../comments/domain-object";
-import {
   canAccessDesignInState,
   requireDesignIdBy,
 } from "../../middleware/can-access-design";
@@ -45,11 +40,10 @@ import * as IrisService from "../../components/iris/send-message";
 import { realtimeApprovalSubmissionRevisionRequest } from "./realtime";
 import { emit } from "../../services/pubsub";
 import * as NotificationsService from "../../services/create-notifications";
-import Comment, { CommentWithResources } from "../comments/types";
+import { CommentWithResources } from "../comments/types";
 import { RouteUpdated, RouteDeleted } from "../../services/pubsub/cala-events";
 import filterError from "../../services/filter-error";
 import ResourceNotFoundError from "../../errors/resource-not-found";
-import Asset from "../assets/types";
 import { StrictContext } from "../../router-context";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
@@ -57,6 +51,10 @@ import { getDesignPermissions } from "../../services/get-permissions";
 import { dateStringToDate } from "../../services/zod-helpers";
 import { parseContext } from "../../services/parse-context";
 import { getRecipientsByStepSubmissionAndDesign } from "./service";
+import {
+  CreateRevisionRequest,
+  createRevisionRequestSchema,
+} from "../approval-step-comments/types";
 
 const router = new Router();
 
@@ -515,63 +513,54 @@ async function getDesignIdFromSubmission(
   return step.designId;
 }
 
-export function* createRevisionRequest(
-  this: TrxContext<
-    AuthedContext<
-      { comment: Comment },
-      PermittedState & { designId: string; stepId: string }
-    >
-  >
-): Iterator<any, any, any> {
-  const { trx, userId } = this.state;
-  if (!this.request.body.comment) {
-    this.throw(400, "Missing comment");
-  }
+interface CreateRevisionRequestContext extends StrictContext {
+  state: AuthedState &
+    TransactionState &
+    SafeBodyState<CreateRevisionRequest> & {
+      stepId: string;
+      designId: string;
+    };
+  params: { submissionId: string };
+}
 
-  const commentRequest = pick(
-    this.request.body.comment,
-    BASE_COMMENT_PROPERTIES
-  );
-  const attachments: Asset[] = this.request.body.comment.attachments || [];
-  const { submissionId } = this.params;
+async function createRevisionRequest(ctx: CreateRevisionRequestContext) {
+  const { trx, userId } = ctx.state;
 
-  if (!commentRequest || !isBaseComment(commentRequest)) {
-    this.throw(400, "Invalid comment");
-  }
+  const { submissionId } = ctx.params;
 
-  const submission = yield ApprovalSubmissionsDAO.findById(trx, submissionId);
+  const submission = await ApprovalSubmissionsDAO.findById(trx, submissionId);
 
   if (!submission) {
-    this.throw(404, "Submission not found");
+    ctx.throw(404, "Submission not found");
   }
 
   if (submission.state === ApprovalStepSubmissionState.REVISION_REQUESTED) {
-    this.throw(409, "Submission already has requested revisions");
+    ctx.throw(409, "Submission already has requested revisions");
   }
 
-  const { updated } = yield ApprovalSubmissionsDAO.update(trx, submissionId, {
+  const { updated } = await ApprovalSubmissionsDAO.update(trx, submissionId, {
     state: ApprovalStepSubmissionState.REVISION_REQUESTED,
   });
 
-  const comment = yield createCommentWithAttachments(trx, {
-    comment: commentRequest,
-    attachments,
+  const comment = await createCommentWithAttachments(trx, {
+    comment: ctx.state.safeBody.comment,
+    attachments: ctx.state.safeBody.comment.attachments,
     userId,
   });
 
-  yield ApprovalStepCommentDAO.create(trx, {
-    approvalStepId: this.state.stepId,
+  await ApprovalStepCommentDAO.create(trx, {
+    approvalStepId: ctx.state.stepId,
     commentId: comment.id,
   });
 
   const {
     mentionedUserIds,
     idNameMap,
-  } = yield getCollaboratorsFromCommentMentions(trx, comment.text);
+  } = await getCollaboratorsFromCommentMentions(trx, comment.text);
 
   for (const mentionedUserId of mentionedUserIds) {
-    yield NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
-      approvalStepId: this.state.stepId,
+    await NotificationsService.sendApprovalStepCommentMentionNotification(trx, {
+      approvalStepId: ctx.state.stepId,
       commentId: comment.id,
       actorId: userId,
       recipientId: mentionedUserId,
@@ -580,19 +569,23 @@ export function* createRevisionRequest(
 
   const commentWithMentions = { ...comment, mentions: idNameMap };
 
-  const event = yield DesignEventsDAO.create(trx, {
+  const event = await DesignEventsDAO.create(trx, {
     ...templateDesignEvent,
-    actorId: this.state.userId,
-    approvalStepId: this.state.stepId,
+    actorId: ctx.state.userId,
+    approvalStepId: ctx.state.stepId,
     approvalSubmissionId: submissionId,
     commentId: comment.id,
     createdAt: new Date(),
-    designId: this.state.designId,
+    designId: ctx.state.designId,
     id: uuid.v4(),
     type: "REVISION_REQUEST",
   });
 
-  const eventWithMeta = yield DesignEventsDAO.findById(trx, event.id);
+  const eventWithMeta = await DesignEventsDAO.findById(trx, event.id);
+
+  if (!eventWithMeta) {
+    throw new Error(`Could not re-fetch new design event ${event.id}`);
+  }
 
   IrisService.sendMessage(
     realtimeApprovalSubmissionRevisionRequest({
@@ -602,28 +595,29 @@ export function* createRevisionRequest(
     })
   );
 
-  const design = yield DesignsDAO.findById(this.state.designId);
+  const design = await DesignsDAO.findById(ctx.state.designId);
   if (!design) {
-    throw new Error(`Could not find a design with id: ${this.state.designId}`);
+    throw new Error(`Could not find a design with id: ${ctx.state.designId}`);
   }
 
-  const recipients = yield getRecipientsByStepSubmissionAndDesign(
+  const recipients = await getRecipientsByStepSubmissionAndDesign(
     trx,
     submission,
     design
   );
+
   for (const recipient of recipients) {
-    yield notifications[
+    await notifications[
       NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST
-    ].send(trx, this.state.userId, recipient, {
+    ].send(trx, ctx.state.userId, recipient, {
       approvalStepId: submission.stepId,
       approvalSubmissionId: submission.id,
-      designId: this.state.designId,
+      designId: ctx.state.designId,
       collectionId: design.collectionIds[0] || null,
     });
   }
 
-  this.status = 204;
+  ctx.status = 204;
 }
 
 interface ListSubmissionStreamItemsContext
@@ -649,10 +643,11 @@ router.get("/", requireAuth, convert.back(getSubmissions));
 router.post(
   "/:submissionId/revision-requests",
   requireAuth,
+  typeGuardFromSchema<CreateRevisionRequest>(createRevisionRequestSchema),
   requireDesignIdBy(getDesignIdFromSubmission),
   canAccessDesignInState,
   useTransaction,
-  createRevisionRequest
+  convert.back(createRevisionRequest)
 );
 
 router.post(

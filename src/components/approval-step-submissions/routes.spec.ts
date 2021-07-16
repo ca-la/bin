@@ -28,6 +28,8 @@ import { generateTeamUser } from "../../test-helpers/factories/team-user";
 import { Role as TeamUserRole } from "../team-users/types";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import generateComment from "../../test-helpers/factories/comment";
+import Asset from "../assets/types";
+import { Serialized } from "../../types/serialized";
 
 test("GET /design-approval-step-submissions?:designId", async (t: Test) => {
   const { designer, design, submission, submission2 } = await setupSubmission();
@@ -535,7 +537,20 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     submission,
   } = await setupSubmission();
 
+  const attachment: Serialized<Asset> = {
+    createdAt: now.toISOString(),
+    description: null,
+    id: uuid.v4(),
+    mimeType: "image/jpeg",
+    originalHeightPx: 0,
+    originalWidthPx: 0,
+    title: "",
+    userId: designer.user.id,
+    uploadCompletedAt: now.toISOString(),
+  };
+
   const comment = {
+    attachments: [attachment],
     createdAt: now,
     deletedAt: null,
     id: uuid.v4(),
@@ -586,7 +601,6 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     );
     const fullComment = {
       ...comment,
-      attachments: [],
       mentions: {
         [collaborator.id]: collaborator.user!.name,
       },
@@ -606,11 +620,15 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       ],
       "Sends realtime messages"
     );
+
+    const irisComment = irisStub.args[3][0].resource.comment;
     t.deepEquals(
-      irisStub.args[3][0].resource.comment,
-      fullComment,
+      omit(irisComment, "attachments"),
+      omit(fullComment, "attachments"),
       "Realtime message has a comment"
     );
+
+    t.deepEquals(irisComment.attachments[0].id, attachment.id);
 
     t.deepEquals(
       omit(irisStub.args[3][0].resource.event, "id"),
@@ -641,10 +659,12 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
       headers: authHeader(designer.session.id),
       body: {
         comment: {
+          attachments: [],
           createdAt: new Date(),
           deletedAt: null,
           id: uuid.v4(),
           isPinned: false,
+          mentions: {},
           parentCommentId: null,
           text: "test comment",
           userId: designer.user.id,
