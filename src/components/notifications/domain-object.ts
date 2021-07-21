@@ -380,6 +380,7 @@ export function isFullNotificationRow(
       "has_attachments",
       "task_title",
       "annotation_image_id",
+      "annotation_image_page_number",
       "approval_step_title",
       "parent_comment_id"
     )
@@ -403,6 +404,7 @@ function encodeFull(rowData: FullNotificationRow): FullNotification {
     actorUserId: rowData.actor_user_id,
     annotationId: rowData.annotation_id,
     annotationImageId: rowData.annotation_image_id,
+    annotationImagePageNumber: rowData.annotation_image_page_number,
     approvalStepId: rowData.approval_step_id,
     approvalSubmissionId: rowData.approval_submission_id,
     approvalStepTitle: rowData.approval_step_title,

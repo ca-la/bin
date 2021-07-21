@@ -16,7 +16,11 @@ import normalizeTitle from "../../services/normalize-title";
 import Comment from "../../components/comments/types";
 import { ComponentType } from "../components/types";
 import { getMentionsFromComment } from "../../services/add-at-mention-details";
-import { generatePreviewLinks } from "../../services/attach-asset-links";
+import {
+  buildImgixLink,
+  generatePreviewLinks,
+  THUMBNAIL_FORMAT,
+} from "../../services/attach-asset-links";
 import User from "../../components/users/domain-object";
 import {
   BreadCrumb,
@@ -405,6 +409,7 @@ export async function createNotificationMessage(
       const {
         annotationId,
         annotationImageId,
+        annotationImagePageNumber,
         canvasId,
         designId,
         collectionId,
@@ -443,7 +448,12 @@ export async function createNotificationMessage(
           { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(cleanName, "user-name")} commented on ${htmlLink}`,
-        imageUrl: buildImageUrl([annotationImageId]),
+        imageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...THUMBNAIL_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`,
@@ -455,6 +465,7 @@ export async function createNotificationMessage(
       const {
         annotationId,
         annotationImageId,
+        annotationImagePageNumber,
         canvasId,
         designId,
         collectionId,
@@ -494,7 +505,12 @@ export async function createNotificationMessage(
           { text: commentText, url: deepLink, mentions, hasAttachments },
         ],
         html: `${span(cleanName, "user-name")} mentioned you on ${htmlLink}`,
-        imageUrl: buildImageUrl([annotationImageId]),
+        imageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...THUMBNAIL_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(design)}`,

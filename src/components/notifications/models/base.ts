@@ -74,6 +74,7 @@ export interface BaseFullNotificationRow {
   has_attachments: boolean;
   task_title: null;
   annotation_image_id: null;
+  annotation_image_page_number: null;
   approval_step_title: null;
   approval_submission_title: null;
   shipment_tracking_description: null;
@@ -155,6 +156,7 @@ export interface BaseFullNotification {
   hasAttachments: boolean;
   taskTitle: null;
   annotationImageId: null;
+  annotationImagePageNumber: null;
   approvalStepTitle: null;
   approvalSubmissionTitle: null;
   shipmentTrackingDescription: null;

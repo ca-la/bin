@@ -1,18 +1,19 @@
-import tape from "tape";
 import uuid from "node-uuid";
 
 import Configuration from "../../config";
-import {
-  addAssetLink,
-  constructAttachmentAssetLinks,
-  generatePreviewLinks,
-} from "./index";
-import { sandbox, test } from "../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 import { Component, ComponentType } from "../../components/components/types";
 import OptionsDAO from "../../dao/product-design-options";
 import * as AssetsDAO from "../../components/assets/dao";
 import Asset from "../../components/assets/types";
+
+import {
+  buildImgixLink,
+  addAssetLink,
+  constructAttachmentAssetLinks,
+  generatePreviewLinks,
+} from "./index";
 
 function stubUrls(): void {
   sandbox()
@@ -23,7 +24,53 @@ function stubUrls(): void {
     .value("https://imgix.example.com");
 }
 
-test("addAssetLink returns only the download link for non-previewable assets", async (t: tape.Test) => {
+test("buildImgixLink", async (t: Test) => {
+  stubUrls();
+
+  t.equal(
+    buildImgixLink("an-annotation-id"),
+    "https://imgix.example.com/an-annotation-id?fm=jpg",
+    "sets jpg format"
+  );
+
+  t.equal(
+    buildImgixLink("an-annotation-id", { fit: "max" }),
+    "https://imgix.example.com/an-annotation-id?fm=jpg&fit=max",
+    "can set fit to max"
+  );
+
+  t.equal(
+    buildImgixLink("an-annotation-id", { fit: "fill" }),
+    "https://imgix.example.com/an-annotation-id?fm=jpg&fit=fill",
+    "can set fit to fill"
+  );
+
+  t.equal(
+    buildImgixLink("an-annotation-id", { dpr: 2 }),
+    "https://imgix.example.com/an-annotation-id?fm=jpg&dpr=2",
+    "can set dpr"
+  );
+
+  t.equal(
+    buildImgixLink("an-annotation-id", { dpr: 2, fit: "fill" }),
+    "https://imgix.example.com/an-annotation-id?fm=jpg&fit=fill&dpr=2",
+    "can set dpr and fit"
+  );
+
+  t.equal(
+    buildImgixLink("an-annotation-id", {
+      dpr: 2,
+      fit: "fill",
+      height: 100,
+      pageNumber: 3,
+      width: 200,
+    }),
+    "https://imgix.example.com/an-annotation-id?fm=jpg&fit=fill&h=100&w=200&dpr=2&page=3",
+    "can set all options"
+  );
+});
+
+test("addAssetLink returns only the download link for non-previewable assets", async (t: Test) => {
   stubUrls();
   const id = uuid.v4();
   const sketchId = uuid.v4();
@@ -57,7 +104,7 @@ test("addAssetLink returns only the download link for non-previewable assets", a
   t.equal(enrichedComponent.assetId, sketchId);
 });
 
-test("addAssetLink returns aws link when component is of type sketch", async (t: tape.Test) => {
+test("addAssetLink returns aws link when component is of type sketch", async (t: Test) => {
   stubUrls();
   const id = uuid.v4();
   const sketchId = uuid.v4();
@@ -101,7 +148,7 @@ test("addAssetLink returns aws link when component is of type sketch", async (t:
   t.equal(enrichedComponent.assetId, sketchId);
 });
 
-test("addAssetLink returns link when component is of type artwork", async (t: tape.Test) => {
+test("addAssetLink returns link when component is of type artwork", async (t: Test) => {
   stubUrls();
   const id = uuid.v4();
   const artworkId = uuid.v4();
@@ -145,7 +192,7 @@ test("addAssetLink returns link when component is of type artwork", async (t: ta
   t.equal(enrichedComponent.assetId, artworkId);
 });
 
-test("addAssetLink returns link when component is of type material", async (t: tape.Test) => {
+test("addAssetLink returns link when component is of type material", async (t: Test) => {
   stubUrls();
   const id = uuid.v4();
   const materialId = uuid.v4();
@@ -194,7 +241,7 @@ test("addAssetLink returns link when component is of type material", async (t: t
   t.equal(enrichedComponent.assetId, materialImageId);
 });
 
-test("generatePreviewLinks", async (t: tape.Test) => {
+test("generatePreviewLinks", async (t: Test) => {
   stubUrls();
   const imageId = uuid.v4();
   const imageIdTwo = uuid.v4();
@@ -217,7 +264,7 @@ test("generatePreviewLinks", async (t: tape.Test) => {
   );
 });
 
-test("constructAttachmentAssetLinks", async (t: tape.Test) => {
+test("constructAttachmentAssetLinks", async (t: Test) => {
   stubUrls();
   const imageId = uuid.v4();
   const attachmentAssetLinks = constructAttachmentAssetLinks({
@@ -234,7 +281,7 @@ test("constructAttachmentAssetLinks", async (t: tape.Test) => {
   );
 });
 
-test("addAssetLink returns paginated links for components with pages", async (t: tape.Test) => {
+test("addAssetLink returns paginated links for components with pages", async (t: Test) => {
   stubUrls();
   const id = uuid.v4();
   const materialId = uuid.v4();

@@ -148,7 +148,10 @@ function addMeasurement(query: Knex.QueryBuilder): Knex.QueryBuilder {
 
 function addAnnotation(query: Knex.QueryBuilder): Knex.QueryBuilder {
   return query
-    .select("canvas_assets.id as annotation_image_id")
+    .select([
+      "canvas_assets.id as annotation_image_id",
+      "components.asset_page_number as annotation_image_page_number",
+    ])
     .leftJoin(
       "product_design_canvas_annotations as a",
       "a.id",

@@ -172,8 +172,10 @@ test("getAllByDesign can handle the empty case", async (t: Test) => {
 });
 
 test("getAllByDesign will fetch all resources necessary for phidias", async (t: Test) => {
-  sandbox().stub(Config, "USER_UPLOADS_BASE_URL").value("base-foo.com");
-  sandbox().stub(Config, "USER_UPLOADS_IMGIX_URL").value("imgix-foo.com");
+  sandbox().stub(Config, "USER_UPLOADS_BASE_URL").value("https://base-foo.com");
+  sandbox()
+    .stub(Config, "USER_UPLOADS_IMGIX_URL")
+    .value("https://imgix-foo.com");
 
   const { user } = await createUser({ withSession: false });
   const { asset: asset1 } = await generateAsset({
@@ -271,12 +273,12 @@ test("getAllByDesign will fetch all resources necessary for phidias", async (t: 
       ...data.asset2,
       assetLinks: {
         assetId: asset2.id,
-        assetLink: `imgix-foo.com/${asset2.id}?fm=jpg&fit=max`,
-        asset3xLink: `imgix-foo.com/${asset2.id}?fm=jpg&fit=max&dpr=3`,
-        downloadLink: `base-foo.com/${asset2.id}`,
+        assetLink: `https://imgix-foo.com/${asset2.id}?fm=jpg&fit=max`,
+        asset3xLink: `https://imgix-foo.com/${asset2.id}?fm=jpg&fit=max&dpr=3`,
+        downloadLink: `https://base-foo.com/${asset2.id}`,
         fileType: "jpeg",
-        thumbnailLink: `imgix-foo.com/${asset2.id}?fm=jpg&fit=fill&h=104&w=104`,
-        thumbnail2xLink: `imgix-foo.com/${asset2.id}?fm=jpg&fit=fill&h=104&w=104&dpr=2`,
+        thumbnailLink: `https://imgix-foo.com/${asset2.id}?fm=jpg&fit=fill&h=104&w=104`,
+        thumbnail2xLink: `https://imgix-foo.com/${asset2.id}?fm=jpg&fit=fill&h=104&w=104&dpr=2`,
         originalHeightPx: 300,
         originalWidthPx: 200,
       },

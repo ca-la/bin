@@ -1,3 +1,4 @@
+import { URL, URLSearchParams } from "url";
 import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from "../../config";
 import { Component } from "../../components/components/types";
 import { isPreviewable } from "../../services/is-previewable";
@@ -5,38 +6,104 @@ import { getExtension } from "../../services/get-extension";
 import Asset, { AssetLinks } from "../../components/assets/types";
 import getAsset from "../../components/components/get-asset";
 
-const DESIGN_PREVIEW_TOOL_FORMAT = "?fm=jpg&fit=max";
-const DESIGN_PREVIEW_TOOL_FORMAT_3X = "?fm=jpg&fit=max&dpr=3";
-const PREVIEW_CARD_FORMAT = "?fm=jpg&w=560";
-const THUMBNAIL_FORMAT = "?fm=jpg&w=160";
-const DESIGN_PREVIEW_THUMBNAIL = "?fm=jpg&fit=fill&h=104&w=104";
-const DESIGN_PREVIEW_THUMBNAIL_2X = DESIGN_PREVIEW_THUMBNAIL + "&dpr=2";
-const ATTACHMENT_PREVIEW = "?fm=jpg&fit=fill&h=106&w=128";
-const ATTACHMENT_PREVIEW_2X = ATTACHMENT_PREVIEW + "&dpr=2";
+interface ImgixOptions {
+  fit: "max" | "fill" | null;
+  dpr: number | null;
+  width: number | null;
+  height: number | null;
+  pageNumber: number | null;
+}
+
+const DESIGN_PREVIEW_TOOL_FORMAT: Partial<ImgixOptions> = { fit: "max" };
+const PREVIEW_CARD_FORMAT: Partial<ImgixOptions> = { width: 560 };
+export const THUMBNAIL_FORMAT: Partial<ImgixOptions> = { width: 160 };
+const DESIGN_PREVIEW_THUMBNAIL: Partial<ImgixOptions> = {
+  fit: "fill",
+  width: 104,
+  height: 104,
+};
+const ATTACHMENT_PREVIEW: Partial<ImgixOptions> = {
+  fit: "fill",
+  height: 106,
+  width: 128,
+};
+
+export function buildImgixLink(
+  assetId: string,
+  {
+    fit = null,
+    dpr = null,
+    width = null,
+    height = null,
+    pageNumber = null,
+  }: Partial<ImgixOptions> = {}
+): string {
+  const url = new URL(USER_UPLOADS_IMGIX_URL);
+  const search = new URLSearchParams();
+
+  url.pathname = assetId;
+  search.set("fm", "jpg");
+
+  if (fit !== null) {
+    search.set("fit", fit);
+  }
+
+  if (height !== null) {
+    search.set("h", String(height));
+  }
+
+  if (width !== null) {
+    search.set("w", String(width));
+  }
+
+  if (dpr !== null) {
+    search.set("dpr", String(dpr));
+  }
+
+  if (pageNumber !== null) {
+    search.set("page", String(pageNumber));
+  }
+
+  url.search = search.toString();
+
+  return url.toString();
+}
 
 function constructAssetLinks(
   asset: Asset,
   pageNumber: number | null
 ): AssetLinks {
-  const pageSuffix = pageNumber === null ? "" : `&page=${pageNumber}`;
-
   const hasPreview = isPreviewable(asset.mimeType);
 
   return {
     assetId: asset.id,
     assetLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}${pageSuffix}`
+      ? buildImgixLink(asset.id, {
+          ...DESIGN_PREVIEW_TOOL_FORMAT,
+          pageNumber,
+        })
       : null,
     asset3xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}${pageSuffix}`
+      ? buildImgixLink(asset.id, {
+          ...DESIGN_PREVIEW_TOOL_FORMAT,
+          pageNumber,
+          dpr: 3,
+        })
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
     fileType: getExtension(asset.mimeType) || "Unknown",
     thumbnailLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL}${pageSuffix}`
+      ? buildImgixLink(asset.id, {
+          ...DESIGN_PREVIEW_THUMBNAIL,
+          pageNumber,
+        })
       : null,
     thumbnail2xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_THUMBNAIL_2X}${pageSuffix}`
+      ? buildImgixLink(asset.id, {
+          ...DESIGN_PREVIEW_THUMBNAIL,
+          pageNumber,
+          dpr: 2,
+        })
       : null,
     originalWidthPx: asset.originalWidthPx,
     originalHeightPx: asset.originalHeightPx,
@@ -104,21 +171,16 @@ export function generatePreviewLinks(
   return imageIds.map(
     (imageId: string): ThumbnailAndPreviewLinks => {
       return {
-        previewLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${PREVIEW_CARD_FORMAT}`,
-        thumbnailLink: `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`,
+        previewLink: buildImgixLink(imageId, PREVIEW_CARD_FORMAT),
+        thumbnailLink: buildImgixLink(imageId, THUMBNAIL_FORMAT),
       };
     }
   );
 }
 
-/**
- * Generates thumbnail links based off the given image ids.
- * Terminology:
- * - thumbnail: a 48px wide png image (intended for dropdown menus).
- */
 export function generateThumbnailLinks(imageIds: string[]): string[] {
   return imageIds.map((imageId: string): string => {
-    return `${USER_UPLOADS_IMGIX_URL}/${imageId}${THUMBNAIL_FORMAT}`;
+    return buildImgixLink(imageId, THUMBNAIL_FORMAT);
   });
 }
 
@@ -127,18 +189,18 @@ export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
   return {
     assetId: asset.id,
     assetLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT}`
+      ? buildImgixLink(asset.id, DESIGN_PREVIEW_TOOL_FORMAT)
       : null,
     asset3xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${DESIGN_PREVIEW_TOOL_FORMAT_3X}`
+      ? buildImgixLink(asset.id, { ...DESIGN_PREVIEW_TOOL_FORMAT, dpr: 3 })
       : null,
     downloadLink: `${USER_UPLOADS_BASE_URL}/${asset.id}`,
     fileType: getExtension(asset.mimeType) || "Unknown",
     thumbnailLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW}`
+      ? buildImgixLink(asset.id, ATTACHMENT_PREVIEW)
       : null,
     thumbnail2xLink: hasPreview
-      ? `${USER_UPLOADS_IMGIX_URL}/${asset.id}${ATTACHMENT_PREVIEW_2X}`
+      ? buildImgixLink(asset.id, { ...ATTACHMENT_PREVIEW, dpr: 2 })
       : null,
     originalWidthPx: asset.originalWidthPx,
     originalHeightPx: asset.originalHeightPx,
