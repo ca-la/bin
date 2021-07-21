@@ -317,6 +317,39 @@ test("PATCH /design-approval-step-submissions/:submissionId with teamUserId", as
   t.is(otherRes[0].status, 403);
 });
 
+test("PATCH /design-approval-step-submissions/:submissionId to remove assignee from submission", async (t: Test) => {
+  const { designer, submission } = await setupSubmission();
+  const { user: user2 } = await createUser();
+
+  const { teamUser: teamUser2 } = await generateTeam(user2.id);
+
+  const [response, body] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        teamUserId: teamUser2.id,
+      },
+    }
+  );
+  t.is(response.status, 200);
+  t.is(body.teamUserId, teamUser2.id);
+
+  const [response2, body2] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        teamUserId: null,
+        collaboratorId: null,
+      },
+    }
+  );
+  t.is(response2.status, 200);
+  t.is(body2.teamUserId, null);
+  t.is(body2.collaboratorId, null);
+});
+
 test("PATCH /design-approval-step-submissions/:submissionId with step", async (t: Test) => {
   const { design, designer, submission, collaborator } = await setupSubmission({
     state: ApprovalStepSubmissionState.APPROVED,

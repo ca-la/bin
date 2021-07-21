@@ -435,8 +435,8 @@ async function updateApprovalSubmission(
     trx,
     submission.id,
     {
-      collaboratorId: collaboratorId || (teamUserId ? null : undefined),
-      teamUserId: teamUserId || (collaboratorId ? null : undefined),
+      collaboratorId: teamUserId ? null : collaboratorId,
+      teamUserId: collaboratorId ? null : teamUserId,
       state,
     }
   );
