@@ -101,6 +101,7 @@ const TEAM_USER_PERMISSIONS: Record<TeamUserRole, Permissions> = {
   [TeamUserRole.OWNER]: FULL_ACCESS,
   [TeamUserRole.ADMIN]: FULL_ACCESS,
   [TeamUserRole.EDITOR]: FULL_ACCESS,
+  [TeamUserRole.TEAM_PARTNER]: FULL_ACCESS,
   [TeamUserRole.VIEWER]: {
     canComment: true,
     canDelete: false,
@@ -110,7 +111,6 @@ const TEAM_USER_PERMISSIONS: Record<TeamUserRole, Permissions> = {
     canSubmit: false,
     canView: true,
   },
-  [TeamUserRole.TEAM_PARTNER]: COLLABORATOR_PERMISSIONS.PARTNER,
 };
 
 const PERMISSIONS_MODIFIERS: Record<string, Partial<Permissions>> = {

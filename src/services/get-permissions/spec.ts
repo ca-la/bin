@@ -273,11 +273,11 @@ test("calculateDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: false,
+      canDelete: true,
       canEdit: true,
-      canEditTitle: false,
-      canEditVariants: false,
-      canSubmit: false,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
       canView: true,
     },
     "valid: TEAM_PARTNER team user cannot edit the design title"
@@ -292,11 +292,11 @@ test("calculateDesignPermissions", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: false,
+      canDelete: true,
       canEdit: true,
-      canEditTitle: false,
+      canEditTitle: true,
       canEditVariants: false,
-      canSubmit: false,
+      canSubmit: true,
       canView: true,
     },
     "valid: TEAM_PARTNER team user on checked out design"
@@ -868,11 +868,11 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     }),
     {
       canComment: true,
-      canDelete: false,
+      canDelete: true,
       canEdit: true,
-      canEditTitle: false,
-      canEditVariants: false,
-      canSubmit: false,
+      canEditTitle: true,
+      canEditVariants: true,
+      canSubmit: true,
       canView: true,
     },
     "Permissions for TEAM_PARTNER role"
@@ -1114,14 +1114,14 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
       ),
       {
         canComment: true,
-        canDelete: false,
+        canDelete: true,
         canEdit: true,
-        canEditTitle: false,
-        canEditVariants: false,
-        canSubmit: false,
+        canEditTitle: true,
+        canEditVariants: true,
+        canSubmit: true,
         canView: true,
       },
-      "Returns partner permissions for the collection the user is a team partner on."
+      "Returns full permissions for the collection the user is a team partner on."
     );
     t.deepEqual(
       await PermissionsService.getCollectionPermissions(
