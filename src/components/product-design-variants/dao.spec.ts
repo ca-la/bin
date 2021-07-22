@@ -12,6 +12,7 @@ import {
   getTotalUnitsToProduce,
   replaceForDesign,
   update,
+  getUnitsPerColorways,
 } from "./dao";
 import generateCollection from "../../test-helpers/factories/collection";
 import { addDesign } from "../../test-helpers/collections";
@@ -204,4 +205,17 @@ test("replaceVariants works for well formed variants", async (t: Test) => {
     "Saves the color position correctly"
   );
   t.equal(variants[0].position, 20, "Saves the position correctly");
+});
+
+test("getUnitsPerColorways returns grouped units by color name for specified design", async (t: Test) => {
+  const { design } = await createPrerequisites();
+
+  const unitsByColor = await db.transaction(async (trx: Knex.Transaction) => {
+    return await getUnitsPerColorways(design.id, trx);
+  });
+
+  t.deepEqual(unitsByColor, [
+    { colorName: "Green", units: 123 },
+    { colorName: "Red", units: 1245 },
+  ]);
 });

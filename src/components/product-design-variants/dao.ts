@@ -4,8 +4,8 @@ import rethrow = require("pg-rethrow");
 import { VariantDb } from "./types";
 
 import db from "../../services/db";
-import filterError = require("../../services/filter-error");
-import InvalidDataError = require("../../errors/invalid-data");
+import filterError from "../../services/filter-error";
+import InvalidDataError from "../../errors/invalid-data";
 import {
   dataAdapter,
   isProductDesignVariantRow,
@@ -250,4 +250,26 @@ export async function getSizes(designId: string): Promise<(string | null)[]> {
     .then((rows: SizeRow[]) =>
       rows.map((row: SizeRow): string | null => row.size_name)
     );
+}
+
+export async function getUnitsPerColorways(
+  designId: string,
+  ktx: Knex = db
+): Promise<{ colorName: string; units: number }[]> {
+  interface ColorUnits {
+    color_name: string;
+    units: string;
+  }
+  const response = await ktx(TABLE_NAME)
+    .select("color_name", ktx.raw("SUM(units_to_produce) as units"))
+    .where({ design_id: designId })
+    .groupBy("color_name")
+    .then((rows: ColorUnits[]) =>
+      rows.map((row: ColorUnits): { colorName: string; units: number } => ({
+        colorName: row.color_name,
+        units: Number(row.units),
+      }))
+    );
+
+  return response;
 }

@@ -298,6 +298,7 @@ test("UsersDAO.findByBidId returns all users on a pricing bid", async (t: Test) 
         id: partner.id,
       },
     },
+    generateVariant: false,
   });
 
   const assignees = await UsersDAO.findByBidId(bid.id);

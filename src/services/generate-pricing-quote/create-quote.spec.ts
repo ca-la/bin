@@ -1,4 +1,5 @@
 import Knex from "knex";
+
 import uuid from "node-uuid";
 
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -14,6 +15,9 @@ import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao"
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { PricingCostInput } from "../../components/pricing-cost-inputs/types";
 import { generateDesign } from "../../test-helpers/factories/product-design";
+import * as ProductDesignVariantsDAO from "../../components/product-design-variants/dao";
+import * as ProductDesignsDao from "../../components/product-designs/dao/dao";
+import { generateProductDesignVariant } from "../../test-helpers/factories/product-design-variant";
 import { ApprovalStepType } from "../../published-types";
 import InvalidDataError from "../../errors/invalid-data";
 import * as QuoteValuesService from "../../services/generate-pricing-quote/quote-values";
@@ -651,15 +655,33 @@ test("createQuote uses the checkout step", async (t: Test) => {
   const { team } = await generateTeam(user.id);
   const { collection } = await generateCollection({ teamId: team.id });
   await generatePricingValues();
+
   const designOne = await createDesign({
     title: "T-Shirt One",
     userId: user.id,
     collectionIds: [collection.id],
   });
+  await generateProductDesignVariant({
+    designId: designOne.id,
+    colorName: "Green",
+    unitsToProduce: 100,
+  });
+  await generateProductDesignVariant({
+    designId: designOne.id,
+    colorName: "Blue",
+    unitsToProduce: 100,
+    position: 1,
+  });
+
   const designTwo = await createDesign({
     title: "T-Shirt Two",
     userId: user.id,
     collectionIds: [collection.id],
+  });
+  await generateProductDesignVariant({
+    designId: designTwo.id,
+    colorName: "Green T",
+    unitsToProduce: 100,
   });
 
   const payload = [
@@ -675,7 +697,7 @@ test("createQuote uses the checkout step", async (t: Test) => {
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
+      minimumOrderQuantity: 100,
       productComplexity: Complexity.SIMPLE,
       productType: ProductType.TEESHIRT,
       processes: [],
@@ -689,7 +711,7 @@ test("createQuote uses the checkout step", async (t: Test) => {
       id: uuid.v4(),
       materialBudgetCents: 1200,
       materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
+      minimumOrderQuantity: 100,
       processes: [],
       productComplexity: Complexity.BLANK,
       productType: ProductType.TEESHIRT,
@@ -725,7 +747,7 @@ test("createQuote uses the checkout step", async (t: Test) => {
   });
 });
 
-test("createQuote respects MOQ", async (t: Test) => {
+test("createQuote respects MOQ per colorway", async (t: Test) => {
   const designId = "a-design-id";
   sandbox().stub(ApprovalStepsDAO, "findOne").resolves({
     id: "a-checkout-step-id",
@@ -739,6 +761,26 @@ test("createQuote respects MOQ", async (t: Test) => {
         processes: [],
       },
     });
+  sandbox()
+    .stub(ProductDesignsDao, "findMinimalByIds")
+    .resolves([
+      {
+        id: designId,
+        title: "A Design Name",
+      },
+    ]);
+  sandbox()
+    .stub(ProductDesignVariantsDAO, "getUnitsPerColorways")
+    .resolves([
+      {
+        colorName: "Green",
+        units: 50,
+      },
+      {
+        colorName: "Blue",
+        units: 50,
+      },
+    ]);
   sandbox().stub(QuoteValuesService, "buildQuoteValuesPool").resolves({
     constants: [],
     materials: [],
@@ -757,7 +799,7 @@ test("createQuote respects MOQ", async (t: Test) => {
       [
         {
           designId,
-          units: 10,
+          units: 100,
         },
       ],
       "a-user-id",
@@ -766,7 +808,7 @@ test("createQuote respects MOQ", async (t: Test) => {
   } catch (error) {
     t.true(error instanceof InvalidDataError, "throws an InvalidDataError");
     t.true(
-      /minimum order quantity.*a-design-id/.test(error.message),
+      /minimum order quantity.*A\ Design\ Name/.test(error.message),
       "throws an error with a helpful message"
     );
   } finally {

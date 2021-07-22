@@ -20,8 +20,11 @@ import {
 } from "../../components/pricing-cost-inputs/types";
 import DesignEventsDAO from "../../components/design-events/dao";
 import { identity } from "../../services/cala-component/cala-dao";
+import { logServerError } from "../../services/logger";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import { ApprovalStepType } from "../../components/approval-steps/types";
+import * as ProductDesignVariantsDAO from "../../components/product-design-variants/dao";
+import { findMinimalByIds } from "../../components/product-designs/dao/dao";
 import { templateDesignEvent } from "../../components/design-events/types";
 import InvalidDataError from "../../errors/invalid-data";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -158,10 +161,29 @@ export async function createQuotes(
       );
     }
 
-    if (unitsNumber < latestInput.minimumOrderQuantity) {
-      throw new InvalidDataError(
-        `Payment violates minimum order quantity. Please hit back to update unit quantity for ${designId}`
+    const colorwayUnitList = await ProductDesignVariantsDAO.getUnitsPerColorways(
+      designId,
+      trx
+    );
+    if (colorwayUnitList.length === 0) {
+      logServerError(
+        `Payment violates minimum order quantity per colorway. Please hit back to update unit quantity for ${designId}`
       );
+      const designs = await findMinimalByIds([designId]);
+      throw new InvalidDataError(
+        `Payment violates minimum order quantity per colorway. Please hit back to update unit quantity for ${designs[0].title}`
+      );
+    }
+    for (const colorwayUnits of colorwayUnitList) {
+      if (colorwayUnits.units < latestInput.minimumOrderQuantity) {
+        logServerError(
+          `Payment violates minimum order quantity per colorway. Please hit back to update unit quantity for the colorway "${colorwayUnits.colorName}" of design ${designId}`
+        );
+        const designs = await findMinimalByIds([designId]);
+        throw new InvalidDataError(
+          `Payment violates minimum order quantity per colorway. Please hit back to update unit quantity for the colorway "${colorwayUnits.colorName}" of ${designs[0].title}`
+        );
+      }
     }
 
     const quote = await generatePricingQuoteFromPool(

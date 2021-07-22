@@ -13,6 +13,7 @@ import * as CollaboratorsDAO from "../collaborators/dao";
 import DesignEventsDAO from "../design-events/dao";
 import { templateDesignEvent } from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
+import { generateProductDesignVariant } from "../../test-helpers/factories/product-design-variant";
 import { MentionType } from "../comments/types";
 import { Role as UserRole } from "../users/types";
 import { TeamUserRole } from "../../published-types";
@@ -55,6 +56,9 @@ async function setup() {
     title: "AW19",
     userId: user.id,
   });
+  await generateProductDesignVariant({
+    designId: design.id,
+  });
   const collection = await CollectionsDAO.create({
     createdAt: new Date(),
     createdBy: user.id,
@@ -71,6 +75,9 @@ async function setup() {
     productType: "BOMBER",
     title: "AW20",
     userId: user.id,
+  });
+  await generateProductDesignVariant({
+    designId: otherDesign.id,
   });
   const otherCollection = await CollectionsDAO.create({
     createdAt: new Date(),

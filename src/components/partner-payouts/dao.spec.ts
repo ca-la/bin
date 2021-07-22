@@ -89,6 +89,7 @@ test("can create a payout log and find the logs", async (t: Test) => {
     },
     designId: design.id,
     userId: admin.id,
+    generateVariant: false,
   });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",

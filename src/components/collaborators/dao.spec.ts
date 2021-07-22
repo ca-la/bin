@@ -982,6 +982,7 @@ test("CollaboratorsDAO.findByDesignAndTaskType", async (t: Test) => {
     quoteId: quote.id,
     designId: design.id,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id],
+    generateVariant: false,
   });
   const { collaborator } = await generateCollaborator({
     cancelledAt: null,

@@ -320,6 +320,7 @@ test("Partner pairing: accept as user", async (t: Test) => {
     designId: design.id,
     bidOptions: { assignee: { type: "USER", id: partner.user.id } },
     generatePricing: false,
+    generateVariant: false,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
 
@@ -425,6 +426,7 @@ test("Partner pairing: accept as a team member", async (t: Test) => {
     designId: design.id,
     bidOptions: { assignee: { type: "TEAM", id: team.id } },
     generatePricing: false,
+    generateVariant: false,
     taskTypeIds: [taskTypes.TECHNICAL_DESIGN.id, taskTypes.PRODUCTION.id],
   });
 
@@ -481,6 +483,7 @@ test("Partner pairing: accept on a deleted design", async (t: Test) => {
   const { bid } = await generateBid({
     designId: design.id,
     generatePricing: true,
+    generateVariant: false,
     userId: admin.user.id,
     bidOptions: {
       assignee: {
@@ -518,6 +521,7 @@ test("Partner pairing: reject as user", async (t: Test) => {
       },
     },
     generatePricing: false,
+    generateVariant: false,
   });
   const bidRejection = {
     createdBy: admin.user.id,
@@ -621,6 +625,7 @@ test("Partner pairing: reject as team member", async (t: Test) => {
       },
     },
     generatePricing: false,
+    generateVariant: false,
   });
   const bidRejection = {
     createdBy: admin.user.id,

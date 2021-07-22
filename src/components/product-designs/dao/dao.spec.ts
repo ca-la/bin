@@ -1551,6 +1551,7 @@ test("findById attached bidId for partners", async (t: tape.Test) => {
     quoteId: partnerRemovedQuote.id,
     designId: design.id,
     userId: partner.id,
+    generateVariant: false,
   });
 
   await generateDesignEvent({
@@ -1583,6 +1584,7 @@ test("findById attached bidId for partners", async (t: tape.Test) => {
   const { bid, quote } = await generateBid({
     designId: design.id,
     userId: partner.id,
+    generateVariant: false,
   });
   await generateDesignEvent({
     actorId: partner.id,
@@ -1615,6 +1617,7 @@ test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.
     quoteId: partnerRemovedQuote.id,
     designId: design.id,
     userId: partner.id,
+    generateVariant: false,
   });
   await generateCollaborator({
     collectionId: null,
@@ -1658,6 +1661,7 @@ test("findAllDesignsThroughCollaboratorAndTeam attaches bid id", async (t: tape.
   const { bid, quote } = await generateBid({
     designId: design.id,
     userId: partner.id,
+    generateVariant: false,
   });
   await generateDesignEvent({
     actorId: partner.id,

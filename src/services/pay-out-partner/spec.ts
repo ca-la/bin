@@ -95,6 +95,7 @@ test("payOutPartner requires payout account if payout is not manual", async (t: 
     quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
+    generateVariant: false,
   });
 
   const trx = await db.transaction();
@@ -137,6 +138,7 @@ test("payOutPartner with manual payment", async (t: Test) => {
     quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
+    generateVariant: false,
   });
   await generateDesignEvent({
     type: "ACCEPT_SERVICE_BID",
@@ -185,6 +187,7 @@ test("payOutPartner can pay amounts larger than bid amount", async (t: Test) => 
     quoteId: quote.id,
     bidOptions: { bidPriceCents: 1000 },
     designId: design.id,
+    generateVariant: false,
   });
 
   const payoutAccount = await PartnerPayoutAccountsDAO.create({

@@ -19,6 +19,7 @@ import * as BidsDAO from "../../components/bids/dao";
 import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
 import { templateDesignEvent } from "../../components/design-events/types";
 import { generateDesign } from "./product-design";
+import { generateProductDesignVariant } from "./product-design-variant";
 import { BidTaskTypeId } from "../../components/bid-task-types/types";
 import generateCollection from "./collection";
 import { createQuotes } from "../../services/generate-pricing-quote";
@@ -40,6 +41,7 @@ interface GenerateBidInputs {
   quoteId: string | null;
   designId: string;
   generatePricing: boolean;
+  generateVariant: boolean;
   userId: string | null;
   taskTypeIds: string[];
   collectionId: string;
@@ -50,6 +52,7 @@ export default async function generateBid({
   designId,
   quoteId = null,
   generatePricing = true,
+  generateVariant = true,
   userId = null,
   taskTypeIds = [],
   collectionId,
@@ -75,6 +78,12 @@ export default async function generateBid({
     design = await generateDesign({
       userId: user.id,
       collectionIds: [collection.id],
+    });
+  }
+
+  if (generateVariant) {
+    await generateProductDesignVariant({
+      designId: design.id,
     });
   }
 

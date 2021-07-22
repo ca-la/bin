@@ -22,6 +22,7 @@ import * as SubscriptionsDAO from "../../components/subscriptions/dao";
 import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
 import generatePricingValues from "../../test-helpers/factories/pricing-values";
+import { generateProductDesignVariant } from "../../test-helpers/factories/product-design-variant";
 import Stripe = require("../../services/stripe");
 import { authHeader, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -109,6 +110,8 @@ async function setup() {
     userId: user.id,
   });
 
+  await generateProductDesignVariant({ designId: d1.id });
+  await generateProductDesignVariant({ designId: d2.id });
   await generatePricingValues();
   await db.transaction(async (trx: Knex.Transaction) => {
     await CreditsDAO.create(trx, {
@@ -736,6 +739,7 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
     userId: user.id,
     collectionIds: [collection.id],
   });
+  await generateProductDesignVariant({ designId: design.id });
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id,
@@ -802,6 +806,7 @@ test("POST /quote-payments with full credit", async (t: Test) => {
     userId: user.id,
     collectionIds: [collection.id],
   });
+  await generateProductDesignVariant({ designId: design.id });
   const address = await createAddress({
     ...ADDRESS_BLANK,
     userId: user.id,

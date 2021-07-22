@@ -263,6 +263,7 @@ test("GET /pricing-quotes/:quoteId/bids returns list of bids for quote", async (
     quoteId: quote.id,
     designId: design.id,
     generatePricing: false,
+    generateVariant: false,
   });
 
   const [response, bids] = await get(`/pricing-quotes/${quote.id}/bids`, {
