@@ -21,6 +21,12 @@ export interface ApiMessages {
       collectionId: string;
     };
   };
+  POST_PROCESS_DELETE_COMMENT: {
+    keys: {
+      commentId: string;
+      actorId: string;
+    };
+  };
 }
 
 export interface Task<MessageKey extends keyof ApiMessages> {

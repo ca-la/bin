@@ -5,9 +5,7 @@ import db from "../../services/db";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CommentDAO from "./dao";
 import requireAuth = require("../../middleware/require-auth");
-import { announceAnnotationCommentDeletion } from "../iris/messages/annotation-comment";
-import { announceTaskCommentDeletion } from "../iris/messages/task-comment";
-import { announceApprovalStepCommentDeletion } from "../iris/messages/approval-step-comment";
+import { sendMessage as sendApiWorkerMessage } from "../../workers/api-worker/send-message";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import { StrictContext } from "../../router-context";
 
@@ -47,7 +45,6 @@ interface DeleteCommentContext extends StrictContext {
 
 async function deleteComment(ctx: DeleteCommentContext) {
   const { userId } = ctx.state;
-  const { annotationId, taskId, approvalStepId } = ctx.query;
   const { commentId } = ctx.params;
   const comment = await CommentDAO.findById(commentId);
 
@@ -55,21 +52,14 @@ async function deleteComment(ctx: DeleteCommentContext) {
 
   await CommentDAO.deleteById(commentId);
 
-  if (annotationId) {
-    await announceAnnotationCommentDeletion({
-      actorId: userId,
-      annotationId,
+  await sendApiWorkerMessage({
+    type: "POST_PROCESS_DELETE_COMMENT",
+    deduplicationId: commentId,
+    keys: {
       commentId,
-    });
-  } else if (taskId) {
-    await announceTaskCommentDeletion({ actorId: userId, commentId, taskId });
-  } else if (approvalStepId) {
-    await announceApprovalStepCommentDeletion({
       actorId: userId,
-      approvalStepId,
-      commentId,
-    });
-  }
+    },
+  });
 
   ctx.status = 204;
 }

@@ -250,3 +250,45 @@ export async function extractDesignIdFromCommentParent(
     );
   }
 }
+
+interface WithParentIds {
+  commentId: string;
+  annotationId: string | null;
+  approvalStepId: string | null;
+  submissionId: string | null;
+}
+
+export async function findWithParentIds(
+  ktx: Knex,
+  commentId: string
+): Promise<WithParentIds | null> {
+  const result = await ktx
+    .select<WithParentIds[]>([
+      "comments.id as commentId",
+      "annotation_comments.annotation_id as annotationId",
+      "step_comments.approval_step_id as approvalStepId",
+      "submission_comments.submission_id as submissionId",
+    ])
+    .from(TABLE_NAME)
+    .leftJoin(
+      "product_design_canvas_annotation_comments as annotation_comments",
+      "annotation_comments.comment_id",
+      "comments.id"
+    )
+    .leftJoin(
+      "design_approval_step_comments as step_comments",
+      "step_comments.comment_id",
+      "comments.id"
+    )
+    .leftJoin(
+      "submission_comments",
+      "submission_comments.comment_id",
+      "comments.id"
+    )
+    .where({
+      "comments.id": commentId,
+    })
+    .first();
+
+  return result || null;
+}

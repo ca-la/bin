@@ -5,6 +5,7 @@ import db from "../../services/db";
 import { messageHandler } from "./message-handler";
 import { SQSMessage } from "./aws";
 import * as PostProcessUserCreation from "./tasks/post-process-user-creation";
+import * as PostProcessDeleteComment from "./tasks/post-process-delete-comment";
 import * as MailchimpSubscribe from "./tasks/subscribe-to-mailchimp-users";
 import * as QuotePayment from "./tasks/post-process-quote-payment/post-process-quote-payment";
 import { HandlerResult } from "./types";
@@ -170,6 +171,127 @@ test("message handler handle POST_PROCESS_USER_CREATION which throws an error", 
   t.equal(
     errorLoggerStub.args[0][0],
     "Error in POST_PROCESS_USER_CREATION api worker task"
+  );
+});
+
+test("message handler handles POST_PROCESS_DELETE_COMMENT", async (t: Test) => {
+  const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(db, "transaction").yields(trxStub);
+  const postProcessDeleteCommentStub = sandbox()
+    .stub(PostProcessDeleteComment, "postProcessDeleteComment")
+    .resolves({
+      type: "SUCCESS",
+      message: null,
+    } as HandlerResult);
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "POST_PROCESS_DELETE_COMMENT" }),
+  };
+  const handler = messageHandler();
+  const response = await handler(message);
+
+  t.deepEqual(
+    postProcessDeleteCommentStub.args,
+    [
+      [
+        trxStub,
+        {
+          type: "POST_PROCESS_DELETE_COMMENT",
+        },
+      ],
+    ],
+    "task has been called with right arguments inside transaction"
+  );
+
+  t.deepEqual(
+    response,
+    {
+      type: "SUCCESS",
+      message: null,
+    } as HandlerResult,
+    "success response"
+  );
+});
+
+test("message handler handle POST_PROCESS_DELETE_COMMENT which response with a error", async (t: Test) => {
+  const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(db, "transaction").yields(trxStub);
+  const postProcessDeleteCommentStub = sandbox()
+    .stub(PostProcessDeleteComment, "postProcessDeleteComment")
+    .resolves({
+      type: "FAILURE",
+      error: new Error("Some error during processing"),
+    } as HandlerResult);
+  const errorLoggerStub = sandbox().stub(Logger, "logServerError");
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "POST_PROCESS_DELETE_COMMENT" }),
+  };
+  const handler = messageHandler();
+  const response = await handler(message);
+
+  t.deepEqual(
+    postProcessDeleteCommentStub.args,
+    [
+      [
+        trxStub,
+        {
+          type: "POST_PROCESS_DELETE_COMMENT",
+        },
+      ],
+    ],
+    "task has been called with right arguments inside transaction"
+  );
+
+  t.deepEqual(
+    response,
+    {
+      type: "FAILURE",
+      error: new Error("Some error during processing"),
+    } as HandlerResult,
+    "reponse with post process user creation data"
+  );
+
+  t.equal(errorLoggerStub.callCount, 0, "error logger is not called");
+});
+
+test("message handler handle POST_PROCESS_DELETE_COMMENT which throws an error", async (t: Test) => {
+  const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(db, "transaction").yields(trxStub);
+  const postProcessDeleteCommentStub = sandbox()
+    .stub(PostProcessDeleteComment, "postProcessDeleteComment")
+    .throws(new Error("Unexpected error"));
+  const errorLoggerStub = sandbox().stub(Logger, "logServerError");
+  const message: SQSMessage = {
+    Body: JSON.stringify({ type: "POST_PROCESS_DELETE_COMMENT" }),
+  };
+  const handler = messageHandler();
+  const response = await handler(message);
+
+  t.deepEqual(
+    postProcessDeleteCommentStub.args,
+    [
+      [
+        trxStub,
+        {
+          type: "POST_PROCESS_DELETE_COMMENT",
+        },
+      ],
+    ],
+    "task has been called with right arguments inside transaction"
+  );
+
+  t.deepEqual(
+    response,
+    {
+      type: "FAILURE",
+      error: new Error("Unexpected error"),
+    } as HandlerResult,
+    "reponse with post process user creation data"
+  );
+
+  t.equal(errorLoggerStub.callCount, 1, "error logger is not called");
+  t.equal(
+    errorLoggerStub.args[0][0],
+    "Error in POST_PROCESS_DELETE_COMMENT api worker task"
   );
 });
 

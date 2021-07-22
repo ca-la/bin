@@ -8,6 +8,7 @@ import {
   postProcessUserCreation,
   subscribeToMailchimpUsers,
   postProcessQuotePayment,
+  postProcessDeleteComment,
 } from "./tasks";
 
 export type MessageHandler = (message: SQSMessage) => Promise<HandlerResult>;
@@ -80,6 +81,28 @@ export function messageHandler(): MessageHandler {
             error,
           };
         });
+      }
+
+      case "POST_PROCESS_DELETE_COMMENT": {
+        log(successMessage);
+        return await db
+          .transaction(async (trx: Knex.Transaction) =>
+            postProcessDeleteComment(
+              trx,
+              task as Task<"POST_PROCESS_DELETE_COMMENT">
+            )
+          )
+          .catch((error: Error) => {
+            logServerError(
+              "Error in POST_PROCESS_DELETE_COMMENT api worker task",
+              error
+            );
+
+            return {
+              type: "FAILURE",
+              error,
+            };
+          });
       }
 
       default: {

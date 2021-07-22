@@ -9,7 +9,7 @@ export async function generateAnnotationComment({
 }: {
   annotationId?: string;
   comment?: Partial<BaseComment>;
-}) {
+} = {}) {
   const { comment: createdComment } = await generateComment(comment);
 
   const id = annotationId || (await generateAnnotation()).annotation.id;

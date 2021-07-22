@@ -1,24 +1,28 @@
-import tape from "tape";
 import uuid from "node-uuid";
 import Knex from "knex";
 
-import { test } from "../../test-helpers/fresh";
+import { test, Test, db } from "../../test-helpers/fresh";
+import createUser from "../../test-helpers/create-user";
+import generateAsset from "../../test-helpers/factories/asset";
+import generateComment from "../../test-helpers/factories/comment";
+import * as CommentAttachmentDAO from "../comment-attachments/dao";
+import * as ApprovalStepCommentsDAO from "../approval-step-comments/dao";
+import * as SubmissionCommentsDAO from "../submission-comments/dao";
+import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
+import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
+
 import {
   create,
   deleteById,
   findById,
   update,
   extractDesignIdFromCommentParent,
+  findWithParentIds,
 } from "./dao";
-import createUser from "../../test-helpers/create-user";
-import generateAsset from "../../test-helpers/factories/asset";
-import generateComment from "../../test-helpers/factories/comment";
-import * as CommentAttachmentDAO from "../comment-attachments/dao";
-import db from "../../services/db";
-import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
-import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
+import { generateAnnotationComment } from "../../test-helpers/factories/annotation-comment";
+import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 
-test("Comment DAO supports creation/retrieval", async (t: tape.Test) => {
+test("Comment DAO supports creation/retrieval", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const comment = await create({
@@ -35,7 +39,7 @@ test("Comment DAO supports creation/retrieval", async (t: tape.Test) => {
   t.deepEqual(result, comment, "Inserted comment matches found");
 });
 
-test("Comment DAO returns deleted comments those have replies", async (t: tape.Test) => {
+test("Comment DAO returns deleted comments those have replies", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const deletedComment = await generateComment({
@@ -80,7 +84,7 @@ test("Comment DAO returns deleted comments those have replies", async (t: tape.T
   );
 });
 
-test("Comment DAO doesn't returns deleted comment those replies are deleted", async (t: tape.Test) => {
+test("Comment DAO doesn't returns deleted comment those replies are deleted", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const deletedComment = await generateComment({
@@ -146,7 +150,7 @@ test("Comment DAO doesn't returns deleted comment those replies are deleted", as
   );
 });
 
-test("Comment DAO supports retrieval with attachments", async (t: tape.Test) => {
+test("Comment DAO supports retrieval with attachments", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const comment = await create({
@@ -181,7 +185,7 @@ test("Comment DAO supports retrieval with attachments", async (t: tape.Test) => 
   t.assert(result.attachments.length === 2, "Returns attachments");
 });
 
-test("Comment DAO supports update", async (t: tape.Test) => {
+test("Comment DAO supports update", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const comment = await create({
@@ -202,7 +206,7 @@ test("Comment DAO supports update", async (t: tape.Test) => {
   t.deepEqual(result, updated, "Updated comment matches found");
 });
 
-test("Comment DAO supports delete", async (t: tape.Test) => {
+test("Comment DAO supports delete", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
 
   const comment = await create({
@@ -220,7 +224,7 @@ test("Comment DAO supports delete", async (t: tape.Test) => {
   t.equal(result, null, "Removes comment");
 });
 
-test("extractDesignIdFromCommentInput requires approvalStepId/annotationId", async (t: tape.Test) => {
+test("extractDesignIdFromCommentInput requires approvalStepId/annotationId", async (t: Test) => {
   const parentIds = {
     approvalStepId: null,
     annotationId: null,
@@ -245,7 +249,7 @@ test("extractDesignIdFromCommentInput requires approvalStepId/annotationId", asy
   }
 });
 
-test("extractDesignIdFromCommentInput should work for approvalStepId case", async (t: tape.Test) => {
+test("extractDesignIdFromCommentInput should work for approvalStepId case", async (t: Test) => {
   const trx = await db.transaction();
   try {
     const { approvalStep } = await generateApprovalStep(trx);
@@ -260,11 +264,82 @@ test("extractDesignIdFromCommentInput should work for approvalStepId case", asyn
   }
 });
 
-test("extractDesignIdFromCommentInput should work for annotation case", async (t: tape.Test) => {
+test("extractDesignIdFromCommentInput should work for annotation case", async (t: Test) => {
   const { annotation, design } = await generateAnnotation();
   const designId = await extractDesignIdFromCommentParent(db, {
     approvalStepId: null,
     annotationId: annotation.id,
   });
   t.is(designId, design.id);
+});
+
+test("findWithParentIds: annotation comment", async (t: Test) => {
+  const { comment, annotationComment } = await generateAnnotationComment();
+
+  t.deepEqual(
+    await findWithParentIds(db, comment.id),
+    {
+      commentId: comment.id,
+      annotationId: annotationComment.annotationId,
+      approvalStepId: null,
+      submissionId: null,
+    },
+    "sets the parent annotationId"
+  );
+});
+
+test("findWithParentIds: approval step comment", async (t: Test) => {
+  const { comment } = await generateComment();
+  const approvalStepComment = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const { approvalStep } = await generateApprovalStep(trx);
+      return ApprovalStepCommentsDAO.create(trx, {
+        approvalStepId: approvalStep.id,
+        commentId: comment.id,
+      });
+    }
+  );
+
+  t.deepEqual(
+    await findWithParentIds(db, comment.id),
+    {
+      commentId: comment.id,
+      annotationId: null,
+      approvalStepId: approvalStepComment.approvalStepId,
+      submissionId: null,
+    },
+    "sets the parent approvalStepId"
+  );
+});
+
+test("findWithParentIds: submission comment", async (t: Test) => {
+  const { comment } = await generateComment();
+  const submissionComment = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const { submission } = await generateApprovalSubmission(trx);
+      return SubmissionCommentsDAO.create(trx, {
+        submissionId: submission.id,
+        commentId: comment.id,
+      });
+    }
+  );
+
+  t.deepEqual(
+    await findWithParentIds(db, comment.id),
+    {
+      commentId: comment.id,
+      annotationId: null,
+      approvalStepId: null,
+      submissionId: submissionComment.submissionId,
+    },
+    "sets the parent submissionId"
+  );
+});
+
+test("findWithParentIds: no such comment", async (t: Test) => {
+  t.equal(
+    await findWithParentIds(db, uuid.v4()),
+    null,
+    "returns null when no comment is found"
+  );
 });
