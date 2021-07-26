@@ -3,6 +3,7 @@ import Knex from "knex";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import * as AnnounceApprovalStepCommentService from "../../../components/iris/messages/approval-step-comment";
 import * as AnnounceAnnotationCommentService from "../../../components/iris/messages/annotation-comment";
+import * as AnnounceSubmissionCommentService from "../../../components/iris/messages/submission-comment";
 import * as CommentsDAO from "../../../components/comments/dao";
 
 import { Task } from "../types";
@@ -63,7 +64,7 @@ test("postProcessDeleteComment: approval step comment", async (t: Test) => {
         },
       ],
     ],
-    "create realtime service for correct parent resource"
+    "create realtime message for correct parent resource"
   );
 });
 
@@ -110,6 +111,53 @@ test("postProcessDeleteComment: annotation comment", async (t: Test) => {
         },
       ],
     ],
-    "create realtime service for correct parent resource"
+    "create realtime message for correct parent resource"
+  );
+});
+
+test("postProcessDeleteComment: submission comment", async (t: Test) => {
+  const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
+  const findWithParentIdsStub = sandbox()
+    .stub(CommentsDAO, "findWithParentIds")
+    .resolves({
+      commentId: "a-comment-id",
+      approvalStepId: null,
+      annotationId: null,
+      submissionId: "a-submission-id",
+    });
+  const announceSubmissionCommentDeletionStub = sandbox()
+    .stub(AnnounceSubmissionCommentService, "announceSubmissionCommentDeletion")
+    .resolves();
+
+  const result = await postProcessDeleteComment(trxStub, task);
+
+  t.deepEqual(
+    result,
+    {
+      type: "SUCCESS",
+      message:
+        "POST_PROCESS_DELETE_COMMENT task successfully completed for comment a-comment-id.",
+    },
+    "returns a success result"
+  );
+
+  t.deepEqual(
+    findWithParentIdsStub.args,
+    [[trxStub, "a-comment-id"]],
+    "looks up comment's parent IDs"
+  );
+
+  t.deepEqual(
+    announceSubmissionCommentDeletionStub.args,
+    [
+      [
+        {
+          actorId: "a-user-id",
+          submissionId: "a-submission-id",
+          commentId: "a-comment-id",
+        },
+      ],
+    ],
+    "create realtime message for correct parent resource"
   );
 });

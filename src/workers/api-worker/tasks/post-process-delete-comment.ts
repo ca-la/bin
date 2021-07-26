@@ -4,6 +4,7 @@ import { Task, HandlerResult } from "../types";
 import * as CommentsDAO from "../../../components/comments/dao";
 import { announceAnnotationCommentDeletion } from "../../../components/iris/messages/annotation-comment";
 import { announceApprovalStepCommentDeletion } from "../../../components/iris/messages/approval-step-comment";
+import { announceSubmissionCommentDeletion } from "../../../components/iris/messages/submission-comment";
 
 export async function postProcessDeleteComment(
   trx: Knex.Transaction,
@@ -24,7 +25,11 @@ export async function postProcessDeleteComment(
         commentId,
       });
     } else if (submissionId) {
-      // TODO: Add submission comment delete realtime message here
+      await announceSubmissionCommentDeletion({
+        actorId,
+        submissionId,
+        commentId,
+      });
     } else if (approvalStepId) {
       await announceApprovalStepCommentDeletion({
         actorId,

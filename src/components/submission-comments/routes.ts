@@ -33,7 +33,7 @@ async function getDesignIdBySubmission(
   return dbResult ? dbResult.design_id : null;
 }
 
-async function getPermissionsBySubmission(
+export async function getPermissionsBySubmission(
   ctx: StrictContext<unknown> & { state: AuthedState },
   submissionId: string
 ): Promise<Permissions> {

@@ -14,6 +14,7 @@ import {
 
 import { Role as TeamUserRole } from "../../components/team-users/types";
 import { StrictContext } from "../../router-context";
+import { getPermissionsBySubmission } from "../submission-comments/routes";
 
 const router = new Router();
 
@@ -115,6 +116,21 @@ function* getTeamAccess(this: AuthedContext): Iterator<any, any, any> {
   this.status = 200;
 }
 
+interface GetSubmissionAccessContext extends StrictContext {
+  state: AuthedState;
+  params: { submissionId: string };
+}
+
+async function getSubmissionAccess(ctx: GetSubmissionAccessContext) {
+  ctx.assert(
+    (await getPermissionsBySubmission(ctx, ctx.params.submissionId)).canView,
+    403,
+    "You do not have permission to view this submission"
+  );
+
+  ctx.status = 200;
+}
+
 router.get("/users", requireAuth, convert.back(getUserAccess));
 router.get("/notifications", requireAuth, getNotificationAccess);
 router.get(
@@ -147,6 +163,12 @@ router.get(
   requireAuth,
   canAccessApprovalStepInParam,
   getApprovalStepAccess
+);
+
+router.get(
+  "/submissions/:submissionId",
+  requireAuth,
+  convert.back(getSubmissionAccess)
 );
 
 interface GetTeamAccessRequireTeamRolesContext extends RequireTeamRolesContext {

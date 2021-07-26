@@ -3,9 +3,10 @@ import uuid from "node-uuid";
 
 import { checkout } from "../../test-helpers/checkout-collection";
 import createUser from "../../test-helpers/create-user";
-import { db, test, Test } from "../../test-helpers/fresh";
+import { db, sandbox, test, Test } from "../../test-helpers/fresh";
 import { authHeader, post, get } from "../../test-helpers/http";
 import * as ApprovalStepSubmissionsDAO from "../approval-step-submissions/dao";
+import * as AnnounceSubmissionCommentService from "../iris/messages/submission-comment";
 import { CreateCommentWithAttachments } from "../comments/types";
 
 const valid: Omit<CreateCommentWithAttachments, "userId"> = {
@@ -28,9 +29,14 @@ async function setup() {
     )
   );
 
+  const announceSubmissionCommentCreationStub = sandbox()
+    .stub(AnnounceSubmissionCommentService, "announceSubmissionCommentCreation")
+    .resolves();
+
   return {
     ...checkedOut,
     submissions,
+    announceSubmissionCommentCreationStub,
   };
 }
 
@@ -83,6 +89,7 @@ test("End-to-end: POST -> GET", async (t: Test) => {
   const {
     submissions,
     user: { designer },
+    announceSubmissionCommentCreationStub,
   } = await setup();
 
   const [response, body] = await post(
@@ -112,6 +119,25 @@ test("End-to-end: POST -> GET", async (t: Test) => {
       })
     ),
     "returns the comment in the response body"
+  );
+  t.deepEqual(
+    announceSubmissionCommentCreationStub.args,
+    [
+      [
+        { submissionId: submissions[0].id, commentId: body.id },
+        {
+          ...valid,
+          userId: designer.user.id,
+          userEmail: designer.user.email,
+          userName: designer.user.name,
+          userRole: designer.user.role,
+          mentions: {},
+          parentCommentId: null,
+          replyCount: 0,
+        },
+      ],
+    ],
+    "creates realtime message for new comment"
   );
 
   const [listResponse, list] = await get(

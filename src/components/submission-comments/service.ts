@@ -8,6 +8,7 @@ import Asset from "../../components/assets/types";
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import { getCollaboratorsFromCommentMentions } from "../../services/add-at-mention-details";
 import * as SubmissionCommentsDAO from "./dao";
+import { announceSubmissionCommentCreation } from "../iris/messages/submission-comment";
 
 interface CreateSubmissionCommentOptions {
   comment: BaseComment;
@@ -25,19 +26,25 @@ export async function createAndAnnounce(
 
   const comment = await createCommentWithAttachments(trx, baseOptions);
 
-  // TODO: will be used to announce creation to realtime
-  await SubmissionCommentsDAO.create(trx, {
-    submissionId,
-    commentId: comment.id,
-  });
-
   const { idNameMap: mentions } = await getCollaboratorsFromCommentMentions(
     trx,
     comment.text
   );
 
-  return {
+  const commentWithResources = {
     ...comment,
     mentions,
   };
+
+  const submissionComment = await SubmissionCommentsDAO.create(trx, {
+    submissionId,
+    commentId: comment.id,
+  });
+
+  await announceSubmissionCommentCreation(
+    submissionComment,
+    commentWithResources
+  );
+
+  return commentWithResources;
 }

@@ -8,6 +8,8 @@ export enum RealtimeMessageType {
   notificationCreated = "notification/created",
   teamUsersListUpdated = "team-users-list/updated",
   teamListUpdated = "team-list/updated",
+  submissionCommentDeleted = "submission-comment/deleted",
+  submissionCommentCreated = "submission-comment/created",
 }
 
 export const realtimeMessageSchema = z.object({
