@@ -105,6 +105,18 @@ import {
   ApprovalStepCommentCreateNotification,
   isApprovalStepCommentCreateNotification,
 } from "../../components/notifications/models/approval-step-comment-create";
+import {
+  ApprovalStepSubmissionCommentCreateNotification,
+  isApprovalStepSubmissionCommentCreateNotification,
+} from "../../components/notifications/models/approval-step-submission-comment-create";
+import {
+  ApprovalStepSubmissionCommentMentionNotification,
+  isApprovalStepSubmissionCommentMentionNotification,
+} from "../../components/notifications/models/approval-step-submission-comment-mention";
+import {
+  ApprovalStepSubmissionCommentReplyNotification,
+  isApprovalStepSubmissionCommentReplyNotification,
+} from "../../components/notifications/models/approval-step-submission-comment-reply";
 
 import ProductDesignStage from "../../domain-objects/product-design-stage";
 import { BidRejection } from "../../components/bid-rejections/domain-object";
@@ -849,6 +861,191 @@ export async function sendDesignOwnerApprovalStepCommentCreateNotification(
     isApprovalStepCommentCreateNotification,
     `Could not validate ${NotificationType.APPROVAL_STEP_COMMENT_CREATE} notification type from database with id: ${id}`
   );
+}
+
+async function getSubmissionRelatedResources(
+  trx: Knex.Transaction,
+  approvalSubmissionId: string
+) {
+  const approvalStep = await ApprovalStepsDAO.findBySubmissionId(
+    trx,
+    approvalSubmissionId
+  );
+  if (!approvalStep) {
+    throw new Error(
+      `Could not find a approval step for approval submission with id: ${approvalSubmissionId}`
+    );
+  }
+
+  const design = await DesignsDAO.findById(
+    approvalStep.designId,
+    undefined,
+    undefined,
+    trx
+  );
+  if (!design) {
+    throw new Error(
+      `Could not find a design with id: ${approvalStep.designId}`
+    );
+  }
+
+  return {
+    approvalStep,
+    design,
+    collectionId: design.collectionIds[0] || null,
+    designOwnerUserId: design.userId,
+  };
+}
+
+/**
+ * Creates a notification for the owner of the design that comment has been created
+ * on an approval step submission. Note: this will only create a notification if the actor is not
+ * the owner.
+ */
+export async function sendDesignOwnerApprovalStepSubmissionCommentCreateNotification(
+  trx: Knex.Transaction,
+  approvalSubmissionId: string,
+  commentId: string,
+  actorId: string,
+  mentionedUserIds: string[],
+  threadUserIds: string[]
+): Promise<ApprovalStepSubmissionCommentCreateNotification | null> {
+  const {
+    approvalStep,
+    design,
+    collectionId,
+    designOwnerUserId,
+  } = await getSubmissionRelatedResources(trx, approvalSubmissionId);
+
+  if (actorId === designOwnerUserId) {
+    return null;
+  }
+
+  if (
+    mentionedUserIds.includes(designOwnerUserId) ||
+    threadUserIds.includes(designOwnerUserId)
+  ) {
+    return null;
+  }
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: designOwnerUserId,
+      sentEmailAt: null,
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId,
+      type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE,
+    },
+    trx,
+  });
+  return validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepSubmissionCommentCreateNotification,
+    `Could not validate ${NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE} notification type from database with id: ${id}`
+  );
+}
+
+/**
+ * Creates notifications for the user mentioned in an approval step submission comment.
+ */
+export async function sendApprovalStepSubmissionCommentMentionNotification(
+  trx: Knex.Transaction,
+  options: {
+    approvalSubmissionId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  }
+): Promise<ApprovalStepSubmissionCommentMentionNotification | null> {
+  const { approvalSubmissionId, commentId, actorId, recipientId } = options;
+  if (recipientId === actorId) {
+    return null;
+  }
+
+  const {
+    approvalStep,
+    design,
+    collectionId,
+  } = await getSubmissionRelatedResources(trx, approvalSubmissionId);
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId,
+      type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+    },
+    trx,
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepSubmissionCommentMentionNotification,
+    `Could not validate ${NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION} notification type from database with id: ${id}`
+  );
+  return validated;
+}
+
+/**
+ * Creates notifications for to users replied to in an approval step submission comment.
+ */
+export async function sendApprovalStepSubmissionCommentReplyNotification(
+  trx: Knex.Transaction,
+  options: {
+    approvalSubmissionId: string;
+    commentId: string;
+    actorId: string;
+    recipientId: string;
+  }
+): Promise<ApprovalStepSubmissionCommentReplyNotification | null> {
+  const { approvalSubmissionId, commentId, actorId, recipientId } = options;
+  if (recipientId === actorId) {
+    return null;
+  }
+
+  const {
+    approvalStep,
+    design,
+    collectionId,
+  } = await getSubmissionRelatedResources(trx, approvalSubmissionId);
+
+  const id = uuid.v4();
+  const notification = await replaceNotifications({
+    notification: {
+      ...templateNotification,
+      actorUserId: actorId,
+      collectionId,
+      commentId,
+      designId: design.id,
+      id,
+      recipientUserId: recipientId,
+      sentEmailAt: null,
+      approvalStepId: approvalStep.id,
+      approvalSubmissionId,
+      type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+    },
+    trx,
+  });
+  const validated = validateTypeWithGuardOrThrow(
+    notification,
+    isApprovalStepSubmissionCommentReplyNotification,
+    `Could not validate ${NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY} notification type from database with id: ${id}`
+  );
+  return validated;
 }
 
 /**

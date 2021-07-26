@@ -18,6 +18,7 @@ export enum LinkType {
   PartnerDesign = "PARTNER_DESIGN",
   Collection = "COLLECTION",
   ApprovalStep = "APPROVAL_STEP",
+  ApprovalStepSubmission = "APPROVAL_STEP_SUBMISSION",
   ShipmentTracking = "SHIPMENT_TRACKING",
   Team = "TEAM",
   Subscribe = "SUBSCRIBE",
@@ -65,6 +66,12 @@ export type LinkBase =
       type: LinkType.ApprovalStep;
       design: Meta;
       approvalStep: Meta;
+    }
+  | {
+      type: LinkType.ApprovalStepSubmission;
+      design: Meta;
+      approvalStep: Meta;
+      approvalSubmission: Meta;
     }
   | {
       type: LinkType.ShipmentTracking;
@@ -172,6 +179,18 @@ export default function getLinks(linkBase: LinkBase): Links {
 
       const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}`;
       const title = normalizeTitle(approvalStep);
+
+      return {
+        deepLink,
+        htmlLink: constructHtmlLink(deepLink, title),
+      };
+    }
+
+    case LinkType.ApprovalStepSubmission: {
+      const { design, approvalStep, approvalSubmission } = linkBase;
+
+      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&submissionId=${approvalSubmission.id}`;
+      const title = normalizeTitle(approvalSubmission);
 
       return {
         deepLink,

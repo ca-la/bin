@@ -1232,3 +1232,279 @@ test("getNonUserInvitationMessage for team user", async (t: tape.Test) => {
     "team invite email does not include collaborate"
   );
 });
+
+test("approval submission comment notification message", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const userOne = await createUser();
+
+  const {
+    design,
+    actor,
+    collaborator,
+    collection,
+    approvalStep,
+    approvalSubmission,
+  } = await generateNotification({
+    recipientUserId: userOne.user.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE,
+  });
+  await CollaboratorsDAO.update(collaborator.id, {
+    ...collaborator,
+    cancelledAt: new Date(),
+  });
+  const { design: submissionCommCreateDesign } = await generateNotification({
+    recipientUserId: userOne.user.id,
+    actorUserId: userOne.user.id,
+    collectionId: collection.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE,
+  });
+  await deleteById(submissionCommCreateDesign.id);
+
+  const { comment } = await generateNotification({
+    recipientUserId: userOne.user.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE,
+  });
+
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id,
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id,
+      },
+    ]);
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, userOne.user.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 2);
+  const submissionCommCreateDesignNotification = notifications[1];
+
+  const submissionCommCreateMessage = await createNotificationMessage(
+    submissionCommCreateDesignNotification
+  );
+  if (!submissionCommCreateMessage) {
+    throw new Error("Did not create message");
+  }
+  t.assert(
+    submissionCommCreateMessage.html.includes(design.title || "test"),
+    "message html contains the design title"
+  );
+  t.assert(
+    submissionCommCreateMessage.html.includes(approvalStep.title),
+    "message html contains the step title"
+  );
+  t.assert(
+    submissionCommCreateMessage.html.includes(approvalSubmission.title),
+    "message html contains the step submission title"
+  );
+  t.assert(
+    submissionCommCreateMessage.actor &&
+      submissionCommCreateMessage.actor.id === actor.id,
+    "message actor is the user"
+  );
+  const {
+    mentions,
+    hasAttachments,
+  } = submissionCommCreateMessage.attachments[0];
+  t.is(
+    Object.keys(mentions!).length,
+    1,
+    "message attachments contains one mention"
+  );
+  t.is(hasAttachments, false, "Notification does not have attachments");
+  const { designId } = submissionCommCreateMessage.actions[0];
+  t.is(designId, design.id, "action contains design ID");
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error("Did not create message");
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    "Notification has attachments"
+  );
+});
+
+test("approval submission mention notification message", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const {
+    design,
+    actor,
+    recipient,
+    approvalStep,
+    approvalSubmission,
+  } = await generateNotification({
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+  });
+  const { design: mentionDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+  });
+  await deleteById(mentionDesign.id);
+
+  const { comment } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id,
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id,
+      },
+    ]);
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 2);
+  const submissionMenNotification = notifications[1];
+
+  const message = await createNotificationMessage(submissionMenNotification);
+  if (!message) {
+    throw new Error("Did not create message");
+  }
+  t.assert(
+    message.html.includes(design.title),
+    "message html contains the design title"
+  );
+  t.assert(
+    message.html.includes(approvalStep.title),
+    "message html contains the step title"
+  );
+  t.assert(
+    message.html.includes(approvalSubmission.title),
+    "message html contains the step submission title"
+  );
+  t.assert(message.actor && message.actor.id === actor.id, "actor is correct");
+  const { mentions, hasAttachments } = message.attachments[0];
+  t.assert(
+    mentions && Object.keys(mentions).length === 1,
+    "message attachments contains one mention"
+  );
+  t.is(hasAttachments, false, "Notification does not have attachments");
+  const { designId } = message.actions[0];
+  t.is(designId, design.id, "action contains design ID");
+
+  const notificationWithAttachment = notifications[0];
+  const withAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withAttachmentsMessage) {
+    throw new Error("Did not create message");
+  }
+  t.true(
+    withAttachmentsMessage.attachments[0].hasAttachments,
+    "Notification has attachments"
+  );
+});
+
+test("approval submission reply notification message", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+
+  const { comment: parentComment } = await generateComment();
+  const { comment } = await generateComment({
+    parentCommentId: parentComment.id,
+  });
+  const {
+    design,
+    actor,
+    recipient,
+    approvalStep,
+    approvalSubmission,
+  } = await generateNotification({
+    commentId: comment.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+  });
+  const { design: mentionDesign } = await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+  });
+  await deleteById(mentionDesign.id);
+
+  await generateNotification({
+    recipientUserId: recipient.id,
+    type: NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+  });
+  const asset1 = (await generateAsset()).asset;
+  const asset2 = (await generateAsset()).asset;
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await CommentAttachmentDAO.createAll(trx, [
+      {
+        assetId: asset1.id,
+        commentId: comment.id,
+      },
+      {
+        assetId: asset2.id,
+        commentId: comment.id,
+      },
+    ]);
+  });
+
+  const notifications = await db.transaction((trx: Knex.Transaction) =>
+    findByUserId(trx, recipient.id, { limit: 20, offset: 0 })
+  );
+
+  t.is(notifications.length, 2);
+  const submissionMenNotification = notifications[1];
+
+  const message = await createNotificationMessage(submissionMenNotification);
+  if (!message) {
+    throw new Error("Did not create message");
+  }
+  t.assert(
+    message.html.includes(design.title),
+    "message html contains the design title"
+  );
+  t.assert(
+    message.html.includes(approvalStep.title),
+    "message html contains the step title"
+  );
+  t.assert(
+    message.html.includes(approvalSubmission.title),
+    "message html contains the submission title"
+  );
+  t.assert(message.actor && message.actor.id === actor.id, "actor is correct");
+  const { hasAttachments } = message.attachments[0];
+  t.true(hasAttachments, "Notification has attachments");
+  const { designId, parentCommentId, commentId } = message.actions[0];
+  t.is(designId, design.id, "action contains design ID");
+  t.is(parentCommentId, parentComment.id, "action contains parent comment id");
+  t.is(commentId, comment.id, "action contains comment id");
+  const notificationWithAttachment = notifications[0];
+  const withoutAttachmentsMessage = await createNotificationMessage(
+    notificationWithAttachment
+  );
+  if (!withoutAttachmentsMessage) {
+    throw new Error("Did not create message");
+  }
+  t.false(
+    withoutAttachmentsMessage.attachments[0].hasAttachments,
+    "Notification has no attachments"
+  );
+});

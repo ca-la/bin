@@ -20,6 +20,7 @@ import * as TaskCommentsDAO from "../../components/task-comments/dao";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as ApprovalStepCommentDAO from "../../components/approval-step-comments/dao";
+import * as ApprovalStepSubmissionCommentDAO from "../../components/submission-comments/dao";
 import * as EmailService from "../../services/email";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
@@ -32,6 +33,7 @@ import * as NotificationAnnouncer from "../../components/iris/messages/notificat
 import { addDesign } from "../../test-helpers/collections";
 import db from "../db";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
+import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 import createDesign from "../create-design";
 import ApprovalStep, {
   ApprovalStepState,
@@ -1639,4 +1641,319 @@ test("immediatelySendInviteTeamUser with a non-CALA user", async (t: tape.Test) 
   } finally {
     await trx.rollback();
   }
+});
+
+test("sendDesignOwnerApprovalStepSubmissionCommentCreateNotification", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const { user: user } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+  const { user: owner } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+
+  const design = await createDesign({
+    productType: "A product type",
+    title: "A design",
+    userId: owner.id,
+  });
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, { designId: design.id })
+  );
+
+  const { submission } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, { stepId: approvalStep.id })
+  );
+
+  const ownerComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: "A comment",
+    userId: owner.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepSubmissionCommentDAO.create(trx, {
+      commentId: ownerComment.id,
+      submissionId: submission.id,
+    })
+  );
+
+  const otherComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: "A comment",
+    userId: owner.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepSubmissionCommentDAO.create(trx, {
+      commentId: otherComment.id,
+      submissionId: submission.id,
+    })
+  );
+
+  const nullNotification = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendDesignOwnerApprovalStepSubmissionCommentCreateNotification(
+      trx,
+      submission.id,
+      ownerComment.id,
+      owner.id,
+      [],
+      []
+    )
+  );
+  t.equal(
+    nullNotification,
+    null,
+    "A notification will not be made if the actor is the recipient"
+  );
+
+  const mentionedNotification = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendDesignOwnerApprovalStepSubmissionCommentCreateNotification(
+      trx,
+      submission.id,
+      ownerComment.id,
+      user.id,
+      [owner.id],
+      []
+    )
+  );
+  t.equal(
+    mentionedNotification,
+    null,
+    "A notification will not be made if the owner is mentioned"
+  );
+
+  const replyNotification = await db.transaction((trx: Knex.Transaction) =>
+    NotificationsService.sendDesignOwnerApprovalStepSubmissionCommentCreateNotification(
+      trx,
+      submission.id,
+      ownerComment.id,
+      user.id,
+      [],
+      [owner.id]
+    )
+  );
+  t.equal(
+    replyNotification,
+    null,
+    "A notification will not be made if the owner is already notified from a thread"
+  );
+
+  const notification = await db.transaction((trx: Knex.Transaction) => {
+    return NotificationsService.sendDesignOwnerApprovalStepSubmissionCommentCreateNotification(
+      trx,
+      submission.id,
+      otherComment.id,
+      user.id,
+      [],
+      []
+    );
+  });
+  if (!notification) {
+    throw new Error("Expected a notification!");
+  }
+  const {
+    actorUserId,
+    collectionId,
+    commentId,
+    designId,
+    recipientUserId,
+    approvalStepId,
+    approvalSubmissionId,
+    type,
+  } = notification;
+  t.equal(actorUserId, user.id, "Actor should be the other user");
+  t.equal(collectionId, null, "CollectionId should be null");
+  t.equal(commentId, otherComment.id, "Comment should be the owners comment");
+  t.equal(designId, design.id, "DesignIds should match");
+  t.equal(recipientUserId, owner.id, "Recipient should be the owner");
+  t.equal(approvalStepId, approvalStep.id, "Approval step should match");
+  t.equal(
+    approvalSubmissionId,
+    submission.id,
+    "Approval step submission should match"
+  );
+  t.equal(
+    type,
+    NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE,
+    "Notification type should be APPROVAL_STEP_SUBMISSION_COMMENT_CREATE"
+  );
+});
+
+test("sendApprovalStepSubmissionCommentMentionNotification", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const { user: user } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+  const { user: owner } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+
+  const design = await createDesign({
+    productType: "A product type",
+    title: "A design",
+    userId: owner.id,
+  });
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, { designId: design.id })
+  );
+
+  const { submission } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, { stepId: approvalStep.id })
+  );
+
+  const ownerComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: "A comment",
+    userId: owner.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepSubmissionCommentDAO.create(trx, {
+      commentId: ownerComment.id,
+      submissionId: submission.id,
+    })
+  );
+
+  const notification = await db.transaction((trx: Knex.Transaction) => {
+    return NotificationsService.sendApprovalStepSubmissionCommentMentionNotification(
+      trx,
+      {
+        approvalSubmissionId: submission.id,
+        commentId: ownerComment.id,
+        actorId: owner.id,
+        recipientId: user.id,
+      }
+    );
+  });
+  if (!notification) {
+    throw new Error("Expected a notification!");
+  }
+  const {
+    actorUserId,
+    collectionId,
+    commentId,
+    designId,
+    recipientUserId,
+    approvalStepId,
+    approvalSubmissionId,
+    type,
+  } = notification;
+  t.equal(actorUserId, owner.id, "Actor should be the owner");
+  t.equal(collectionId, null, "CollectionId should be null");
+  t.equal(commentId, ownerComment.id, "Comment should be the owners comment");
+  t.equal(designId, design.id, "DesignIds should match");
+  t.equal(recipientUserId, user.id, "Recipient should be the user");
+  t.equal(approvalStepId, approvalStep.id, "Approval step should match");
+  t.equal(
+    approvalSubmissionId,
+    submission.id,
+    "Approval step submission should match"
+  );
+  t.equal(
+    type,
+    NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+    "Notification type should be APPROVAL_STEP_SUBMISSION_COMMENT_MENTION"
+  );
+});
+
+test("sendApprovalStepSubmissionCommentReplyNotification", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const { user: user } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+  const { user: owner } = await createUser({
+    withSession: false,
+    role: "ADMIN",
+  });
+
+  const design = await createDesign({
+    productType: "A product type",
+    title: "A design",
+    userId: owner.id,
+  });
+  const { approvalStep } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalStep(trx, { designId: design.id })
+  );
+
+  const { submission } = await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, { stepId: approvalStep.id })
+  );
+
+  const ownerComment = await CommentsDAO.create({
+    createdAt: new Date(),
+    deletedAt: null,
+    id: uuid.v4(),
+    isPinned: false,
+    parentCommentId: null,
+    text: "A comment",
+    userId: owner.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepSubmissionCommentDAO.create(trx, {
+      commentId: ownerComment.id,
+      submissionId: submission.id,
+    })
+  );
+
+  const notification = await db.transaction((trx: Knex.Transaction) => {
+    return NotificationsService.sendApprovalStepSubmissionCommentReplyNotification(
+      trx,
+      {
+        approvalSubmissionId: submission.id,
+        commentId: ownerComment.id,
+        actorId: owner.id,
+        recipientId: user.id,
+      }
+    );
+  });
+  if (!notification) {
+    throw new Error("Expected a notification!");
+  }
+  const {
+    actorUserId,
+    collectionId,
+    commentId,
+    designId,
+    recipientUserId,
+    approvalStepId,
+    approvalSubmissionId,
+    type,
+  } = notification;
+  t.equal(actorUserId, owner.id, "Actor should be the owner");
+  t.equal(collectionId, null, "CollectionId should be null");
+  t.equal(commentId, ownerComment.id, "Comment should be the owners comment");
+  t.equal(designId, design.id, "DesignIds should match");
+  t.equal(recipientUserId, user.id, "Recipient should be the user");
+  t.equal(approvalStepId, approvalStep.id, "Approval step should match");
+  t.equal(
+    approvalSubmissionId,
+    submission.id,
+    "Approval step submission should match"
+  );
+  t.equal(
+    type,
+    NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+    "Notification type should be APPROVAL_STEP_SUBMISSION_COMMENT_REPLY"
+  );
 });

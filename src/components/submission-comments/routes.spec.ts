@@ -3,11 +3,14 @@ import uuid from "node-uuid";
 
 import { checkout } from "../../test-helpers/checkout-collection";
 import createUser from "../../test-helpers/create-user";
-import { db, sandbox, test, Test } from "../../test-helpers/fresh";
+import { generateTeamUser } from "../../test-helpers/factories/team-user";
+import { Role as TeamUserRole } from "../team-users/types";
+import { sandbox, db, test, Test } from "../../test-helpers/fresh";
 import { authHeader, post, get } from "../../test-helpers/http";
 import * as ApprovalStepSubmissionsDAO from "../approval-step-submissions/dao";
 import * as AnnounceSubmissionCommentService from "../iris/messages/submission-comment";
 import { CreateCommentWithAttachments } from "../comments/types";
+import * as CreateNotifications from "../../services/create-notifications";
 
 const valid: Omit<CreateCommentWithAttachments, "userId"> = {
   createdAt: new Date(),
@@ -166,5 +169,104 @@ test("End-to-end: POST -> GET", async (t: Test) => {
       ])
     ),
     "returns created comment"
+  );
+});
+
+test("POST /submission-comments/:submissionId generates notifications", async (t: Test) => {
+  const notificationDesignOwnerStub = sandbox()
+    .stub(
+      CreateNotifications,
+      "sendDesignOwnerApprovalStepSubmissionCommentCreateNotification"
+    )
+    .resolves();
+  const notificationMentionStub = sandbox()
+    .stub(
+      CreateNotifications,
+      "sendApprovalStepSubmissionCommentMentionNotification"
+    )
+    .resolves();
+  const notificationReplyStub = sandbox()
+    .stub(
+      CreateNotifications,
+      "sendApprovalStepSubmissionCommentReplyNotification"
+    )
+    .resolves();
+
+  const {
+    submissions,
+    user: { designer },
+    team,
+  } = await setup();
+
+  const { user: teamEditorUser } = await createUser();
+  const teamMember = await generateTeamUser({
+    userId: teamEditorUser.id,
+    teamId: team.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const [response, body] = await post(
+    `/submission-comments/${submissions[0].id}`,
+    {
+      body: {
+        ...valid,
+        userId: designer.user.id,
+        text: `A comment @<${teamMember.teamUser.id}|teamUser>.`,
+      },
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.equal(response.status, 201, "returns Created status");
+
+  t.equal(notificationDesignOwnerStub.callCount, 1, "owner notified");
+  t.deepEqual(
+    notificationDesignOwnerStub.args[0].slice(1),
+    [submissions[0].id, body.id, body.userId, [teamEditorUser.id], []],
+    "send notification to owner with right arguments"
+  );
+
+  t.equal(notificationMentionStub.callCount, 1, "mentioned user notified");
+  t.deepEqual(
+    notificationMentionStub.args[0][1],
+    {
+      approvalSubmissionId: submissions[0].id,
+      commentId: body.id,
+      actorId: body.userId,
+      recipientId: teamEditorUser.id,
+    },
+    "send notification to mentioned user"
+  );
+
+  const [replyResponse, replyBody] = await post(
+    `/submission-comments/${submissions[0].id}`,
+    {
+      body: {
+        ...valid,
+        id: uuid.v4(),
+        userId: designer.user.id,
+        text: `A reply comment`,
+        parentCommentId: body.id,
+      },
+      headers: authHeader(designer.session.id),
+    }
+  );
+
+  t.equal(replyResponse.status, 201, "returns Created status");
+  t.equal(
+    notificationDesignOwnerStub.callCount,
+    2,
+    "owner notified about reply"
+  );
+  t.equal(notificationReplyStub.callCount, 1, "thread users notified");
+  t.deepEqual(
+    notificationReplyStub.args[0][1],
+    {
+      approvalSubmissionId: submissions[0].id,
+      commentId: replyBody.id,
+      actorId: replyBody.userId,
+      recipientId: designer.user.id,
+    },
+    "send reply notifaction called with right args"
   );
 });

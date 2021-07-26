@@ -118,6 +118,24 @@ import {
   FullApprovalStepCommentCreateNotification,
   FullApprovalStepCommentCreateNotificationRow,
 } from "./models/approval-step-comment-create";
+import {
+  ApprovalStepSubmissionCommentCreateNotification,
+  ApprovalStepSubmissionCommentCreateNotificationRow,
+  FullApprovalStepSubmissionCommentCreateNotification,
+  FullApprovalStepSubmissionCommentCreateNotificationRow,
+} from "./models/approval-step-submission-comment-create";
+import {
+  ApprovalStepSubmissionCommentMentionNotification,
+  ApprovalStepSubmissionCommentMentionNotificationRow,
+  FullApprovalStepSubmissionCommentMentionNotification,
+  FullApprovalStepSubmissionCommentMentionNotificationRow,
+} from "./models/approval-step-submission-comment-mention";
+import {
+  ApprovalStepSubmissionCommentReplyNotification,
+  ApprovalStepSubmissionCommentReplyNotificationRow,
+  FullApprovalStepSubmissionCommentReplyNotification,
+  FullApprovalStepSubmissionCommentReplyNotificationRow,
+} from "./models/approval-step-submission-comment-reply";
 import { CalaNotificationsUnion } from "../cala-components";
 import {
   FullShipmentTrackingCreateNotification,
@@ -156,6 +174,9 @@ export type Notification =
   | ApprovalStepCommentMentionNotification
   | ApprovalStepCommentReplyNotification
   | ApprovalStepCommentCreateNotification
+  | ApprovalStepSubmissionCommentMentionNotification
+  | ApprovalStepSubmissionCommentReplyNotification
+  | ApprovalStepSubmissionCommentCreateNotification
   | ApprovalStepAssignmentNotification
   | ApprovalStepSubmissionAssignmentNotification
   | CalaNotificationsUnion;
@@ -180,6 +201,9 @@ export type FullNotification =
   | FullApprovalStepCommentMentionNotification
   | FullApprovalStepCommentReplyNotification
   | FullApprovalStepCommentCreateNotification
+  | FullApprovalStepSubmissionCommentMentionNotification
+  | FullApprovalStepSubmissionCommentReplyNotification
+  | FullApprovalStepSubmissionCommentCreateNotification
   | FullShipmentTrackingCreateNotification
   | FullShipmentTrackingUpdateNotification
   | FullApprovalStepAssignmentNotification
@@ -207,7 +231,10 @@ export type NotificationRow =
   | TwoDayExpirationNotificationRow
   | ApprovalStepCommentMentionNotificationRow
   | ApprovalStepCommentReplyNotificationRow
-  | ApprovalStepCommentCreateNotificationRow;
+  | ApprovalStepCommentCreateNotificationRow
+  | ApprovalStepSubmissionCommentCreateNotificationRow
+  | ApprovalStepSubmissionCommentMentionNotificationRow
+  | ApprovalStepSubmissionCommentReplyNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -227,7 +254,10 @@ export type FullNotificationRow =
   | FullAnnotationCommentCreateNotificationRow
   | FullApprovalStepCommentMentionNotificationRow
   | FullApprovalStepCommentReplyNotificationRow
-  | FullApprovalStepCommentCreateNotificationRow;
+  | FullApprovalStepCommentCreateNotificationRow
+  | FullApprovalStepSubmissionCommentCreateNotificationRow
+  | FullApprovalStepSubmissionCommentMentionNotificationRow
+  | FullApprovalStepSubmissionCommentReplyNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
@@ -359,6 +389,9 @@ export const INBOX_NOTIFICATION_TYPES = [
   "APPROVAL_STEP_COMMENT_MENTION",
   "APPROVAL_STEP_COMMENT_REPLY",
   "APPROVAL_STEP_ASSIGNMENT",
+  "APPROVAL_STEP_SUBMISSION_COMMENT_MENTION",
+  "APPROVAL_STEP_SUBMISSION_COMMENT_REPLY",
+  "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
   "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
   "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
   "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",

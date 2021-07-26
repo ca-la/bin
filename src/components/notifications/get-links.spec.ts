@@ -116,4 +116,29 @@ test("getLinks", async () => {
     );
     t.true(htmlLink.includes("Test design"), "HTML link contains title");
   });
+
+  test("Submission link", async (t: Test) => {
+    const { deepLink, htmlLink } = getLinks({
+      type: LinkType.ApprovalStepSubmission,
+      design: {
+        id: "a-design-id",
+        title: "Test design",
+      },
+      approvalStep: {
+        id: "a-step-id",
+        title: "Test step",
+      },
+      approvalSubmission: {
+        id: "a-submission-id",
+        title: "Test submission",
+      },
+    });
+
+    t.equal(
+      deepLink,
+      `${STUDIO_HOST}/dashboard?designId=a-design-id&stepId=a-step-id&submissionId=a-submission-id`,
+      "Deep link matches"
+    );
+    t.true(htmlLink.includes("Test submission"), "HTML link contains title");
+  });
 });

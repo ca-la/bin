@@ -27,6 +27,7 @@ export enum NotificationMessageActionType {
   ANNOTATION_COMMENT_REPLY = "ANNOTATION_COMMENT_REPLY",
   TASK_COMMENT_REPLY = "TASK_COMMENT_REPLY",
   APPROVAL_STEP_COMMENT_REPLY = "APPROVAL_STEP_COMMENT_REPLY",
+  APPROVAL_STEP_SUBMISSION_COMMENT_REPLY = "APPROVAL_STEP_SUBMISSION_COMMENT_REPLY",
 }
 
 export const notificationMessageActionBaseSchema = z.object({
@@ -57,10 +58,21 @@ const approvalStepCommentReplyActionSchema = commentActionBaseSchema.extend({
   approvalStepId: z.string(),
 });
 
+const approvalStepSubmissionCommentReplyActionSchema = commentActionBaseSchema.extend(
+  {
+    type: z.literal(
+      NotificationMessageActionType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY
+    ),
+    approvalStepId: z.string(),
+    approvalSubmissionId: z.string(),
+  }
+);
+
 export const notificationMessageActionSchema = z.union([
   taskCommentReplyActionSchema,
   annotationCommentReplyActionSchema,
   approvalStepCommentReplyActionSchema,
+  approvalStepSubmissionCommentReplyActionSchema,
 ]);
 
 export type NotificationMessageAction = z.infer<
@@ -99,6 +111,9 @@ export enum NotificationType {
   APPROVAL_STEP_ASSIGNMENT = "APPROVAL_STEP_ASSIGNMENT",
   APPROVAL_STEP_COMPLETION = "APPROVAL_STEP_COMPLETION",
   APPROVAL_STEP_PAIRING = "APPROVAL_STEP_PAIRING",
+  APPROVAL_STEP_SUBMISSION_COMMENT_CREATE = "APPROVAL_STEP_SUBMISSION_COMMENT_CREATE",
+  APPROVAL_STEP_SUBMISSION_COMMENT_MENTION = "APPROVAL_STEP_SUBMISSION_COMMENT_MENTION",
+  APPROVAL_STEP_SUBMISSION_COMMENT_REPLY = "APPROVAL_STEP_SUBMISSION_COMMENT_REPLY",
   APPROVAL_STEP_SUBMISSION_ASSIGNMENT = "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
   APPROVAL_STEP_SUBMISSION_APPROVAL = "APPROVAL_STEP_SUBMISSION_APPROVAL",
   APPROVAL_STEP_SUBMISSION_UNSTARTED = "APPROVAL_STEP_SUBMISSION_UNSTARTED",

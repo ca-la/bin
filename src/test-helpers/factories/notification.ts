@@ -48,6 +48,7 @@ import generateApprovalStep from "./design-approval-step";
 import generateApprovalSubmission from "./design-approval-submission";
 import db from "../../services/db";
 import ApprovalStep from "../../components/approval-steps/domain-object";
+import ApprovalStepSubmission from "../../components/approval-step-submissions/types";
 import generateShipmentTracking from "./shipment-tracking";
 import generateShipmentTrackingEvent from "./shipment-tracking-event";
 import { ShipmentTrackingEvent } from "../../components/shipment-tracking-events/types";
@@ -68,6 +69,7 @@ interface NotificationWithResources {
   stage: ProductDesignStage;
   comment: Comment;
   approvalStep: ApprovalStep;
+  approvalSubmission: ApprovalStepSubmission;
   team: TeamDb;
   id: string;
 }
@@ -215,6 +217,7 @@ export default async function generateNotification(
     actor,
     annotation,
     approvalStep,
+    approvalSubmission: submission,
     canvas,
     collaborator,
     collection,
@@ -499,6 +502,25 @@ export default async function generateNotification(
         commentId: comment.id,
         designId: design.id,
         approvalStepId: approvalStep.id,
+        recipientUserId: base.recipient.id,
+        type: options.type,
+      });
+
+      return {
+        ...base,
+        notification,
+      };
+    }
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY:
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION: {
+      const notification = await create({
+        ...baseNotification,
+        collectionId: collection.id,
+        commentId: comment.id,
+        designId: design.id,
+        approvalStepId: approvalStep.id,
+        approvalSubmissionId: submission.id,
         recipientUserId: base.recipient.id,
         type: options.type,
       });

@@ -1209,6 +1209,259 @@ export async function createNotificationMessage(
         )} for ${normalizeTitle(design)}`,
       };
     }
+
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_CREATE: {
+      const {
+        designId,
+        designTitle,
+        designImageIds,
+        collectionId,
+        collectionTitle,
+        approvalStepId,
+        approvalStepTitle,
+        approvalSubmissionId,
+        approvalSubmissionTitle,
+        commentId,
+        commentText,
+        hasAttachments,
+        parentCommentId,
+      } = notification;
+
+      if (!collectionId) {
+        return null;
+      }
+
+      const design = { id: designId, title: designTitle };
+      const collection = {
+        id: collectionId,
+        title: collectionTitle,
+      };
+      const approvalStep = {
+        id: approvalStepId,
+        title: approvalStepTitle,
+      };
+      const approvalSubmission = {
+        id: approvalSubmissionId,
+        title: approvalSubmissionTitle,
+      };
+
+      const { deepLink, htmlLink: submissionHtmlLink } = getLinks({
+        design,
+        approvalStep,
+        approvalSubmission,
+        type: LinkType.ApprovalStepSubmission,
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type:
+              NotificationMessageActionType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+            approvalStepId,
+            approvalSubmissionId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
+            designId,
+          },
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments },
+        ],
+        html: `${span(
+          cleanName,
+          "user-name"
+        )} commented on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
+          normalizeTitle(approvalStep)
+        )})`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} commented on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+        text: `Commented on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+      };
+    }
+
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION: {
+      const {
+        designId,
+        designTitle,
+        designImageIds,
+        collectionId,
+        collectionTitle,
+        commentId,
+        commentText,
+        hasAttachments,
+        parentCommentId,
+        approvalStepId,
+        approvalStepTitle,
+        approvalSubmissionId,
+        approvalSubmissionTitle,
+      } = notification;
+
+      if (!collectionId) {
+        return null;
+      }
+
+      const design = { id: designId, title: designTitle };
+      const collection = {
+        id: collectionId,
+        title: collectionTitle,
+      };
+      const approvalStep = {
+        id: approvalStepId,
+        title: approvalStepTitle,
+      };
+      const approvalSubmission = {
+        id: approvalSubmissionId,
+        title: approvalSubmissionTitle,
+      };
+
+      const { deepLink, htmlLink: submissionHtmlLink } = getLinks({
+        design,
+        approvalStep,
+        approvalSubmission,
+        type: LinkType.ApprovalStepSubmission,
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type:
+              NotificationMessageActionType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
+            designId,
+            approvalStepId,
+            approvalSubmissionId,
+          },
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments },
+        ],
+        html: `${span(
+          cleanName,
+          "user-name"
+        )} mentioned you on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
+          normalizeTitle(approvalStep)
+        )})`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} mentioned you on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+        text: `Mentioned you on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+      };
+    }
+
+    case NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY: {
+      const {
+        designId,
+        designTitle,
+        designImageIds,
+        collectionId,
+        collectionTitle,
+        commentId,
+        commentText,
+        hasAttachments,
+        parentCommentId,
+        approvalStepId,
+        approvalStepTitle,
+        approvalSubmissionId,
+        approvalSubmissionTitle,
+      } = notification;
+
+      if (!collectionId) {
+        return null;
+      }
+
+      const design = { id: designId, title: designTitle };
+      const collection = {
+        id: collectionId,
+        title: collectionTitle,
+      };
+      const approvalStep = {
+        id: approvalStepId,
+        title: approvalStepTitle,
+      };
+      const approvalSubmission = {
+        id: approvalSubmissionId,
+        title: approvalSubmissionTitle,
+      };
+
+      const { deepLink, htmlLink: submissionHtmlLink } = getLinks({
+        design,
+        approvalStep,
+        approvalSubmission,
+        type: LinkType.ApprovalStepSubmission,
+      });
+      const designHtmlLink = constructHtmlLink(
+        deepLink,
+        normalizeTitle(design)
+      );
+
+      const mentions = await db.transaction((trx: Knex.Transaction) =>
+        getMentionsFromComment(trx, commentText)
+      );
+      const cleanName = escapeHtml(baseNotificationMessage.actor.name);
+      return {
+        ...baseNotificationMessage,
+        actions: [
+          {
+            type:
+              NotificationMessageActionType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+            approvalStepId,
+            approvalSubmissionId,
+            parentCommentId: parentCommentId || commentId,
+            commentId,
+            designId,
+          },
+        ],
+        attachments: [
+          { text: commentText, url: deepLink, mentions, hasAttachments },
+        ],
+        html: `${span(
+          cleanName,
+          "user-name"
+        )} replied to a comment on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
+          normalizeTitle(approvalStep)
+        )})`,
+        imageUrl: buildImageUrl(designImageIds),
+        link: deepLink,
+        location: getLocation({ collection, design }),
+        title: `${cleanName} replied to a comment on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+        text: `${cleanName} replied to a comment on review ${normalizeTitle(
+          approvalSubmission
+        )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
+      };
+    }
+
     default: {
       throw new InvalidDataError(
         `Unknown notification type found with id ${notification!.id} and type ${
