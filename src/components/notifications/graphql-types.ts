@@ -50,6 +50,7 @@ export const NotificationMessageAction: GraphQLType = {
     taskId: "String",
     annotationId: "String",
     approvalStepId: "String",
+    approvalSubmissionId: "String",
   },
   requires: ["NotificationMessageActionType"],
 };
