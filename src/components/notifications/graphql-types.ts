@@ -34,11 +34,9 @@ export const NotificationMessageAttachment: GraphQLType = {
 export const NotificationMessageActionType: GraphQLType = {
   name: "NotificationMessageActionType",
   type: "enum",
-  body: [
-    NotificationTypes.NotificationMessageActionType.ANNOTATION_COMMENT_REPLY,
-    NotificationTypes.NotificationMessageActionType.TASK_COMMENT_REPLY,
-    NotificationTypes.NotificationMessageActionType.APPROVAL_STEP_COMMENT_REPLY,
-  ].join("\n  "),
+  body: Object.values(NotificationTypes.NotificationMessageActionType).join(
+    "\n  "
+  ),
 };
 
 export const NotificationMessageAction: GraphQLType = {
@@ -59,11 +57,7 @@ export const NotificationMessageAction: GraphQLType = {
 export const NotificationFilter: GraphQLType = {
   name: "NotificationFilter",
   type: "enum",
-  body: [
-    NotificationTypes.NotificationFilter.UNARCHIVED,
-    NotificationTypes.NotificationFilter.ARCHIVED,
-    NotificationTypes.NotificationFilter.INBOX,
-  ].join("\n  "),
+  body: Object.values(NotificationTypes.NotificationFilter).join("\n  "),
 };
 
 export const NotificationMessage: GraphQLType = {
