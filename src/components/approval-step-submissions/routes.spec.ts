@@ -32,7 +32,6 @@ import { Role as TeamUserRole } from "../team-users/types";
 import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import generateComment from "../../test-helpers/factories/comment";
 import Asset from "../assets/types";
-import { Serialized } from "../../types/serialized";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 
 test("GET /design-approval-step-submissions?:designId", async (t: Test) => {
@@ -574,8 +573,8 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     submission,
   } = await setupSubmission();
 
-  const attachment: Serialized<Asset> = {
-    createdAt: now.toISOString(),
+  const attachment: Asset = {
+    createdAt: now,
     description: null,
     id: uuid.v4(),
     mimeType: "image/jpeg",
@@ -583,7 +582,7 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
     originalWidthPx: 0,
     title: "",
     userId: designer.user.id,
-    uploadCompletedAt: now.toISOString(),
+    uploadCompletedAt: now,
   };
 
   const comment = {
@@ -685,6 +684,14 @@ test("POST /design-approval-step-submissions/:submissionId/revision-requests", a
         submissionTitle: submission.title,
       },
       "Realtime message has an event"
+    );
+
+    t.deepEquals(
+      await SubmissionCommentsDAO.findBySubmissionId(trx, {
+        submissionId: submission.id,
+      }),
+      [{ ...omit(fullComment, "mentions"), submissionId: submission.id }],
+      "creates a submission comment for the revision request"
     );
   } finally {
     await trx.rollback();

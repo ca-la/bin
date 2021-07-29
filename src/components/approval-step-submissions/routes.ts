@@ -8,7 +8,6 @@ import {
   SafeBodyState,
   typeGuardFromSchema,
 } from "../../middleware/type-guard";
-import * as ApprovalStepCommentDAO from "../approval-step-comments/dao";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as ApprovalSubmissionsDAO from "./dao";
 import DesignEventsDAO from "../design-events/dao";
@@ -551,8 +550,8 @@ async function createRevisionRequest(ctx: CreateRevisionRequestContext) {
     userId,
   });
 
-  await ApprovalStepCommentDAO.create(trx, {
-    approvalStepId: ctx.state.stepId,
+  await SubmissionCommentsDAO.create(trx, {
+    submissionId,
     commentId: comment.id,
   });
 
