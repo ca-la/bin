@@ -26,9 +26,8 @@ export const dao = {
     ktx: Knex,
     designId: string
   ): Promise<ApprovalStepSubmission[]> {
-    return adapter.fromDbArray(
-      await ktx(TABLE_NAME)
-        .select("design_approval_submissions.*")
+    return standardDao.find(ktx, {}, (query: Knex.QueryBuilder) =>
+      query
         .join(
           "design_approval_steps",
           "design_approval_steps.id",

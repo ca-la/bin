@@ -22,7 +22,10 @@ import SessionsDAO from "../../dao/sessions";
 import { DesignEventWithMeta } from "../../published-types";
 import * as NotificationService from "../../services/create-notifications";
 import * as IrisService from "../iris/send-message";
-import { templateDesignEventWithMeta } from "../design-events/types";
+import {
+  allEventsSchema,
+  templateDesignEventWithMeta,
+} from "../design-events/types";
 import { generateTeam } from "../../test-helpers/factories/team";
 import { generateTeamUser } from "../../test-helpers/factories/team-user";
 import { Role as TeamUserRole } from "../team-users/types";
@@ -30,6 +33,7 @@ import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import generateComment from "../../test-helpers/factories/comment";
 import Asset from "../assets/types";
 import { Serialized } from "../../types/serialized";
+import generateDesignEvent from "../../test-helpers/factories/design-event";
 
 test("GET /design-approval-step-submissions?:designId", async (t: Test) => {
   const { designer, design, submission, submission2 } = await setupSubmission();
@@ -1483,9 +1487,19 @@ test("DELETE /design-approval-step-submissions fail for submission with changed 
 });
 
 test("GET /design-approval-step-submissions/:submissionId/stream-items", async (t: Test) => {
-  const { designer, submission } = await setupSubmission();
+  const { designer, submission, design } = await setupSubmission();
   const admin = await createUser({ role: "ADMIN" });
   const other = await createUser();
+
+  const { designEvent } = await generateDesignEvent({
+    actorId: designer.user.id,
+    designId: design.id,
+    approvalSubmissionId: submission.id,
+    type: allEventsSchema.enum.STEP_SUBMISSION_APPROVAL,
+  });
+  const eventApproval = await DesignEventsDAO.findOne(db, {
+    id: designEvent.id,
+  });
 
   const { comment } = await generateComment({
     text: "Take a look at this when you can and let me know what you think",
@@ -1510,6 +1524,7 @@ test("GET /design-approval-step-submissions/:submissionId/stream-items", async (
     body,
     JSON.parse(
       JSON.stringify([
+        eventApproval,
         { ...comment, mentions: {}, submissionId: submission.id },
       ])
     ),

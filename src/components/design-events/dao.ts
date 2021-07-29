@@ -148,6 +148,18 @@ const dao = {
     return withMetaAdapter.fromDbArray(designEventRows);
   },
 
+  findSubmissionEvents: async (
+    ktx: Knex,
+    submissionId: string
+  ): Promise<DesignEventWithMeta[]> => {
+    return withMetaDao.find(
+      ktx,
+      { approvalSubmissionId: submissionId },
+      (query: Knex.QueryBuilder) =>
+        query.whereIn("design_events.type", activityStreamEventsSchema.options)
+    );
+  },
+
   findCommitQuoteByInvoiceEvents: async (
     ktx: Knex,
     invoiceId: string

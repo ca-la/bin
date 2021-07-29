@@ -20,7 +20,10 @@ import ApprovalStepSubmission, {
   ApprovalStepSubmissionArtifactType,
 } from "./types";
 import db from "../../services/db";
-import DesignEvent, { templateDesignEvent } from "../design-events/types";
+import DesignEvent, {
+  DesignEventWithMeta,
+  templateDesignEvent,
+} from "../design-events/types";
 import requireAuth from "../../middleware/require-auth";
 import {
   canAccessDesignInState,
@@ -620,8 +623,9 @@ async function createRevisionRequest(ctx: CreateRevisionRequestContext) {
   ctx.status = 204;
 }
 
-interface ListSubmissionStreamItemsContext
-  extends StrictContext<CommentWithResources[]> {
+type StreamItem = CommentWithResources | DesignEventWithMeta;
+
+interface ListSubmissionStreamItemsContext extends StrictContext<StreamItem[]> {
   state: AuthedState;
   params: { submissionId: string };
 }
@@ -634,7 +638,20 @@ async function listSubmissionStreamItems(
   const comments = await SubmissionCommentsDAO.findBySubmissionId(db, {
     submissionId,
   });
-  ctx.body = (await addAtMentionDetails(db, comments)).map(addAttachmentLinks);
+  const commentsWithResources = (await addAtMentionDetails(db, comments)).map(
+    addAttachmentLinks
+  );
+
+  const events: DesignEventWithMeta[] = await DesignEventsDAO.findSubmissionEvents(
+    db,
+    submissionId
+  );
+
+  const streamItems: StreamItem[] = [...commentsWithResources, ...events].sort(
+    (a: StreamItem, b: StreamItem) =>
+      a.createdAt.getTime() - b.createdAt.getTime()
+  );
+  ctx.body = streamItems;
   ctx.status = 200;
 }
 
