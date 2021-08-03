@@ -475,6 +475,20 @@ test("POST /design-approval-step-submissions", async (t: Test) => {
   t.is(body.stepId, steps[1].id);
   t.is(body.createdBy, designer.user.id, "Creator is defined");
   t.is(body.deletedAt, null);
+
+  const submissionEvents = await DesignEventsDAO.findSubmissionEvents(
+    db,
+    body.id
+  );
+  const creationEvent = submissionEvents.find(
+    (event: DesignEventWithMeta) => event.type === "STEP_SUBMISSION_CREATION"
+  );
+  t.ok(creationEvent, "creates a creation event");
+  t.is(
+    creationEvent!.approvalSubmissionId,
+    body.id,
+    "sets the submission ID on the event"
+  );
 });
 
 test("POST /design-approval-step-submissions/:submissionId/approvals", async (t: Test) => {

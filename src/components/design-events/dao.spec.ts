@@ -36,19 +36,25 @@ test("DesignEventsDAO.findSubmissionEvents", async (t: Test) => {
     designId: design.id,
     type: allEventsSchema.enum.BID_DESIGN,
   });
-  const { designEvent } = await generateDesignEvent({
+  const { designEvent: event1 } = await generateDesignEvent({
     actorId: designer.user.id,
     designId: design.id,
     approvalSubmissionId: submission.id,
+    type: allEventsSchema.enum.STEP_SUBMISSION_CREATION,
+  });
+  const { designEvent: event2 } = await generateDesignEvent({
+    actorId: designer.user.id,
+    designId: design.id,
+    approvalStepId: submission.stepId,
+    approvalSubmissionId: submission.id,
     type: allEventsSchema.enum.STEP_SUBMISSION_APPROVAL,
   });
-  const eventApproval = await DesignEventsDAO.findOne(db, {
-    id: designEvent.id,
-  });
+  const eventCreation = await DesignEventsDAO.findById(db, event1.id);
+  const eventApproval = await DesignEventsDAO.findById(db, event2.id);
 
   t.deepEqual(
     await DesignEventsDAO.findSubmissionEvents(db, submission.id),
-    [eventApproval],
+    [eventCreation, eventApproval],
     "Finds submission events"
   );
 });

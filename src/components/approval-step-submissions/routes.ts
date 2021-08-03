@@ -317,11 +317,23 @@ async function createApprovalSubmission(ctx: CreateSubmissionContext) {
   );
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    ctx.body = await ApprovalSubmissionsDAO.create(trx, {
+    const submission = await ApprovalSubmissionsDAO.create(trx, {
       ...body,
       createdBy: userId,
       deletedAt: null,
     });
+
+    await DesignEventsDAO.create(trx, {
+      ...templateDesignEvent,
+      actorId: userId,
+      approvalSubmissionId: submission.id,
+      createdAt: new Date(),
+      designId: approvalStep.designId,
+      id: uuid.v4(),
+      type: "STEP_SUBMISSION_CREATION",
+    });
+
+    ctx.body = submission;
     ctx.status = 200;
   });
 }
