@@ -22,7 +22,7 @@ interface BidAcceptanceDesignEvent {
   created_at: Date;
   type: string;
   partner_team_title: string;
-  designer_team_title: string;
+  designer_team_title: string | null;
   design_title: string | null;
 }
 
@@ -33,6 +33,9 @@ async function main(): Promise<string> {
   // Update all bid acceptance events that are accepted by the user instead of the
   // team to add the target_team_id of the actor's partner team
   const { rows: updatedDesignEvents } = await trx.raw(`
+WITH partner_users AS (
+  SELECT id FROM users WHERE role = 'PARTNER'
+)
 UPDATE design_events
    SET target_team_id = (
      SELECT team_users.team_id
@@ -47,17 +50,25 @@ UPDATE design_events
       ORDER BY team_users.created_at DESC
       LIMIT 1
    ),
-   SET target_id = (CASE
-                    WHEN type = 'ACCEPT_SERVICE_BID' THEN target_id
-                    WHEN type = 'BID_DESIGN' THEN NULL
-                    ELSE target_id
-                    END)
+   target_id = (CASE
+                WHEN type = 'ACCEPT_SERVICE_BID' THEN target_id
+                WHEN type = 'BID_DESIGN' THEN NULL
+                ELSE target_id
+                END)
  WHERE (design_events.type = 'ACCEPT_SERVICE_BID' OR design_events.type = 'BID_DESIGN')
    AND target_team_id IS NULL
+   AND target_id IN (SELECT id FROM partner_users)
 RETURNING *;
 `);
 
   const { rows: updatedCollaborators } = await trx.raw(`
+WITH partner_collaborators AS (
+  SELECT collaborators.*
+    FROM collaborators
+         JOIN users ON users.id = collaborators.user_id
+   WHERE collaborators.role = 'PARTNER'
+     AND users.role = 'PARTNER'
+)
 UPDATE collaborators
    SET user_id = NULL,
        team_id = (
@@ -70,9 +81,11 @@ UPDATE collaborators
           ORDER BY team_users.created_at DESC
           LIMIT 1
          )
- WHERE user_id IS NOT NULL
-   AND team_id IS NULL
-   AND role = 'PARTNER';
+  FROM partner_collaborators
+ WHERE collaborators.user_id IS NOT NULL
+   AND collaborators.team_id IS NULL
+   AND collaborators.role = 'PARTNER'
+   AND collaborators.id = partner_collaborators.id;
 `);
 
   log(
@@ -90,13 +103,21 @@ UPDATE collaborators
       "product_designs.title AS design_title",
     ])
     .join("product_designs", "product_designs.id", "design_events.design_id")
-    .join(
+    .leftJoin(
       "collection_designs",
       "collection_designs.design_id",
       "product_designs.id"
     )
-    .join("collections", "collections.id", "collection_designs.collection_id")
-    .join("teams AS designer_teams", "designer_teams.id", "collections.team_id")
+    .leftJoin(
+      "collections",
+      "collections.id",
+      "collection_designs.collection_id"
+    )
+    .leftJoin(
+      "teams AS designer_teams",
+      "designer_teams.id",
+      "collections.team_id"
+    )
     .join(
       "teams AS partner_teams",
       "partner_teams.id",
@@ -109,6 +130,10 @@ UPDATE collaborators
     .orderBy("design_events.created_at", "desc");
 
   if (eventsWithTeamMeta.length !== updatedDesignEvents.length) {
+    logServerError({
+      updatedCount: updatedDesignEvents.length,
+      lookupCount: eventsWithTeamMeta.length,
+    });
     logServerError({ eventsWithTeamMeta, updatedDesignEvents });
     throw new Error("Unexpected number of design events");
   }
