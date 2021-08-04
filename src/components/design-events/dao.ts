@@ -129,11 +129,7 @@ const dao = {
         .orderBy("design_events.created_at", "asc")
         .whereIn("design_events.type", activityStreamEventsSchema.options)
         .whereRaw(
-          `design_events.design_id = ?
-          AND (
-            design_events.approval_step_id = ?
-            OR design_events.approval_step_id IS NULL
-          )`,
+          `design_events.design_id = ? AND design_events.approval_step_id = ?`,
           [designId, approvalStepId]
         )
     ).map((item: DesignEventWithMetaRow) => {
