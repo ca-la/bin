@@ -779,6 +779,29 @@ test("POST /:canvasId/split-pages splits pages", async (t: tape.Test) => {
   t.deepEqual(body[1].components[0].id, "component2");
 });
 
+test("POST /:canvasId/split-pages catches when original canvas is deleted", async (t: tape.Test) => {
+  sandbox()
+    .stub(CanvasSplitService, "splitCanvas")
+    .returns(
+      Promise.reject(
+        new ProductDesignCanvasesDAO.CanvasNotFoundError("Deleted")
+      )
+    );
+
+  const { session, user } = await createUser();
+  const { canvas } = await generateCanvas({ createdBy: user.id });
+
+  const [response, body] = await post(
+    `/product-design-canvases/${canvas.id}/split-pages`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+
+  t.equal(response.status, 400, "Returns a client error");
+  t.true(body.message.includes("Deleted"));
+});
+
 test("POST /:canvasId/split-pages returns and logs client error in case of ImgixResponseTypeError", async (t: tape.Test) => {
   sandbox()
     .stub(CanvasSplitService, "splitCanvas")

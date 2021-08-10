@@ -307,17 +307,23 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
     return ctx.throw(404, "Canvas not found");
   }
 
-  const results = await CanvasSplitService.splitCanvas(
-    ctx.state.trx,
-    canvas
-  ).catch(
-    filterError(
-      NonSplittableComponentError,
-      (err: NonSplittableComponentError) => {
-        ctx.throw(400, err.message);
-      }
+  const results = await CanvasSplitService.splitCanvas(ctx.state.trx, canvas)
+    .catch(
+      filterError(
+        NonSplittableComponentError,
+        (err: NonSplittableComponentError) => {
+          ctx.throw(400, err.message);
+        }
+      )
     )
-  );
+    .catch(
+      filterError(
+        CanvasesDAO.CanvasNotFoundError,
+        (err: CanvasNotFoundError) => {
+          ctx.throw(400, err.message);
+        }
+      )
+    );
 
   const enrichedCanvases: CanvasWithEnrichedComponents[] = await Promise.all(
     results.map(
