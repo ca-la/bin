@@ -11,14 +11,18 @@ import {
 import DesignEventsDAO from "../design-events/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
+import DesignsDAO from "../product-designs/dao";
 import ApprovalStepsDAO from "../approval-steps/dao";
+import { templateDesignEvent } from "../design-events/types";
+import { NotificationType } from "../notifications/types";
 import ApprovalStepSubmission, {
   approvalStepSubmissionDomain,
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
 } from "./types";
 import { listeners } from "./listeners";
-import { templateDesignEvent } from "../design-events/types";
+import * as SubmissionNotifications from "./notifications";
+import * as SubmissionService from "./service";
 
 const now = new Date();
 const submission: ApprovalStepSubmission = {
@@ -43,6 +47,9 @@ function setup() {
     designEventCreateStub: sandbox().stub(DesignEventsDAO, "create"),
     findApprovalStepStub: sandbox().stub(ApprovalStepsDAO, "findById"),
     clock: sandbox().useFakeTimers(now),
+    findDesignStub: sandbox()
+      .stub(DesignsDAO, "findById")
+      .resolves({ id: "d1", collections: [], collectionIds: [] }),
   };
 }
 
@@ -139,6 +146,408 @@ test("dao.created", async (t: Test) => {
         approvalStepId: "step-1",
       },
       "Sends message via realtime on create"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("route.updated.*.state: UNSUBMITTED", async (t: Test) => {
+  const {
+    findApprovalStepStub,
+    findCollaboratorStub,
+    designEventCreateStub,
+  } = setup();
+  const notifierStub = sandbox()
+    .stub(
+      SubmissionNotifications.default[
+        NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED
+      ],
+      "send"
+    )
+    .resolves();
+
+  sandbox()
+    .stub(SubmissionService, "getRecipientsByStepSubmissionAndDesign")
+    .resolves([
+      {
+        recipientUserId: "u2",
+        recipientCollaboratorId: null,
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: "collab1",
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: null,
+        recipientTeamUserId: "tu1",
+      },
+    ]);
+
+  findApprovalStepStub.resolves({
+    id: "step-1",
+    designId: "d1",
+  });
+  findCollaboratorStub.resolves({
+    id: "c1",
+    userId: "u2",
+  });
+
+  const trx = await db.transaction();
+
+  try {
+    const event: RouteUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "route.updated",
+      domain: approvalStepSubmissionDomain,
+      before: {
+        ...submission,
+        state: ApprovalStepSubmissionState.SUBMITTED,
+      },
+      updated: {
+        ...submission,
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+      },
+      actorId: "u1",
+    };
+
+    await listeners["route.updated.*"]!.state!(event);
+
+    t.deepEquals(
+      designEventCreateStub.args,
+      [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId: "u1",
+            approvalStepId: "step-1",
+            approvalSubmissionId: "sub-1",
+            createdAt: now,
+            designId: "d1",
+            id: "uuid",
+            type: "STEP_SUBMISSION_UNSTARTED",
+          },
+        ],
+      ],
+      "Creates correct design event"
+    );
+
+    const data = {
+      approvalStepId: "step-1",
+      approvalSubmissionId: "sub-1",
+      designId: "d1",
+      collectionId: null,
+    };
+    t.deepEquals(
+      notifierStub.args,
+      [
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: "u2",
+            recipientCollaboratorId: null,
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: "collab1",
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: null,
+            recipientTeamUserId: "tu1",
+          },
+          data,
+        ],
+      ],
+      "Sends notifications to all recipients"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("route.updated.*.state: SUBMITTED", async (t: Test) => {
+  const {
+    findApprovalStepStub,
+    findCollaboratorStub,
+    designEventCreateStub,
+  } = setup();
+  const notifierStub = sandbox()
+    .stub(
+      SubmissionNotifications.default[
+        NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST
+      ],
+      "send"
+    )
+    .resolves();
+
+  sandbox()
+    .stub(SubmissionService, "getRecipientsByStepSubmissionAndDesign")
+    .resolves([
+      {
+        recipientUserId: "u2",
+        recipientCollaboratorId: null,
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: "collab1",
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: null,
+        recipientTeamUserId: "tu1",
+      },
+    ]);
+
+  findApprovalStepStub.resolves({
+    id: "step-1",
+    designId: "d1",
+  });
+  findCollaboratorStub.resolves({
+    id: "c1",
+    userId: "u2",
+  });
+
+  const trx = await db.transaction();
+
+  try {
+    const event: RouteUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "route.updated",
+      domain: approvalStepSubmissionDomain,
+      before: {
+        ...submission,
+        state: ApprovalStepSubmissionState.UNSUBMITTED,
+      },
+      updated: {
+        ...submission,
+        state: ApprovalStepSubmissionState.SUBMITTED,
+      },
+      actorId: "u1",
+    };
+
+    await listeners["route.updated.*"]!.state!(event);
+
+    t.deepEquals(
+      designEventCreateStub.args,
+      [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId: "u1",
+            approvalStepId: "step-1",
+            approvalSubmissionId: "sub-1",
+            createdAt: now,
+            designId: "d1",
+            id: "uuid",
+            type: "STEP_SUBMISSION_RE_REVIEW_REQUEST",
+          },
+        ],
+      ],
+      "Creates correct design event"
+    );
+
+    const data = {
+      approvalStepId: "step-1",
+      approvalSubmissionId: "sub-1",
+      designId: "d1",
+      collectionId: null,
+    };
+    t.deepEquals(
+      notifierStub.args,
+      [
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: "u2",
+            recipientCollaboratorId: null,
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: "collab1",
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: null,
+            recipientTeamUserId: "tu1",
+          },
+          data,
+        ],
+      ],
+      "Sends notifications to all recipients"
+    );
+  } finally {
+    await trx.rollback();
+  }
+});
+
+test("route.updated.*.state: APPROVED", async (t: Test) => {
+  const {
+    findApprovalStepStub,
+    findCollaboratorStub,
+    designEventCreateStub,
+  } = setup();
+  const notifierStub = sandbox()
+    .stub(
+      SubmissionNotifications.default[
+        NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL
+      ],
+      "send"
+    )
+    .resolves();
+
+  sandbox()
+    .stub(SubmissionService, "getRecipientsByStepSubmissionAndDesign")
+    .resolves([
+      {
+        recipientUserId: "u2",
+        recipientCollaboratorId: null,
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: "collab1",
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: null,
+        recipientTeamUserId: "tu1",
+      },
+    ]);
+
+  findApprovalStepStub.resolves({
+    id: "step-1",
+    designId: "d1",
+  });
+  findCollaboratorStub.resolves({
+    id: "c1",
+    userId: "u2",
+  });
+
+  const trx = await db.transaction();
+
+  try {
+    const event: RouteUpdated<
+      ApprovalStepSubmission,
+      typeof approvalStepSubmissionDomain
+    > = {
+      trx,
+      type: "route.updated",
+      domain: approvalStepSubmissionDomain,
+      before: {
+        ...submission,
+        state: ApprovalStepSubmissionState.SUBMITTED,
+      },
+      updated: {
+        ...submission,
+        state: ApprovalStepSubmissionState.APPROVED,
+      },
+      actorId: "u1",
+    };
+
+    await listeners["route.updated.*"]!.state!(event);
+
+    t.deepEquals(
+      designEventCreateStub.args,
+      [
+        [
+          trx,
+          {
+            ...templateDesignEvent,
+            actorId: "u1",
+            approvalStepId: "step-1",
+            approvalSubmissionId: "sub-1",
+            createdAt: now,
+            designId: "d1",
+            id: "uuid",
+            type: "STEP_SUBMISSION_APPROVAL",
+          },
+        ],
+      ],
+      "Creates correct design event"
+    );
+
+    const data = {
+      approvalStepId: "step-1",
+      approvalSubmissionId: "sub-1",
+      designId: "d1",
+      collectionId: null,
+    };
+    t.deepEquals(
+      notifierStub.args,
+      [
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: "u2",
+            recipientCollaboratorId: null,
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: "collab1",
+            recipientTeamUserId: null,
+          },
+          data,
+        ],
+        [
+          trx,
+          "u1",
+          {
+            recipientUserId: null,
+            recipientCollaboratorId: null,
+            recipientTeamUserId: "tu1",
+          },
+          data,
+        ],
+      ],
+      "Sends notifications to all recipients"
     );
   } finally {
     await trx.rollback();

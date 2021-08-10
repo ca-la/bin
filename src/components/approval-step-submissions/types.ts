@@ -86,7 +86,11 @@ export const approvalStepSubmissionUpdateSchema = z
   .object({
     collaboratorId: z.string().nullable(),
     teamUserId: z.string().nullable(),
-    state: z.literal(ApprovalStepSubmissionState.UNSUBMITTED),
+    state: z.union([
+      z.literal(ApprovalStepSubmissionState.SUBMITTED),
+      z.literal(ApprovalStepSubmissionState.UNSUBMITTED),
+      z.literal(ApprovalStepSubmissionState.APPROVED),
+    ]),
   })
   .partial();
 

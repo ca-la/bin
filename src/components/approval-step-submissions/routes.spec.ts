@@ -353,8 +353,8 @@ test("PATCH /design-approval-step-submissions/:submissionId to remove assignee f
   t.is(body2.collaboratorId, null);
 });
 
-test("PATCH /design-approval-step-submissions/:submissionId with step", async (t: Test) => {
-  const { design, designer, submission, collaborator } = await setupSubmission({
+test("PATCH /:submissionId with state: REVISION_REQUESTED", async (t: Test) => {
+  const { designer, submission } = await setupSubmission({
     state: ApprovalStepSubmissionState.APPROVED,
   });
 
@@ -370,10 +370,16 @@ test("PATCH /design-approval-step-submissions/:submissionId with step", async (t
   t.equal(
     response.status,
     400,
-    "It's not possible to update the step state using this route to any value other than Unstarted"
+    "It's not possible to update the step state using this route to REVISION_REQUESTED"
   );
+});
 
-  const [response2, body2] = await patch(
+test("PATCH /:submissionId with state: UNSUBMITTED", async (t: Test) => {
+  const { design, designer, submission, collaborator } = await setupSubmission({
+    state: ApprovalStepSubmissionState.APPROVED,
+  });
+
+  const [response, body] = await patch(
     `/design-approval-step-submissions/${submission.id}`,
     {
       headers: authHeader(designer.session.id),
@@ -382,18 +388,18 @@ test("PATCH /design-approval-step-submissions/:submissionId with step", async (t
       },
     }
   );
-  t.is(response2.status, 200);
+  t.is(response.status, 200);
   t.is(
-    body2.state,
+    body.state,
     ApprovalStepSubmissionState.UNSUBMITTED,
     "submission state is updated"
   );
   t.is(
-    body2.collaboratorId,
+    body.collaboratorId,
     collaborator.id,
     "submission collaboratorId is not changed"
   );
-  t.is(body2.teamUserId, null, "sumission teamUserId is not changed");
+  t.is(body.teamUserId, null, "sumission teamUserId is not changed");
 
   const events = await db.transaction(async (trx: Knex.Transaction) =>
     DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
@@ -447,6 +453,162 @@ test("PATCH /design-approval-step-submissions/:submissionId with step", async (t
     unstartedDesignEvents.length,
     1,
     "There is still one design event even though we called the endpoint twice with the same Unstarted state in Body"
+  );
+});
+
+test("PATCH /:submissionId with state: SUBMITTED", async (t: Test) => {
+  const { design, designer, submission, collaborator } = await setupSubmission({
+    state: ApprovalStepSubmissionState.APPROVED,
+  });
+
+  const [response, body] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.SUBMITTED,
+      },
+    }
+  );
+  t.is(response.status, 200);
+  t.is(
+    body.state,
+    ApprovalStepSubmissionState.SUBMITTED,
+    "submission state is updated"
+  );
+  t.is(
+    body.collaboratorId,
+    collaborator.id,
+    "submission collaboratorId is not changed"
+  );
+  t.is(body.teamUserId, null, "sumission teamUserId is not changed");
+
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const reReviewEvent = events.find(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_RE_REVIEW_REQUEST"
+  );
+  t.is(
+    reReviewEvent!.approvalSubmissionId,
+    submission.id,
+    "Submission event has an approvalSubmissionId"
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const notifications = await NotificationsDAO.findByUserId(
+      trx,
+      collaborator.userId!,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(notifications.length, 1);
+    t.is(notifications[0].approvalSubmissionId, submission.id);
+  });
+
+  const [duplicate] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.SUBMITTED,
+      },
+    }
+  );
+
+  t.is(duplicate.status, 200);
+  const designEvents = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const reReviewEvents = designEvents.filter(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_RE_REVIEW_REQUEST"
+  );
+  t.is(
+    reReviewEvents.length,
+    1,
+    "Does not create a duplicate event for the second request"
+  );
+});
+
+test("PATCH /:submissionId with state: APPROVED", async (t: Test) => {
+  const { design, designer, submission, collaborator } = await setupSubmission({
+    state: ApprovalStepSubmissionState.SUBMITTED,
+  });
+
+  const [response, body] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.APPROVED,
+      },
+    }
+  );
+  t.is(response.status, 200);
+  t.is(
+    body.state,
+    ApprovalStepSubmissionState.APPROVED,
+    "submission state is updated"
+  );
+  t.is(
+    body.collaboratorId,
+    collaborator.id,
+    "submission collaboratorId is not changed"
+  );
+  t.is(body.teamUserId, null, "sumission teamUserId is not changed");
+
+  const events = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const approvalEvent = events.find(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_APPROVAL"
+  );
+  t.is(
+    approvalEvent!.approvalSubmissionId,
+    submission.id,
+    "Submission event has an approvalSubmissionId"
+  );
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const notifications = await NotificationsDAO.findByUserId(
+      trx,
+      collaborator.userId!,
+      {
+        limit: 10,
+        offset: 0,
+      }
+    );
+    t.is(notifications.length, 1);
+    t.is(notifications[0].approvalSubmissionId, submission.id);
+  });
+
+  const [duplicate] = await patch(
+    `/design-approval-step-submissions/${submission.id}`,
+    {
+      headers: authHeader(designer.session.id),
+      body: {
+        state: ApprovalStepSubmissionState.APPROVED,
+      },
+    }
+  );
+
+  t.is(duplicate.status, 200);
+  const designEvents = await db.transaction(async (trx: Knex.Transaction) =>
+    DesignEventsDAO.findApprovalStepEvents(trx, design.id, submission.stepId)
+  );
+
+  const approvalEvents = designEvents.filter(
+    (e: DesignEventWithMeta) => e.type === "STEP_SUBMISSION_APPROVAL"
+  );
+  t.is(
+    approvalEvents.length,
+    1,
+    "Does not create a duplicate event for the second request"
   );
 });
 

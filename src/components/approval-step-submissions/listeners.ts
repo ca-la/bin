@@ -26,10 +26,11 @@ import ApprovalStepSubmission, {
   approvalStepSubmissionDomain,
   ApprovalStepSubmissionState,
 } from "./types";
-import { templateDesignEvent } from "../design-events/types";
+import { DesignEventTypes, templateDesignEvent } from "../design-events/types";
 import { NotificationType } from "../notifications/domain-object";
 import notifications from "./notifications";
 import { getRecipientsByStepSubmissionAndDesign } from "./service";
+import { NotificationComponent } from "../../services/cala-component/cala-notifications";
 
 export const listeners: Listeners<
   ApprovalStepSubmission,
@@ -117,8 +118,36 @@ export const listeners: Listeners<
     ) => {
       const state = event.updated.state;
 
-      if (state !== ApprovalStepSubmissionState.UNSUBMITTED) {
-        return;
+      let eventType: DesignEventTypes;
+      let notifier: NotificationComponent<any, any, any>;
+
+      switch (state) {
+        case ApprovalStepSubmissionState.UNSUBMITTED: {
+          eventType = "STEP_SUBMISSION_UNSTARTED";
+          notifier =
+            notifications[NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED];
+          break;
+        }
+
+        case ApprovalStepSubmissionState.SUBMITTED: {
+          eventType = "STEP_SUBMISSION_RE_REVIEW_REQUEST";
+          notifier =
+            notifications[
+              NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST
+            ];
+          break;
+        }
+
+        case ApprovalStepSubmissionState.APPROVED: {
+          eventType = "STEP_SUBMISSION_APPROVAL";
+          notifier =
+            notifications[NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL];
+          break;
+        }
+
+        default: {
+          return;
+        }
       }
 
       const approvalStep = await ApprovalStepsDAO.findById(
@@ -153,7 +182,7 @@ export const listeners: Listeners<
         createdAt: new Date(),
         designId: design.id,
         id: uuid.v4(),
-        type: "STEP_SUBMISSION_UNSTARTED",
+        type: eventType,
       });
 
       const recipients = await getRecipientsByStepSubmissionAndDesign(
@@ -163,9 +192,7 @@ export const listeners: Listeners<
       );
 
       for (const recipient of recipients) {
-        await notifications[
-          NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED
-        ].send(event.trx, event.actorId, recipient, {
+        await notifier.send(event.trx, event.actorId, recipient, {
           approvalStepId: event.updated.stepId,
           approvalSubmissionId: event.updated.id,
           designId: design.id,

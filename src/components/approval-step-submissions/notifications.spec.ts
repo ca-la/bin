@@ -131,8 +131,8 @@ test("ApprovalSubmissions notifications", async (t: Test) => {
         approvalStepId: approvalStep.id,
         approvalSubmissionId: submission.id,
       },
-      parts: [actor.name, " requested re-review of ", submission.title],
-      textParts: ["Requested re-review of ", submission.title],
+      parts: [actor.name, " requested review of ", submission.title],
+      textParts: ["Requested review of ", submission.title],
     },
   ];
   for (const testCase of testCases) {

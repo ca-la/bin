@@ -138,11 +138,11 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
 
       return {
         ...assets.base,
-        html: `${span(assets.actorName, "user-name")} requested re-review of ${
+        html: `${span(assets.actorName, "user-name")} requested review of ${
           assets.submissionHtmlLink
         }`,
-        title: `${assets.actorName} requested re-review of ${notification.approvalSubmissionTitle}`,
-        text: `Requested re-review of ${notification.approvalSubmissionTitle}`,
+        title: `${assets.actorName} requested review of ${notification.approvalSubmissionTitle}`,
+        text: `Requested review of ${notification.approvalSubmissionTitle}`,
       };
     }
   ),
