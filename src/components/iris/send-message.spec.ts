@@ -16,7 +16,7 @@ import LogService from "../../services/logger";
 import { NotificationMessage } from "../../published-types";
 
 import { sendMessage } from "./send-message";
-import { RealtimeMessageType, RealtimeMessage } from "./types";
+import { RealtimeMessage } from "./types";
 
 test("sendMessage supports sending a message", async (t: tape.Test) => {
   sandbox()
@@ -51,7 +51,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   }
 
   const realtimeNotification: RealtimeMessage = {
-    type: RealtimeMessageType.notificationCreated,
+    type: "notification/created",
     channels: [`notifications/${notification.recipientUserId}`],
     resource: notificationMessage,
   };
@@ -107,7 +107,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
     type: NotificationType.ANNOTATION_COMMENT_CREATE,
   };
   const realtimeNotification: RealtimeMessage = {
-    type: RealtimeMessageType.notificationCreated,
+    type: "notification/created",
     channels: [`notifications/user-id`],
     resource: message,
   };

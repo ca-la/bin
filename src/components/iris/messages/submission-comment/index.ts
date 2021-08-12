@@ -1,26 +1,18 @@
 import { sendMessage } from "../../send-message";
-import { RealtimeMessage, RealtimeMessageType } from "../../types";
-import { buildChannelName } from "../../build-channel";
 import { SubmissionComment } from "../../../submission-comments/types";
 import { CommentWithResources } from "../../../comments/types";
+import {
+  realtimeSubmissionCommentCreated,
+  realtimeSubmissionCommentDeleted,
+} from "../../../submission-comments/realtime";
 
 export async function announceSubmissionCommentCreation(
   submissionComment: SubmissionComment,
   comment: CommentWithResources
-): Promise<RealtimeMessage> {
-  const { submissionId } = submissionComment;
-  const message: RealtimeMessage = {
-    channels: [buildChannelName("submissions", submissionId)],
-    resource: {
-      comment,
-      submissionId,
-    },
-    type: RealtimeMessageType.submissionCommentCreated,
-  };
-
-  await sendMessage(message);
-
-  return message;
+): Promise<void> {
+  await sendMessage(
+    realtimeSubmissionCommentCreated(submissionComment.submissionId, comment)
+  );
 }
 
 export async function announceSubmissionCommentDeletion({
@@ -31,14 +23,8 @@ export async function announceSubmissionCommentDeletion({
   actorId: string;
   submissionId: string;
   commentId: string;
-}): Promise<RealtimeMessage> {
-  const message: RealtimeMessage = {
-    channels: [buildChannelName("submissions", submissionId)],
-    resource: { commentId, submissionId, actorId },
-    type: RealtimeMessageType.submissionCommentDeleted,
-  };
-
-  await sendMessage(message);
-
-  return message;
+}): Promise<void> {
+  await sendMessage(
+    realtimeSubmissionCommentDeleted(submissionId, actorId, commentId)
+  );
 }

@@ -53,14 +53,17 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
     trackingId: null,
     type: NotificationType.TASK_ASSIGNMENT,
   };
-  const response = await announceNotificationCreation(notification);
+  await announceNotificationCreation(notification);
 
-  t.deepEqual(response, {
-    channels: ["updates/zzzz-2222"],
-    resource: { foo: "bar" },
-    type: "notification/created",
-  });
-  t.equal(sendStub.callCount, 1);
+  t.deepEqual(sendStub.args, [
+    [
+      {
+        channels: ["updates/zzzz-2222"],
+        resource: { foo: "bar" },
+        type: "notification/created",
+      },
+    ],
+  ]);
   t.equal(createStub.callCount, 1);
 });
 
@@ -105,9 +108,8 @@ test("sendMessage can early return if the notification is missing data", async (
     trackingId: null,
     type: NotificationType.TASK_ASSIGNMENT,
   };
-  const response = await announceNotificationCreation(notification);
+  await announceNotificationCreation(notification);
 
-  t.equal(response, null);
   t.equal(sendStub.callCount, 0);
   t.equal(createStub.callCount, 1);
 });
@@ -151,9 +153,8 @@ test("sendMessage can early return if the notification is missing data", async (
     trackingId: null,
     type: NotificationType.INVITE_COLLABORATOR,
   };
-  const response = await announceNotificationCreation(notification);
+  await announceNotificationCreation(notification);
 
-  t.equal(response, null);
   t.equal(sendStub.callCount, 0);
   t.equal(createStub.callCount, 1);
 });

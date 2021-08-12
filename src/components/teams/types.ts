@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { serializedDates } from "../../services/zod-helpers";
 import { Role as TeamUserRole } from "../team-users/types";
 
 export enum TeamType {
@@ -30,6 +31,8 @@ export const teamSchema = teamDbSchema.extend({
   teamUserId: z.string(),
 });
 export type Team = z.infer<typeof teamSchema>;
+
+export const serializedTeamSchema = teamSchema.extend(serializedDates);
 
 export const teamRowSchema = teamDbRowSchema.extend({
   role: z.nativeEnum(TeamUserRole),

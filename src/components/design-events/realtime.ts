@@ -1,60 +1,40 @@
+import { z } from "zod";
+import { buildChannelName } from "../iris/build-channel";
 import {
   DesignEventWithMeta,
-  ActivityStreamEventType,
-  activityStreamEventsSchema,
+  serializedDesignEventWithMetaSchema,
 } from "./types";
 
-export interface RealtimeDesignEventCreated {
-  actorId: string;
-  approvalStepId: string | null;
-  resource: DesignEventWithMeta;
-  type: "design-event/created";
-}
+export const realtimeDesignEventCreatedSchema = z.object({
+  resource: serializedDesignEventWithMetaSchema,
+  type: z.literal("design-event/created"),
+  channels: z.array(z.string()),
+});
 
-export function isRealtimeDesignEventCreated(
-  data: any
-): data is RealtimeDesignEventCreated {
-  return (
-    "actorId" in data &&
-    "approvalStepId" in data &&
-    "resource" in data &&
-    "type" in data &&
-    data.type === "design-event/created"
-  );
-}
+export type RealtimeDesignEventCreated = z.infer<
+  typeof realtimeDesignEventCreatedSchema
+>;
 
 export function realtimeDesignEventCreated(
   designEvent: DesignEventWithMeta
 ): RealtimeDesignEventCreated {
+  const channels = [buildChannelName("designs", designEvent.designId)];
+
+  if (designEvent.approvalStepId) {
+    channels.push(
+      buildChannelName("approval-steps", designEvent.approvalStepId)
+    );
+  }
+
+  if (designEvent.approvalSubmissionId) {
+    channels.push(
+      buildChannelName("submissions", designEvent.approvalSubmissionId)
+    );
+  }
+
   return {
-    actorId: designEvent.actorId,
-    approvalStepId: designEvent.approvalStepId,
     resource: designEvent,
     type: "design-event/created",
+    channels,
   };
-}
-
-interface ActivityStreamDesignEvent extends DesignEventWithMeta {
-  type: ActivityStreamEventType;
-}
-
-export interface RealtimeActivityStreamDesignEventCreated
-  extends RealtimeDesignEventCreated {
-  actorId: string;
-  approvalStepId: string;
-  resource: ActivityStreamDesignEvent;
-  type: "design-event/created";
-}
-
-export function isRealtimeActivityStreamDesignEventCreated(
-  data: any
-): data is RealtimeActivityStreamDesignEventCreated {
-  return (
-    "actorId" in data &&
-    "approvalStepId" in data &&
-    "resource" in data &&
-    "type" in data &&
-    data.type === "design-event/created" &&
-    activityStreamEventsSchema.options.includes(data.resource.type)
-  );
 }

@@ -23,6 +23,16 @@ export const nullableNumberStringToNumber = z
       : parseNumericString(nullableNumberString)
   );
 
+export const serializedDates = {
+  createdAt: dateStringToDate,
+  deletedAt: nullableDateStringToNullableDate,
+};
+
+export const serializedDatesWithUpdated = {
+  ...serializedDates,
+  updatedAt: dateStringToDate,
+};
+
 type ZTypeJsonShapeItem = Record<string, ZTypeJson>;
 type ZTypeJsonShape = Record<string, ZTypeJsonShapeItem>;
 

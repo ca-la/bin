@@ -1,23 +1,20 @@
 import { test, Test } from "../../test-helpers/simple";
-import { RealtimeMessageType } from "../iris/types";
 import { teamTestBlank } from "../teams/types";
 
 import {
-  serializedRealtimeTeamUsersListUpdatedSchema,
-  SerializedRealtimeTeamUsersListUpdated,
-  serializedRealtimeTeamListUpdatedSchema,
-  SerializedRealtimeTeamListUpdated,
+  realtimeTeamUsersListUpdatedSchema,
+  realtimeTeamListUpdatedSchema,
 } from "./realtime";
 import { teamUserTestBlank } from "./types";
 
 test("serializedRealtimeTeamUsersListUpdatedSchema: valid", (t: Test) => {
-  const serialized: SerializedRealtimeTeamUsersListUpdated = {
+  const serialized = {
     channels: ["a-channel"],
     resource: [JSON.parse(JSON.stringify(teamUserTestBlank))],
-    type: RealtimeMessageType.teamUsersListUpdated,
+    type: "team-users-list/updated",
   };
 
-  const parsed = serializedRealtimeTeamUsersListUpdatedSchema.parse(serialized);
+  const parsed = realtimeTeamUsersListUpdatedSchema.parse(serialized);
 
   t.deepEqual(
     parsed,
@@ -30,13 +27,13 @@ test("serializedRealtimeTeamUsersListUpdatedSchema: valid", (t: Test) => {
 });
 
 test("serializedTealtimeTeamListUpdatedSchema: valid", (t: Test) => {
-  const serialized: SerializedRealtimeTeamListUpdated = {
+  const serialized = {
     channels: ["a-channel"],
     resource: JSON.parse(JSON.stringify([teamTestBlank])),
-    type: RealtimeMessageType.teamListUpdated,
+    type: "team-list/updated",
   };
 
-  const parsed = serializedRealtimeTeamListUpdatedSchema.parse(serialized);
+  const parsed = realtimeTeamListUpdatedSchema.parse(serialized);
 
   t.deepEqual(
     parsed,

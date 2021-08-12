@@ -7,6 +7,7 @@ import {
 } from "../users/types";
 import { Roles } from "../collaborators/types";
 import { check } from "../../services/check";
+import { serializedDatesWithUpdated } from "../../services/zod-helpers";
 
 export const teamUserDomain = "TeamUser" as "TeamUser";
 export const rawTeamUserDomain = "TeamUserDb" as "TeamUserDb";
@@ -121,6 +122,11 @@ export const teamUserSchema = z.union([
   invitedTeamUserSchema,
 ]);
 export type TeamUser = z.infer<typeof teamUserSchema>;
+
+export const serializedTeamUserSchema = z.union([
+  registeredTeamUserSchema.extend(serializedDatesWithUpdated),
+  invitedTeamUserSchema.extend(serializedDatesWithUpdated),
+]);
 
 export const teamUserRowSchema = z.union([
   registeredTeamUserRowSchema,

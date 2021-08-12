@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
 import { userSchema } from "../users/types";
 
 export const breadCrumbSchema = z.object({
@@ -142,6 +146,14 @@ export const notificationMessageSchema = z.object({
 });
 
 export type NotificationMessage = z.infer<typeof notificationMessageSchema>;
+
+export const serializedNotificationMessageSchema = notificationMessageSchema.extend(
+  {
+    createdAt: dateStringToDate,
+    readAt: nullableDateStringToNullableDate,
+    archivedAt: nullableDateStringToNullableDate,
+  }
+);
 
 // GraphQL doesn't allow arbitrary schemaless object like Mention
 export interface MentionForGraphQL {

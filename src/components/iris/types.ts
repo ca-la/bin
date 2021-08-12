@@ -1,27 +1,36 @@
 import { z } from "zod";
-import { check } from "../../services/check";
-import { Serialized } from "../../types/serialized";
+import { realtimeNotificationCreatedSchema } from "../notifications/realtime";
+import {
+  realtimeShipmentTrackingCreatedSchema,
+  realtimeShipmentTrackingUpdatedSchema,
+} from "../shipment-trackings/realtime";
+import {
+  realtimeSubmissionCommentCreatedSchema,
+  realtimeSubmissionCommentDeletedSchema,
+} from "../submission-comments/realtime";
+import {
+  realtimeTeamListUpdatedSchema,
+  realtimeTeamUsersListUpdatedSchema,
+} from "../team-users/realtime";
 
-export enum RealtimeMessageType {
-  shipmentTrackingUpdated = "shipment-tracking/updated",
-  shipmentTrackingCreated = "shipment-tracking/created",
-  notificationCreated = "notification/created",
-  teamUsersListUpdated = "team-users-list/updated",
-  teamListUpdated = "team-list/updated",
-  submissionCommentDeleted = "submission-comment/deleted",
-  submissionCommentCreated = "submission-comment/created",
-}
-
-export const realtimeMessageSchema = z.object({
-  // string here to avoid breaking backwards compatibility when adding new messages
+// Generic catch-all to allow expanding types without throwing
+export const unknownRealtimeMessageSchema = z.object({
   type: z.string(),
   channels: z.array(z.string()),
-  resource: z.any(),
+  resource: z.unknown(),
 });
-export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;
 
-export function isRealtimeMessage(
-  data: any
-): data is Serialized<RealtimeMessage> {
-  return check(realtimeMessageSchema, data);
-}
+export const realtimeMessageSchema = z.union([
+  realtimeShipmentTrackingCreatedSchema,
+  realtimeShipmentTrackingUpdatedSchema,
+  realtimeNotificationCreatedSchema,
+  realtimeTeamUsersListUpdatedSchema,
+  realtimeTeamListUpdatedSchema,
+  realtimeSubmissionCommentCreatedSchema,
+  realtimeSubmissionCommentDeletedSchema,
+
+  // Fall through to generic message
+  unknownRealtimeMessageSchema,
+]);
+
+export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;

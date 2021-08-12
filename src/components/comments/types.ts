@@ -5,6 +5,7 @@ import { assetLinksSchema, assetRowSchema, assetSchema } from "../assets/types";
 import {
   dateStringToDate,
   nullableDateStringToNullableDate,
+  serializedDates,
 } from "../../services/zod-helpers";
 import { CommentWithResourcesGraphQLType } from "./graphql-types";
 
@@ -27,6 +28,8 @@ export const commentSchema = baseCommentSchema.extend({
   replyCount: z.number(),
 });
 export type Comment = z.infer<typeof commentSchema>;
+
+export const serializedCommentSchema = commentSchema.extend(serializedDates);
 
 export const baseCommentRowSchema = z.object({
   id: z.string(),
@@ -57,6 +60,10 @@ export const commentWithResourcesSchema = commentWithMentionsSchema.extend({
   attachments: z.array(z.intersection(assetSchema, assetLinksSchema)),
 });
 export type CommentWithResources = z.infer<typeof commentWithResourcesSchema>;
+
+export const serializedCommentWithResourcesSchema = commentWithResourcesSchema.extend(
+  serializedDates
+);
 
 export const createCommentWithAttachmentsSchema = baseCommentSchema.extend({
   createdAt: dateStringToDate,

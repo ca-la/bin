@@ -4,7 +4,6 @@ import {
   announceSubmissionCommentCreation,
   announceSubmissionCommentDeletion,
 } from "./index";
-import { RealtimeMessageType } from "../../types";
 import generateComment from "../../../../test-helpers/factories/comment";
 
 test("announceSubmissionCommentCreation supports sending a message", async (t: Test) => {
@@ -14,27 +13,25 @@ test("announceSubmissionCommentCreation supports sending a message", async (t: T
   const { comment } = await generateComment();
   const commentWithResources = { ...comment, mentions: {}, attachments: [] };
 
-  const response = await announceSubmissionCommentCreation(
+  await announceSubmissionCommentCreation(
     { submissionId: "a-submission-id", commentId: comment.id },
     commentWithResources
   );
 
   t.deepEqual(
-    response,
-    {
-      resource: {
-        submissionId: "a-submission-id",
-        comment: commentWithResources,
-      },
-      type: RealtimeMessageType.submissionCommentCreated,
-      channels: ["submissions/a-submission-id"],
-    },
-    "Returns the realtime message that was sent"
-  );
-
-  t.deepEqual(
     sendStub.args,
-    [[response]],
+    [
+      [
+        {
+          resource: {
+            submissionId: "a-submission-id",
+            comment: commentWithResources,
+          },
+          type: "submission-comment/created",
+          channels: ["submissions/a-submission-id"],
+        },
+      ],
+    ],
     "calls sendMessage with the correct message"
   );
 });
@@ -44,29 +41,27 @@ test("announceSubmissionCommentDeletion supports sending a message", async (t: T
     .stub(SendMessageService, "sendMessage")
     .resolves({});
 
-  const response = await announceSubmissionCommentDeletion({
+  await announceSubmissionCommentDeletion({
     commentId: "a-comment-id",
     submissionId: "a-submission-id",
     actorId: "a-user-id",
   });
 
   t.deepEqual(
-    response,
-    {
-      resource: {
-        commentId: "a-comment-id",
-        submissionId: "a-submission-id",
-        actorId: "a-user-id",
-      },
-      type: RealtimeMessageType.submissionCommentDeleted,
-      channels: ["submissions/a-submission-id"],
-    },
-    "Returns the realtime message that was sent"
-  );
-
-  t.deepEqual(
     sendStub.args,
-    [[response]],
+    [
+      [
+        {
+          resource: {
+            commentId: "a-comment-id",
+            submissionId: "a-submission-id",
+            actorId: "a-user-id",
+          },
+          type: "submission-comment/deleted",
+          channels: ["submissions/a-submission-id"],
+        },
+      ],
+    ],
     "calls sendMessage with the correct message"
   );
 });

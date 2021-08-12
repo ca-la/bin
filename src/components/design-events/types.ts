@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { userRoleSchema } from "../users/types";
 import { bidTaskTypeIdSchema } from "../bid-task-types/types";
+import { dateStringToDate } from "../../services/zod-helpers";
 
 const designerEvents = z.enum(["SUBMIT_DESIGN", "COMMIT_QUOTE"]);
 const calaEvents = z.enum([
@@ -105,9 +106,7 @@ export const designEventRowSchema = z.object({
 export type DesignEventRow = z.infer<typeof designEventRowSchema>;
 
 export const serializedDesignEventRowSchema = designEventRowSchema.extend({
-  created_at: z
-    .string()
-    .transform((dateString: string) => new Date(dateString)),
+  created_at: dateStringToDate,
 });
 export type SerializedDesignEventRow = z.infer<
   typeof serializedDesignEventRowSchema
@@ -130,6 +129,12 @@ export const designEventWithMetaSchema = designEventSchema.extend({
   shipmentTrackingEventSubtag: z.string().nullable(),
 });
 export type DesignEventWithMeta = z.infer<typeof designEventWithMetaSchema>;
+
+export const serializedDesignEventWithMetaSchema = designEventWithMetaSchema.extend(
+  {
+    createdAt: dateStringToDate,
+  }
+);
 
 export const designEventWithMetaRowSchema = designEventRowSchema.extend({
   actor_name: z.string().nullable(),

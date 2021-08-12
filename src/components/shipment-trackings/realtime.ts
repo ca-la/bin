@@ -1,28 +1,32 @@
-import { Serialized } from "../../types/serialized";
-import { ShipmentTracking, DeliveryStatus } from "./types";
+import { z } from "zod";
 import {
-  RealtimeMessage,
-  isRealtimeMessage,
-  RealtimeMessageType,
-} from "../iris/types";
+  ShipmentTracking,
+  DeliveryStatus,
+  serializedShipmentTrackingSchema,
+  serializedDeliveryStatusSchema,
+} from "./types";
 import { buildChannelName } from "../iris/build-channel";
 
-export interface RealtimeShipmentTrackingUpdated extends RealtimeMessage {
-  resource: ShipmentTracking & {
-    deliveryStatus: DeliveryStatus;
-    trackingLink: string;
-  };
-  type: RealtimeMessageType.shipmentTrackingUpdated;
-}
+const baseRealtimeShipmentTrackingSchema = z.object({
+  resource: z.intersection(
+    serializedShipmentTrackingSchema,
+    z.object({
+      deliveryStatus: serializedDeliveryStatusSchema,
+      trackingLink: z.string(),
+    })
+  ),
+  channels: z.tuple([z.string()]),
+});
 
-export function isRealtimeShipmentTrackingUpdated(
-  data: any
-): data is Serialized<RealtimeShipmentTrackingUpdated> {
-  return (
-    isRealtimeMessage(data) &&
-    data.type === RealtimeMessageType.shipmentTrackingUpdated
-  );
-}
+export const realtimeShipmentTrackingUpdatedSchema = baseRealtimeShipmentTrackingSchema.extend(
+  {
+    type: z.literal("shipment-tracking/updated"),
+  }
+);
+
+export type RealtimeShipmentTrackingUpdated = z.infer<
+  typeof realtimeShipmentTrackingUpdatedSchema
+>;
 
 export function realtimeShipmentTrackingUpdated(
   shipmentTracking: ShipmentTracking & {
@@ -31,7 +35,7 @@ export function realtimeShipmentTrackingUpdated(
   }
 ): RealtimeShipmentTrackingUpdated {
   return {
-    type: RealtimeMessageType.shipmentTrackingUpdated,
+    type: "shipment-tracking/updated",
     resource: shipmentTracking,
     channels: [
       buildChannelName("approval-steps", shipmentTracking.approvalStepId),
@@ -39,22 +43,15 @@ export function realtimeShipmentTrackingUpdated(
   };
 }
 
-export interface RealtimeShipmentTrackingCreated extends RealtimeMessage {
-  resource: ShipmentTracking & {
-    deliveryStatus: DeliveryStatus;
-    trackingLink: string;
-  };
-  type: RealtimeMessageType.shipmentTrackingCreated;
-}
+export const realtimeShipmentTrackingCreatedSchema = baseRealtimeShipmentTrackingSchema.extend(
+  {
+    type: z.literal("shipment-tracking/created"),
+  }
+);
 
-export function isRealtimeShipmentTrackingCreated(
-  data: any
-): data is Serialized<RealtimeShipmentTrackingCreated> {
-  return (
-    isRealtimeMessage(data) &&
-    data.type === RealtimeMessageType.shipmentTrackingCreated
-  );
-}
+export type RealtimeShipmentTrackingCreated = z.infer<
+  typeof realtimeShipmentTrackingCreatedSchema
+>;
 
 export function realtimeShipmentTrackingCreated(
   shipmentTracking: ShipmentTracking & {
@@ -63,7 +60,7 @@ export function realtimeShipmentTrackingCreated(
   }
 ): RealtimeShipmentTrackingCreated {
   return {
-    type: RealtimeMessageType.shipmentTrackingCreated,
+    type: "shipment-tracking/created",
     resource: shipmentTracking,
     channels: [
       buildChannelName("approval-steps", shipmentTracking.approvalStepId),

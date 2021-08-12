@@ -1,13 +1,27 @@
-export interface ShipmentTracking {
-  id: string;
-  courier: string;
-  trackingId: string;
-  description: string | null;
-  approvalStepId: string;
-  createdAt: Date;
-  expectedDelivery: Date | null;
-  deliveryDate: Date | null;
-}
+import { z } from "zod";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
+
+export const shipmentTrackingSchema = z.object({
+  id: z.string(),
+  courier: z.string(),
+  trackingId: z.string(),
+  description: z.string().nullable(),
+  approvalStepId: z.string(),
+  createdAt: z.date(),
+  expectedDelivery: z.date().nullable(),
+  deliveryDate: z.date().nullable(),
+});
+
+export type ShipmentTracking = z.infer<typeof shipmentTrackingSchema>;
+
+export const serializedShipmentTrackingSchema = shipmentTrackingSchema.extend({
+  createdAt: dateStringToDate,
+  expectedDelivery: nullableDateStringToNullableDate,
+  deliveryDate: nullableDateStringToNullableDate,
+});
 
 export interface ShipmentTrackingRow {
   id: string;
@@ -38,8 +52,15 @@ export function isShipmentTrackingRow(
   ].every((key: string) => keyset.has(key));
 }
 
-export interface DeliveryStatus {
-  tag: string;
-  expectedDelivery: Date | null;
-  deliveryDate: Date | null;
-}
+export const deliveryStatusSchema = z.object({
+  tag: z.string(),
+  expectedDelivery: z.date().nullable(),
+  deliveryDate: z.date().nullable(),
+});
+
+export type DeliveryStatus = z.infer<typeof deliveryStatusSchema>;
+
+export const serializedDeliveryStatusSchema = deliveryStatusSchema.extend({
+  expectedDelivery: nullableDateStringToNullableDate,
+  deliveryDate: nullableDateStringToNullableDate,
+});

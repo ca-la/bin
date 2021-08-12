@@ -1,45 +1,16 @@
 import { z } from "zod";
-import { RealtimeMessageType, realtimeMessageSchema } from "../iris/types";
 import { buildChannelName } from "../iris/build-channel";
 
-import {
-  invitedTeamUserSchema,
-  registeredTeamUserSchema,
-  TeamUser,
-  teamUserSchema,
-} from "./types";
-import { Team, teamSchema } from "../teams/types";
-import {
-  dateStringToDate,
-  nullableDateStringToNullableDate,
-} from "../../services/zod-helpers";
+import { serializedTeamUserSchema, TeamUser } from "./types";
+import { serializedTeamSchema, Team } from "../teams/types";
 
-const realtimeTeamUsersListUpdatedSchema = realtimeMessageSchema.extend({
-  resource: z.array(teamUserSchema),
-  type: z.literal(RealtimeMessageType.teamUsersListUpdated),
+export const realtimeTeamUsersListUpdatedSchema = z.object({
+  channels: z.tuple([z.string()]),
+  resource: z.array(serializedTeamUserSchema),
+  type: z.literal("team-users-list/updated"),
 });
 export type RealtimeTeamUsersListUpdated = z.infer<
   typeof realtimeTeamUsersListUpdatedSchema
->;
-
-const dateTransformed = {
-  createdAt: dateStringToDate,
-  updatedAt: dateStringToDate,
-  deletedAt: nullableDateStringToNullableDate,
-};
-
-export const serializedRealtimeTeamUsersListUpdatedSchema = realtimeTeamUsersListUpdatedSchema.extend(
-  {
-    resource: z.array(
-      z.union([
-        registeredTeamUserSchema.extend(dateTransformed),
-        invitedTeamUserSchema.extend(dateTransformed),
-      ])
-    ),
-  }
-);
-export type SerializedRealtimeTeamUsersListUpdated = z.input<
-  typeof serializedRealtimeTeamUsersListUpdatedSchema
 >;
 
 export function realtimeTeamUsersListUpdated(
@@ -47,32 +18,19 @@ export function realtimeTeamUsersListUpdated(
   teamUsersList: TeamUser[]
 ): RealtimeTeamUsersListUpdated {
   return {
-    type: RealtimeMessageType.teamUsersListUpdated,
+    type: "team-users-list/updated",
     resource: teamUsersList,
     channels: [buildChannelName("teams", teamId)],
   };
 }
 
-const realtimeTeamListUpdatedSchema = realtimeMessageSchema.extend({
-  resource: z.array(teamSchema),
-  type: z.literal(RealtimeMessageType.teamListUpdated),
+export const realtimeTeamListUpdatedSchema = z.object({
+  channels: z.tuple([z.string()]),
+  resource: z.array(serializedTeamSchema),
+  type: z.literal("team-list/updated"),
 });
 export type RealtimeTeamListUpdated = z.infer<
   typeof realtimeTeamListUpdatedSchema
->;
-
-export const serializedRealtimeTeamListUpdatedSchema = realtimeTeamListUpdatedSchema.extend(
-  {
-    resource: z.array(
-      teamSchema.extend({
-        createdAt: dateStringToDate,
-        deletedAt: nullableDateStringToNullableDate,
-      })
-    ),
-  }
-);
-export type SerializedRealtimeTeamListUpdated = z.output<
-  typeof serializedRealtimeTeamListUpdatedSchema
 >;
 
 export function realtimeTeamListUpdated(
@@ -80,7 +38,7 @@ export function realtimeTeamListUpdated(
   teams: Team[]
 ): RealtimeTeamListUpdated {
   return {
-    type: RealtimeMessageType.teamListUpdated,
+    type: "team-list/updated",
     resource: teams,
     channels: [buildChannelName("updates", userId)],
   };

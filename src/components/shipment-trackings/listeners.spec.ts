@@ -7,7 +7,6 @@ import * as IrisService from "../iris/send-message";
 import * as ShipmentTrackingService from "./service";
 
 import { listeners } from "./listeners";
-import { RealtimeMessageType } from "../iris/types";
 
 function setup() {
   const created: ShipmentTracking = {
@@ -127,7 +126,7 @@ test("ShipmentTracking listener: dao.created", async (t: Test) => {
   t.deepEqual(
     stubs.irisStub.args[0][0],
     {
-      type: RealtimeMessageType.shipmentTrackingCreated,
+      type: "shipment-tracking/created",
       channels: [`approval-steps/${created.approvalStepId}`],
       resource: {
         ...created,
@@ -157,7 +156,7 @@ test("ShipmentTracking listener: dao.updated", async (t: Test) => {
   t.deepEqual(
     stubs.irisStub.args[0][0],
     {
-      type: RealtimeMessageType.shipmentTrackingUpdated,
+      type: "shipment-tracking/updated",
       channels: [`approval-steps/${created.approvalStepId}`],
       resource: {
         ...created,

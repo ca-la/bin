@@ -25,6 +25,8 @@ interface Setup {
 function setup(eventType: DesignEventTypes): Setup {
   const created: DesignEvent = {
     ...templateDesignEvent,
+    approvalSubmissionId: "a-submission-id",
+    approvalStepId: "a-step-id",
     actorId: uuid.v4(),
     createdAt: new Date(),
     designId: uuid.v4(),
@@ -32,8 +34,8 @@ function setup(eventType: DesignEventTypes): Setup {
     type: eventType,
   };
   const createdWithMeta: DesignEventWithMeta = {
-    ...created,
     ...templateDesignEventWithMeta,
+    ...created,
     actorEmail: "anemail@example.com",
     actorName: "An Email",
     actorRole: "USER",
@@ -83,8 +85,11 @@ test("DesignEvent listener: ACCEPT_SERVICE_BID", async (t: Test) => {
     sendMessageStub.args[0],
     [
       {
-        actorId: createdWithMeta.actorId,
-        approvalStepId: createdWithMeta.approvalStepId,
+        channels: [
+          `designs/${created.designId}`,
+          `approval-steps/${created.approvalStepId}`,
+          `submissions/${created.approvalSubmissionId}`,
+        ],
         resource: createdWithMeta,
         type: "design-event/created",
       },
@@ -124,8 +129,11 @@ test("DesignEvent listener: COMMIT_PARTNER_PAIRING", async (t: Test) => {
     sendMessageStub.args[0],
     [
       {
-        actorId: createdWithMeta.actorId,
-        approvalStepId: createdWithMeta.approvalStepId,
+        channels: [
+          `designs/${created.designId}`,
+          `approval-steps/${created.approvalStepId}`,
+          `submissions/${created.approvalSubmissionId}`,
+        ],
         resource: createdWithMeta,
         type: "design-event/created",
       },
