@@ -1,14 +1,17 @@
 import Knex from "knex";
 import { pick } from "lodash";
 import db from "../../services/db";
-import Annotation, {
+import {
   dataAdapter,
   isProductDesignCanvasAnnotationRow as isAnnotationRow,
   parseNumerics,
   parseNumericsList,
-  ProductDesignCanvasAnnotationRow as AnnotationRow,
   UPDATABLE_PROPERTIES,
 } from "./domain-object";
+import {
+  ProductDesignCanvasAnnotation as Annotation,
+  ProductDesignCanvasAnnotationRow as AnnotationRow,
+} from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";

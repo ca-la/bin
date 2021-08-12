@@ -103,11 +103,16 @@ export function schemaToGraphQLType(
       }
 
       if (internal instanceof z.ZodNumber) {
+        const numberType = internal._def.checks.some(
+          (check: any) => check.kind === "int"
+        )
+          ? "Int"
+          : "Float";
         return {
           ...acc,
           body: {
             ...acc.body,
-            [key]: `Int${maybeBang}`,
+            [key]: `${numberType}${maybeBang}`,
           },
         };
       }

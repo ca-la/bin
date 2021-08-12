@@ -1,6 +1,6 @@
 import db from "../../services/db";
 import Router from "koa-router";
-import Measurement from "./domain-object";
+import { ProductDesignCanvasMeasurement as Measurement } from "./types";
 import * as MeasurementsDAO from "./dao";
 import { hasOnlyProperties } from "../../services/require-properties";
 

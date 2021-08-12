@@ -2,7 +2,7 @@ import uuid from "node-uuid";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser from "../create-user";
 import * as CanvasesDAO from "../../components/canvases/dao";
-import Annotation from "../../components/product-design-canvas-annotations/domain-object";
+import { ProductDesignCanvasAnnotation as Annotation } from "../../components/product-design-canvas-annotations/types";
 import { create } from "../../components/product-design-canvas-annotations/dao";
 import generateCanvas from "./product-design-canvas";
 import ProductDesignsDAO = require("../../components/product-designs/dao");

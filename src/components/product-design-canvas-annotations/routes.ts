@@ -3,7 +3,7 @@ import convert from "koa-convert";
 import { z } from "zod";
 
 import db from "../../services/db";
-import Annotation from "./domain-object";
+import { ProductDesignCanvasAnnotation as Annotation } from "./types";
 import {
   create,
   deleteById,

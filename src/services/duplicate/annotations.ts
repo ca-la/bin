@@ -3,7 +3,7 @@ import Knex from "knex";
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CommentsDAO from "../../components/comments/dao";
-import Annotation from "../../components/product-design-canvas-annotations/domain-object";
+import { ProductDesignCanvasAnnotation as Annotation } from "../../components/product-design-canvas-annotations/types";
 import prepareForDuplication from "./prepare-for-duplication";
 import Comment from "../../components/comments/types";
 import db from "../db";

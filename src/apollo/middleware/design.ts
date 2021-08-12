@@ -1,6 +1,7 @@
 import * as z from "zod";
 import { GraphQLContextBase } from "../types";
 import ApprovalStepsDAO from "../../components/approval-steps/dao";
+import * as CanvasesDAO from "../../components/canvases/dao";
 import { UserInputError } from "apollo-server-koa";
 import { NotFoundError } from "../services";
 
@@ -20,6 +21,20 @@ export async function attachDesignFromDesignId<
   return {
     ...context,
     designId: args.designId,
+  };
+}
+
+export async function attachDesignFromCanvasId<
+  Args extends { canvasId: string },
+  Result
+>(args: Args, context: GraphQLContextBase<Result>) {
+  const canvas = await CanvasesDAO.findById(args.canvasId);
+  if (!canvas) {
+    throw new NotFoundError("Filter should contain designId");
+  }
+  return {
+    ...context,
+    designId: canvas.designId,
   };
 }
 

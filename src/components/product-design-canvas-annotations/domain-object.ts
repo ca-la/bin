@@ -1,25 +1,9 @@
 import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
-
-export default interface ProductDesignCanvasAnnotation {
-  canvasId: string;
-  createdAt: Date;
-  createdBy: string;
-  deletedAt: Date | null;
-  id: string;
-  x: number;
-  y: number;
-}
-
-export interface ProductDesignCanvasAnnotationRow {
-  canvas_id: string;
-  created_at: Date;
-  created_by: string;
-  deleted_at: Date | null;
-  id: string;
-  x: number;
-  y: number;
-}
+import {
+  ProductDesignCanvasAnnotation,
+  ProductDesignCanvasAnnotationRow,
+} from "./types";
 
 export const UPDATABLE_PROPERTIES = ["canvas_id", "x", "y"];
 

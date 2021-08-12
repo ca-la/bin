@@ -5,14 +5,17 @@ import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import InvalidDataError = require("../../errors/invalid-data");
 import { pick } from "lodash";
-import Measurement, {
+import {
   dataAdapter,
   isProductDesignCanvasMeasurementRow as isMeasurementRow,
   parseNumerics,
   parseNumericsList,
-  ProductDesignCanvasMeasurementRow as MeasurementRow,
   UPDATABLE_PROPERTIES,
 } from "./domain-object";
+import {
+  ProductDesignCanvasMeasurement as Measurement,
+  ProductDesignCanvasMeasurementRow as MeasurementRow,
+} from "./types";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import generateLabel from "../../services/generate-label";
