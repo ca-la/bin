@@ -1,7 +1,7 @@
 import { Test, test } from "../../test-helpers/simple";
 import { realtimeNotificationCreated } from "../notifications/realtime";
 import { NotificationType } from "../notifications/types";
-import { realtimeMessageSchema } from "./types";
+import { realtimeMessageSchema, unknownRealtimeMessageSchema } from "./types";
 
 test("realtimeMessageSchema: valid", async (t: Test) => {
   const notificationCreated = realtimeNotificationCreated("a-user-id", {
@@ -35,17 +35,20 @@ test("realtimeMessageSchema: valid", async (t: Test) => {
 });
 
 test("realtimeMessageSchema: fall-through", async (t: Test) => {
-  const result = realtimeMessageSchema.safeParse({
+  const unknownMessage = {
     type: "a-new-message/type",
     channels: ["many", "channels", "get", "this", "message"],
     resource: {
       foo: "doesn't matter",
     },
-  });
+  };
+  const result = realtimeMessageSchema.safeParse(unknownMessage);
 
-  t.true(result.success, "succeeds at parsing a valid but unknown message");
+  t.false(result.success, "fails with the generic message");
+
+  const fallthrough = unknownRealtimeMessageSchema.safeParse(unknownMessage);
   t.deepEqual(
-    result.success && result.data,
+    fallthrough.success && fallthrough.data,
     {
       type: "a-new-message/type",
       channels: ["many", "channels", "get", "this", "message"],

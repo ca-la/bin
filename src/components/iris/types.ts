@@ -28,9 +28,6 @@ export const realtimeMessageSchema = z.union([
   realtimeTeamListUpdatedSchema,
   realtimeSubmissionCommentCreatedSchema,
   realtimeSubmissionCommentDeletedSchema,
-
-  // Fall through to generic message
-  unknownRealtimeMessageSchema,
 ]);
 
 export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;
