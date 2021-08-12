@@ -28,6 +28,7 @@ import duplicationRoutes from "./components/duplication/routes";
 import financingAccountsRouter from "./components/financing-accounts/routes";
 import healthRoutes from "./components/health/routes";
 import integrationRoutes from "./components/integrations/routes";
+import measurementRoutes from "./components/product-design-canvas-measurements/routes";
 import newsletterSubscriptionRoutes from "./components/newsletter-subscriptions/routes";
 import nodeRoutes from "./components/nodes/routes";
 import nonBidDesignCostRoutes from "./components/non-bid-design-costs/routes";
@@ -109,6 +110,7 @@ router.use("/plans", planRoutes);
 router.use("/pricing-cost-inputs", pricingCostInputs);
 router.use("/processes", processRoutes);
 router.use("/product-design-canvas-annotations", annotationRoutes);
+router.use("/product-design-canvas-measurements", measurementRoutes);
 router.use(
   "/product-design-canvas-annotations/:annotationId/comments",
   annotationCommentRoutes

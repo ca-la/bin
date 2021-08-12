@@ -1,7 +1,7 @@
 import Knex from "knex";
 
-import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
-import Measurement from "../../domain-objects/product-design-canvas-measurement";
+import * as MeasurementsDAO from "../../components/product-design-canvas-measurements/dao";
+import Measurement from "../../components/product-design-canvas-measurements/domain-object";
 import prepareForDuplication from "./prepare-for-duplication";
 
 /**

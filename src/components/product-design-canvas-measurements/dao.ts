@@ -12,7 +12,7 @@ import Measurement, {
   parseNumericsList,
   ProductDesignCanvasMeasurementRow as MeasurementRow,
   UPDATABLE_PROPERTIES,
-} from "../../domain-objects/product-design-canvas-measurement";
+} from "./domain-object";
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import generateLabel from "../../services/generate-label";

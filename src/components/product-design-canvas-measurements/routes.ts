@@ -1,7 +1,7 @@
 import db from "../../services/db";
 import Router from "koa-router";
-import Measurement from "../../domain-objects/product-design-canvas-measurement";
-import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
+import Measurement from "./domain-object";
+import * as MeasurementsDAO from "./dao";
 import { hasOnlyProperties } from "../../services/require-properties";
 
 import filterError = require("../../services/filter-error");

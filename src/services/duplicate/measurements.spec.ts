@@ -5,7 +5,7 @@ import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
 import generateMeasurement from "../../test-helpers/factories/product-design-canvas-measurement";
 
-import Measurement from "../../domain-objects/product-design-canvas-measurement";
+import Measurement from "../../components/product-design-canvas-measurements/domain-object";
 import { findAndDuplicateMeasurements } from "./measurements";
 
 test("findAndDuplicateMeasurements", async (t: tape.Test) => {

@@ -7,7 +7,7 @@ import createUser from "../../test-helpers/create-user";
 
 import * as CollectionsDAO from "../collections/dao";
 import * as TaskEventsDAO from "../../dao/task-events";
-import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
+import * as MeasurementsDAO from "../product-design-canvas-measurements/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
 import * as CommentAttachmentDAO from "../comment-attachments/dao";
 import * as PlansDAO from "../../components/plans/dao";

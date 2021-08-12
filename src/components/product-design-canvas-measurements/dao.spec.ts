@@ -17,7 +17,7 @@ import {
   getLabel,
   MeasurementNotFoundError,
   update,
-} from "./index";
+} from "./dao";
 
 test("ProductDesignCanvasMeasurement DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();

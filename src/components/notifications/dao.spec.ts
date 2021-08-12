@@ -22,7 +22,7 @@ import * as CanvasesDAO from "../canvases/dao";
 import * as ComponentsDAO from "../components/dao";
 import * as CommentsDAO from "../../components/comments/dao";
 import { standardDao as TeamsDAO } from "../../components/teams/dao";
-import * as MeasurementsDAO from "../../dao/product-design-canvas-measurements";
+import * as MeasurementsDAO from "../product-design-canvas-measurements/dao";
 import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
 import { deleteById } from "../../test-helpers/designs";
 import { deleteByIds } from "../product-designs/dao/dao";

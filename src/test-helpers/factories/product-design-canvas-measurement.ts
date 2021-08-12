@@ -3,8 +3,8 @@ import Canvas from "../../components/canvases/domain-object";
 import { findById as findUserById } from "../../components/users/dao";
 import createUser = require("../create-user");
 import * as CanvasesDAO from "../../components/canvases/dao";
-import Measurement from "../../domain-objects/product-design-canvas-measurement";
-import { create } from "../../dao/product-design-canvas-measurements";
+import Measurement from "../../components/product-design-canvas-measurements/domain-object";
+import { create } from "../../components/product-design-canvas-measurements/dao";
 import generateCanvas from "./product-design-canvas";
 
 interface MeasurementWithResources {

@@ -6,7 +6,7 @@ import createUser from "../../test-helpers/create-user";
 import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
 import { sandbox, test } from "../../test-helpers/fresh";
-import * as MeasurementDAO from "../../dao/product-design-canvas-measurements";
+import * as MeasurementDAO from "./dao";
 import * as CreateNotifications from "../../services/create-notifications";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createDesign from "../../services/create-design";
