@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { realtimeDesignEventCreatedSchema } from "../design-events/realtime";
 import { realtimeNotificationCreatedSchema } from "../notifications/realtime";
 import {
   realtimeShipmentTrackingCreatedSchema,
@@ -28,6 +29,7 @@ export const realtimeMessageSchema = z.union([
   realtimeTeamListUpdatedSchema,
   realtimeSubmissionCommentCreatedSchema,
   realtimeSubmissionCommentDeletedSchema,
+  realtimeDesignEventCreatedSchema,
 ]);
 
 export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;
