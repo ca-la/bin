@@ -21,6 +21,7 @@ const notificationMessage: NotificationMessage = {
   createdAt: new Date(),
   actor: null,
   imageUrl: null,
+  previewImageUrl: null,
   location: [],
   attachments: [],
   actions: [],

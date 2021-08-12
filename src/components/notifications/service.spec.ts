@@ -27,6 +27,7 @@ test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
     createdAt: new Date(),
     actor: null,
     imageUrl: null,
+    previewImageUrl: null,
     location: [],
     attachments: [
       {

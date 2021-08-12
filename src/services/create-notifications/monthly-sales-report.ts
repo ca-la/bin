@@ -107,6 +107,7 @@ export async function immediatelySendMonthlySalesReport(
     createdAt: new Date(),
     actor,
     imageUrl: null,
+    previewImageUrl: null,
     location: [],
     attachments: [],
     actions: [],

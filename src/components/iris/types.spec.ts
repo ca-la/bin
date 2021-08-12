@@ -14,6 +14,7 @@ test("realtimeMessageSchema: valid", async (t: Test) => {
     createdAt: new Date(),
     actor: null,
     imageUrl: null,
+    previewImageUrl: null,
     location: [],
     attachments: [],
     actions: [],

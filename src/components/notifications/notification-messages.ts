@@ -20,6 +20,7 @@ import {
   buildImgixLink,
   generatePreviewLinks,
   THUMBNAIL_FORMAT,
+  PREVIEW_CARD_FORMAT,
 } from "../../services/attach-asset-links";
 import User from "../../components/users/domain-object";
 import {
@@ -55,6 +56,20 @@ export function buildImageUrl(imageIds: string[]): string | null {
   const imageLinks = generatePreviewLinks(imageIds);
 
   return imageLinks.length > 0 ? imageLinks[0].thumbnailLink : null;
+}
+
+function buildCommentNotificationImageUrls(
+  imageIds: string[]
+): {
+  imageUrl: string | null;
+  previewImageUrl: string | null;
+} {
+  const imageLinks = generatePreviewLinks(imageIds);
+
+  return {
+    imageUrl: imageLinks.length > 0 ? imageLinks[0].thumbnailLink : null,
+    previewImageUrl: imageLinks.length > 0 ? imageLinks[0].previewLink : null,
+  };
 }
 
 export function escapeHtml(html?: string | null): string {
@@ -96,6 +111,7 @@ type BaseMessage = Pick<
   | "archivedAt"
   | "matchedFilters"
   | "type"
+  | "previewImageUrl"
 > & {
   actor: User;
 };
@@ -111,6 +127,7 @@ export function createBaseMessage(notification: FullNotification): BaseMessage {
     archivedAt: notification.archivedAt,
     matchedFilters: getMatchingFilters(notification),
     type: notification.type,
+    previewImageUrl: null,
   };
 }
 
@@ -454,6 +471,12 @@ export async function createNotificationMessage(
               pageNumber: annotationImagePageNumber,
             })
           : null,
+        previewImageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...PREVIEW_CARD_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`,
@@ -511,6 +534,12 @@ export async function createNotificationMessage(
               pageNumber: annotationImagePageNumber,
             })
           : null,
+        previewImageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...PREVIEW_CARD_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(design)}`,
@@ -564,7 +593,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} has replied to a comment on ${htmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
@@ -647,7 +676,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} commented on your task ${htmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on your task ${normalizeTitle(task)}`,
@@ -699,7 +728,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} mentioned you on the task ${htmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on the task ${normalizeTitle(task)}`,
@@ -751,7 +780,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} has replied to a comment on ${htmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} has replied to a comment on ${normalizeTitle(
@@ -1062,7 +1091,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} mentioned you on ${stepHtmlLink} for ${designHtmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on ${normalizeTitle(
@@ -1130,7 +1159,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} replied to a comment on ${stepHtmlLink} for ${designHtmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} replied to a comment on ${normalizeTitle(
@@ -1198,7 +1227,7 @@ export async function createNotificationMessage(
           cleanName,
           "user-name"
         )} commented on ${stepHtmlLink} for ${designHtmlLink}`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(
@@ -1282,7 +1311,7 @@ export async function createNotificationMessage(
         )} commented on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
           normalizeTitle(approvalStep)
         )})`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on review ${normalizeTitle(
@@ -1366,7 +1395,7 @@ export async function createNotificationMessage(
         )} mentioned you on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
           normalizeTitle(approvalStep)
         )})`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} mentioned you on review ${normalizeTitle(
@@ -1450,7 +1479,7 @@ export async function createNotificationMessage(
         )} replied to a comment on review ${submissionHtmlLink} for ${designHtmlLink} (${escapeHtml(
           normalizeTitle(approvalStep)
         )})`,
-        imageUrl: buildImageUrl(designImageIds),
+        ...buildCommentNotificationImageUrls(designImageIds),
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} replied to a comment on review ${normalizeTitle(

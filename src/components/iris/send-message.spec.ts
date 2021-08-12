@@ -99,6 +99,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
     createdAt: new Date(),
     actor: null,
     imageUrl: null,
+    previewImageUrl: null,
     location: [],
     attachments: [],
     actions: [],
