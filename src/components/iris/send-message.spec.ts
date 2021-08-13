@@ -53,7 +53,7 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   const realtimeNotification: RealtimeMessage = {
     type: "notification/created",
     channels: [`notifications/${notification.recipientUserId}`],
-    resource: notificationMessage,
+    resource: JSON.parse(JSON.stringify(notificationMessage)),
   };
   await sendMessage(realtimeNotification);
 
@@ -110,7 +110,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
   const realtimeNotification: RealtimeMessage = {
     type: "notification/created",
     channels: [`notifications/user-id`],
-    resource: message,
+    resource: JSON.parse(JSON.stringify(message)),
   };
   try {
     await sendMessage(realtimeNotification);

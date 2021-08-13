@@ -3,7 +3,7 @@ import {
   dateStringToDate,
   nullableDateStringToNullableDate,
 } from "../../services/zod-helpers";
-import { userSchema } from "../users/types";
+import { serializedUserSchema, userSchema } from "../users/types";
 
 export const breadCrumbSchema = z.object({
   text: z.string(),
@@ -153,6 +153,7 @@ export const serializedNotificationMessageSchema = notificationMessageSchema.ext
     createdAt: dateStringToDate,
     readAt: nullableDateStringToNullableDate,
     archivedAt: nullableDateStringToNullableDate,
+    actor: serializedUserSchema.nullable(),
   }
 );
 
