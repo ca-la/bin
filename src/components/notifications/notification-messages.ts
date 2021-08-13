@@ -21,6 +21,7 @@ import {
   generatePreviewLinks,
   THUMBNAIL_FORMAT,
   PREVIEW_CARD_FORMAT,
+  EMAIL_PREVIEW_FORMAT,
 } from "../../services/attach-asset-links";
 import User from "../../components/users/domain-object";
 import {
@@ -63,12 +64,17 @@ function buildCommentNotificationImageUrls(
 ): {
   imageUrl: string | null;
   previewImageUrl: string | null;
+  emailPreviewImageUrl: string | null;
 } {
   const imageLinks = generatePreviewLinks(imageIds);
 
   return {
     imageUrl: imageLinks.length > 0 ? imageLinks[0].thumbnailLink : null,
     previewImageUrl: imageLinks.length > 0 ? imageLinks[0].previewLink : null,
+    emailPreviewImageUrl:
+      imageIds.length > 0
+        ? buildImgixLink(imageIds[0], EMAIL_PREVIEW_FORMAT)
+        : null,
   };
 }
 
@@ -112,6 +118,7 @@ type BaseMessage = Pick<
   | "matchedFilters"
   | "type"
   | "previewImageUrl"
+  | "emailPreviewImageUrl"
 > & {
   actor: User;
 };
@@ -128,6 +135,7 @@ export function createBaseMessage(notification: FullNotification): BaseMessage {
     matchedFilters: getMatchingFilters(notification),
     type: notification.type,
     previewImageUrl: null,
+    emailPreviewImageUrl: null,
   };
 }
 
@@ -477,6 +485,12 @@ export async function createNotificationMessage(
               pageNumber: annotationImagePageNumber,
             })
           : null,
+        emailPreviewImageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...EMAIL_PREVIEW_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
         link: deepLink,
         location: getLocation({ collection, design }),
         title: `${cleanName} commented on ${normalizeTitle(design)}`,
@@ -537,6 +551,12 @@ export async function createNotificationMessage(
         previewImageUrl: annotationImageId
           ? buildImgixLink(annotationImageId, {
               ...PREVIEW_CARD_FORMAT,
+              pageNumber: annotationImagePageNumber,
+            })
+          : null,
+        emailPreviewImageUrl: annotationImageId
+          ? buildImgixLink(annotationImageId, {
+              ...EMAIL_PREVIEW_FORMAT,
               pageNumber: annotationImagePageNumber,
             })
           : null,

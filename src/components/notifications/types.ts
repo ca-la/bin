@@ -137,6 +137,7 @@ export const notificationMessageSchema = z.object({
   actor: userSchema.nullable(),
   imageUrl: z.string().nullable(),
   previewImageUrl: z.string().nullable(),
+  emailPreviewImageUrl: z.string().nullable(),
   location: z.array(breadCrumbSchema),
   attachments: z.array(notificationMessageAttachmentSchema),
   actions: z.array(notificationMessageActionSchema),

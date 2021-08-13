@@ -108,6 +108,7 @@ export async function immediatelySendMonthlySalesReport(
     actor,
     imageUrl: null,
     previewImageUrl: null,
+    emailPreviewImageUrl: null,
     location: [],
     attachments: [],
     actions: [],

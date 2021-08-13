@@ -17,6 +17,7 @@ interface ImgixOptions {
 const DESIGN_PREVIEW_TOOL_FORMAT: Partial<ImgixOptions> = { fit: "max" };
 export const PREVIEW_CARD_FORMAT: Partial<ImgixOptions> = { width: 560 };
 export const THUMBNAIL_FORMAT: Partial<ImgixOptions> = { width: 160 };
+export const EMAIL_PREVIEW_FORMAT: Partial<ImgixOptions> = { height: 194 };
 const DESIGN_PREVIEW_THUMBNAIL: Partial<ImgixOptions> = {
   fit: "fill",
   width: 104,

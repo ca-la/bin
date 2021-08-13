@@ -22,6 +22,7 @@ const notificationMessage: NotificationMessage = {
   actor: null,
   imageUrl: null,
   previewImageUrl: null,
+  emailPreviewImageUrl: null,
   location: [],
   attachments: [],
   actions: [],
