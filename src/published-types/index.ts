@@ -7,6 +7,8 @@ export * from "../components/canvases/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
 export * from "../components/product-designs/types";
+export * from "../components/product-design-canvas-annotations/types";
+export * from "../components/product-design-canvas-measurements/types";
 export * from "../components/notifications/types";
 export * from "../components/users/types";
 export * from "../components/collaborators/types";
@@ -50,6 +52,7 @@ import * as NotificationsGraphQLTypes from "../components/notifications/graphql-
 import * as CommentsGraphQLTypes from "../components/comments/graphql-types";
 import * as AssetsGraphQLTypes from "../components/assets/graphql-types";
 import * as ProductDesignGraphQLTypes from "../components/product-designs/endpoints/graphql-types";
+import * as CanvasGraphQLTypes from "../components/canvases/endpoints/graphql-types";
 
 export const GraphQLTypes = {
   ...SessionsGraphQLTypes,
@@ -58,6 +61,7 @@ export const GraphQLTypes = {
   ...CommentsGraphQLTypes,
   ...AssetsGraphQLTypes,
   ...ProductDesignGraphQLTypes,
+  ...CanvasGraphQLTypes,
 };
 
 export { z } from "zod";
