@@ -1,4 +1,3 @@
-export * from "zod";
 export * from "../components/design-events/realtime";
 export { DesignEventWithMeta } from "../components/design-events/types";
 export * from "../components/plans/types";
@@ -65,4 +64,6 @@ export const GraphQLTypes = {
   ...CanvasGraphQLTypes,
 };
 
+import * as zod from "zod";
 export { z } from "zod";
+export { zod };
