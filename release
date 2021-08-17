@@ -50,6 +50,15 @@ run() {
   git push origin production
 
   git checkout main
+
+  local recent_tags=$(git for-each-ref --sort=-creatordate --format '%(refname)' refs/tags | head -n 2)
+  local previous_tag=$(echo "$recent_tags" | tail -n 1)
+  local this_tag=$(echo "$recent_tags" | head -n 1)
+
+  if [[ "$previous_tag" != '' && $this_tag != '' ]]; then
+    echo "ℹ️ Changes in this release (please share a changelog with the team):"
+    git log $previous_tag..$this_tag^
+  fi
 }
 
 run "$@"
