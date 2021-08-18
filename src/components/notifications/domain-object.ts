@@ -150,6 +150,7 @@ import {
   FullApprovalStepSubmissionAssignmentNotification,
 } from "../approval-step-submissions/types";
 import { FullInviteTeamUserNotification } from "../team-users/notifications";
+import { NotificationType } from "./types";
 export { NotificationType } from "./types";
 
 export type Notification =
@@ -379,22 +380,23 @@ export const DEPRECATED_NOTIFICATION_TYPES = [
   "PARTNER_PAIRING_COMMITTED",
 ];
 
-export const INBOX_NOTIFICATION_TYPES = [
-  "ANNOTATION_COMMENT_MENTION",
-  "ANNOTATION_COMMENT_REPLY",
-  "PARTNER_DESIGN_BID",
-  "TASK_ASSIGNMENT",
-  "TASK_COMMENT_MENTION",
-  "TASK_COMMENT_REPLY",
-  "APPROVAL_STEP_COMMENT_MENTION",
-  "APPROVAL_STEP_COMMENT_REPLY",
-  "APPROVAL_STEP_ASSIGNMENT",
-  "APPROVAL_STEP_SUBMISSION_COMMENT_MENTION",
-  "APPROVAL_STEP_SUBMISSION_COMMENT_REPLY",
-  "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
-  "APPROVAL_STEP_SUBMISSION_ASSIGNMENT",
-  "APPROVAL_STEP_SUBMISSION_REVISION_REQUEST",
-  "APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST",
+export const INBOX_NOTIFICATION_TYPES: NotificationType[] = [
+  NotificationType.ANNOTATION_COMMENT_MENTION,
+  NotificationType.ANNOTATION_COMMENT_REPLY,
+  NotificationType.PARTNER_DESIGN_BID,
+  NotificationType.TASK_ASSIGNMENT,
+  NotificationType.TASK_COMMENT_MENTION,
+  NotificationType.TASK_COMMENT_REPLY,
+  NotificationType.APPROVAL_STEP_COMMENT_MENTION,
+  NotificationType.APPROVAL_STEP_COMMENT_REPLY,
+  NotificationType.APPROVAL_STEP_ASSIGNMENT,
+  NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_MENTION,
+  NotificationType.APPROVAL_STEP_SUBMISSION_COMMENT_REPLY,
+  NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+  NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
+  NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST,
+  NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST,
+  NotificationType.COMMIT_COST_INPUTS,
 ];
 
 export function isFullNotificationRow(

@@ -899,7 +899,10 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
 
     t.deepEqual(
       inboxNotifications,
-      [unarchivedNotification.notification],
+      [
+        unarchivedNotification2.notification,
+        unarchivedNotification.notification,
+      ],
       "Returns inbox notifications"
     );
 
@@ -928,7 +931,7 @@ test("Notifications DAO filters notifications", async (t: tape.Test) => {
     t.deepEqual(
       counts,
       {
-        [NotificationFilter.INBOX]: 1,
+        [NotificationFilter.INBOX]: 2,
         [NotificationFilter.ARCHIVED]: 1,
         [NotificationFilter.UNARCHIVED]: 2,
       },
