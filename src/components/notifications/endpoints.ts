@@ -182,7 +182,10 @@ const updateNotification: GraphQLEndpoint<
       throw new ForbiddenError("Access denied for this resource");
     }
 
-    await NotificationsDAO.update(trx, id, { archivedAt });
+    await NotificationsDAO.update(trx, id, {
+      archivedAt,
+      ...(archivedAt && !notification.readAt ? { readAt: new Date() } : {}),
+    });
 
     const updated = await NotificationsDAO.findById(trx, id);
     if (!updated) {

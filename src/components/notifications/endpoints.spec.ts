@@ -177,6 +177,7 @@ test("archiveNotifications endpoint", async (t: Test) => {
 
 test("updateNotification endpoint", async (t: Test) => {
   const testTime = new Date(2020, 0, 1);
+  sandbox().useFakeTimers(testTime);
   const { session, user } = await createUser({ role: "USER" });
   const notification = {
     ...templateNotification,
@@ -226,15 +227,20 @@ test("updateNotification endpoint", async (t: Test) => {
     },
   });
 
-  t.deepEqual(updateStub.args, [
+  t.deepEqual(
+    updateStub.args,
     [
-      updateStub.args[0][0],
-      "some-id",
-      {
-        archivedAt: testTime,
-      },
+      [
+        updateStub.args[0][0],
+        "some-id",
+        {
+          archivedAt: testTime,
+          readAt: testTime,
+        },
+      ],
     ],
-  ]);
+    "Marks as read and archived"
+  );
 });
 
 test("readNotifications endpoint", async (t: Test) => {
