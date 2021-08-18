@@ -552,7 +552,7 @@ async function createRevisionRequest(ctx: CreateRevisionRequestContext) {
     ctx.throw(409, "Submission already has requested revisions");
   }
 
-  const { updated } = await ApprovalSubmissionsDAO.update(trx, submissionId, {
+  await ApprovalSubmissionsDAO.update(trx, submissionId, {
     state: ApprovalStepSubmissionState.REVISION_REQUESTED,
   });
 
@@ -605,7 +605,6 @@ async function createRevisionRequest(ctx: CreateRevisionRequestContext) {
     realtimeApprovalSubmissionRevisionRequest({
       comment: commentWithMentions,
       event: eventWithMeta,
-      approvalStepId: updated.stepId,
     })
   );
 

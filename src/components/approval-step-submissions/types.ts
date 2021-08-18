@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { serializedDates } from "../../services/zod-helpers";
 import {
   BaseNotification,
   BaseFullNotification,
@@ -10,6 +11,9 @@ export enum ApprovalStepSubmissionArtifactType {
   SAMPLE = "SAMPLE",
   CUSTOM = "CUSTOM",
 }
+export const approvalStepSubmissionArtifactTypeSchema = z.nativeEnum(
+  ApprovalStepSubmissionArtifactType
+);
 
 export enum ApprovalStepSubmissionState {
   UNSUBMITTED = "UNSUBMITTED",
@@ -18,32 +22,47 @@ export enum ApprovalStepSubmissionState {
   REVISION_REQUESTED = "REVISION_REQUESTED",
   SKIPPED = "SKIPPED",
 }
+export const approvalStepSubmissionStateSchema = z.nativeEnum(
+  ApprovalStepSubmissionState
+);
 
-export default interface ApprovalStepSubmission {
-  id: string;
-  stepId: string;
-  createdAt: Date;
-  createdBy: string | null;
-  deletedAt: Date | null;
-  artifactType: ApprovalStepSubmissionArtifactType;
-  state: ApprovalStepSubmissionState;
-  collaboratorId: string | null;
-  teamUserId: string | null;
-  title: string;
-}
+export const approvalStepSubmissionSchema = z.object({
+  id: z.string(),
+  stepId: z.string(),
+  createdAt: z.date(),
+  createdBy: z.string().nullable(),
+  deletedAt: z.date().nullable(),
+  artifactType: approvalStepSubmissionArtifactTypeSchema,
+  state: approvalStepSubmissionStateSchema,
+  collaboratorId: z.string().nullable(),
+  teamUserId: z.string().nullable(),
+  title: z.string(),
+});
+export type ApprovalStepSubmission = z.infer<
+  typeof approvalStepSubmissionSchema
+>;
+export default ApprovalStepSubmission;
 
-export interface ApprovalStepSubmissionRow {
-  id: string;
-  step_id: string;
-  created_at: Date;
-  created_by: string | null;
-  deleted_at: Date | null;
-  artifact_type: ApprovalStepSubmissionArtifactType;
-  state: ApprovalStepSubmissionState;
-  collaborator_id: string | null;
-  team_user_id: string | null;
-  title: string;
-}
+export const approvalStepSubmissionRowSchema = z.object({
+  id: approvalStepSubmissionSchema.shape.id,
+  step_id: approvalStepSubmissionSchema.shape.stepId,
+  created_at: approvalStepSubmissionSchema.shape.createdAt,
+  created_by: approvalStepSubmissionSchema.shape.createdBy,
+  deleted_at: approvalStepSubmissionSchema.shape.deletedAt,
+  artifact_type: approvalStepSubmissionSchema.shape.artifactType,
+  state: approvalStepSubmissionSchema.shape.state,
+  collaborator_id: approvalStepSubmissionSchema.shape.collaboratorId,
+  team_user_id: approvalStepSubmissionSchema.shape.teamUserId,
+  title: approvalStepSubmissionSchema.shape.title,
+});
+
+export type ApprovalStepSubmissionRow = z.infer<
+  typeof approvalStepSubmissionRowSchema
+>;
+
+export const serializedApprovalStepSubmissionSchema = approvalStepSubmissionSchema.extend(
+  serializedDates
+);
 
 export const approvalStepSubmissionDomain = "ApprovalStepSubmission" as "ApprovalStepSubmission";
 

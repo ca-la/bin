@@ -1,23 +1,26 @@
-import ApprovalStepSubmission from "./types";
-import { DesignEventWithMeta } from "../design-events/types";
-import { Serialized } from "../../types/serialized";
-import { CommentWithResources } from "../comments/types";
+import { z } from "zod";
+import ApprovalStepSubmission, {
+  serializedApprovalStepSubmissionSchema,
+} from "./types";
+import {
+  DesignEventWithMeta,
+  serializedDesignEventWithMetaSchema,
+} from "../design-events/types";
+import {
+  CommentWithResources,
+  serializedCommentSchema,
+} from "../comments/types";
+import { buildChannelName } from "../iris/build-channel";
 
-export interface RealtimeApprovalSubmissionUpdated {
-  resource: ApprovalStepSubmission;
-  approvalStepId: string;
-  type: "approval-step-submission/updated";
-}
+export const realtimeApprovalSubmissionUpdatedSchema = z.object({
+  resource: serializedApprovalStepSubmissionSchema,
+  channels: z.array(z.string()),
+  type: z.literal("approval-step-submission/updated"),
+});
 
-export function isRealtimeApprovalSubmissionUpdated(
-  data: any
-): data is Serialized<RealtimeApprovalSubmissionUpdated> {
-  return (
-    "approvalStepId" in data &&
-    "type" in data &&
-    data.type === "approval-step-submission/updated"
-  );
-}
+export type RealtimeApprovalSubmissionUpdated = z.infer<
+  typeof realtimeApprovalSubmissionUpdatedSchema
+>;
 
 export function realtimeApprovalSubmissionUpdated(
   submission: ApprovalStepSubmission
@@ -25,25 +28,22 @@ export function realtimeApprovalSubmissionUpdated(
   return {
     type: "approval-step-submission/updated",
     resource: submission,
-    approvalStepId: submission.stepId,
+    channels: [
+      buildChannelName("approval-steps", submission.stepId),
+      buildChannelName("submissions", submission.id),
+    ],
   };
 }
 
-export interface RealtimeApprovalSubmissionCreated {
-  resource: ApprovalStepSubmission;
-  approvalStepId: string;
-  type: "approval-step-submission/created";
-}
+export const realtimeApprovalSubmissionCreatedSchema = z.object({
+  resource: serializedApprovalStepSubmissionSchema,
+  channels: z.array(z.string()),
+  type: z.literal("approval-step-submission/created"),
+});
 
-export function isRealtimeApprovalSubmissionCreated(
-  data: any
-): data is Serialized<RealtimeApprovalSubmissionCreated> {
-  return (
-    "approvalStepId" in data &&
-    "type" in data &&
-    data.type === "approval-step-submission/created"
-  );
-}
+export type RealtimeApprovalSubmissionCreated = z.infer<
+  typeof realtimeApprovalSubmissionCreatedSchema
+>;
 
 export function realtimeApprovalSubmissionCreated(
   submission: ApprovalStepSubmission
@@ -51,25 +51,22 @@ export function realtimeApprovalSubmissionCreated(
   return {
     type: "approval-step-submission/created",
     resource: submission,
-    approvalStepId: submission.stepId,
+    channels: [
+      buildChannelName("approval-steps", submission.stepId),
+      buildChannelName("submissions", submission.id),
+    ],
   };
 }
 
-export interface RealtimeApprovalSubmissionDeleted {
-  resource: ApprovalStepSubmission;
-  approvalStepId: string;
-  type: "approval-step-submission/deleted";
-}
+export const realtimeApprovalSubmissionDeletedSchema = z.object({
+  resource: serializedApprovalStepSubmissionSchema,
+  channels: z.array(z.string()),
+  type: z.literal("approval-step-submission/deleted"),
+});
 
-export function isRealtimeApprovalSubmissionDeleted(
-  data: any
-): data is Serialized<RealtimeApprovalSubmissionDeleted> {
-  return (
-    "approvalStepId" in data &&
-    "type" in data &&
-    data.type === "approval-step-submission/deleted"
-  );
-}
+export type RealtimeApprovalSubmissionDeleted = z.infer<
+  typeof realtimeApprovalSubmissionDeletedSchema
+>;
 
 export function realtimeApprovalSubmissionDeleted(
   submission: ApprovalStepSubmission
@@ -77,41 +74,45 @@ export function realtimeApprovalSubmissionDeleted(
   return {
     type: "approval-step-submission/deleted",
     resource: submission,
-    approvalStepId: submission.stepId,
+    channels: [
+      buildChannelName("approval-steps", submission.stepId),
+      buildChannelName("submissions", submission.id),
+    ],
   };
 }
 
-export interface RealtimeApprovalSubmissionRevisionRequest {
-  resource: {
-    event: DesignEventWithMeta;
-    comment: CommentWithResources;
-  };
-  approvalStepId: string;
-  type: "approval-step-submission/revision-request";
-}
+export const realtimeApprovalSubmissionRevisionRequestSchema = z.object({
+  resource: z.object({
+    event: serializedDesignEventWithMetaSchema,
+    comment: serializedCommentSchema,
+  }),
+  channels: z.array(z.string()),
+  type: z.literal("approval-step-submission/revision-request"),
+});
 
-export function isRealtimeApprovalSubmissionRevisionRequest(
-  data: any
-): data is Serialized<RealtimeApprovalSubmissionRevisionRequest> {
-  return (
-    "approvalStepId" in data &&
-    "type" in data &&
-    data.type === "approval-step-submission/revision-request"
-  );
-}
+export type RealtimeApprovalSubmissionRevisionRequest = z.infer<
+  typeof realtimeApprovalSubmissionRevisionRequestSchema
+>;
 
 export function realtimeApprovalSubmissionRevisionRequest({
-  approvalStepId,
   event,
   comment,
 }: {
-  approvalStepId: string;
   event: DesignEventWithMeta;
   comment: CommentWithResources;
 }): RealtimeApprovalSubmissionRevisionRequest {
+  if (event.approvalStepId === null || event.approvalSubmissionId === null) {
+    throw new Error(
+      "Revision Request realtime is missing submission and step ID"
+    );
+  }
+
   return {
     type: "approval-step-submission/revision-request",
     resource: { event, comment },
-    approvalStepId,
+    channels: [
+      buildChannelName("approval-steps", event.approvalStepId),
+      buildChannelName("submissions", event.approvalSubmissionId),
+    ],
   };
 }

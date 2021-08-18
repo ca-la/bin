@@ -96,7 +96,7 @@ test("dao.updated.state", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
         },
-        approvalStepId: "step-1",
+        channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
       "Updates via realtime on state change"
     );
@@ -143,7 +143,7 @@ test("dao.created", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
         },
-        approvalStepId: "step-1",
+        channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
       "Sends message via realtime on create"
     );
@@ -1032,7 +1032,7 @@ test("route.deleted", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
         },
-        approvalStepId: "step-1",
+        channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
       "Sends message via realtime on delete"
     );

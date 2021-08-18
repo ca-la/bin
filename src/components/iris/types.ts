@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  realtimeApprovalSubmissionCreatedSchema,
+  realtimeApprovalSubmissionDeletedSchema,
+  realtimeApprovalSubmissionRevisionRequestSchema,
+  realtimeApprovalSubmissionUpdatedSchema,
+} from "../approval-step-submissions/realtime";
 import { realtimeDesignEventCreatedSchema } from "../design-events/realtime";
 import { realtimeNotificationCreatedSchema } from "../notifications/realtime";
 import {
@@ -30,6 +36,10 @@ export const realtimeMessageSchema = z.union([
   realtimeSubmissionCommentCreatedSchema,
   realtimeSubmissionCommentDeletedSchema,
   realtimeDesignEventCreatedSchema,
+  realtimeApprovalSubmissionUpdatedSchema,
+  realtimeApprovalSubmissionCreatedSchema,
+  realtimeApprovalSubmissionDeletedSchema,
+  realtimeApprovalSubmissionRevisionRequestSchema,
 ]);
 
 export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;
