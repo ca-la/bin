@@ -64,6 +64,4 @@ export const GraphQLTypes = {
   ...CanvasGraphQLTypes,
 };
 
-import * as zod from "zod";
 export { z } from "zod";
-export { zod };
