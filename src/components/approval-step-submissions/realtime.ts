@@ -8,7 +8,7 @@ import {
 } from "../design-events/types";
 import {
   CommentWithResources,
-  serializedCommentSchema,
+  serializedCommentWithResourcesSchema,
 } from "../comments/types";
 import { buildChannelName } from "../iris/build-channel";
 
@@ -84,7 +84,7 @@ export function realtimeApprovalSubmissionDeleted(
 export const realtimeApprovalSubmissionRevisionRequestSchema = z.object({
   resource: z.object({
     event: serializedDesignEventWithMetaSchema,
-    comment: serializedCommentSchema,
+    comment: serializedCommentWithResourcesSchema,
   }),
   channels: z.array(z.string()),
   type: z.literal("approval-step-submission/revision-request"),
