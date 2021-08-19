@@ -92,6 +92,25 @@ export const approvalStepSchema = z.union([
 ]);
 type ApprovalStep = z.infer<typeof approvalStepSchema>;
 
+const serializedBaseDates = {
+  createdAt: dateStringToDate,
+  dueAt: nullableDateStringToNullableDate,
+};
+export const serializedApprovalStepSchema = z.union([
+  approvalBlockedSchema.extend(serializedBaseDates),
+  approvalUnstartedSchema.extend(serializedBaseDates),
+  approvalCurrentSchema.extend({
+    ...serializedBaseDates,
+    startedAt: dateStringToDate,
+  }),
+  approvalCompletedSchema.extend({
+    ...serializedBaseDates,
+    startedAt: dateStringToDate,
+    completedAt: dateStringToDate,
+  }),
+  approvalSkipSchema.extend(serializedBaseDates),
+]);
+
 export const approvalStepSchemaFromBase = baseApprovalStepSchema.transform(
   approvalStepSchema.parse
 );

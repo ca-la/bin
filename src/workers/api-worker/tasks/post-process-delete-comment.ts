@@ -32,7 +32,6 @@ export async function postProcessDeleteComment(
       });
     } else if (approvalStepId) {
       await announceApprovalStepCommentDeletion({
-        actorId,
         approvalStepId,
         commentId,
       });

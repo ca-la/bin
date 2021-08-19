@@ -20,21 +20,30 @@ test("announceApprovalStepCommentCreation supports sending a message", async (t:
     commentId: comment.id,
   };
 
-  const response = await announceApprovalStepCommentCreation(stepComment, {
+  await announceApprovalStepCommentCreation(stepComment, {
     ...comment,
     mentions: {},
   } as CommentWithResources);
+
   t.deepEqual(
-    response,
-    {
-      actorId: comment.userId,
-      approvalStepId: "approval-step-one",
-      resource: { ...comment, mentions: {} },
-      type: "approval-step-comment",
-    },
-    "Returns the realtime message that was sent"
+    sendStub.args,
+    [
+      [
+        {
+          type: "approval-step-comment/created",
+          channels: ["approval-steps/approval-step-one"],
+          resource: {
+            comment: { ...comment, mentions: {} },
+            approvalStepComment: {
+              approvalStepId: "approval-step-one",
+              commentId: comment.id,
+            },
+          },
+        },
+      ],
+    ],
+    "calls send with the correct message"
   );
-  t.true(sendStub.calledOnce);
 });
 
 test("announceApprovalStepCommentDeletion supports sending a message", async (t: tape.Test) => {
@@ -43,21 +52,25 @@ test("announceApprovalStepCommentDeletion supports sending a message", async (t:
     .resolves({});
   const { comment } = await generateComment();
 
-  const response = await announceApprovalStepCommentDeletion({
+  await announceApprovalStepCommentDeletion({
     commentId: comment.id,
     approvalStepId: "approval-step-one",
-    actorId: comment.userId,
   });
 
   t.deepEqual(
-    response,
-    {
-      actorId: comment.userId,
-      approvalStepId: "approval-step-one",
-      resource: { id: comment.id },
-      type: "approval-step-comment/delete",
-    },
-    "Returns the realtime message that was sent"
+    sendStub.args,
+    [
+      [
+        {
+          resource: {
+            commentId: comment.id,
+            approvalStepId: "approval-step-one",
+          },
+          channels: ["approval-steps/approval-step-one"],
+          type: "approval-step-comment/deleted",
+        },
+      ],
+    ],
+    "calls send with the correct message"
   );
-  t.true(sendStub.calledOnce);
 });

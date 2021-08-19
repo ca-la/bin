@@ -2,16 +2,10 @@ import DataAdapter from "../../services/data-adapter";
 import { hasProperties } from "../../services/require-properties";
 import { isCommentRow } from "../comments/domain-object";
 import Comment, { CommentRow } from "../comments/types";
+import { ApprovalStepComment, ApprovalStepCommentRow } from "./types";
 
-export default interface ApprovalStepComment {
-  commentId: string;
-  approvalStepId: string;
-}
-
-export interface ApprovalStepCommentRow {
-  comment_id: string;
-  approval_step_id: string;
-}
+export { ApprovalStepComment, ApprovalStepCommentRow };
+export default ApprovalStepComment;
 
 export const dataAdapter = new DataAdapter<
   ApprovalStepCommentRow,

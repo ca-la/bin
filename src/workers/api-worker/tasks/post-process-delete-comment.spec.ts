@@ -58,7 +58,6 @@ test("postProcessDeleteComment: approval step comment", async (t: Test) => {
     [
       [
         {
-          actorId: "a-user-id",
           approvalStepId: "an-approval-step-id",
           commentId: "a-comment-id",
         },
