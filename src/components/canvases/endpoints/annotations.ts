@@ -23,6 +23,6 @@ export const AnnotationsEndpoint: GraphQLEndpoint<
     const { trx } = context;
     const { canvasId } = parent;
 
-    return AnnotationsDAO.findAllByCanvasId(trx, canvasId);
+    return AnnotationsDAO.findAllWithCommentsByCanvasId(trx, canvasId);
   },
 };

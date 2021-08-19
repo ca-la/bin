@@ -6,6 +6,8 @@ import { generateDesign } from "../../../test-helpers/factories/product-design";
 import generateCanvas from "../../../test-helpers/factories/product-design-canvas";
 import generateAnnotation from "../../../test-helpers/factories/product-design-canvas-annotation";
 import generateMeasurement from "../../../test-helpers/factories/product-design-canvas-measurement";
+import generateComment from "../../../test-helpers/factories/comment";
+import * as AnnotationCommentsDAO from "../../annotation-comments/dao";
 
 function buildRequest(canvasId: string) {
   return {
@@ -66,6 +68,18 @@ test("CanvasAndEnvironment returns annotations and measurements", async (t: Test
     x: 1,
     y: 2,
   });
+  // empty annotation
+  await generateAnnotation({
+    canvasId: canvas.id,
+    x: 2,
+    y: 3,
+  });
+  const { comment } = await generateComment({ userId: user.id });
+  await AnnotationCommentsDAO.create({
+    annotationId: annotation.id,
+    commentId: comment.id,
+  });
+
   const { measurement } = await generateMeasurement({
     canvasId: canvas.id,
     label: "m1",
