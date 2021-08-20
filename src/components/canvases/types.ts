@@ -35,9 +35,9 @@ export const canvasSchema = z.object({
 
 export type Canvas = z.infer<typeof canvasSchema>;
 
-export const componentWithAssetLinksSchema = tolerantComponentSchema.merge(
-  assetLinksSchema
-);
+export const componentWithAssetLinksSchema = tolerantComponentSchema
+  .merge(assetLinksSchema)
+  .extend({ mimeType: z.string() });
 
 export const canvasWithEnrichedComponentsSchema = canvasSchema.extend({
   components: z.array(componentWithAssetLinksSchema),

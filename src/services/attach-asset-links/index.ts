@@ -122,10 +122,15 @@ export function getLinksForAsset(asset: Asset): AssetLinks | null {
 /**
  * Adds in image links based off the given component.
  */
-async function getLink(component: Component): Promise<AssetLinks> {
+async function getLink(
+  component: Component
+): Promise<AssetLinks & { mimeType: string }> {
   const asset = await getAsset(component);
   if (asset && asset.uploadCompletedAt) {
-    return constructAssetLinks(asset, component.assetPageNumber);
+    return {
+      ...constructAssetLinks(asset, component.assetPageNumber),
+      mimeType: asset.mimeType,
+    };
   }
 
   return {
@@ -134,6 +139,7 @@ async function getLink(component: Component): Promise<AssetLinks> {
     asset3xLink: null,
     downloadLink: "",
     fileType: "",
+    mimeType: "",
     thumbnail2xLink: null,
     thumbnailLink: null,
     originalWidthPx: null,
@@ -150,7 +156,7 @@ export type EnrichedComponent = Component & AssetLinks;
  */
 export async function addAssetLink(
   component: Component
-): Promise<Component & AssetLinks> {
+): Promise<Component & AssetLinks & { mimeType: string }> {
   const assetLink = await getLink(component);
   return { ...component, ...assetLink };
 }

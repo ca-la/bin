@@ -17,14 +17,14 @@ import { omit } from "lodash";
 
 test("GET /components/:componentId returns Component", async (t: tape.Test) => {
   const { session } = await createUser();
-
+  const testTime = new Date();
   const id = uuid.v4();
   const sketchId = uuid.v4();
 
   const data = {
     artworkId: null,
-    createdAt: new Date().toISOString(),
-    deletedAt: new Date().toISOString(),
+    createdAt: testTime.toISOString(),
+    deletedAt: testTime.toISOString(),
     id,
     materialId: null,
     parentId: null,
@@ -33,15 +33,14 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
     assetPageNumber: null,
   };
   const image = {
-    createdAt: new Date(),
+    createdAt: testTime.toISOString(),
     description: "",
-    getUrl: (): string => "",
+    uploadCompletedAt: testTime.toISOString(),
     id: "",
-    mimeType: "image/jpg",
+    mimeType: "image/jpeg",
     originalHeightPx: 0,
     originalWidthPx: 0,
     title: "",
-    toJSON: (): any => "",
     userId: "",
   };
 
@@ -60,12 +59,15 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
       "downloadLink",
       "thumbnail2xLink",
       "thumbnailLink",
-      "fileType",
       "originalHeightPx",
       "originalWidthPx",
       "assetId"
     ),
-    data
+    {
+      ...data,
+      fileType: "jpeg",
+      mimeType: "image/jpeg",
+    }
   );
 });
 
