@@ -1,15 +1,28 @@
 import Knex from "knex";
 
-import ApprovalStepSubmission, {
-  ApprovalStepSubmissionRow,
+import {
   approvalStepSubmissionDomain,
+  ApprovalStepSubmissionDb,
+  ApprovalStepSubmissionDbRow,
+  ApprovalStepSubmission,
+  ApprovalStepSubmissionRow,
 } from "./types";
 import { buildDao } from "../../services/cala-component/cala-dao";
-import adapter from "./adapter";
+import { rawAdapter, adapter } from "./adapter";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import first from "../../services/first";
+import db from "../../services/db";
 
 const TABLE_NAME = "design_approval_submissions";
+
+const rawDao = buildDao<ApprovalStepSubmissionDb, ApprovalStepSubmissionDbRow>(
+  approvalStepSubmissionDomain,
+  TABLE_NAME,
+  rawAdapter,
+  {
+    orderColumn: "created_at",
+  }
+);
 
 const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
   approvalStepSubmissionDomain,
@@ -17,11 +30,25 @@ const standardDao = buildDao<ApprovalStepSubmission, ApprovalStepSubmissionRow>(
   adapter,
   {
     orderColumn: "created_at",
+    queryModifier: (query: Knex.QueryBuilder) =>
+      query
+        .select(db.raw(`count(submission_comments.*) as comment_count`))
+        .leftJoin(
+          "submission_comments",
+          "submission_comments.submission_id",
+          "design_approval_submissions.id"
+        )
+        .leftJoin("comments", "comments.id", "submission_comments.comment_id")
+        .where({ "comments.deleted_at": null })
+        .groupBy("design_approval_submissions.id"),
   }
 );
 
 export const dao = {
   ...standardDao,
+  create: rawDao.create,
+  createAll: rawDao.createAll,
+  update: rawDao.update,
   async findByDesign(
     ktx: Knex,
     designId: string
@@ -48,7 +75,7 @@ export const dao = {
   async deleteById(
     trx: Knex.Transaction,
     id: string
-  ): Promise<ApprovalStepSubmission> {
+  ): Promise<ApprovalStepSubmissionDb> {
     const deleted: ApprovalStepSubmissionRow = await trx
       .from(TABLE_NAME)
       .where({ id, deleted_at: null })
@@ -59,19 +86,20 @@ export const dao = {
       throw new ResourceNotFoundError(`Submission "${id}" could not be found.`);
     }
 
-    return adapter.fromDb(deleted);
+    return rawAdapter.fromDb(deleted);
   },
 };
 
 export default dao;
 export const {
-  create,
-  createAll,
   find,
   findById,
   findOne,
-  update,
   findByDesign,
   findByStep,
+
+  create,
+  createAll,
+  update,
   deleteById,
 } = dao;

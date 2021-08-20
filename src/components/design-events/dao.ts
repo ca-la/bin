@@ -115,6 +115,7 @@ const dao = {
   find: withMetaDao.find,
   findOne: withMetaDao.findOne,
   findById: withMetaDao.findById,
+  findDeleted: withMetaDao.findDeleted,
   count: withMetaDao.count,
 
   findApprovalStepEvents: async (

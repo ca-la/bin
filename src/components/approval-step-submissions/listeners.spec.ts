@@ -15,17 +15,19 @@ import DesignsDAO from "../product-designs/dao";
 import ApprovalStepsDAO from "../approval-steps/dao";
 import { templateDesignEvent } from "../design-events/types";
 import { NotificationType } from "../notifications/types";
-import ApprovalStepSubmission, {
+import ApprovalStepSubmissionsDAO from "./dao";
+import {
   approvalStepSubmissionDomain,
   ApprovalStepSubmissionArtifactType,
   ApprovalStepSubmissionState,
+  ApprovalStepSubmissionDb,
 } from "./types";
 import { listeners } from "./listeners";
 import * as SubmissionNotifications from "./notifications";
 import * as SubmissionService from "./service";
 
 const now = new Date();
-const submission: ApprovalStepSubmission = {
+const submission: ApprovalStepSubmissionDb = {
   id: "sub-1",
   stepId: "step-1",
   createdAt: now,
@@ -50,17 +52,30 @@ function setup() {
     findDesignStub: sandbox()
       .stub(DesignsDAO, "findById")
       .resolves({ id: "d1", collections: [], collectionIds: [] }),
+    findSubmissionByIdStub: sandbox()
+      .stub(ApprovalStepSubmissionsDAO, "findById")
+      .resolves({ ...submission, commentCount: 0 }),
+    findDeletedSubmissionStub: sandbox()
+      .stub(ApprovalStepSubmissionsDAO, "findDeleted")
+      .resolves({ ...submission, commentCount: 0, deletedAt: now }),
   };
 }
 
 test("dao.updated.state", async (t: Test) => {
-  const { irisStub } = setup();
+  const { irisStub, findSubmissionByIdStub } = setup();
+
+  findSubmissionByIdStub.resolves({
+    ...submission,
+    state: ApprovalStepSubmissionState.SUBMITTED,
+    collaboratorId: "collabo-id",
+    commentCount: 0,
+  });
 
   const trx = await db.transaction();
 
   try {
     const event: DaoUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -95,6 +110,7 @@ test("dao.updated.state", async (t: Test) => {
           collaboratorId: "collabo-id",
           teamUserId: null,
           title: "Garment Sample",
+          commentCount: 0,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
@@ -112,7 +128,7 @@ test("dao.created", async (t: Test) => {
 
   try {
     const event: DaoCreated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -142,6 +158,7 @@ test("dao.created", async (t: Test) => {
           collaboratorId: null,
           teamUserId: null,
           title: "Garment Sample",
+          commentCount: 0,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
@@ -200,7 +217,7 @@ test("route.updated.*.state: UNSUBMITTED", async (t: Test) => {
 
   try {
     const event: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -334,7 +351,7 @@ test("route.updated.*.state: SUBMITTED", async (t: Test) => {
 
   try {
     const event: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -468,7 +485,7 @@ test("route.updated.*.state: APPROVED", async (t: Test) => {
 
   try {
     const event: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -574,7 +591,7 @@ test("route.updated: collaborator assigned", async (t: Test) => {
 
   try {
     const fromNull: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -610,7 +627,7 @@ test("route.updated: collaborator assigned", async (t: Test) => {
     );
 
     const fromTeamUser: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -649,7 +666,7 @@ test("route.updated: collaborator assigned", async (t: Test) => {
     );
 
     const fromCollaborator: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -688,7 +705,7 @@ test("route.updated: collaborator assigned", async (t: Test) => {
     );
 
     const sameCollaborator: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -737,7 +754,7 @@ test("route.updated: teamUser assigned", async (t: Test) => {
 
   try {
     const fromNull: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -773,7 +790,7 @@ test("route.updated: teamUser assigned", async (t: Test) => {
     );
 
     const fromTeamUser: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -812,7 +829,7 @@ test("route.updated: teamUser assigned", async (t: Test) => {
     );
 
     const fromCollaborator: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -851,7 +868,7 @@ test("route.updated: teamUser assigned", async (t: Test) => {
     );
 
     const sameTeamUser: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -892,7 +909,7 @@ test("route.updated: unassigned", async (t: Test) => {
 
   try {
     const fromTeamUser: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -931,7 +948,7 @@ test("route.updated: unassigned", async (t: Test) => {
     );
 
     const fromCollaborator: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -970,7 +987,7 @@ test("route.updated: unassigned", async (t: Test) => {
     );
 
     const fromNull: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -994,13 +1011,19 @@ test("route.updated: unassigned", async (t: Test) => {
 });
 
 test("route.deleted", async (t: Test) => {
-  const { irisStub } = setup();
+  const { irisStub, findDeletedSubmissionStub } = setup();
+
+  findDeletedSubmissionStub.resolves({
+    ...submission,
+    deletedAt: now,
+    commentCount: 0,
+  });
 
   const trx = await db.transaction();
 
   try {
     const event: RouteDeleted<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     > = {
       trx,
@@ -1025,12 +1048,13 @@ test("route.deleted", async (t: Test) => {
           stepId: "step-1",
           createdAt: now,
           createdBy: null,
-          deletedAt: null,
+          deletedAt: now,
           artifactType: "CUSTOM",
           state: ApprovalStepSubmissionState.UNSUBMITTED,
           collaboratorId: null,
           teamUserId: null,
           title: "Garment Sample",
+          commentCount: 0,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },

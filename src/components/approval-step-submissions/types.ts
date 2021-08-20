@@ -26,7 +26,7 @@ export const approvalStepSubmissionStateSchema = z.nativeEnum(
   ApprovalStepSubmissionState
 );
 
-export const approvalStepSubmissionSchema = z.object({
+export const approvalStepSubmissionDbSchema = z.object({
   id: z.string(),
   stepId: z.string(),
   createdAt: z.date(),
@@ -38,23 +38,52 @@ export const approvalStepSubmissionSchema = z.object({
   teamUserId: z.string().nullable(),
   title: z.string(),
 });
+
+export type ApprovalStepSubmissionDb = z.infer<
+  typeof approvalStepSubmissionDbSchema
+>;
+
+export const approvalStepSubmissionSchema = approvalStepSubmissionDbSchema.extend(
+  {
+    commentCount: z.number(),
+  }
+);
+
 export type ApprovalStepSubmission = z.infer<
   typeof approvalStepSubmissionSchema
 >;
+
 export default ApprovalStepSubmission;
 
-export const approvalStepSubmissionRowSchema = z.object({
-  id: approvalStepSubmissionSchema.shape.id,
-  step_id: approvalStepSubmissionSchema.shape.stepId,
-  created_at: approvalStepSubmissionSchema.shape.createdAt,
-  created_by: approvalStepSubmissionSchema.shape.createdBy,
-  deleted_at: approvalStepSubmissionSchema.shape.deletedAt,
-  artifact_type: approvalStepSubmissionSchema.shape.artifactType,
-  state: approvalStepSubmissionSchema.shape.state,
-  collaborator_id: approvalStepSubmissionSchema.shape.collaboratorId,
-  team_user_id: approvalStepSubmissionSchema.shape.teamUserId,
-  title: approvalStepSubmissionSchema.shape.title,
+export const approvalStepSubmissionDbRowSchema = z.object({
+  id: approvalStepSubmissionDbSchema.shape.id,
+  step_id: approvalStepSubmissionDbSchema.shape.stepId,
+  created_at: approvalStepSubmissionDbSchema.shape.createdAt,
+  created_by: approvalStepSubmissionDbSchema.shape.createdBy,
+  deleted_at: approvalStepSubmissionDbSchema.shape.deletedAt,
+  artifact_type: approvalStepSubmissionDbSchema.shape.artifactType,
+  state: approvalStepSubmissionDbSchema.shape.state,
+  collaborator_id: approvalStepSubmissionDbSchema.shape.collaboratorId,
+  team_user_id: approvalStepSubmissionDbSchema.shape.teamUserId,
+  title: approvalStepSubmissionDbSchema.shape.title,
 });
+
+export type ApprovalStepSubmissionDbRow = z.infer<
+  typeof approvalStepSubmissionDbRowSchema
+>;
+
+export const approvalStepSubmissionRowSchema = approvalStepSubmissionDbRowSchema.extend(
+  {
+    comment_count: z
+      .string()
+      .refine(
+        (maybeNumberString: string) =>
+          Number.isSafeInteger(parseInt(maybeNumberString, 10)),
+        "Comment count exceeds maximum safe integer"
+      )
+      .transform(parseInt),
+  }
+);
 
 export type ApprovalStepSubmissionRow = z.infer<
   typeof approvalStepSubmissionRowSchema

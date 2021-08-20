@@ -6,7 +6,8 @@ import * as ApprovalStepsDAO from "../approval-steps/dao";
 import * as PricingProductTypesDAO from "../pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../dao/pricing-quotes";
 import PricingProductType from "../pricing-product-types/domain-object";
-import ApprovalStepSubmission, {
+import {
+  ApprovalStepSubmissionDb,
   ApprovalStepSubmissionState,
   ApprovalStepSubmissionArtifactType,
 } from "./types";
@@ -17,7 +18,7 @@ import { Complexity } from "../../domain-objects/pricing";
 import PricingProcess from "../../domain-objects/pricing-process";
 
 type ApprovalStepByType = Record<ApprovalStepType, ApprovalStep>;
-type SubmissionOption = Partial<ApprovalStepSubmission> & {
+type SubmissionOption = Partial<ApprovalStepSubmissionDb> & {
   stepId: string;
   title: string;
 };
@@ -165,7 +166,7 @@ function getComplexitySubmissions(
 export async function getDefaultsByDesign(
   trx: Knex.Transaction,
   designId: string
-): Promise<ApprovalStepSubmission[]> {
+): Promise<ApprovalStepSubmissionDb[]> {
   const now = new Date();
   const productType = await PricingProductTypesDAO.findByDesignId(
     designId,

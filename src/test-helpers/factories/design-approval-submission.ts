@@ -22,24 +22,27 @@ export default async function generateApprovalSubmission(
   const stepId =
     options.stepId || (await generateApprovalStep(trx)).approvalStep.id;
 
-  const [submission] = await ApprovalStepSubmissionsDAO.createAll(trx, [
-    {
-      artifactType:
-        options.artifactType ||
-        ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
-      createdAt: new Date(),
+  const created = await ApprovalStepSubmissionsDAO.create(trx, {
+    artifactType:
+      options.artifactType ||
+      ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
+    createdAt: new Date(),
 
-      collaboratorId: null,
-      teamUserId: null,
-      title: "A submission",
-      id: options.id || uuid.v4(),
-      state: options.state || ApprovalStepSubmissionState.UNSUBMITTED,
-      createdBy: null,
-      deletedAt: null,
-      stepId,
-      ...options,
-    },
-  ]);
+    collaboratorId: null,
+    teamUserId: null,
+    title: "A submission",
+    id: options.id || uuid.v4(),
+    state: options.state || ApprovalStepSubmissionState.UNSUBMITTED,
+    createdBy: null,
+    deletedAt: null,
+    stepId,
+    ...options,
+  });
+  const submission = await ApprovalStepSubmissionsDAO.findById(trx, created.id);
+
+  if (!submission) {
+    throw new Error("Could not find submission after creating");
+  }
 
   return {
     submission,

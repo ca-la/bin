@@ -39,13 +39,16 @@ export function buildDao<
 ): CalaDao<Model> {
   const namespacedSplatSelect = `${tableName}.*`;
   const namespacedOrderColumn = `${tableName}.${orderColumn}`;
-  const getNamespacedFilter = (filter: Partial<Model>): object => {
+  const getNamespacedFilter = (
+    filter: Partial<Model>,
+    shouldHideDeleted: boolean = excludeDeletedAt
+  ): object => {
     const transformed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(adapter.toDbPartial(filter))) {
       transformed[`${tableName}.${key}`] = value;
     }
 
-    if (excludeDeletedAt) {
+    if (shouldHideDeleted) {
       transformed[`${tableName}.deleted_at`] = null;
     }
 
@@ -115,6 +118,26 @@ export function buildDao<
       .modify(queryModifier)
       .modify(modifier)
       .first();
+
+    if (!row) {
+      return null;
+    }
+
+    return adapter.fromDb(row);
+  };
+
+  const findDeleted = async (
+    ktx: Knex,
+    filter: Partial<Model>,
+    modifier: QueryModifier = identity
+  ): Promise<Model | null> => {
+    const row = await ktx(tableName)
+      .select(namespacedSplatSelect)
+      .where(getNamespacedFilter(filter, false))
+      .orderBy(`${tableName}.${orderColumn}`, orderDirection)
+      .first()
+      .modify(queryModifier)
+      .modify(modifier);
 
     if (!row) {
       return null;
@@ -247,6 +270,7 @@ export function buildDao<
     count,
     findOne,
     findById,
+    findDeleted,
     update,
     create,
     createAll,

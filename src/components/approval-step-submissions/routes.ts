@@ -17,6 +17,7 @@ import ApprovalStepSubmission, {
   ApprovalStepSubmissionUpdate,
   approvalStepSubmissionUpdateSchema,
   ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionDb,
 } from "./types";
 import db from "../../services/db";
 import DesignEvent, {
@@ -317,7 +318,7 @@ async function createApprovalSubmission(ctx: CreateSubmissionContext) {
   );
 
   return db.transaction(async (trx: Knex.Transaction) => {
-    const submission = await ApprovalSubmissionsDAO.create(trx, {
+    const created = await ApprovalSubmissionsDAO.create(trx, {
       ...body,
       createdBy: userId,
       deletedAt: null,
@@ -326,14 +327,17 @@ async function createApprovalSubmission(ctx: CreateSubmissionContext) {
     await DesignEventsDAO.create(trx, {
       ...templateDesignEvent,
       actorId: userId,
-      approvalSubmissionId: submission.id,
+      approvalSubmissionId: created.id,
       createdAt: new Date(),
       designId: approvalStep.designId,
       id: uuid.v4(),
       type: "STEP_SUBMISSION_CREATION",
     });
 
-    ctx.body = submission;
+    ctx.body = {
+      ...created,
+      commentCount: 0,
+    };
     ctx.status = 200;
   });
 }
@@ -456,8 +460,8 @@ async function updateApprovalSubmission(
   );
 
   await emit<
-    ApprovalStepSubmission,
-    RouteUpdated<ApprovalStepSubmission, typeof approvalStepSubmissionDomain>
+    ApprovalStepSubmissionDb,
+    RouteUpdated<ApprovalStepSubmissionDb, typeof approvalStepSubmissionDomain>
   >({
     type: "route.updated",
     domain: approvalStepSubmissionDomain,
@@ -467,8 +471,14 @@ async function updateApprovalSubmission(
     updated,
   });
 
+  const withCount = await ApprovalSubmissionsDAO.findById(trx, updated.id);
+
+  if (!withCount) {
+    ctx.throw(404, "Could not find submission after updating");
+  }
+
   ctx.status = 200;
-  ctx.body = updated;
+  ctx.body = withCount;
 }
 
 type StringGetter<State> = (this: AuthedContext<{}, State>) => string;

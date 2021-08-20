@@ -1,7 +1,7 @@
 import Knex from "knex";
 
 import ProductDesign from "../product-designs/domain-objects/product-design";
-import ApprovalStepSubmission from "./types";
+import { ApprovalStepSubmissionDb } from "./types";
 import { Recipient } from "../../services/cala-component/cala-notifications";
 import TeamUsersDao from "../team-users/dao";
 import * as CollaboratorsDAO from "../collaborators/dao";
@@ -13,7 +13,7 @@ import {
 
 export async function getRecipientsByStepSubmissionAndDesign(
   ktx: Knex,
-  submission: ApprovalStepSubmission,
+  submission: ApprovalStepSubmissionDb,
   design: ProductDesign
 ): Promise<Recipient[]> {
   const collaborator = submission.collaboratorId

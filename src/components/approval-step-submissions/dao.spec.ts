@@ -9,15 +9,18 @@ import ProductDesign from "../product-designs/domain-objects/product-design";
 import createUser from "../../test-helpers/create-user";
 import generateApprovalStep from "../../test-helpers/factories/design-approval-step";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import generateComment from "../../test-helpers/factories/comment";
 import ApprovalStep, {
   ApprovalStepState,
   ApprovalStepType,
 } from "../approval-steps/domain-object";
 import * as ApprovalStepsDAO from "../approval-steps/dao";
+import * as SubmissionCommentsDAO from "../submission-comments/dao";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 
-import ApprovalStepSubmission, {
+import {
   ApprovalStepSubmissionArtifactType,
+  ApprovalStepSubmissionDb,
   ApprovalStepSubmissionState,
 } from "./types";
 import * as ApprovalStepSubmissionsDAO from "./dao";
@@ -57,7 +60,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     dueAt: null,
   };
 
-  const sub1: ApprovalStepSubmission = {
+  const sub1: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
@@ -69,7 +72,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     teamUserId: null,
     title: "Technical Design",
   };
-  const sub2: ApprovalStepSubmission = {
+  const sub2: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
@@ -81,7 +84,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     teamUserId: null,
     title: "Technical Design",
   };
-  const sub3: ApprovalStepSubmission = {
+  const sub3: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.TECHNICAL_DESIGN,
     id: uuid.v4(),
@@ -93,7 +96,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     teamUserId: null,
     title: "Technical Design",
   };
-  const sub4: ApprovalStepSubmission = {
+  const sub4: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
     artifactType: ApprovalStepSubmissionArtifactType.SAMPLE,
     id: uuid.v4(),
@@ -105,6 +108,10 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     teamUserId: null,
     title: "Technical Design",
   };
+  const { comment: com1 } = await generateComment();
+  const { comment: com2 } = await generateComment();
+  const { comment: com3 } = await generateComment({ deletedAt: new Date() });
+  const { comment: com4 } = await generateComment();
 
   await db.transaction(async (trx: Knex.Transaction) => {
     await ApprovalStepsDAO.createAll(trx, [as1, as2]);
@@ -114,6 +121,23 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
       sub3,
       sub4,
     ]);
+
+    await SubmissionCommentsDAO.create(trx, {
+      submissionId: sub1.id,
+      commentId: com1.id,
+    });
+    await SubmissionCommentsDAO.create(trx, {
+      submissionId: sub1.id,
+      commentId: com2.id,
+    });
+    await SubmissionCommentsDAO.create(trx, {
+      submissionId: sub1.id,
+      commentId: com3.id,
+    });
+    await SubmissionCommentsDAO.create(trx, {
+      submissionId: sub2.id,
+      commentId: com4.id,
+    });
 
     t.deepEqual(
       created,
@@ -127,13 +151,22 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     );
 
     t.true(
-      isEqual(new Set(foundByStep), new Set([sub1, sub2])),
+      isEqual(
+        new Set(foundByStep),
+        new Set([
+          { ...sub1, commentCount: 2 },
+          { ...sub2, commentCount: 1 },
+        ])
+      ),
       "returns submissions by step"
     );
 
     const foundById = await ApprovalStepSubmissionsDAO.findById(trx, sub1.id);
 
-    t.true(isEqual(foundById, sub1), "returns submission by id");
+    t.true(
+      isEqual(foundById, { ...sub1, commentCount: 2 }),
+      "returns submission by id"
+    );
 
     const foundByDesign = await ApprovalStepSubmissionsDAO.findByDesign(
       trx,
@@ -141,7 +174,15 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     );
 
     t.true(
-      isEqual(new Set(foundByDesign), new Set([sub1, sub2, sub3, sub4])),
+      isEqual(
+        new Set(foundByDesign),
+        new Set([
+          { ...sub1, commentCount: 2 },
+          { ...sub2, commentCount: 1 },
+          { ...sub3, commentCount: 0 },
+          { ...sub4, commentCount: 0 },
+        ])
+      ),
       "returns submissions by design"
     );
   });

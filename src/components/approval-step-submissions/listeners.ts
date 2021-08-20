@@ -23,6 +23,7 @@ import {
   realtimeApprovalSubmissionDeleted,
 } from "./realtime";
 import ApprovalStepSubmission, {
+  ApprovalStepSubmissionDb,
   approvalStepSubmissionDomain,
   ApprovalStepSubmissionState,
 } from "./types";
@@ -31,30 +32,46 @@ import { NotificationType } from "../notifications/domain-object";
 import notifications from "./notifications";
 import { getRecipientsByStepSubmissionAndDesign } from "./service";
 import { NotificationComponent } from "../../services/cala-component/cala-notifications";
+import ApprovalStepSubmissionsDAO from "./dao";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 export const listeners: Listeners<
-  ApprovalStepSubmission,
+  ApprovalStepSubmissionDb,
   typeof approvalStepSubmissionDomain
 > = {
   "dao.created": (
     event: DaoCreated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     >
   ): Promise<void> =>
-    IrisService.sendMessage(realtimeApprovalSubmissionCreated(event.created)),
+    IrisService.sendMessage(
+      realtimeApprovalSubmissionCreated({ ...event.created, commentCount: 0 })
+    ),
 
-  "dao.updated": (
+  "dao.updated": async (
     event: DaoUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     >
-  ): Promise<void> =>
-    IrisService.sendMessage(realtimeApprovalSubmissionUpdated(event.updated)),
+  ): Promise<void> => {
+    const found = await ApprovalStepSubmissionsDAO.findById(
+      event.trx,
+      event.updated.id
+    );
+
+    if (!found) {
+      throw new ResourceNotFoundError(
+        "Could not find submission after updating"
+      );
+    }
+
+    return IrisService.sendMessage(realtimeApprovalSubmissionUpdated(found));
+  },
 
   "route.updated": async (
     event: RouteUpdated<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     >
   ) => {
@@ -112,7 +129,7 @@ export const listeners: Listeners<
   "route.updated.*": {
     state: async (
       event: RouteUpdated<
-        ApprovalStepSubmission,
+        ApprovalStepSubmissionDb,
         typeof approvalStepSubmissionDomain
       >
     ) => {
@@ -202,7 +219,7 @@ export const listeners: Listeners<
     },
     collaboratorId: async (
       event: RouteUpdated<
-        ApprovalStepSubmission,
+        ApprovalStepSubmissionDb,
         typeof approvalStepSubmissionDomain
       >
     ) => {
@@ -262,7 +279,7 @@ export const listeners: Listeners<
     },
     teamUserId: async (
       event: RouteUpdated<
-        ApprovalStepSubmission,
+        ApprovalStepSubmissionDb,
         typeof approvalStepSubmissionDomain
       >
     ) => {
@@ -322,11 +339,22 @@ export const listeners: Listeners<
   },
   "route.deleted": async (
     event: RouteDeleted<
-      ApprovalStepSubmission,
+      ApprovalStepSubmissionDb,
       typeof approvalStepSubmissionDomain
     >
-  ): Promise<void> =>
-    IrisService.sendMessage(realtimeApprovalSubmissionDeleted(event.deleted)),
+  ): Promise<void> => {
+    const found = await ApprovalStepSubmissionsDAO.findDeleted(event.trx, {
+      id: event.deleted.id,
+    });
+
+    if (!found) {
+      throw new ResourceNotFoundError(
+        "Could not find submission after updating"
+      );
+    }
+
+    return IrisService.sendMessage(realtimeApprovalSubmissionDeleted(found));
+  },
 };
 
 export default buildListeners<

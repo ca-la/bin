@@ -57,6 +57,11 @@ export interface CalaDao<Model> {
     id: string,
     modifier?: (query: QueryBuilder) => QueryBuilder
   ) => Promise<Model | null>;
+  findDeleted: (
+    ktx: Knex,
+    filter: Partial<Model>,
+    modifier?: (query: QueryBuilder) => QueryBuilder
+  ) => Promise<Model | null>;
   update: (
     trx: Transaction,
     id: string,
