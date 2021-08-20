@@ -1185,7 +1185,7 @@ export async function createNotificationMessage(
         title: `${cleanName} replied to a comment on ${normalizeTitle(
           approvalStep
         )} for ${normalizeTitle(design)}`,
-        text: `${cleanName} replied to a comment on ${normalizeTitle(
+        text: `Replied to a comment on ${normalizeTitle(
           approvalStep
         )} for ${normalizeTitle(design)}`,
       };
@@ -1505,7 +1505,7 @@ export async function createNotificationMessage(
         title: `${cleanName} replied to a comment on review ${normalizeTitle(
           approvalSubmission
         )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
-        text: `${cleanName} replied to a comment on review ${normalizeTitle(
+        text: `Replied to a comment on review ${normalizeTitle(
           approvalSubmission
         )} for ${normalizeTitle(design)} (${normalizeTitle(approvalStep)})`,
       };
