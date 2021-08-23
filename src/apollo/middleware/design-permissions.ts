@@ -46,3 +46,16 @@ export async function requireDesignViewPermissions<Args, Result>(
 
   return context;
 }
+
+export async function requireDesignEditPermissions<Args, Result>(
+  _: Args,
+  context: GraphQLContextWithDesignAndPermissions<Result>
+): Promise<GraphQLContextWithDesignAndPermissions<Result>> {
+  const { designPermissions } = context;
+
+  if (!designPermissions.canEdit) {
+    throw new ForbiddenError("Not authorized to edit this design");
+  }
+
+  return context;
+}

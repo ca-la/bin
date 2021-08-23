@@ -30,7 +30,7 @@ export async function attachDesignFromCanvasId<
 >(args: Args, context: GraphQLContextBase<Result>) {
   const canvas = await CanvasesDAO.findById(args.canvasId);
   if (!canvas) {
-    throw new NotFoundError("Filter should contain designId");
+    throw new NotFoundError(`Could not find canvas ${args.canvasId}`);
   }
   return {
     ...context,
