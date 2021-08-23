@@ -25,7 +25,7 @@ export async function postProcessDeleteComment(
         commentId,
       });
     } else if (submissionId) {
-      await announceSubmissionCommentDeletion({
+      await announceSubmissionCommentDeletion(trx, {
         actorId,
         submissionId,
         commentId,

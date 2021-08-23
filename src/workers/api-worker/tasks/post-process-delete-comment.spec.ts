@@ -150,6 +150,7 @@ test("postProcessDeleteComment: submission comment", async (t: Test) => {
     announceSubmissionCommentDeletionStub.args,
     [
       [
+        trxStub,
         {
           actorId: "a-user-id",
           submissionId: "a-submission-id",

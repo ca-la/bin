@@ -21,7 +21,6 @@ interface CreateSubmissionCommentOptions {
   submissionId: string;
 }
 
-// TODO: add the "announce" part
 export async function createAndAnnounce(
   trx: Knex.Transaction,
   options: CreateSubmissionCommentOptions
@@ -84,6 +83,7 @@ export async function createAndAnnounce(
   });
 
   await announceSubmissionCommentCreation(
+    trx,
     submissionComment,
     commentWithResources
   );

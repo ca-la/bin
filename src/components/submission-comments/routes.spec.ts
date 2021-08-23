@@ -127,6 +127,7 @@ test("End-to-end: POST -> GET", async (t: Test) => {
     announceSubmissionCommentCreationStub.args,
     [
       [
+        announceSubmissionCommentCreationStub.args[0][0],
         { submissionId: submissions[0].id, commentId: body.id },
         {
           ...valid,
