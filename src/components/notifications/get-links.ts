@@ -1,5 +1,5 @@
+import { URL, URLSearchParams } from "url";
 import { escape as escapeHtml } from "lodash";
-import qs from "querystring";
 
 import { STUDIO_HOST } from "../../config";
 import { ComponentType } from "../components/types";
@@ -36,12 +36,14 @@ export type LinkBase =
       design: Meta;
       canvasId: string;
       componentType: ComponentType;
+      commentId?: string;
     }
   | {
       type: LinkType.CollectionDesignTask;
       design: Meta;
       collection: Meta | null;
       task: Meta;
+      commentId?: string;
     }
   | {
       type: LinkType.CollectionDesign;
@@ -66,12 +68,14 @@ export type LinkBase =
       type: LinkType.ApprovalStep;
       design: Meta;
       approvalStep: Meta;
+      commentId?: string;
     }
   | {
       type: LinkType.ApprovalStepSubmission;
       design: Meta;
       approvalStep: Meta;
       approvalSubmission: Meta;
+      commentId?: string;
     }
   | {
       type: LinkType.ShipmentTracking;
@@ -103,15 +107,31 @@ export function constructHtmlLink(deepLink: string, title: string): string {
 export default function getLinks(linkBase: LinkBase): Links {
   switch (linkBase.type) {
     case LinkType.DesignAnnotation: {
-      const { annotationId, canvasId, componentType, design } = linkBase;
+      const {
+        annotationId,
+        canvasId,
+        componentType,
+        design,
+        commentId,
+      } = linkBase;
       const tab =
         componentType === ComponentType.Artwork
-          ? "tab=artwork&"
+          ? "artwork"
           : componentType === ComponentType.Material
-          ? "tab=materials&"
+          ? "materials"
           : "";
-      // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/designs/${design.id}?${tab}canvasId=${canvasId}&annotationId=${annotationId}`;
+
+      const search = new URLSearchParams({
+        ...(tab && { tab }),
+        canvasId,
+        annotationId,
+        ...(commentId && { replyingToCommentId: commentId }),
+      });
+
+      const linkUrl = new URL(`/designs/${design.id}`, STUDIO_HOST);
+      linkUrl.search = search.toString();
+      const deepLink = linkUrl.href;
+
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -120,8 +140,18 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.CollectionDesignTask: {
-      const { design, task } = linkBase;
-      const deepLink = `${STUDIO_HOST}/tasks?taskId=${task.id}&designId=${design.id}`;
+      const { design, task, commentId } = linkBase;
+
+      const search = new URLSearchParams({
+        taskId: task.id,
+        designId: design.id,
+        ...(commentId && { replyingToCommentId: commentId }),
+      });
+
+      const linkUrl = new URL("/tasks", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(task);
       return {
         deepLink,
@@ -131,8 +161,18 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.CollectionDesign: {
       const { collection, design } = linkBase;
-      // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs?previewDesignId=${design.id}`;
+
+      const search = new URLSearchParams({
+        previewDesignId: design.id,
+      });
+
+      const linkUrl = new URL(
+        `/collections/${collection.id}/designs`,
+        STUDIO_HOST
+      );
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -142,7 +182,10 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.Design: {
       const { design } = linkBase;
-      const deepLink = `${STUDIO_HOST}/designs/${design.id}`;
+
+      const linkUrl = new URL(`/designs/${design.id}`, STUDIO_HOST);
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -152,7 +195,13 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.PartnerDesign: {
       const { design } = linkBase;
-      const deepLink = `${STUDIO_HOST}/partners?previewDesignId=${design.id}`;
+      const search = new URLSearchParams({
+        previewDesignId: design.id,
+      });
+      const linkUrl = new URL("/partners", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(design);
       return {
         deepLink,
@@ -162,11 +211,19 @@ export default function getLinks(linkBase: LinkBase): Links {
 
     case LinkType.Collection: {
       const { collection, isCheckout, isSubmit } = linkBase;
-      const checkoutParam = isCheckout ? "?isCheckout=true" : "";
-      const submitParam = isSubmit ? "?isSubmit=true" : "";
 
-      // tslint:disable-next-line:max-line-length
-      const deepLink = `${STUDIO_HOST}/collections/${collection.id}/designs${checkoutParam}${submitParam}`;
+      const search = new URLSearchParams({
+        ...(isCheckout && { isCheckout: "true" }),
+        ...(isSubmit && { isSubmit: "true" }),
+      });
+
+      const linkUrl = new URL(
+        `/collections/${collection.id}/designs`,
+        STUDIO_HOST
+      );
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(collection);
       return {
         deepLink,
@@ -175,9 +232,18 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.ApprovalStep: {
-      const { design, approvalStep } = linkBase;
+      const { design, approvalStep, commentId } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}`;
+      const search = new URLSearchParams({
+        designId: design.id,
+        stepId: approvalStep.id,
+        ...(commentId && { replyingToCommentId: commentId }),
+      });
+
+      const linkUrl = new URL("/dashboard", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(approvalStep);
 
       return {
@@ -187,9 +253,19 @@ export default function getLinks(linkBase: LinkBase): Links {
     }
 
     case LinkType.ApprovalStepSubmission: {
-      const { design, approvalStep, approvalSubmission } = linkBase;
+      const { design, approvalStep, approvalSubmission, commentId } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&submissionId=${approvalSubmission.id}`;
+      const search = new URLSearchParams({
+        designId: design.id,
+        stepId: approvalStep.id,
+        submissionId: approvalSubmission.id,
+        ...(commentId && { replyingToCommentId: commentId }),
+      });
+
+      const linkUrl = new URL("/dashboard", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(approvalSubmission);
 
       return {
@@ -201,7 +277,17 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.ShipmentTracking: {
       const { design, approvalStep, shipmentTrackingId } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/dashboard?designId=${design.id}&stepId=${approvalStep.id}&showTracking=view&trackingId=${shipmentTrackingId}`;
+      const search = new URLSearchParams({
+        designId: design.id,
+        stepId: approvalStep.id,
+        showTracking: "view",
+        trackingId: shipmentTrackingId,
+      });
+
+      const linkUrl = new URL("/dashboard", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(design);
 
       return {
@@ -213,7 +299,8 @@ export default function getLinks(linkBase: LinkBase): Links {
     case LinkType.Team: {
       const { team } = linkBase;
 
-      const deepLink = `${STUDIO_HOST}/teams/${team.id}`;
+      const linkUrl = new URL(`/teams/${team.id}`, STUDIO_HOST);
+      const deepLink = linkUrl.href;
       const title = normalizeTitle(team);
 
       return {
@@ -240,13 +327,16 @@ export default function getLinks(linkBase: LinkBase): Links {
         ? `/collections/${returnToCollectionId}`
         : null;
 
-      const queryString = qs.stringify({
+      const search = new URLSearchParams({
         planId,
         invitationEmail,
-        ...(returnTo ? { returnTo } : null),
+        ...(returnTo && { returnTo }),
       });
 
-      const deepLink = `${STUDIO_HOST}/subscribe?${queryString}`;
+      const linkUrl = new URL("/subscribe", STUDIO_HOST);
+      linkUrl.search = search.toString();
+
+      const deepLink = linkUrl.href;
 
       return {
         deepLink,

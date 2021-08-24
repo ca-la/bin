@@ -456,6 +456,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
+        commentId,
         type: LinkType.DesignAnnotation,
       });
       return {
@@ -525,6 +526,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
+        commentId,
         type: LinkType.DesignAnnotation,
       });
       return {
@@ -593,6 +595,7 @@ export async function createNotificationMessage(
         canvasId,
         componentType: componentType as ComponentType,
         design,
+        commentId,
         type: LinkType.DesignAnnotation,
       });
       return {
@@ -668,6 +671,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
+        commentId,
         type: LinkType.CollectionDesignTask,
       });
       const comment: Comment | null = await CommentsDAO.findById(commentId);
@@ -724,6 +728,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
+        commentId,
         type: LinkType.CollectionDesignTask,
       });
       const mentions = await db.transaction((trx: Knex.Transaction) =>
@@ -776,6 +781,7 @@ export async function createNotificationMessage(
         collection,
         design,
         task,
+        commentId,
         type: LinkType.CollectionDesignTask,
       });
       const mentions = await db.transaction((trx: Knex.Transaction) =>
@@ -1083,6 +1089,7 @@ export async function createNotificationMessage(
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
+        commentId,
         type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
@@ -1151,6 +1158,7 @@ export async function createNotificationMessage(
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
+        commentId,
         type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
@@ -1219,6 +1227,7 @@ export async function createNotificationMessage(
       const { htmlLink: stepHtmlLink, deepLink } = getLinks({
         design,
         approvalStep,
+        commentId,
         type: LinkType.ApprovalStep,
       });
       const designHtmlLink = constructHtmlLink(
@@ -1298,6 +1307,7 @@ export async function createNotificationMessage(
         design,
         approvalStep,
         approvalSubmission,
+        commentId,
         type: LinkType.ApprovalStepSubmission,
       });
       const designHtmlLink = constructHtmlLink(
@@ -1382,6 +1392,7 @@ export async function createNotificationMessage(
         design,
         approvalStep,
         approvalSubmission,
+        commentId,
         type: LinkType.ApprovalStepSubmission,
       });
       const designHtmlLink = constructHtmlLink(
@@ -1466,6 +1477,7 @@ export async function createNotificationMessage(
         design,
         approvalStep,
         approvalSubmission,
+        commentId,
         type: LinkType.ApprovalStepSubmission,
       });
       const designHtmlLink = constructHtmlLink(
