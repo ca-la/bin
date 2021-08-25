@@ -1,161 +1,305 @@
-import { test, Test } from "../../../../test-helpers/fresh";
-import createDesign from "../../../../services/create-design";
-import createUser = require("../../../../test-helpers/create-user");
-import { ProductDesignDataWithMeta } from "../../domain-objects/with-meta";
-import { ProductDesignData } from "../../domain-objects/product-designs-new";
-import generateDesignEvent from "../../../../test-helpers/factories/design-event";
+import { test, Test } from "../../../../test-helpers/simple";
+import { PricingCostInput } from "../../../pricing-cost-inputs/types";
+import {
+  Complexity,
+  MaterialCategory,
+  ProductType,
+} from "../../../../domain-objects/pricing";
+import { DesignEvent, templateDesignEvent } from "../../../design-events/types";
+
 import { DesignState, determineState } from "./index";
-import generatePricingCostInput from "../../../../test-helpers/factories/pricing-cost-input";
-import generatePricingValues from "../../../../test-helpers/factories/pricing-values";
+
+function setup() {
+  const active: PricingCostInput = {
+    id: "active-pricing-cost-input",
+    createdAt: new Date(),
+    deletedAt: null,
+    designId: "a-design-id",
+    productType: ProductType.PANTS,
+    productComplexity: Complexity.COMPLEX,
+    materialCategory: MaterialCategory.SPECIFY,
+    materialBudgetCents: 10000,
+    minimumOrderQuantity: 1,
+    processes: [],
+    careLabelsVersion: 0,
+    constantsVersion: 0,
+    marginVersion: 0,
+    processTimelinesVersion: 0,
+    processesVersion: 0,
+    productMaterialsVersion: 0,
+    productTypeVersion: 0,
+    unitMaterialMultipleVersion: 0,
+    expiresAt: null,
+  };
+  const expired: PricingCostInput = {
+    ...active,
+    expiresAt: new Date("2019-04-23"),
+  };
+
+  const submit: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-submit",
+    createdAt: new Date("2019-04-20"),
+    type: "SUBMIT_DESIGN",
+  };
+
+  const commitCosts: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-commit-costs",
+    createdAt: new Date("2019-04-21"),
+    type: "COMMIT_COST_INPUTS",
+  };
+  const commitQuote: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-commit-quote",
+    createdAt: new Date("2019-04-22"),
+    type: "COMMIT_QUOTE",
+  };
+  const commitPartners: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-commit-partners",
+    createdAt: new Date("2019-04-24"),
+    type: "COMMIT_PARTNER_PAIRING",
+  };
+  const reject: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-reject",
+    createdAt: new Date("2019-04-25"),
+    type: "REJECT_DESIGN",
+  };
+
+  return {
+    costInputs: {
+      active,
+      expired,
+    },
+    events: {
+      submit,
+      reject,
+      commitCosts,
+      commitQuote,
+      commitPartners,
+    },
+  };
+}
 
 test("determineState works for designs with no events or cost inputs", async (t: Test) => {
-  const { user: u1 } = await createUser({ withSession: false });
-  const design = (await createDesign({
-    productType: "TEESHIRT",
-    title: "My cool tee",
-    userId: u1.id,
-  })) as ProductDesignData;
-  const designWithData: ProductDesignDataWithMeta = {
-    ...design,
-    collectionId: "collection-one",
+  const state = determineState({
+    id: "a-design-id",
     costInputs: [],
     events: [],
-  };
-  const state = determineState(designWithData);
+  });
   t.deepEqual(state, DesignState.INITIAL, "Sits at pre-submission state");
 });
 
-test("determineState works for a design with events", async (t: Test) => {
-  await generatePricingValues();
+test("determineState: SUBMIT", async (t: Test) => {
+  const { costInputs, events } = setup();
 
-  const { user: u1 } = await createUser({ withSession: false });
-  const design = (await createDesign({
-    productType: "TEESHIRT",
-    title: "My cool tee",
-    userId: u1.id,
-  })) as ProductDesignData;
-  const { designEvent: e1 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-20"),
-    type: "SUBMIT_DESIGN",
-  });
-  const { designEvent: e2 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-21"),
-    type: "COMMIT_COST_INPUTS",
-  });
-  const { designEvent: e3 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-22"),
-    type: "COMMIT_QUOTE",
-  });
-  const { designEvent: e4 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-24"),
-    type: "COMMIT_PARTNER_PAIRING",
-  });
-  const { pricingCostInput: ci1 } = await generatePricingCostInput({
-    designId: design.id,
-    expiresAt: null,
-  });
-  const { pricingCostInput: ci2 } = await generatePricingCostInput({
-    designId: design.id,
-    expiresAt: new Date("2019-04-23"),
-  });
-
-  // FLOW 1: Submitting and paying once all the way through.
-
-  // With a submission event
-  let designWithData: ProductDesignDataWithMeta = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [],
-    events: [e1],
-  };
-  const state = determineState(designWithData);
-  t.deepEqual(state, DesignState.SUBMITTED, "Sits at pending pricing state");
-
-  // With costing event
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci1],
-    events: [e1, e2],
-  };
-  const state2 = determineState(designWithData);
-  t.deepEqual(state2, DesignState.COSTED, "Sits at costed state");
-
-  // With an expired cost input
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2],
-    events: [e1, e2],
-  };
-  const state3 = determineState(designWithData);
   t.deepEqual(
-    state3,
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit],
+    }),
+    DesignState.SUBMITTED,
+    "INITIAL to SUBMITTED state"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit],
+    }),
+    DesignState.SUBMITTED,
+    "expired: SUBMITTED"
+  );
+});
+
+test("determineState: SUBMIT -> REJECT", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.reject],
+    }),
     DesignState.INITIAL,
-    "Rolls back to pre-submission state"
+    "INITIAL -> SUBMITTED -> INITIAL"
   );
 
-  // With an expired cost input but committed quote
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2],
-    events: [e1, e2, e3],
-  };
-  const state4 = determineState(designWithData);
-  t.deepEqual(state4, DesignState.CHECKED_OUT, "Continues to checkout state");
-
-  // With an expired cost input but committed quote and committed pairing
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2],
-    events: [e1, e2, e3, e4],
-  };
-  const state5 = determineState(designWithData);
-  t.deepEqual(state5, DesignState.PAIRED, "Sits at paired state (final)");
-
-  // FLOW 2: Submitting, getting priced, expiring, and re-submitting.
-
-  const { designEvent: e5 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-25"),
-    type: "SUBMIT_DESIGN",
-  });
-  const { designEvent: e6 } = await generateDesignEvent({
-    createdAt: new Date("2019-04-26"),
-    type: "COMMIT_COST_INPUTS",
-  });
-
-  // With an expired cost input
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2],
-    events: [e1, e2, e5],
-  };
-  const state6 = determineState(designWithData);
-  t.deepEqual(state6, DesignState.SUBMITTED, "Sits at pending pricing state");
-
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2, ci1],
-    events: [e1, e2, e5, e6],
-  };
-  const state7 = determineState(designWithData);
   t.deepEqual(
-    state7,
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.reject],
+    }),
+    DesignState.INITIAL,
+    "expired: INITIAL"
+  );
+});
+
+test("determineState: SUBMIT -> COST", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.commitCosts],
+    }),
     DesignState.COSTED,
-    "Sits at checkout state when committed with new cost inputs"
+    "INITIAL -> COSTED"
   );
 
-  // With costing and submitting "out of normal order"
-  designWithData = {
-    ...design,
-    collectionId: "collection-one",
-    costInputs: [ci2],
-    events: [e2, e1, e3],
-  };
-  const state8 = determineState(designWithData);
-  t.deepEqual(state8, DesignState.CHECKED_OUT, "Continues to checkout state");
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.commitCosts],
+    }),
+    DesignState.INITIAL,
+    "expired: INITIAL"
+  );
+});
+
+test("determineState: SUBMIT -> COST -> REJECT", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.commitCosts, events.reject],
+    }),
+    DesignState.INITIAL,
+    "INITIAL -> SUBMITTED -> COSTED -> INITIAL"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.commitCosts, events.reject],
+    }),
+    DesignState.INITIAL,
+    "expired: INITIAL"
+  );
+});
+
+test("determineState: SUBMIT -> COST -> REJECT -> SUBMIT", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.commitCosts, events.reject, events.submit],
+    }),
+    DesignState.SUBMITTED,
+    "INITIAL -> SUBMITTED -> COSTED -> INITIAL -> SUBMITTED"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.commitCosts, events.reject, events.submit],
+    }),
+    DesignState.SUBMITTED,
+    "expired: SUBMITTED"
+  );
+});
+
+test("determineState: SUBMIT -> REJECT -> SUBMIT -> COST", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.reject, events.submit, events.commitCosts],
+    }),
+    DesignState.COSTED,
+    "INITIAL -> SUBMITTED -> INITIAL -> COSTED"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.reject, events.submit, events.commitCosts],
+    }),
+    DesignState.INITIAL,
+    "expired: INITIAL"
+  );
+});
+
+test("determineState: SUBMIT -> COST -> CHECKOUT", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [events.submit, events.commitCosts, events.commitQuote],
+    }),
+    DesignState.CHECKED_OUT,
+    "INITIAL -> COSTED -> CHECKED_OUT"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [events.submit, events.commitCosts, events.commitQuote],
+    }),
+    DesignState.CHECKED_OUT,
+    "expired: CHECKED_OUT"
+  );
+});
+
+test("determineState: SUBMIT -> COST -> CHECKOUT -> PAIRED", async (t: Test) => {
+  const { costInputs, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.active],
+      events: [
+        events.submit,
+        events.commitCosts,
+        events.commitQuote,
+        events.commitPartners,
+      ],
+    }),
+    DesignState.PAIRED,
+    "INITIAL -> COSTED -> CHECKED_OUT -> PAIRED"
+  );
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs: [costInputs.expired],
+      events: [
+        events.submit,
+        events.commitCosts,
+        events.commitQuote,
+        events.commitPartners,
+      ],
+    }),
+    DesignState.PAIRED,
+    "expired: PAIRED"
+  );
 });

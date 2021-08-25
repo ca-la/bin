@@ -8,6 +8,7 @@ import * as NotificationsService from "../../../services/create-notifications";
 import * as IrisService from "../../iris/send-message";
 import { moveDesign } from "../../../test-helpers/collections";
 import { findByDesignId } from "../../pricing-cost-inputs/dao";
+import { submitCollection } from "../../../test-helpers/submit-collection";
 
 test("POST /collections/:id/recost creates new not expired costings", async (t: Test) => {
   const notificationStub = sandbox()
@@ -86,4 +87,83 @@ test("POST /collections/:id/recost creates new not expired costings", async (t: 
       "finds 2 items after recosting with showExpired: true"
     );
   }
+});
+
+test("POST /:collectionId/reject", async (t: Test) => {
+  const {
+    collection,
+    collectionDesigns,
+    user: { designer, admin },
+  } = await submitCollection();
+
+  const [forbidden] = await API.post(`/collections/${collection.id}/reject`, {
+    headers: API.authHeader(designer.session.id),
+  });
+
+  t.equal(forbidden.status, 403, "Requires ADMIN role");
+
+  const [, beforeRejectStatus] = await API.get(
+    `/collections/${collection.id}/submissions`,
+    {
+      headers: API.authHeader(designer.session.id),
+    }
+  );
+
+  t.deepEqual(
+    beforeRejectStatus,
+    {
+      collectionId: collection.id,
+      isSubmitted: true,
+      isCosted: false,
+      isQuoted: false,
+      isPaired: false,
+      pricingExpiresAt: null,
+    },
+    "Returns the costed collection submission status"
+  );
+
+  const [response, body] = await API.post(
+    `/collections/${collection.id}/reject`,
+    {
+      headers: API.authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(response.status, 200, "Returns OK response");
+  t.deepEqual(
+    [
+      {
+        ...body[0],
+        type: "REJECT_DESIGN",
+        designId: collectionDesigns[0].id,
+      },
+      {
+        ...body[1],
+        type: "REJECT_DESIGN",
+        designId: collectionDesigns[1].id,
+      },
+    ],
+    body,
+    "returns the reject events for the correct designs"
+  );
+
+  const [, collectionWithStatus] = await API.get(
+    `/collections/${collection.id}/submissions`,
+    {
+      headers: API.authHeader(designer.session.id),
+    }
+  );
+
+  t.deepEqual(
+    collectionWithStatus,
+    {
+      collectionId: collection.id,
+      isSubmitted: false,
+      isCosted: false,
+      isQuoted: false,
+      isPaired: false,
+      pricingExpiresAt: null,
+    },
+    "Returns the correct collection submission status"
+  );
 });

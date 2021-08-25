@@ -50,12 +50,14 @@ function createDesignMachine(
       [DesignState.SUBMITTED]: {
         on: {
           COMMIT_COST_INPUTS: DesignState.COSTED,
+          REJECT_DESIGN: DesignState.INITIAL,
         },
       },
       [DesignState.COSTED]: {
         on: {
           COMMIT_QUOTE: DesignState.CHECKED_OUT,
           EXPIRE_COST_INPUT: DesignState.INITIAL,
+          REJECT_DESIGN: DesignState.INITIAL,
         },
       },
       [DesignState.CHECKED_OUT]: {

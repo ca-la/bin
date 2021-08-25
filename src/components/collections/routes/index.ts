@@ -47,7 +47,7 @@ import {
   putDesigns,
 } from "./designs";
 import { getCollectionPermissions } from "../../../services/get-permissions";
-import { commitCostInputs, recostInputs } from "./admin";
+import { commitCostInputs, recostInputs, rejectCollection } from "./admin";
 import {
   fetchExpiredWithLabels,
   fetchUncostedWithLabels,
@@ -398,5 +398,10 @@ router.post(
   requireAdmin,
   canAccessCollectionInParam,
   recostInputs
+);
+router.post(
+  "/:collectionId/reject",
+  requireAdmin,
+  convert.back(rejectCollection)
 );
 export default router.routes();

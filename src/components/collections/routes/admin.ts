@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import * as NotificationsService from "../../../services/create-notifications";
 import {
   commitCostInputs as commitInputs,
@@ -6,6 +8,10 @@ import {
 import * as IrisService from "../../iris/send-message";
 import { realtimeCollectionStatusUpdated } from "../realtime";
 import { determineSubmissionStatus } from "../services/determine-submission-status";
+import { StrictContext } from "../../../router-context";
+import { parseContext } from "../../../services/parse-context";
+import DesignEvent from "../../design-events/types";
+import { rejectCollection as rejectCollectionService } from "../../../services/reject-collection";
 
 async function sendCollectionStatusUpdated(
   collectionId: string
@@ -49,4 +55,29 @@ export function* recostInputs(this: AuthedContext): Iterator<any, any, any> {
   yield commitInputs(collectionId, userId);
   yield handleCommitCostInputs(collectionId, userId);
   this.status = 204;
+}
+
+interface RejectCollectionContext extends StrictContext<DesignEvent[]> {
+  state: AuthedState;
+}
+
+const rejectCollectionContextSchema = z.object({
+  state: z.object({
+    userId: z.string(),
+  }),
+  params: z.object({
+    collectionId: z.string(),
+  }),
+});
+
+export async function rejectCollection(ctx: RejectCollectionContext) {
+  const {
+    state: { userId },
+    params: { collectionId },
+  } = parseContext(ctx, rejectCollectionContextSchema);
+
+  const rejectEvents = await rejectCollectionService(collectionId, userId);
+
+  ctx.body = rejectEvents;
+  ctx.status = 200;
 }
