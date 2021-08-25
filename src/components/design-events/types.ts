@@ -56,6 +56,7 @@ export const activityStreamEventsSchema = z.enum([
   allEventsSchema.enum.COSTING_EXPIRATION,
   allEventsSchema.enum.TRACKING_CREATION,
   allEventsSchema.enum.TRACKING_UPDATE,
+  allEventsSchema.enum.REJECT_DESIGN,
 ]);
 export type ActivityStreamEventType = z.infer<
   typeof activityStreamEventsSchema
