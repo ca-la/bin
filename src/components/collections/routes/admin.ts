@@ -77,6 +77,7 @@ export async function rejectCollection(ctx: RejectCollectionContext) {
   } = parseContext(ctx, rejectCollectionContextSchema);
 
   const rejectEvents = await rejectCollectionService(collectionId, userId);
+  await sendCollectionStatusUpdated(collectionId);
   await NotificationsService.immediatelySendRejectCollection(
     collectionId,
     userId

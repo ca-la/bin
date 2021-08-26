@@ -95,6 +95,7 @@ test("POST /:collectionId/reject", async (t: Test) => {
     collectionDesigns,
     user: { designer, admin },
   } = await submitCollection();
+  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
 
   const notificationStub = sandbox()
     .stub(NotificationsService, "immediatelySendRejectCollection")
@@ -169,6 +170,39 @@ test("POST /:collectionId/reject", async (t: Test) => {
       pricingExpiresAt: null,
     },
     "Returns the correct collection submission status"
+  );
+
+  t.deepEqual(
+    irisStub.args,
+    [
+      [
+        {
+          ...irisStub.args[0][0],
+          type: "design-event/created",
+        },
+      ],
+      [
+        {
+          ...irisStub.args[1][0],
+          type: "design-event/created",
+        },
+      ],
+      [
+        {
+          type: "collection/status-updated",
+          collectionId: collection.id,
+          resource: {
+            collectionId: collection.id,
+            isSubmitted: false,
+            isCosted: false,
+            isQuoted: false,
+            isPaired: false,
+            pricingExpiresAt: null,
+          },
+        },
+      ],
+    ],
+    "sends design events and new status in realtime"
   );
 
   t.deepEqual(
