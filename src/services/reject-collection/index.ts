@@ -7,12 +7,18 @@ import {
   templateDesignEvent,
 } from "../../components/design-events/types";
 import DesignEventsDAO from "../../components/design-events/dao";
+import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import db from "../db";
+
+interface DesignIdAndCheckoutStepId {
+  designId: string;
+  checkoutStepId: string;
+}
 
 export async function rejectCollection(collectionId: string, actorId: string) {
   return db.transaction(async (trx: Knex.Transaction) => {
     const collectionDesigns = await trx("product_designs")
-      .select<{ designId: string; checkoutStepId: string }[]>([
+      .select<DesignIdAndCheckoutStepId[]>([
         "product_designs.id as designId",
         "design_approval_steps.id as checkoutStepId",
       ])
@@ -51,6 +57,14 @@ export async function rejectCollection(collectionId: string, actorId: string) {
     if (rejectEvents.length > 0) {
       await DesignEventsDAO.createAll(trx, rejectEvents);
     }
+
+    await PricingCostInputsDAO.expireCostInputs(
+      collectionDesigns.map(
+        ({ designId }: DesignIdAndCheckoutStepId) => designId
+      ),
+      new Date(),
+      trx
+    );
 
     return rejectEvents;
   });
