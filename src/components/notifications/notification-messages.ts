@@ -989,6 +989,31 @@ export async function createNotificationMessage(
       };
     }
 
+    case NotificationType.REJECT_COLLECTION: {
+      const { collectionId } = notification;
+      const collection = {
+        id: collectionId,
+        title: notification.collectionTitle,
+      };
+      const { htmlLink, deepLink } = getLinks({
+        collection,
+        type: LinkType.Collection,
+      });
+      return {
+        ...baseNotificationMessage,
+        html: `CALA has requested more information in order to cost ${htmlLink}`,
+        imageUrl: null,
+        link: deepLink,
+        location: [],
+        title: `CALA has requested more information in order to cost ${normalizeTitle(
+          collection
+        )}`,
+        text: `CALA has requested more information in order to cost ${normalizeTitle(
+          collection
+        )}`,
+      };
+    }
+
     case NotificationType.COSTING_EXPIRED: {
       const { collectionId } = notification;
       const collection = {

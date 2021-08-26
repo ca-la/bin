@@ -308,7 +308,7 @@ export default async function generateNotification(
         notification,
       };
     }
-
+    case NotificationType.REJECT_COLLECTION:
     case NotificationType.COMMIT_COST_INPUTS: {
       const notification = await create({
         ...baseNotification,

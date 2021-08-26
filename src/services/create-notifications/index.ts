@@ -123,6 +123,10 @@ import { BidRejection } from "../../components/bid-rejections/domain-object";
 import { getRecipientsByCollection } from "../../components/notifications/service";
 import { Recipient } from "../cala-component/cala-notifications";
 import { TeamUsersDAO } from "../../components/team-users";
+import {
+  isRejectCollectionNotification,
+  RejectCollectionNotification,
+} from "../../components/notifications/models/reject-collection";
 
 /**
  * Deletes pre-existing similar notifications and adds in a new one by comparing columns.
@@ -1227,6 +1231,77 @@ export async function immediatelySendFullyCostedCollection(
           notification,
           isCommitCostInputsNotification,
           `Could not validate ${NotificationType.COMMIT_COST_INPUTS} notification type from database with id: ${id}`
+        );
+
+        return validated;
+      }
+    )
+  );
+}
+
+/**
+ * Creates a notification that a collection needs more information before costing
+ */
+export async function immediatelySendRejectCollection(
+  collectionId: string,
+  actorId: string
+): Promise<RejectCollectionNotification[]> {
+  const actor = await UsersDAO.findById(actorId);
+  if (!actor) {
+    throw new Error(`User ${actorId} does not exist!`);
+  }
+
+  const collection = await CollectionsDAO.findById(collectionId);
+  if (!collection) {
+    throw new Error(`Collection ${collectionId} does not exist!`);
+  }
+
+  const recipients = await getRecipientsByCollection(db, collectionId);
+
+  return Promise.all(
+    recipients.map(
+      async (recipient: Recipient): Promise<RejectCollectionNotification> => {
+        const id = uuid.v4();
+        const notification = await NotificationsDAO.create({
+          ...templateNotification,
+          actorUserId: actor.id,
+          collectionId,
+          id,
+          sentEmailAt: recipient.recipientUserId ? new Date() : null,
+          type: NotificationType.REJECT_COLLECTION,
+          ...recipient,
+        });
+
+        const notificationMessage = await createNotificationMessage(
+          notification
+        );
+
+        if (!notificationMessage) {
+          throw new Error("Could not create notification message");
+        }
+
+        if (recipient.recipientUserId) {
+          const user = await UsersDAO.findById(recipient.recipientUserId);
+          if (!user) {
+            throw new Error(
+              `Cannot find user with ID ${recipient.recipientUserId}`
+            );
+          }
+
+          await EmailService.enqueueSend({
+            params: {
+              collection,
+              notification: notificationMessage,
+            },
+            templateName: "single_notification",
+            to: user.email,
+          });
+        }
+
+        const validated = validateTypeWithGuardOrThrow(
+          notification,
+          isRejectCollectionNotification,
+          `Could not validate ${NotificationType.REJECT_COLLECTION} notification type from database with id: ${id}`
         );
 
         return validated;

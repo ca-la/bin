@@ -1208,6 +1208,119 @@ test("immediatelySendFullyCostedCollection", async (t: tape.Test) => {
   );
 });
 
+test("immediatelySendRejectCollection", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const admin = await createUser({ withSession: false, role: "ADMIN" });
+  const userOne = await createUser({ withSession: false });
+  const userTwo = await createUser({ withSession: false });
+
+  const collection = await CollectionsDAO.create({
+    createdAt: new Date(),
+    createdBy: userOne.user.id,
+    deletedAt: null,
+    description: null,
+    id: uuid.v4(),
+    teamId: null,
+    title: "AW19",
+  });
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: userOne.user.id,
+  });
+  await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: null,
+    userId: userTwo.user.id,
+  });
+  const { collaborator: c2 } = await generateCollaborator({
+    collectionId: collection.id,
+    designId: null,
+    invitationMessage: null,
+    role: "EDIT",
+    userEmail: "test@ca.la",
+    userId: null,
+  });
+
+  const emailStub = sandbox()
+    .stub(EmailService, "enqueueSend")
+    .returns(Promise.resolve());
+
+  const notifications = await NotificationsService.immediatelySendRejectCollection(
+    collection.id,
+    admin.user.id
+  );
+
+  t.equal(
+    emailStub.callCount,
+    2,
+    "Two emails are sent, to the two users with accounts"
+  );
+
+  t.equal(
+    notifications.length,
+    3,
+    "Three notifications are created, including one to the unregistered collaborator"
+  );
+
+  t.true(
+    isEqual(
+      new Set([
+        {
+          type: notifications[0].type,
+          actorUserId: notifications[0].actorUserId,
+          recipientUserId: notifications[0].recipientUserId,
+        },
+        {
+          type: notifications[1].type,
+          actorUserId: notifications[1].actorUserId,
+          recipientUserId: notifications[1].recipientUserId,
+        },
+        {
+          type: notifications[2].type,
+          actorUserId: notifications[2].actorUserId,
+          recipientUserId: notifications[2].recipientUserId,
+          recipientCollaboratorId: notifications[2].recipientCollaboratorId,
+        },
+      ]),
+      new Set([
+        {
+          type: NotificationType.REJECT_COLLECTION,
+          actorUserId: admin.user.id,
+          recipientUserId: userOne.user.id,
+        },
+        {
+          type: NotificationType.REJECT_COLLECTION,
+          actorUserId: admin.user.id,
+          recipientUserId: userTwo.user.id,
+        },
+        {
+          type: NotificationType.REJECT_COLLECTION,
+          actorUserId: admin.user.id,
+          recipientUserId: null,
+          recipientCollaboratorId: c2.id,
+        },
+      ])
+    )
+  );
+
+  t.false(
+    isEqual(
+      new Set([notifications[0].sentEmailAt, notifications[1].sentEmailAt]),
+      new Set([null, null])
+    ),
+    "Emails are sent immediately"
+  );
+});
+
 test("immediatelySendInviteCollaborator", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")

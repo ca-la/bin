@@ -150,6 +150,12 @@ import {
   FullApprovalStepSubmissionAssignmentNotification,
 } from "../approval-step-submissions/types";
 import { FullInviteTeamUserNotification } from "../team-users/notifications";
+import {
+  RejectCollectionNotification,
+  FullRejectCollectionNotification,
+  RejectCollectionNotificationRow,
+  FullRejectCollectionNotificationRow,
+} from "./models/reject-collection";
 import { NotificationType } from "./types";
 export { NotificationType } from "./types";
 
@@ -180,6 +186,7 @@ export type Notification =
   | ApprovalStepSubmissionCommentCreateNotification
   | ApprovalStepAssignmentNotification
   | ApprovalStepSubmissionAssignmentNotification
+  | RejectCollectionNotification
   | CalaNotificationsUnion;
 
 export type FullNotification =
@@ -209,6 +216,7 @@ export type FullNotification =
   | FullShipmentTrackingUpdateNotification
   | FullApprovalStepAssignmentNotification
   | FullApprovalStepSubmissionAssignmentNotification
+  | FullRejectCollectionNotification
   | FullInviteTeamUserNotification;
 
 export type NotificationRow =
@@ -235,7 +243,8 @@ export type NotificationRow =
   | ApprovalStepCommentCreateNotificationRow
   | ApprovalStepSubmissionCommentCreateNotificationRow
   | ApprovalStepSubmissionCommentMentionNotificationRow
-  | ApprovalStepSubmissionCommentReplyNotificationRow;
+  | ApprovalStepSubmissionCommentReplyNotificationRow
+  | RejectCollectionNotificationRow;
 
 export type FullNotificationRow =
   | FullTaskCompletionNotificationRow
@@ -258,7 +267,8 @@ export type FullNotificationRow =
   | FullApprovalStepCommentCreateNotificationRow
   | FullApprovalStepSubmissionCommentCreateNotificationRow
   | FullApprovalStepSubmissionCommentMentionNotificationRow
-  | FullApprovalStepSubmissionCommentReplyNotificationRow;
+  | FullApprovalStepSubmissionCommentReplyNotificationRow
+  | FullRejectCollectionNotificationRow;
 
 type EqualKeys<T> = { [P in keyof T]: any };
 
@@ -397,6 +407,7 @@ export const INBOX_NOTIFICATION_TYPES: NotificationType[] = [
   NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST,
   NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST,
   NotificationType.COMMIT_COST_INPUTS,
+  NotificationType.REJECT_COLLECTION,
 ];
 
 export function isFullNotificationRow(

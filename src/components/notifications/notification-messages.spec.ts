@@ -320,6 +320,58 @@ test("commit cost inputs notification message", async (t: tape.Test) => {
   );
 });
 
+test("reject collection notification message", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const userOne = await createUser();
+  const { collection } = await generateCollection({
+    createdBy: userOne.user.id,
+    title: "test collection",
+  });
+
+  const { recipient } = await generateNotification({
+    actorUserId: userOne.user.id,
+    collectionId: collection.id,
+    type: NotificationType.REJECT_COLLECTION,
+  });
+  const { collection: delCollection } = await generateNotification({
+    actorUserId: userOne.user.id,
+    recipientUserId: recipient.id,
+    type: NotificationType.REJECT_COLLECTION,
+  });
+  const notifications = await db.transaction(async (trx: Knex.Transaction) => {
+    await CollectionsDAO.deleteById(trx, delCollection.id);
+    return findByUserId(trx, recipient.id, { limit: 20, offset: 0 });
+  });
+
+  t.is(notifications.length, 1);
+  const rejectCollectionNotification = notifications[0];
+  const message = await createNotificationMessage(rejectCollectionNotification);
+  if (!message) {
+    throw new Error("Did not create message");
+  }
+
+  t.assert(
+    message.html.includes("test collection"),
+    "message html contains the collection title"
+  );
+  t.assert(
+    message.text.includes("test collection"),
+    "message text contains the collection title"
+  );
+  t.assert(
+    message.actor && message.actor.id === userOne.user.id,
+    "message.actor && message.actor.id is the user"
+  );
+  t.assert(
+    message.html.indexOf(
+      `<a href="${STUDIO_HOST}/collections/${collection.id}/designs">`
+    ) !== -1,
+    "message link goes to correct collection"
+  );
+});
+
 test("invite existing-user collaborator notification message", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")

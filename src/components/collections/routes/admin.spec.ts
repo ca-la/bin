@@ -96,6 +96,10 @@ test("POST /:collectionId/reject", async (t: Test) => {
     user: { designer, admin },
   } = await submitCollection();
 
+  const notificationStub = sandbox()
+    .stub(NotificationsService, "immediatelySendRejectCollection")
+    .resolves();
+
   const [forbidden] = await API.post(`/collections/${collection.id}/reject`, {
     headers: API.authHeader(designer.session.id),
   });
@@ -165,5 +169,11 @@ test("POST /:collectionId/reject", async (t: Test) => {
       pricingExpiresAt: null,
     },
     "Returns the correct collection submission status"
+  );
+
+  t.deepEqual(
+    notificationStub.args,
+    [[collection.id, admin.user.id]],
+    "sends rejection notification"
   );
 });
