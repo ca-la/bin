@@ -32,7 +32,7 @@ export async function findAndDuplicateDesign(
       omit(
         design,
         "collections",
-        "imageIds",
+        "imageAssets",
         "imageLinks",
         "approvalSteps",
         "progress",

@@ -6,7 +6,7 @@ const { requireProperties } = require("../../../services/require-properties");
 const ApprovalStepAdapter = require("../../approval-steps/adapter").default;
 
 const {
-  generatePreviewLinks,
+  generatePreviewLinksFromDesignImageAssets,
 } = require("../../../services/attach-asset-links");
 
 const keyNamesByColumnName = {
@@ -19,7 +19,7 @@ const keyNamesByColumnName = {
   metadata: "metadata",
   user_id: "userId",
 
-  image_ids: "imageIds",
+  image_assets: "imageAssets",
   // string[] - urls of each section preview
   preview_image_urls: "previewImageUrls",
   collections: "collections",
@@ -47,7 +47,9 @@ class ProductDesign {
     requireProperties(row, "id");
 
     const data = dataMapper.rowDataToUserData(row);
-    const imageLinks = generatePreviewLinks(data.imageIds);
+    const imageLinks = generatePreviewLinksFromDesignImageAssets(
+      data.imageAssets
+    );
     const previewImageUrls = imageLinks.map((imageLink) => {
       return imageLink.previewLink;
     });

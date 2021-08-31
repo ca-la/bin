@@ -86,7 +86,7 @@ export function getBuilder({
       "designsfortasksviewraw.id as design_id",
       "designsfortasksviewraw.created_at as design_created_at",
       "designsfortasksviewraw.title as design_title",
-      "designsfortasksviewraw.image_ids as image_ids",
+      "designsfortasksviewraw.image_assets as image_assets",
       "collectionsfortasksviewraw.id as collection_id",
       "collectionsfortasksviewraw.title as collection_title",
       "collectionsfortasksviewraw.created_at as collection_created_at"
@@ -186,7 +186,7 @@ export function getBuilder({
     designsfortasksviewraw.id,
     designsfortasksviewraw.title,
     designsfortasksviewraw.created_at,
-    designsfortasksviewraw.image_ids,
+    designsfortasksviewraw.image_assets,
     collectionsfortasksviewraw.id,
     collectionsfortasksviewraw.title,
     collectionsfortasksviewraw.created_at

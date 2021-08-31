@@ -5,8 +5,8 @@ import { TaskEvent, TaskStatus } from "@cala/ts-lib";
 import DataAdapter from "../services/data-adapter";
 import { hasOnlyProperties } from "../services/require-properties";
 import {
-  generatePreviewLinks,
-  generateThumbnailLinks,
+  generatePreviewLinksFromDesignImageAssets,
+  generateThumbnailLinksFromDesignImageAssets,
   ThumbnailAndPreviewLinks,
 } from "../services/attach-asset-links";
 import { encode as encodeCollaborator } from "../components/collaborators/domain-objects/collaborator";
@@ -14,6 +14,7 @@ import Collaborator, {
   CollaboratorWithUser,
   CollaboratorWithUserRow,
 } from "../components/collaborators/types";
+import { DesignImageAsset } from "../components/assets/types";
 
 export interface RelatedResourceMeta {
   id: string | null;
@@ -41,7 +42,7 @@ export interface DetailsTaskAdaptedRow extends Omit<TaskEvent, "taskId"> {
   collectionCreatedAt: string | null;
   lastModifiedAt: Date;
   commentCount: number;
-  imageIds: string[] | null;
+  imageAssets: DesignImageAsset[];
 }
 
 export interface DetailsTaskWithAssigneesAdaptedRow
@@ -63,7 +64,7 @@ export const createDetailsTask = (
     collectionTitle,
     collectionCreatedAt,
     commentCount,
-    imageIds,
+    imageAssets,
     ...task
   } = data;
   return {
@@ -77,8 +78,12 @@ export const createDetailsTask = (
     design: {
       createdAt: designCreatedAt ? new Date(designCreatedAt) : null,
       id: designId,
-      previewImageUrls: imageIds ? generateThumbnailLinks(imageIds) : null,
-      imageLinks: imageIds ? generatePreviewLinks(imageIds) : null,
+      previewImageUrls: imageAssets
+        ? generateThumbnailLinksFromDesignImageAssets(imageAssets)
+        : null,
+      imageLinks: imageAssets
+        ? generatePreviewLinksFromDesignImageAssets(imageAssets)
+        : null,
       title: designTitle,
     },
     designStage: {
@@ -156,7 +161,7 @@ export interface DetailTaskEventRow extends TaskEventRow {
   collection_id: string | null;
   collection_title: string | null;
   comment_count: number;
-  image_ids: string[] | null;
+  image_assets: DesignImageAsset[];
   last_modified_at: string;
 }
 
@@ -187,7 +192,7 @@ export function isDetailTaskRow(
     "collection_id",
     "collection_title",
     "comment_count",
-    "image_ids",
+    "image_assets",
     "ordering"
   );
 }
@@ -221,7 +226,7 @@ export function isDetailTaskWithAssigneeRow(
     "collection_title",
     "collection_created_at",
     "comment_count",
-    "image_ids",
+    "image_assets",
     "ordering"
   );
 }
@@ -252,7 +257,7 @@ const encode = (
     designTitle: data.design_title,
     dueDate: data.due_date,
     id: data.id,
-    imageIds: data.image_ids,
+    imageAssets: data.image_assets,
     ordering: data.ordering,
     status: data.status,
     title: data.title,

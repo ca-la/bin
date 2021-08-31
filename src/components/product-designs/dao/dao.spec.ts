@@ -150,8 +150,8 @@ test("ProductDesignsDAO supports creation/retrieval, enriched with image links",
     throw new Error("Design should have been created!");
   }
   t.deepEqual(
-    result.imageIds,
-    [sketch.id],
+    result.imageAssets,
+    [{ id: sketch.id, page: null }],
     "Returns the associated image ids for the design"
   );
   t.equal(
@@ -195,7 +195,7 @@ test("ProductDesignsDAO supports creation/retrieval, enriched with image links",
     throw new Error("Cannot find Design!");
   }
   t.deepEqual(
-    secondFetch.imageIds,
+    secondFetch.imageAssets,
     [],
     "If a canvas gets deleted, the image id list should update accordingly."
   );
@@ -460,7 +460,11 @@ test("findAllDesignsThroughCollaboratorAndTeam does not double product design im
     userId: user.id,
   });
 
-  t.deepEqual(found[0].imageIds, [asset.id], "does not duplicate image ids");
+  t.deepEqual(
+    found[0].imageAssets,
+    [{ id: asset.id, page: null }],
+    "does not duplicate image ids"
+  );
 });
 
 test("findAllDesignsThroughCollaboratorAndTeam finds all designs with a search string", async (t: tape.Test) => {
@@ -1364,7 +1368,13 @@ test("findAllWithCostsAndEvents base cases", async (t: tape.Test) => {
     results,
     [
       {
-        ...omit(d1, "collectionIds", "collections", "imageIds", "imageLinks"),
+        ...omit(
+          d1,
+          "collectionIds",
+          "collections",
+          "imageAssets",
+          "imageLinks"
+        ),
         collectionId: c1.id,
         costInputs: [],
         events: [],
@@ -1383,14 +1393,26 @@ test("findAllWithCostsAndEvents base cases", async (t: tape.Test) => {
     results3,
     [
       {
-        ...omit(d2, "collectionIds", "collections", "imageIds", "imageLinks"),
+        ...omit(
+          d2,
+          "collectionIds",
+          "collections",
+          "imageAssets",
+          "imageLinks"
+        ),
         collectionId: c1.id,
         costInputs: [],
         events: [],
         previewImageUrls: null,
       },
       {
-        ...omit(d1, "collectionIds", "collections", "imageIds", "imageLinks"),
+        ...omit(
+          d1,
+          "collectionIds",
+          "collections",
+          "imageAssets",
+          "imageLinks"
+        ),
         collectionId: c1.id,
         costInputs: [],
         events: [],
@@ -1446,7 +1468,7 @@ test("findAllWithCostsAndEvents +1 case", async (t: tape.Test) => {
   t.deepEqual(
     omit(results[0], "costInputs", "events"),
     {
-      ...omit(d2, "collectionIds", "collections", "imageIds", "imageLinks"),
+      ...omit(d2, "collectionIds", "collections", "imageAssets", "imageLinks"),
       collectionId: c1.id,
       previewImageUrls: null,
     },
@@ -1476,7 +1498,7 @@ test("findAllWithCostsAndEvents +1 case", async (t: tape.Test) => {
   t.deepEqual(
     omit(results[1], "costInputs", "events"),
     {
-      ...omit(d1, "collectionIds", "collections", "imageIds", "imageLinks"),
+      ...omit(d1, "collectionIds", "collections", "imageAssets", "imageLinks"),
       collectionId: c1.id,
       previewImageUrls: null,
     },
@@ -1927,7 +1949,13 @@ test("findBaseById", async (t: Test) => {
   t.deepEqual(
     await findBaseById(db, design.id),
     {
-      ...omit(design, "collectionIds", "collections", "imageIds", "imageLinks"),
+      ...omit(
+        design,
+        "collectionIds",
+        "collections",
+        "imageAssets",
+        "imageLinks"
+      ),
       previewImageUrls: [],
     },
     "finds existing design"

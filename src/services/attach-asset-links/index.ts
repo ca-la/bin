@@ -3,7 +3,10 @@ import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from "../../config";
 import { Component } from "../../components/components/types";
 import { isPreviewable } from "../../services/is-previewable";
 import { getExtension } from "../../services/get-extension";
-import Asset, { AssetLinks } from "../../components/assets/types";
+import Asset, {
+  AssetLinks,
+  DesignImageAsset,
+} from "../../components/assets/types";
 import getAsset from "../../components/components/get-asset";
 
 interface ImgixOptions {
@@ -185,10 +188,45 @@ export function generatePreviewLinks(
   );
 }
 
+export function generatePreviewLinksFromDesignImageAssets(
+  imageAssets: DesignImageAsset[]
+): ThumbnailAndPreviewLinks[] {
+  return imageAssets.map(
+    (imageAsset: {
+      id: string;
+      page: number | null;
+    }): ThumbnailAndPreviewLinks => {
+      return {
+        previewLink: buildImgixLink(imageAsset.id, {
+          ...PREVIEW_CARD_FORMAT,
+          pageNumber: imageAsset.page,
+        }),
+        thumbnailLink: buildImgixLink(imageAsset.id, {
+          ...THUMBNAIL_FORMAT,
+          pageNumber: imageAsset.page,
+        }),
+      };
+    }
+  );
+}
+
 export function generateThumbnailLinks(imageIds: string[]): string[] {
   return imageIds.map((imageId: string): string => {
     return buildImgixLink(imageId, THUMBNAIL_FORMAT);
   });
+}
+
+export function generateThumbnailLinksFromDesignImageAssets(
+  imageAssets: DesignImageAsset[]
+): string[] {
+  return imageAssets.map(
+    (imageAsset: { id: string; page: number | null }): string => {
+      return buildImgixLink(imageAsset.id, {
+        ...THUMBNAIL_FORMAT,
+        pageNumber: imageAsset.page,
+      });
+    }
+  );
 }
 
 export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {

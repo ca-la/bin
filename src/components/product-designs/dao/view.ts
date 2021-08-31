@@ -10,15 +10,43 @@ export function queryWithCollectionMeta(
   return dbInstance(TABLE_NAME)
     .select(
       db.raw(`
-product_designs.*,
-array_to_json(array_remove(
-    array[case when collections.id is not null
-        then jsonb_build_object('id', collections.id, 'title', collections.title)
-    end],
-    null
-)) as collections,
-array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
-    `)
+        product_designs.*,
+        array_to_json(array_remove(
+            array[case when collections.id is not null
+                then jsonb_build_object('id', collections.id, 'title', collections.title)
+            end],
+            null
+        )) as collections
+      `),
+      db.raw(`
+        to_jsonb(
+          ARRAY (
+            SELECT
+              jsonb_build_object(
+                'id', assets.id, 'page', co.asset_page_number
+              )
+            FROM
+              canvases AS c
+              JOIN components as co on co.id = c.component_id
+              and co.deleted_at is null
+              JOIN assets on assets.id = co.sketch_id
+              and assets.deleted_at IS NULL
+              and assets.upload_completed_at IS NOT NULL
+            WHERE
+              c.design_id = product_designs.id
+              and c.archived_at is null
+              and c.deleted_at is null
+            GROUP BY
+              assets.id,
+              co.asset_page_number,
+              c.ordering
+            ORDER BY
+              c.ordering
+            LIMIT
+              2
+          )
+        ) AS image_assets
+      `)
     )
     .leftJoin(
       "collection_designs",
@@ -29,28 +57,6 @@ array_remove(array_agg(pdi.id ORDER BY c.ordering ASC), null) AS image_ids
       join
         .on("collections.id", "=", "collection_designs.collection_id")
         .andOnNull("collections.deleted_at")
-    )
-    .joinRaw(
-      `
-LEFT JOIN (SELECT * FROM canvases AS c WHERE c.deleted_at IS null AND archived_at IS null) AS c
-ON c.design_id = product_designs.id
-    `
-    )
-    .joinRaw(
-      `
-LEFT JOIN (SELECT * FROM components AS co WHERE co.deleted_at IS null) AS co
-ON co.id = c.component_id
-    `
-    )
-    .joinRaw(
-      `
-LEFT JOIN (
-  SELECT * FROM product_design_images AS pdi
-   WHERE pdi.deleted_at IS NULL
-     AND pdi.upload_completed_at IS NOT NULL
-) AS pdi
-ON pdi.id = co.sketch_id
-    `
     )
     .groupBy(["product_designs.id", "collections.id", "collections.title"])
     .orderBy("product_designs.created_at", "desc")

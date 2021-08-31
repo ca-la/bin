@@ -37,7 +37,7 @@ export default async function findAndDuplicateTemplateDesign(
       omit(
         design,
         "collections",
-        "imageIds",
+        "imageAssets",
         "imageLinks",
         "approvalSteps",
         "progress",

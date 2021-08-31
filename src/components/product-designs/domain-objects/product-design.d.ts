@@ -1,4 +1,5 @@
 import { ThumbnailAndPreviewLinks } from "../../../services/attach-asset-links";
+import { DesignImageAsset } from "../../../components/assets/types";
 
 declare class ProductDesign {
   public id: string;
@@ -11,7 +12,7 @@ declare class ProductDesign {
   public previewImageUrls?: string[]; // DEPRECATED; use imageLinks instead.
   public collections?: { id: string; title: string }[];
   public collectionIds?: string[];
-  public imageIds?: string[];
+  public imageAssets?: DesignImageAsset[];
   public imageLinks?: ThumbnailAndPreviewLinks[];
   public bidId?: string;
   public collaboratorRoles?: string[];
