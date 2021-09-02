@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { approvalStepSchema } from "../../published-types";
+import { approvalStepSchema } from "../approval-steps/types";
 
 export const baseProductDesignSchema = z.object({
   id: z.string(),
