@@ -4,6 +4,7 @@ import uuid from "node-uuid";
 import * as BidsDAO from "../../components/bids/dao";
 import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
+import TeamUsersDAO from "../../components/team-users/dao";
 import { Bid, BidCreationPayload } from "../../components/bids/types";
 import InvalidDataError from "../../errors/invalid-data";
 import { findIdByQuoteId } from "../../components/product-designs/dao/dao";
@@ -14,6 +15,7 @@ import { create as createDesignEvent } from "../../components/design-events/dao"
 import { MILLISECONDS_TO_EXPIRE } from "../../components/bids/constants";
 import * as NotificationsService from "../create-notifications";
 import ConflictError from "../../errors/conflict";
+import { PARTNER_TEAM_BID_PREVIEWERS } from "../../components/team-users/types";
 
 interface Assignment {
   bidId: string;
@@ -150,6 +152,23 @@ async function assignTeam(
     targetTeamId: targetId,
     type: "BID_DESIGN",
   });
+
+  const bidPreviewers = await TeamUsersDAO.find(
+    trx,
+    { teamId: targetId },
+    (query: Knex.QueryBuilder) =>
+      query.whereIn("team_users.role", PARTNER_TEAM_BID_PREVIEWERS)
+  );
+
+  for (const previewer of bidPreviewers) {
+    if (previewer.userId) {
+      NotificationsService.sendPartnerDesignBid(
+        designId,
+        actorId,
+        previewer.userId
+      );
+    }
+  }
 }
 
 export async function createBid(

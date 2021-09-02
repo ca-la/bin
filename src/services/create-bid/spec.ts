@@ -10,6 +10,7 @@ import * as HasActiveBidsService from "../../components/bids/services/has-active
 import * as DesignEventsDAO from "../../components/design-events/dao";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as NotificationsService from "../create-notifications";
+import TeamUsersDAO from "../../components/team-users/dao";
 
 import { createBid } from "./index";
 import { BidCreationPayload } from "../../components/bids/types";
@@ -39,6 +40,10 @@ function setup() {
     findTeamCollaboratorStub: sandbox()
       .stub(CollaboratorsDAO, "findByDesignAndTeam")
       .resolves(null),
+    findTeamUsersStub: sandbox()
+      .stub(TeamUsersDAO, "find")
+      .resolves([{ userId: "u1" }, { userId: "u2" }]),
+
     createCollaboratorStub: sandbox()
       .stub(CollaboratorsDAO, "create")
       .resolves(),
@@ -175,6 +180,8 @@ test("createBid with team assignee", async (t: Test) => {
     createDesignEventStub,
     bidTaskTypeCreateStub,
     createCollaboratorStub,
+    findTeamUsersStub,
+    notificationStub,
   } = setup();
 
   const trx = await db.transaction();
@@ -275,5 +282,29 @@ test("createBid with team assignee", async (t: Test) => {
       ],
     ],
     "calls Collaborator.create with correct arguments"
+  );
+
+  t.deepEqual(
+    findTeamUsersStub.args,
+    [
+      [
+        trx,
+        {
+          teamId: "a-partner-team-id",
+        },
+        // that's an inline function, so there's no simpler way to emulate it
+        findTeamUsersStub.args[0][2],
+      ],
+    ],
+    "calls TeamUsersDAO.find with correct arguments"
+  );
+
+  t.deepEqual(
+    notificationStub.args,
+    [
+      ["a-design-id", "a-user-id", "u1"],
+      ["a-design-id", "a-user-id", "u2"],
+    ],
+    "calls Notification service with correct arguments"
   );
 });
