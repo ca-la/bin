@@ -83,3 +83,38 @@ test("DesignAndEnvironment returns design, collection and canvases", async (t: T
     },
   });
 });
+
+test("GetProductDesignList", async (t: Test) => {
+  const { session, user } = await createUser();
+  const { design, collection } = await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($offset: Int!, $limit: Int) {
+        productDesigns(offset: $offset, limit: $limit) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: { offset: 0, limit: 10 },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      productDesigns: [
+        {
+          id: design.id,
+          title: design.title,
+          collections: [{ id: collection.id, title: collection.title }],
+        },
+      ],
+    },
+  });
+});

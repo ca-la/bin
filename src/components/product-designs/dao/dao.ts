@@ -66,6 +66,7 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
   search?: string;
   sortBy?: string;
   filters?: DesignFilter[];
+  trx?: Knex.Transaction;
 }): Promise<ProductDesignWithApprovalSteps[]> {
   const TEAM_USER_EDITOR_ROLES = Object.entries(
     TEAM_USER_ROLE_TO_COLLABORATOR_ROLE
@@ -182,6 +183,11 @@ export async function findAllDesignsThroughCollaboratorAndTeam(options: {
       if (options.sortBy) {
         const [column, direction] = options.sortBy.split(":");
         query.clearOrder().orderBy(column, direction || "asc");
+      }
+    })
+    .modify((query: Knex.QueryBuilder): void => {
+      if (options.trx) {
+        query.transacting(options.trx);
       }
     })
     .modify((query: Knex.QueryBuilder): void => {

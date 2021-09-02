@@ -1,14 +1,20 @@
+import { z } from "zod";
 import {
   GraphQLType,
   schemaToGraphQLType,
 } from "../../../apollo/published-types";
-import { baseProductDesignSchema, BaseProductDesign } from "../types";
+import {
+  baseProductDesignSchema,
+  BaseProductDesign,
+  productDesignSchema,
+} from "../types";
 import { CollectionDb } from "../../collections/types";
 import {
   CanvasWithEnrichedComponents,
   canvasWithEnrichedComponentsSchema,
   componentWithAssetLinksSchema,
 } from "../../canvases/types";
+import { baseApprovalStepSchema } from "../../approval-steps/types";
 
 export interface DesignAndEnvironmentParent {
   designId: string;
@@ -56,3 +62,29 @@ export interface DesignAndEnvironment extends DesignAndEnvironmentParent {
   collection: CollectionDb;
   canvases: CanvasWithEnrichedComponents[];
 }
+
+export const gtCollectionMeta = schemaToGraphQLType(
+  "CollectionMeta",
+  z.object({ id: z.string(), title: z.string().nullable() })
+);
+
+export const gtApprovalStep = schemaToGraphQLType(
+  "ApprovalStep",
+  baseApprovalStepSchema
+);
+
+export const gtProductDesign: GraphQLType = schemaToGraphQLType(
+  "ProductDesign",
+  productDesignSchema,
+  {
+    depTypes: {
+      collections: gtCollectionMeta,
+      approvalSteps: gtApprovalStep,
+    },
+    bodyPatch: {
+      previewImageUrls: "[String]!",
+      imageLinks: "[String]!",
+      collectionIds: "[String]",
+    },
+  }
+);

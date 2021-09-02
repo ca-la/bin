@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { approvalStepSchema } from "../../published-types";
 
 export const baseProductDesignSchema = z.object({
   id: z.string(),
@@ -35,3 +36,20 @@ export const baseProductDesignRowSchema = z.object({
 });
 
 export type BaseProductDesignRow = z.infer<typeof baseProductDesignRowSchema>;
+
+export const productDesignSchema = z.object({
+  id: z.string(),
+  createdAt: z.date(),
+  deletedAt: z.date().nullable(),
+  title: z.string(),
+  productType: z.string().nullable(),
+  userId: z.string(),
+  description: z.string().nullable(),
+  previewImageUrls: z.array(z.string()),
+  imageLinks: z.array(z.string()),
+  collections: z
+    .array(z.object({ id: z.string(), title: z.string().nullable() }))
+    .optional(),
+  collectionIds: z.array(z.string()).optional(),
+  approvalSteps: z.array(approvalStepSchema).optional(),
+});
