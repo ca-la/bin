@@ -32,28 +32,10 @@ import {
 } from "../../approval-steps/types";
 import { TEAM_USER_ROLE_TO_COLLABORATOR_ROLE } from "../../team-users/types";
 import { Roles } from "../../../published-types";
-import { BaseProductDesign } from "../types";
+import { BaseProductDesign, DesignFilter } from "../types";
 import { baseAdapter } from "../adapter";
 
 export const TABLE_NAME = "product_designs";
-
-export type DesignFilter =
-  | {
-      type: "TEAM";
-      value: string | null;
-    }
-  | {
-      type: "COLLECTION";
-      value: "*" | string;
-    }
-  | {
-      type: "STEP";
-      value: ApprovalStepType;
-    }
-  | {
-      type: "STAGE";
-      value: "COMPLETED" | "INCOMPLETE" | "CHECKED_OUT";
-    };
 
 /**
  * Find all designs that the user is a collaborator on.

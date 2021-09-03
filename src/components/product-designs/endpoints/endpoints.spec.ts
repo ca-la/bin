@@ -1,10 +1,11 @@
 import { pick } from "lodash";
-import { test, Test } from "../../../test-helpers/fresh";
+import { test, Test, sandbox } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import { authHeader, post } from "../../../test-helpers/http";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import createCollectionDesign from "../../../test-helpers/factories/collection-design";
 import generateCanvas from "../../../test-helpers/factories/product-design-canvas";
+import * as ProductDesignsDAO from "../dao/dao";
 
 function buildRequest(designId: string) {
   return {
@@ -84,15 +85,15 @@ test("DesignAndEnvironment returns design, collection and canvases", async (t: T
   });
 });
 
-test("GetProductDesignList", async (t: Test) => {
+test("GetProductDesignList: valid: no arguments", async (t: Test) => {
   const { session, user } = await createUser();
   const { design, collection } = await createCollectionDesign(user.id);
 
   const [response, body] = await post("/v2", {
     body: {
       operationName: "pd",
-      query: `query pd($offset: Int!, $limit: Int) {
-        productDesigns(offset: $offset, limit: $limit) {
+      query: `query pd {
+        productDesigns {
           id
           title
           collections {
@@ -101,7 +102,6 @@ test("GetProductDesignList", async (t: Test) => {
           }
         }
       }`,
-      variables: { offset: 0, limit: 10 },
     },
     headers: authHeader(session.id),
   });
@@ -117,4 +117,203 @@ test("GetProductDesignList", async (t: Test) => {
       ],
     },
   });
+});
+
+test("GetProductDesignList: valid: offset/limit", async (t: Test) => {
+  const { session, user } = await createUser();
+  await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($limit: Int!, $offset: Int!) {
+        productDesigns(input: { limit: $limit, offset: $offset }) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: {
+        limit: 1,
+        offset: 20,
+      },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      productDesigns: [],
+    },
+  });
+});
+
+test("GetProductDesignList: valid: offset/limit with valid filters", async (t: Test) => {
+  const findDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
+    .resolves([]);
+  const { session, user } = await createUser();
+  await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
+        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: {
+        limit: 1,
+        offset: 20,
+        filters: [{ type: "TEAM", value: "a-team-id" }],
+      },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      productDesigns: [],
+    },
+  });
+
+  t.deepEqual(findDesignsStub.args, [
+    [
+      {
+        filters: [{ type: "TEAM", value: "a-team-id" }],
+        limit: 1,
+        offset: 20,
+        userId: user.id,
+        trx: findDesignsStub.args[0][0].trx,
+      },
+    ],
+  ]);
+});
+
+test("GetProductDesignList: invalid: invalid filters", async (t: Test) => {
+  const findDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
+    .resolves([]);
+  const { session, user } = await createUser();
+  await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
+        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: {
+        limit: 1,
+        offset: 20,
+        filters: [
+          { type: "unknown filter type", value: "valid graphql, invalid zod" },
+        ],
+      },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.equal(body.data.productDesigns, null, "returns null data");
+  t.equal(
+    body.errors[0].extensions.code,
+    "BAD_USER_INPUT",
+    "returns correct code"
+  );
+  t.equal(body.errors[0].message, "Invalid query arguments");
+  t.deepEqual(findDesignsStub.args, []);
+});
+
+test("GetProductDesignList: invalid: negative offset", async (t: Test) => {
+  const findDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
+    .resolves([]);
+  const { session, user } = await createUser();
+  await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
+        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: {
+        limit: 1,
+        offset: -1,
+        filters: [],
+      },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.equal(body.data.productDesigns, null, "returns null data");
+  t.equal(
+    body.errors[0].extensions.code,
+    "BAD_USER_INPUT",
+    "returns correct code"
+  );
+  t.equal(body.errors[0].message, "Invalid query arguments");
+  t.deepEqual(findDesignsStub.args, []);
+});
+
+test("GetProductDesignList: invalid: negative limit", async (t: Test) => {
+  const findDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
+    .resolves([]);
+  const { session, user } = await createUser();
+  await createCollectionDesign(user.id);
+
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: "pd",
+      query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
+        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+          id
+          title
+          collections {
+            id
+            title
+          }
+        }
+      }`,
+      variables: {
+        limit: -1,
+        offset: 0,
+        filters: [],
+      },
+    },
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+  t.equal(body.data.productDesigns, null, "returns null data");
+  t.equal(
+    body.errors[0].extensions.code,
+    "BAD_USER_INPUT",
+    "returns correct code"
+  );
+  t.equal(body.errors[0].message, "Invalid query arguments");
+  t.deepEqual(findDesignsStub.args, []);
 });

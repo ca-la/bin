@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { approvalStepSchema } from "../approval-steps/types";
+import {
+  approvalStepSchema,
+  approvalStepTypeSchema,
+} from "../approval-steps/types";
 
 export const baseProductDesignSchema = z.object({
   id: z.string(),
@@ -53,3 +56,22 @@ export const productDesignSchema = z.object({
   collectionIds: z.array(z.string()).optional(),
   approvalSteps: z.array(approvalStepSchema).optional(),
 });
+
+export const designFilterSchema = z.union([
+  z.object({ type: z.literal("TEAM"), value: z.string().nullable() }),
+  z.object({
+    type: z.literal("COLLECTION"),
+    value: z.union([z.literal("*"), z.string()]),
+  }),
+  z.object({ type: z.literal("STEP"), value: approvalStepTypeSchema }),
+  z.object({
+    type: z.literal("STAGE"),
+    value: z.union([
+      z.literal("COMPLETED"),
+      z.literal("INCOMPLETE"),
+      z.literal("CHECKED_OUT"),
+    ]),
+  }),
+]);
+
+export type DesignFilter = z.infer<typeof designFilterSchema>;

@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   GraphQLContextAuthenticated,
   GraphQLEndpoint,
@@ -5,14 +6,34 @@ import {
   Middleware,
   UserInputError,
 } from "../../../apollo";
-import { gtCollectionMeta, gtProductDesign } from "./graphql-types";
+import {
+  gtCollectionMeta,
+  gtDesignFilter,
+  gtDesignListInput,
+  gtProductDesign,
+} from "./graphql-types";
 import * as ProductDesignsDAO from "../dao/dao";
 import ProductDesign from "../domain-objects/product-design";
+import { designFilterSchema } from "../types";
+
+interface UncheckedDesignFilter {
+  type: string;
+  value: string | null;
+}
 
 interface GetProductDesignListArgs {
   limit: number;
   offset: number;
+  filters: UncheckedDesignFilter[];
 }
+
+const argSchema = z.object({
+  input: z.object({
+    limit: z.number().min(0),
+    offset: z.number().min(0),
+    filters: z.array(designFilterSchema),
+  }),
+});
 
 type GetProductDesignListResult = ProductDesign[];
 
@@ -22,9 +43,9 @@ export const GetProductDesignList: GraphQLEndpoint<
   GraphQLContextAuthenticated<GetProductDesignListResult>
 > = {
   endpointType: "Query",
-  types: [gtCollectionMeta, gtProductDesign],
+  types: [gtDesignFilter, gtDesignListInput, gtCollectionMeta, gtProductDesign],
   name: "productDesigns",
-  signature: "(limit: Int = 20, offset: Int = 20): [ProductDesign]",
+  signature: "(input: DesignListInput! = {}): [ProductDesign]",
   middleware: requireAuth as Middleware<
     GetProductDesignListArgs,
     GraphQLContextAuthenticated<GetProductDesignListResult>,
@@ -35,17 +56,22 @@ export const GetProductDesignList: GraphQLEndpoint<
     args: GetProductDesignListArgs,
     context: GraphQLContextAuthenticated<GetProductDesignListResult>
   ) => {
-    const { limit, offset } = args;
+    const argResult = argSchema.safeParse(args);
+
+    if (!argResult.success) {
+      throw new UserInputError("Invalid query arguments", {
+        issues: argResult.error.issues,
+      });
+    }
+
+    const { limit, offset, filters } = argResult.data.input;
     const {
       trx,
       session: { userId },
     } = context;
 
-    if ((limit && limit < 0) || (offset && offset < 0)) {
-      throw new UserInputError("Offset / Limit cannot be negative!");
-    }
-
     return ProductDesignsDAO.findAllDesignsThroughCollaboratorAndTeam({
+      filters,
       limit,
       offset,
       userId,

@@ -88,3 +88,22 @@ export const gtProductDesign: GraphQLType = schemaToGraphQLType(
     },
   }
 );
+
+export const gtDesignFilter: GraphQLType = {
+  name: "DesignFilter",
+  type: "input",
+  body: {
+    type: "String!",
+    value: "String",
+  },
+};
+
+export const gtDesignListInput: GraphQLType = {
+  name: "DesignListInput",
+  type: "input",
+  body: {
+    limit: "Int = 20",
+    offset: "Int = 0",
+    filters: "[DesignFilter] = []",
+  },
+};
