@@ -38,6 +38,22 @@ export async function attachDesignFromCanvasId<
   };
 }
 
+export async function attachDesignFromAnnotationInput<
+  Args extends { annotation: { canvasId: string } },
+  Result
+>(args: Args, context: GraphQLContextBase<Result>) {
+  const canvas = await CanvasesDAO.findById(args.annotation.canvasId);
+  if (!canvas) {
+    throw new NotFoundError(
+      `Could not find canvas ${args.annotation.canvasId}`
+    );
+  }
+  return {
+    ...context,
+    designId: canvas.designId,
+  };
+}
+
 export async function attachDesignFromFilter<
   Args extends { filter: any },
   Result

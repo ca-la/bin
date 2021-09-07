@@ -1,8 +1,7 @@
 import { GraphQLContextBase, GraphQLEndpoint } from "../../../apollo";
-import {
-  CanvasAndEnvironmentParent,
-  gtProductDesignCanvasAnnotation,
-} from "./graphql-types";
+import { CanvasAndEnvironmentParent } from "./graphql-types";
+import { gtProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/graphql-types";
+
 import { ProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/types";
 import * as AnnotationsDAO from "../../product-design-canvas-annotations/dao";
 

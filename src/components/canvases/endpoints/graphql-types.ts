@@ -2,10 +2,7 @@ import {
   GraphQLType,
   schemaToGraphQLType,
 } from "../../../apollo/published-types";
-import {
-  ProductDesignCanvasAnnotation,
-  productDesignCanvasAnnotationSchema,
-} from "../../product-design-canvas-annotations/types";
+import { ProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/types";
 import {
   ProductDesignCanvasMeasurement,
   productDesignCanvasMeasurementSchema,
@@ -14,11 +11,6 @@ import {
 export interface CanvasAndEnvironmentParent {
   canvasId: string;
 }
-
-export const gtProductDesignCanvasAnnotation = schemaToGraphQLType(
-  "ProductDesignCanvasAnnotation",
-  productDesignCanvasAnnotationSchema
-);
 
 export const gtProductDesignCanvasMeasurement = schemaToGraphQLType(
   "ProductDesignCanvasMeasurement",
