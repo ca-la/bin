@@ -401,7 +401,13 @@ export async function removeTeamUser(
 
   const isRoleFree = FREE_TEAM_USER_ROLES.includes(teamUser.role);
   if (!isRoleFree) {
-    await removeStripeSeatCharge(trx, teamUser.teamId);
+    try {
+      await removeStripeSeatCharge(trx, teamUser.teamId);
+    } catch (error) {
+      if (!(error instanceof InsufficientPlanError)) {
+        throw error;
+      }
+    }
   }
 
   return deleted;

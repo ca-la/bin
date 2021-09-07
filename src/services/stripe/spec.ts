@@ -9,6 +9,7 @@ import TeamUsersDAO from "../../components/team-users/dao";
 import insecureHash from "../insecure-hash";
 import { PlanStripePriceType } from "../../components/plan-stripe-price/types";
 import InvalidPaymentError from "../../errors/invalid-payment";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 import StripeError from "../../errors/stripe";
 
 import * as RequestService from "./make-request";
@@ -445,7 +446,9 @@ test("addSeatCharge: no team subscription", async (t: Test) => {
   } catch (err) {
     t.deepEqual(
       err,
-      new Error("Could not find a subscription for team with ID a-team-id"),
+      new InsufficientPlanError(
+        "Could not find a subscription for team with ID a-team-id"
+      ),
       "throws when missing team subscription"
     );
   }
@@ -823,7 +826,9 @@ test("removeSeatCharge: no team subscription", async (t: Test) => {
   } catch (err) {
     t.deepEqual(
       err,
-      new Error("Could not find a subscription for team with ID a-team-id"),
+      new InsufficientPlanError(
+        "Could not find a subscription for team with ID a-team-id"
+      ),
       "throws when missing team subscription"
     );
   }

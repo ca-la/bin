@@ -11,6 +11,7 @@ import {
   PlanStripePrice,
   PlanStripePriceType,
 } from "../../components/plan-stripe-price/types";
+import InsufficientPlanError from "../../errors/insufficient-plan";
 
 import {
   Charge,
@@ -224,7 +225,9 @@ async function getStripePerSeat(
   );
 
   if (teamSubscriptions.length === 0) {
-    throw new Error(`Could not find a subscription for team with ID ${teamId}`);
+    throw new InsufficientPlanError(
+      `Could not find a subscription for team with ID ${teamId}`
+    );
   }
 
   const subscription = teamSubscriptions[0];

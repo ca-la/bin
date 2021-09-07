@@ -1264,14 +1264,20 @@ test("DEL /team-users/:id throws a 404 if team user not found", async (t: Test) 
   t.equal(response.status, 404);
 });
 
-test("DEL /team-users/:id throws a 402 if team subscription is missing", async (t: Test) => {
-  const { findTeamSubscriptionsStub } = setup();
+test("DEL /team-users/:id allows to delete user even if team subscription is missing", async (t: Test) => {
+  const {
+    findTeamSubscriptionsStub,
+    deleteStub,
+    removeStripeSeatStub,
+  } = setup();
   findTeamSubscriptionsStub.resolves([]);
+  removeStripeSeatStub.restore();
 
-  const [response] = await del(`/team-users/0000-0000-0000`, {
+  const [response] = await del(`/team-users/${tu1.id}`, {
     headers: authHeader("a-session-id"),
   });
-  t.equal(response.status, 402);
+  t.equal(response.status, 204, "Allows deletion");
+  t.equal(deleteStub.args[0][1], tu1.id);
 });
 
 test("DEL /team-users/:id allows admins to delete users ", async (t: Test) => {

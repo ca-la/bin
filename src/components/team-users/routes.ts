@@ -282,7 +282,6 @@ export default {
             ) => context.params.teamUserId === actorTeamUserId,
           }
         ),
-        requireActiveSubscription(findTeamByTeamUser),
         useTransaction,
         convert.back(deleteTeamUser),
       ],
