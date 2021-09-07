@@ -6,6 +6,7 @@ import * as GetPermissionsService from "../../../services/get-permissions";
 import * as CreateFromTemplateService from "../../templates/services/create-from-design-template";
 import * as UsersDAO from "../../users/dao";
 import * as CollectionsDAO from "../../collections/dao";
+import ProductDesignsDAO from "../../product-designs/dao/index";
 import TeamUsersDAO from "../../team-users/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
@@ -38,6 +39,9 @@ function setup() {
   const createDesignStub = sandbox()
     .stub(CreateDesignService, "default")
     .resolves(design);
+  const findDesignById = sandbox()
+    .stub(ProductDesignsDAO, "findById")
+    .resolves(design);
   const getPermissionsStub = sandbox()
     .stub(GetPermissionsService, "getDesignPermissions")
     .resolves(permissions);
@@ -68,6 +72,7 @@ function setup() {
     sessionStub,
     createDesignStub,
     createFromTemplateStub,
+    findDesignById,
     getPermissionsStub,
     findUserStub,
     findCollectionStub,
@@ -85,6 +90,7 @@ test("POST /product-designs: team collection", async (t: Test) => {
     createDesignStub,
     findCollectionCollaboratorStub,
     findTeamUserStub,
+    findDesignById,
   } = setup();
   const [response, body] = await post(`/product-designs`, {
     headers: authHeader("a-session-id"),
@@ -116,6 +122,8 @@ test("POST /product-designs: team collection", async (t: Test) => {
     },
     "calls create design with the body data"
   );
+
+  t.equal(findDesignById.callCount, 1, "calls find by id before return");
 
   t.ok(
     createDesignStub.args[0][1],
@@ -253,6 +261,7 @@ test("POST /product-designs/templates/:templateId?collectionId", async (t: Test)
     permissions,
     createFromTemplateStub,
     findTeamUserStub,
+    findDesignById,
     findCollectionCollaboratorStub,
     sessionStub,
   } = setup();
@@ -286,6 +295,8 @@ test("POST /product-designs/templates/:templateId?collectionId", async (t: Test)
     },
     "calls create design from template with correct values"
   );
+
+  t.equal(findDesignById.callCount, 1, "calls find by id before return");
 
   createFromTemplateStub.resetHistory();
   findTeamUserStub.resolves(null);

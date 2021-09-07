@@ -66,7 +66,19 @@ test("createDesign puts the design into the collection", async (t: Test) => {
   const collections = await CollectionsDAO.findByDesign(design.id);
   t.deepEqual(
     collections,
-    [collection],
+    [
+      {
+        ...collection,
+        designs: [
+          {
+            id: design.id,
+            title: design.title,
+            imageAssets: [],
+            createdAt: design.createdAt,
+          },
+        ],
+      },
+    ],
     "The design has been moved into the collection"
   );
 });
@@ -95,7 +107,19 @@ test("createDesign doesn't create a collaborator in case of team collection", as
   const collections = await CollectionsDAO.findByDesign(design.id);
   t.deepEqual(
     collections,
-    [collection],
+    [
+      {
+        ...collection,
+        designs: [
+          {
+            id: design.id,
+            title: design.title,
+            imageAssets: [],
+            createdAt: design.createdAt,
+          },
+        ],
+      },
+    ],
     "The design has been moved into the collection"
   );
 });

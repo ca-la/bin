@@ -26,12 +26,12 @@ export const assetSchema = z.object({
 });
 export type Asset = z.infer<typeof assetSchema>;
 
-export const designImageAsset = z.object({
+export const designImageAssetSchema = z.object({
   id: z.string(),
   page: z.number().nullable(),
 });
 
-export type DesignImageAsset = z.infer<typeof designImageAsset>;
+export type DesignImageAsset = z.infer<typeof designImageAssetSchema>;
 
 export const attachmentSchema = assetSchema.merge(assetLinksSchema);
 

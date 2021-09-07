@@ -1,7 +1,23 @@
 import { schemaToGraphQLType, GraphQLType } from "../../apollo/published-types";
-import { collectionDbSchema } from "./types";
+import { collectionDbSchema, designMetaSchema } from "./types";
+
+export const gtCollectionDesignsMeta = schemaToGraphQLType(
+  "CollectionDesignsMeta",
+  designMetaSchema,
+  {
+    bodyPatch: {
+      previewImageUrls: "[String]",
+      createdAt: "GraphQLDateTime",
+    },
+  }
+);
 
 export const gtCollection: GraphQLType = schemaToGraphQLType(
   "Collection",
-  collectionDbSchema
+  collectionDbSchema,
+  {
+    depTypes: {
+      designs: gtCollectionDesignsMeta,
+    },
+  }
 );

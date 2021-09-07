@@ -134,13 +134,16 @@ test("CollectionsDAO#findByTeam", async (t: Test) => {
 
     t.deepEqual(
       await CollectionsDAO.findByTeam(trx, team.id),
-      [c2, c1],
+      [
+        { ...c2, designs: [] },
+        { ...c1, designs: [] },
+      ],
       "Finds only team collections"
     );
 
     t.deepEqual(
       await CollectionsDAO.findByTeam(trx, team2.id),
-      [c3],
+      [{ ...c3, designs: [] }],
       "Finds only team collections"
     );
   } finally {
@@ -212,6 +215,14 @@ async function findSetup() {
     teamId: team.id,
     title: "Team Drop",
   });
+
+  const d1 = await generateDesign({ userId: user2.id, title: "Design One" });
+  const d2 = await generateDesign({ userId: user2.id, title: "Design Two" });
+  const d3 = await generateDesign({ userId: user2.id, title: "Design Three" });
+  await moveDesign(collection1.id, d1.id);
+  await moveDesign(collection2.id, d2.id);
+  await moveDesign(collection1.id, d3.id);
+
   await generateCollaborator({
     collectionId: collection1.id,
     designId: null,
@@ -276,6 +287,9 @@ async function findSetup() {
     collection3,
     collection4,
     collection5,
+    d1,
+    d2,
+    d3,
   };
 }
 
@@ -287,6 +301,9 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
     collection2,
     collection4,
     collection5,
+    d1,
+    d2,
+    d3,
   } = await findSetup();
 
   const permissions = {
@@ -312,14 +329,43 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
       [
         {
           ...collection5,
+          designs: [],
           // as a team owner
           permissions: {
             ...permissions,
             canDelete: true,
           },
         },
-        { ...collection2, permissions },
-        { ...collection1, permissions },
+        {
+          ...collection2,
+          permissions,
+          designs: [
+            {
+              id: d2.id,
+              title: d2.title,
+              previewImageUrls: [],
+              createdAt: new Date(d2.createdAt),
+            },
+          ],
+        },
+        {
+          ...collection1,
+          permissions,
+          designs: [
+            {
+              id: d3.id,
+              title: d3.title,
+              previewImageUrls: [],
+              createdAt: new Date(d3.createdAt),
+            },
+            {
+              id: d1.id,
+              title: d1.title,
+              previewImageUrls: [],
+              createdAt: new Date(d1.createdAt),
+            },
+          ],
+        },
       ],
       "all collections I can access are returned"
     );
@@ -332,7 +378,26 @@ test("CollectionsDAO#findByUser finds all collections and searches", async (t: T
 
     t.deepEqual(
       searchCollections,
-      [{ ...collection1, permissions }],
+      [
+        {
+          ...collection1,
+          permissions,
+          designs: [
+            {
+              id: d3.id,
+              title: d3.title,
+              previewImageUrls: [],
+              createdAt: new Date(d3.createdAt),
+            },
+            {
+              id: d1.id,
+              title: d1.title,
+              previewImageUrls: [],
+              createdAt: new Date(d1.createdAt),
+            },
+          ],
+        },
+      ],
       "Collections I searched for are returned"
     );
 
@@ -363,6 +428,9 @@ test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches",
     collection2,
     collection4,
     collection5,
+    d1,
+    d2,
+    d3,
   } = await findSetup();
 
   const permissions = {
@@ -400,8 +468,36 @@ test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches",
     t.deepEqual(
       collections,
       [
-        { ...collection2, permissions },
-        { ...collection1, permissions },
+        {
+          ...collection2,
+          permissions,
+          designs: [
+            {
+              id: d2.id,
+              title: d2.title,
+              previewImageUrls: [],
+              createdAt: new Date(d2.createdAt),
+            },
+          ],
+        },
+        {
+          ...collection1,
+          permissions,
+          designs: [
+            {
+              id: d3.id,
+              title: d3.title,
+              previewImageUrls: [],
+              createdAt: new Date(d3.createdAt),
+            },
+            {
+              id: d1.id,
+              title: d1.title,
+              previewImageUrls: [],
+              createdAt: new Date(d1.createdAt),
+            },
+          ],
+        },
       ],
       "only collections i am directly shared on are returned"
     );
@@ -417,7 +513,26 @@ test("CollectionsDAO#findDirectlySharedWithUser finds collections and searches",
 
     t.deepEqual(
       searchCollections,
-      [{ ...collection1, permissions }],
+      [
+        {
+          ...collection1,
+          permissions,
+          designs: [
+            {
+              id: d3.id,
+              title: d3.title,
+              previewImageUrls: [],
+              createdAt: new Date(d3.createdAt),
+            },
+            {
+              id: d1.id,
+              title: d1.title,
+              previewImageUrls: [],
+              createdAt: new Date(d1.createdAt),
+            },
+          ],
+        },
+      ],
       "Collections I searched for are returned"
     );
   });
@@ -985,4 +1100,24 @@ test("count", async (t: Test) => {
     }
   );
   t.equal(countDeleted, 1, "countDeleted");
+});
+
+test("findById", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team: team1 } = await generateTeam(user.id);
+
+  const { collection } = await generateCollection({
+    teamId: team1.id,
+    title: "The collection",
+  });
+  await generateCollection({ teamId: team1.id });
+  await generateCollection({ teamId: team1.id });
+
+  const found = await CollectionsDAO.findById(collection.id);
+
+  t.deepEqual(
+    found,
+    { ...collection, designs: [] },
+    "returns all collection data"
+  );
 });

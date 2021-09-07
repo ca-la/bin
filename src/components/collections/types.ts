@@ -1,6 +1,33 @@
 import { z } from "zod";
 
+import { dateStringToDate } from "../../services/zod-helpers";
 import { permissionsSchema } from "../permissions/types";
+import { designImageAssetSchema } from "../../components/assets/types";
+
+export const designMetaDbRowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  created_at: dateStringToDate,
+  image_assets: z.array(designImageAssetSchema),
+});
+
+export const designMetaDbSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  createdAt: dateStringToDate,
+  imageAssets: z.array(designImageAssetSchema),
+});
+
+export const designMetaSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  createdAt: dateStringToDate,
+  previewImageUrls: z.array(z.string()),
+});
+
+export type CollectionDesignMetaDbRow = z.infer<typeof designMetaDbRowSchema>;
+export type CollectionDesignMetaDb = z.infer<typeof designMetaDbSchema>;
+export type CollectionDesignMeta = z.infer<typeof designMetaSchema>;
 
 export const collectionDbSchema = z.object({
   id: z.string(),
@@ -10,6 +37,7 @@ export const collectionDbSchema = z.object({
   description: z.string().nullable(),
   title: z.string().nullable(),
   teamId: z.string().nullable(),
+  designs: z.array(designMetaDbSchema).optional(),
 });
 
 export type CollectionDb = z.infer<typeof collectionDbSchema>;
@@ -32,12 +60,14 @@ export const collectionDbRowSchema = z.object({
   description: z.string().nullable(),
   title: z.string().nullable(),
   team_id: z.string().nullable(),
+  designs: z.array(designMetaDbRowSchema).optional(),
 });
 
 export type CollectionDbRow = z.infer<typeof collectionDbRowSchema>;
 
 export const collectionSchema = collectionDbSchema.extend({
   permissions: permissionsSchema,
+  designs: z.array(designMetaSchema),
 });
 
 export type Collection = z.infer<typeof collectionSchema>;

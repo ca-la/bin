@@ -22,6 +22,7 @@ import {
 import { User } from "../../users/types";
 import { Role as TeamUserRole } from "../../team-users/types";
 import ProductDesign from "../domain-objects/product-design";
+import { findById as findDesignById } from "../dao/index";
 import * as UsersDAO from "../../users/dao";
 import requireAuth from "../../../middleware/require-auth";
 import * as CollectionsDAO from "../../collections/dao";
@@ -91,6 +92,7 @@ type CreateBody = z.infer<typeof createBodySchema>;
 interface CreateResponseBody extends ProductDesign {
   permissions: Permissions;
   owner: User;
+  collectionIds: string[];
 }
 
 interface CreateContext extends StrictContext<CreateResponseBody> {
@@ -110,10 +112,10 @@ async function create(ctx: CreateContext) {
     "You do not have permission to create a design in this collection"
   );
 
-  const design = await createDesign({ ...safeBody, userId }, trx);
+  const baseDesign = await createDesign({ ...safeBody, userId }, trx);
 
   const permissions = await getDesignPermissions({
-    designId: design.id,
+    designId: baseDesign.id,
     sessionRole,
     sessionUserId: userId,
     trx,
@@ -123,9 +125,23 @@ async function create(ctx: CreateContext) {
   // Unexpected: Owner should exist in an authed route. Checked for safety.
   ctx.assert(owner, 404, `No user found with ID ${userId}`);
 
+  // re-fetching as baseDesign doesn't know about the collection the design belongs too
+  const createdDesign = await findDesignById(
+    baseDesign.id,
+    undefined,
+    undefined,
+    trx
+  );
+
+  if (!createdDesign) {
+    throw new ResourceNotFoundError(
+      `Created design #${baseDesign.id} is not found`
+    );
+  }
+
   ctx.status = 201;
   ctx.body = {
-    ...design,
+    ...createdDesign,
     permissions,
     owner,
   };
@@ -141,7 +157,7 @@ const createFromTemplateQuerySchema = z.object({
 });
 type CreateFromTemplateQuery = z.infer<typeof createFromTemplateQuerySchema>;
 
-interface CreateFromTemplateContext extends StrictContext<ProductDesign> {
+interface CreateFromTemplateContext extends StrictContext<CreateResponseBody> {
   state: AuthedState &
     TransactionState &
     SafeQueryState<CreateFromTemplateQuery>;
@@ -180,6 +196,20 @@ async function createFromTemplate(ctx: CreateFromTemplateContext) {
 
   // Unexpected: Owner should exist in an authed route. Checked for safety.
   ctx.assert(owner, 404, `No user found with ID ${userId}`);
+
+  // re-fetching as baseDesign doesn't know about the collection the design belongs too
+  const createdDesign = await findDesignById(
+    templateDesign.id,
+    undefined,
+    undefined,
+    trx
+  );
+
+  if (!createdDesign) {
+    throw new ResourceNotFoundError(
+      `Created design #${templateDesign.id} is not found`
+    );
+  }
 
   ctx.status = 201;
   ctx.body = {

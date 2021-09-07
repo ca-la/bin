@@ -59,7 +59,10 @@ test("GET /collections/:id returns a created collection", async (t: tape.Test) =
   t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
   t.deepEqual(
-    postCollection,
+    {
+      ...postCollection,
+      designs: [],
+    },
     getCollection,
     "return from POST is identical to GET"
   );
@@ -94,7 +97,10 @@ test("POST /collections/ without a full object can create a collection", async (
   t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
   t.deepEqual(
-    postCollection,
+    {
+      ...postCollection,
+      designs: [],
+    },
     getCollection,
     "return from POST is identical to GET"
   );
@@ -155,7 +161,10 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
   t.equal(postResponse.status, 201, 'POST returns "201 Created" status');
   t.equal(getResponse.status, 200, 'GET returns "200 OK" status');
   t.deepEqual(
-    postCollection,
+    {
+      ...postCollection,
+      designs: [],
+    },
     getCollection,
     "return from POST is identical to GET"
   );
@@ -598,6 +607,7 @@ test("GET /collections", async (t: tape.Test) => {
           canSubmit: true,
           canView: true,
         },
+        designs: [],
       },
       {
         ...collection2,
@@ -611,6 +621,7 @@ test("GET /collections", async (t: tape.Test) => {
           canSubmit: false,
           canView: true,
         },
+        designs: [],
       },
       {
         ...collection1,
@@ -624,6 +635,7 @@ test("GET /collections", async (t: tape.Test) => {
           canSubmit: true,
           canView: true,
         },
+        designs: [],
       },
     ],
     "Returns all collections I have access to."
@@ -648,6 +660,7 @@ test("GET /collections", async (t: tape.Test) => {
           canSubmit: true,
           canView: true,
         },
+        designs: [],
       },
     ],
     "Returns all team collections"
@@ -675,6 +688,7 @@ test("GET /collections", async (t: tape.Test) => {
           canSubmit: true,
           canView: true,
         },
+        designs: [],
       },
     ],
     "Returns all team collections with all permissions"

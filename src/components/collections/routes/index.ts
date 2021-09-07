@@ -102,7 +102,7 @@ const createCollection = convert.back(async (ctx: CreateContext) => {
     }
   }
 
-  const collection = await CollectionsDAO.create(data).catch(
+  const collectionDb: CollectionDb = await CollectionsDAO.create(data).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
       ctx.throw(400, err)
     )
@@ -110,12 +110,20 @@ const createCollection = convert.back(async (ctx: CreateContext) => {
 
   const permissions = await getCollectionPermissions(
     db,
-    collection,
+    collectionDb,
     role,
     userId
   );
 
-  ctx.body = { ...collection, permissions };
+  const collection = {
+    ...collectionDb,
+    designs: CollectionsDAO.convertCollectionDesignsDbMetaToDesignMeta(
+      collectionDb.designs
+    ),
+    permissions,
+  };
+
+  ctx.body = collection;
   ctx.status = 201;
 });
 
@@ -195,23 +203,38 @@ async function deleteCollection(ctx: DeleteContext) {
   ctx.status = 204;
 }
 
-function* getCollection(this: AuthedContext): Iterator<any, any, any> {
-  const { collectionId } = this.params;
-  const { role, userId } = this.state;
+interface GetContext extends StrictContext<Collection> {
+  state: AuthedState;
+  params: { collectionId: string };
+}
 
-  if (collectionId) {
-    const collection = yield CollectionsDAO.findById(collectionId);
-    const permissions = yield getCollectionPermissions(
-      db,
-      collection,
-      role,
-      userId
-    );
-    this.body = { ...collection, permissions };
-    this.status = 200;
-  } else {
-    this.throw(400, "CollectionId is required!");
-  }
+async function getCollection(ctx: GetContext) {
+  const { collectionId } = ctx.params;
+  const { role, userId } = ctx.state;
+
+  const collectionDb = await CollectionsDAO.findById(collectionId);
+  ctx.assert(
+    collectionDb,
+    404,
+    `Collection with id ${ctx.params.collectionId} not found`
+  );
+
+  const permissions = await getCollectionPermissions(
+    db,
+    collectionDb,
+    role,
+    userId
+  );
+  const collection = {
+    ...collectionDb,
+    designs: CollectionsDAO.convertCollectionDesignsDbMetaToDesignMeta(
+      collectionDb.designs
+    ),
+    permissions,
+  };
+
+  ctx.body = collection;
+  ctx.status = 200;
 }
 
 interface UpdateContext extends StrictContext<Collection | UpgradeTeamBody> {
@@ -246,19 +269,30 @@ async function updateCollection(ctx: UpdateContext) {
     }
   }
 
-  const collection = await CollectionsDAO.update(collectionId, patch).catch(
+  const collectionDb: CollectionDb = await CollectionsDAO.update(
+    collectionId,
+    patch
+  ).catch(
     filterError(InvalidDataError, (err: InvalidDataError) =>
       ctx.throw(400, err)
     )
   );
   const permissions = await getCollectionPermissions(
     trx,
-    collection,
+    collectionDb,
     role,
     userId
   );
 
-  ctx.body = { ...collection, permissions };
+  const collection: Collection = {
+    ...collectionDb,
+    designs: CollectionsDAO.convertCollectionDesignsDbMetaToDesignMeta(
+      collectionDb.designs
+    ),
+    permissions,
+  };
+
+  ctx.body = collection;
   ctx.status = 200;
 }
 
@@ -301,7 +335,7 @@ router.get(
   "/:collectionId",
   requireAuth,
   canAccessCollectionInParam,
-  getCollection
+  convert.back(getCollection)
 );
 router.patch(
   "/:collectionId",

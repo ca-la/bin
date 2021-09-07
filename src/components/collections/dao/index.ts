@@ -2,17 +2,18 @@ import Knex from "knex";
 import rethrow from "pg-rethrow";
 import { pick } from "lodash";
 
+import { dataAdapter, INSERTABLE_PROPERTIES } from "../domain-object";
 import {
-  dataAdapter,
-  INSERTABLE_PROPERTIES,
-  isCollectionRow,
-  partialDataAdapter,
-} from "../domain-object";
-import { Collection, CollectionDb, CollectionDbRow } from "../types";
+  Collection,
+  CollectionDb,
+  CollectionDbRow,
+  CollectionDesignMeta,
+  CollectionDesignMetaDb,
+} from "../types";
 import { CollectionDesignRow } from "../../../domain-objects/collection-design";
 
 import db from "../../../services/db";
-import { validate, validateEvery } from "../../../services/validate-from-db";
+import { validateEvery } from "../../../services/validate-from-db";
 import first from "../../../services/first";
 import limitOrOffset from "../../../services/limit-or-offset";
 import { ExpirationNotification } from "../../notifications/models/costing-expiration";
@@ -32,8 +33,81 @@ import {
   identity,
   QueryModifier,
 } from "../../../services/cala-component/cala-dao";
+import {
+  generatePreviewLinksFromDesignImageAssets,
+  ThumbnailAndPreviewLinks,
+} from "../../../services/attach-asset-links";
 
 export const TABLE_NAME = "collections";
+
+export function addDesignMetaToCollection(
+  query: Knex.QueryBuilder
+): Knex.QueryBuilder {
+  return query.select(
+    db.raw(`
+     to_jsonb(ARRAY(
+      SELECT json_build_object(
+        'id',
+        "product_designs".id,
+        'title',
+        "product_designs".title,
+        'created_at',
+        "product_designs".created_at,
+        'image_assets',
+        array_to_json(
+          ARRAY (
+            SELECT
+              jsonb_build_object(
+                'id', assets.id, 'page', co.asset_page_number
+              )
+            FROM
+              canvases AS c
+              JOIN components AS co ON co.id = c.component_id
+              AND co.deleted_at IS NULL
+              JOIN assets ON assets.id = co.sketch_id
+              AND assets.deleted_at IS NULL
+              AND assets.upload_completed_at IS NOT NULL
+            WHERE
+              c.design_id = product_designs.id
+              AND c.archived_at IS NULL
+              AND c.deleted_at IS NULL
+            GROUP BY
+              assets.id,
+              co.asset_page_number,
+              c.ordering
+            ORDER BY
+              c.ordering
+            LIMIT
+              2
+          )
+        )
+      )
+      FROM product_designs
+      LEFT JOIN collection_designs ON collection_designs.design_id = product_designs.id
+      WHERE product_designs.deleted_at IS NULL AND collection_designs.collection_id = collections.id
+      GROUP BY product_designs.id
+      ORDER BY product_designs.created_at DESC
+    )) AS designs
+  `)
+  );
+}
+
+export function convertCollectionDesignsDbMetaToDesignMeta(
+  designs: CollectionDesignMetaDb[] = []
+): CollectionDesignMeta[] {
+  return designs.map(
+    (design: CollectionDesignMetaDb): CollectionDesignMeta => {
+      return {
+        id: design.id,
+        title: design.title,
+        createdAt: design.createdAt,
+        previewImageUrls: generatePreviewLinksFromDesignImageAssets(
+          design.imageAssets
+        ).map((imageLink: ThumbnailAndPreviewLinks) => imageLink.previewLink),
+      };
+    }
+  );
+}
 
 export async function create(
   data: CollectionDb,
@@ -55,12 +129,7 @@ export async function create(
     throw new Error("Failed to create a collection");
   }
 
-  return validate<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    created
-  );
+  return dataAdapter.fromDb(created);
 }
 
 export async function deleteById(ktx: Knex, id: string): Promise<CollectionDb> {
@@ -74,19 +143,14 @@ export async function deleteById(ktx: Knex, id: string): Promise<CollectionDb> {
     throw new Error(`Failed to delete collection ${id}`);
   }
 
-  return validate<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    deleted
-  );
+  return dataAdapter.fromDb(deleted);
 }
 
 export async function update(
   id: string,
   data: Partial<CollectionDb>
 ): Promise<CollectionDb> {
-  const rowData = partialDataAdapter.forInsertion(data);
+  const rowData = dataAdapter.toDbPartial(data);
   const updated = await db(TABLE_NAME)
     .where({ deleted_at: null, id })
     .update(rowData, "*")
@@ -97,12 +161,7 @@ export async function update(
     throw new Error(`Failed to update collection ${id}`);
   }
 
-  return validate<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    updated
-  );
+  return dataAdapter.fromDb(updated);
 }
 
 type CollectionDbRowWithCollaboratorRoles = CollectionDbRow & {
@@ -170,16 +229,15 @@ export async function findByUser(
 )`,
       { userId: options.userId }
     )
+    .modify(addDesignMetaToCollection)
     .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc");
 
-  const collectionDbs: CollectionDb[] = validateEvery<
-    CollectionDbRow,
-    CollectionDb
-  >(TABLE_NAME, isCollectionRow, dataAdapter, collectionRows);
+  const collectionDbs = dataAdapter.fromDbArray(collectionRows);
 
   return collectionDbs.map((collection: CollectionDb, index: number) => ({
     ...collection,
+    designs: convertCollectionDesignsDbMetaToDesignMeta(collection.designs),
     permissions: calculateCollectionPermissions({
       collection,
       sessionRole: options.sessionRole,
@@ -237,17 +295,16 @@ export async function findDirectlySharedWithUser(
         })
         .orWhere("collections.team_id", null);
     })
+    .modify(addDesignMetaToCollection)
     .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
-  const collectionDbs: CollectionDb[] = validateEvery<
-    CollectionDbRow,
-    CollectionDb
-  >(TABLE_NAME, isCollectionRow, dataAdapter, collectionRows);
+  const collectionDbs = dataAdapter.fromDbArray(collectionRows);
 
   return collectionDbs.map((collection: CollectionDb, index: number) => ({
     ...collection,
+    designs: convertCollectionDesignsDbMetaToDesignMeta(collection.designs),
     permissions: calculateCollectionPermissions({
       collection,
       sessionRole: options.sessionRole,
@@ -272,15 +329,11 @@ export async function findByTeam(
       "collections.deleted_at": null,
       "teams.id": teamId,
     })
+    .modify(addDesignMetaToCollection)
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
-  return validateEvery<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collections
-  );
+  return dataAdapter.fromDbArray(collections);
 }
 
 export async function findByTeamWithPermissionsByRole(
@@ -292,6 +345,7 @@ export async function findByTeamWithPermissionsByRole(
   const permissions = calculateTeamCollectionPermissions(teamRole);
   return collectionsDb.map((collection: CollectionDb) => ({
     ...collection,
+    designs: convertCollectionDesignsDbMetaToDesignMeta(collection.designs),
     permissions,
   }));
 }
@@ -301,20 +355,17 @@ export async function findById(
   ktx: Knex = db
 ): Promise<CollectionDb | null> {
   const collection = await ktx(TABLE_NAME)
+    .select("*")
     .where({ id, deleted_at: null })
-    .then((rows: CollectionDbRow[]) => first<CollectionDbRow>(rows))
+    .modify(addDesignMetaToCollection)
+    .first()
     .catch(rethrow);
 
   if (!collection) {
     return null;
   }
 
-  return validate<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collection
-  );
+  return dataAdapter.fromDb(collection);
 }
 
 export async function findByDesign(
@@ -324,6 +375,7 @@ export async function findByDesign(
   const collectionDesigns: CollectionDesignRow[] = await ktx(
     "collection_designs"
   ).where({ design_id: designId });
+
   const maybeCollections = await Promise.all(
     collectionDesigns.map(
       (collectionDesign: CollectionDesignRow): Promise<CollectionDb | null> =>
@@ -375,12 +427,7 @@ JOIN (
     .where({ "collections.deleted_at": null })
     .orderBy("collections.id");
 
-  return validateEvery<CollectionDbRow, CollectionDb>(
-    TABLE_NAME,
-    isCollectionRow,
-    dataAdapter,
-    collections
-  );
+  return dataAdapter.fromDbArray(collections);
 }
 
 /**
@@ -479,7 +526,7 @@ export async function count(
   filter: Partial<CollectionDb> = {},
   modifier: QueryModifier = identity
 ): Promise<number> {
-  const namespacedFilter = partialDataAdapter.toDb(filter) || {};
+  const namespacedFilter = dataAdapter.toDbPartial(filter) || {};
   const result = await ktx(TABLE_NAME)
     .count("*")
     .where(namespacedFilter)
