@@ -1,3 +1,4 @@
+import Knex from "knex";
 import {
   GraphQLEndpoint,
   ForbiddenError,
@@ -33,7 +34,7 @@ import * as CommentsDAO from "../comments/dao";
 import { findByStepId } from "../approval-step-comments/dao";
 import { transformMentionsToGraphQL } from "./service";
 import { sliceAroundIndex } from "../../services/slice-around-index";
-import Knex from "knex";
+import db from "../../services/db";
 
 interface CreateCommentArgs {
   comment: GraphQLTypes.CommentInputType;
@@ -58,74 +59,82 @@ const createComment: GraphQLEndpoint<
     context: GraphQLContextBase<GraphQLTypes.CommentWithResourcesGraphQLType>
   ) => {
     const { comment: input } = args;
-    const { trx, session } = useRequireAuth(context);
+    const { transactionProvider, session } = useRequireAuth(context);
     const { userId, role } = session;
+    const trx = await transactionProvider();
 
-    const designId = await extractDesignIdFromCommentParent(trx, {
-      approvalStepId: input.approvalStepId,
-      annotationId: input.annotationId,
-    });
-    const designPermissions = await getDesignPermissions({
-      designId,
-      sessionRole: role,
-      sessionUserId: userId,
-    });
+    try {
+      const designId = await extractDesignIdFromCommentParent(trx, {
+        approvalStepId: input.approvalStepId,
+        annotationId: input.annotationId,
+      });
+      const designPermissions = await getDesignPermissions({
+        designId,
+        sessionRole: role,
+        sessionUserId: userId,
+      });
 
-    if (!designPermissions.canComment) {
-      throw new ForbiddenError("Not authorized to comment on this design");
-    }
+      if (!designPermissions.canComment) {
+        throw new ForbiddenError("Not authorized to comment on this design");
+      }
 
-    const comment = await createCommentWithAttachments(trx, {
-      comment: {
-        id: input.id,
-        createdAt: new Date(),
-        deletedAt: null,
-        text: input.text,
-        parentCommentId: input.parentCommentId,
+      const comment = await createCommentWithAttachments(trx, {
+        comment: {
+          id: input.id,
+          createdAt: new Date(),
+          deletedAt: null,
+          text: input.text,
+          parentCommentId: input.parentCommentId,
+          userId,
+          isPinned: input.isPinned,
+        },
+        attachments: [],
         userId,
-        isPinned: input.isPinned,
-      },
-      attachments: [],
-      userId,
-    });
+      });
 
-    const commentWithResources = input.approvalStepId
-      ? await ApprovalStepService.createAndAnnounce(
-          trx,
-          input.approvalStepId,
-          comment
-        )
-      : input.annotationId
-      ? await AnnotationService.createAndAnnounce(
-          trx,
-          input.annotationId,
-          comment
-        )
-      : null;
+      const commentWithResources = input.approvalStepId
+        ? await ApprovalStepService.createAndAnnounce(
+            trx,
+            input.approvalStepId,
+            comment
+          )
+        : input.annotationId
+        ? await AnnotationService.createAndAnnounce(
+            trx,
+            input.annotationId,
+            comment
+          )
+        : null;
 
-    if (!commentWithResources) {
-      // this should never happen
-      // because extractDesignIdFromCommentInput makes sure that one of
-      // approvalStepId or annotationId is set
-      throw new Error("commentWithResources should not be empty");
+      if (!commentWithResources) {
+        // this should never happen
+        // because extractDesignIdFromCommentInput makes sure that one of
+        // approvalStepId or annotationId is set
+        throw new Error("commentWithResources should not be empty");
+      }
+
+      await trx.commit();
+
+      return {
+        ...commentWithResources,
+        mentions: transformMentionsToGraphQL(commentWithResources.mentions),
+      };
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
     }
-
-    return {
-      ...commentWithResources,
-      mentions: transformMentionsToGraphQL(commentWithResources.mentions),
-    };
   },
 };
 
 async function getPageByCommentId({
-  trx,
+  ktx,
   limit,
   commentId,
   annotationId,
   approvalStepId,
   parentCommentId,
 }: {
-  trx: Knex.Transaction;
+  ktx: Knex;
   limit: number;
   annotationId: string | null;
   approvalStepId: string | null;
@@ -149,12 +158,12 @@ async function getPageByCommentId({
     }),
   };
   const beforeComments = annotationId
-    ? await findByAnnotationId(trx, {
+    ? await findByAnnotationId(ktx, {
         ...baseBeforeOptions,
         annotationId,
       })
     : approvalStepId
-    ? await findByStepId(trx, {
+    ? await findByStepId(ktx, {
         ...baseBeforeOptions,
         approvalStepId,
       })
@@ -171,12 +180,12 @@ async function getPageByCommentId({
     }),
   };
   const afterComments = annotationId
-    ? await findByAnnotationId(trx, {
+    ? await findByAnnotationId(ktx, {
         ...baseAfterOptions,
         annotationId,
       })
     : approvalStepId
-    ? await findByStepId(trx, {
+    ? await findByStepId(ktx, {
         ...baseAfterOptions,
         approvalStepId,
       })
@@ -220,7 +229,7 @@ async function getPageByCommentId({
     previousCursor,
     nextCursor,
 
-    data: await addCommentResources(trx, slicedComments),
+    data: await addCommentResources(ktx, slicedComments),
   };
 }
 
@@ -265,7 +274,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
     }: GetCommentsArg,
     context: GraphQLContextAuthenticated<PaginatedComments>
   ) => {
-    const { trx, session } = useRequireAuth(context);
+    const { session } = useRequireAuth(context);
     const { userId, role } = session;
 
     if (
@@ -277,7 +286,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
       );
     }
 
-    const designId = await extractDesignIdFromCommentParent(trx, {
+    const designId = await extractDesignIdFromCommentParent(db, {
       approvalStepId,
       annotationId,
     });
@@ -298,7 +307,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
 
     if (commentId) {
       return getPageByCommentId({
-        trx,
+        ktx: db,
         limit,
         commentId,
         annotationId,
@@ -333,17 +342,17 @@ const getComments: GraphQLEndpoint<any, any, any> = {
     };
 
     const comments = annotationId
-      ? await findByAnnotationId(trx, {
+      ? await findByAnnotationId(db, {
           ...baseFindOptions,
           annotationId,
         })
       : approvalStepId
-      ? await findByStepId(trx, { ...baseFindOptions, approvalStepId })
+      ? await findByStepId(db, { ...baseFindOptions, approvalStepId })
       : [];
 
     if (nextCursor) {
       return getNextPage({
-        trx,
+        ktx: db,
         comments,
         limit,
         currentCursor: nextCursor,
@@ -351,7 +360,7 @@ const getComments: GraphQLEndpoint<any, any, any> = {
     }
 
     return getPreviousPage({
-      trx,
+      ktx: db,
       comments,
       limit,
       currentCursor: previousCursor,

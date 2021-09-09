@@ -13,6 +13,7 @@ import * as GraphQLTypes from "./graphql-types";
 import { createNotificationMessage } from "./notification-messages";
 import { transformNotificationMessageToGraphQL } from "./service";
 import { Notification } from "./domain-object";
+import db from "../../services/db";
 
 interface GetNotificationsArgs {
   limit: number;
@@ -51,14 +52,14 @@ const notificationMessages: GraphQLEndpoint<
     context: GraphQLContextAuthenticated<GetNotificationsResult>
   ) => {
     const { limit, offset, filter } = args;
-    const { trx, session } = context;
+    const { session } = context;
     const { userId } = session;
 
     if ((limit && limit < 0) || (offset && offset < 0)) {
       throw new UserInputError("Offset / Limit cannot be negative!");
     }
 
-    const notifications = await NotificationsDAO.findByUserId(trx, userId, {
+    const notifications = await NotificationsDAO.findByUserId(db, userId, {
       limit: limit || 20,
       offset: offset || 0,
       filter,
@@ -99,11 +100,11 @@ const unreadNotificationsCount: GraphQLEndpoint<
     _args: UnreadNotificationsArgs,
     context: GraphQLContextAuthenticated<UnreadNotificationsResult>
   ) => {
-    const { trx, session } = context;
+    const { session } = context;
     const { userId } = session;
 
     const unreadCount = NotificationsDAO.findUnreadCountByFiltersByUserId(
-      trx,
+      db,
       userId
     );
 
@@ -132,8 +133,8 @@ const archiveNotifications: GraphQLEndpoint<
   ) => {
     const { id, inboxOnly } = args;
     const {
-      trx,
       session: { userId },
+      transactionProvider,
     } = context;
     if (!id) {
       throw new UserInputError(
@@ -141,11 +142,20 @@ const archiveNotifications: GraphQLEndpoint<
       );
     }
 
-    return await NotificationsDAO.archiveOlderThan(trx, {
-      notificationId: id,
-      recipientUserId: userId,
-      onlyArchiveInbox: inboxOnly,
-    });
+    const trx = await transactionProvider();
+
+    try {
+      const count = await NotificationsDAO.archiveOlderThan(trx, {
+        notificationId: id,
+        recipientUserId: userId,
+        onlyArchiveInbox: inboxOnly,
+      });
+      await trx.commit();
+      return count;
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
+    }
   },
 };
 
@@ -170,32 +180,42 @@ const updateNotification: GraphQLEndpoint<
   ) => {
     const { id, archivedAt } = args;
     const {
-      trx,
       session: { userId },
+      transactionProvider,
     } = context;
 
-    const notification = await NotificationsDAO.findById(trx, id);
-    if (!notification) {
-      throw new NotFoundError("Notification not found");
-    }
-    if (notification.recipientUserId !== userId) {
-      throw new ForbiddenError("Access denied for this resource");
-    }
+    const trx = await transactionProvider();
 
-    await NotificationsDAO.update(trx, id, {
-      archivedAt,
-      ...(archivedAt && !notification.readAt ? { readAt: new Date() } : {}),
-    });
+    try {
+      const notification = await NotificationsDAO.findById(trx, id);
+      if (!notification) {
+        throw new NotFoundError("Notification not found");
+      }
+      if (notification.recipientUserId !== userId) {
+        throw new ForbiddenError("Access denied for this resource");
+      }
 
-    const updated = await NotificationsDAO.findById(trx, id);
-    if (!updated) {
-      throw new Error("Updated notification not found");
+      await NotificationsDAO.update(trx, id, {
+        archivedAt,
+        ...(archivedAt && !notification.readAt ? { readAt: new Date() } : {}),
+      });
+
+      const updated = await NotificationsDAO.findById(trx, id);
+      if (!updated) {
+        throw new Error("Updated notification not found");
+      }
+
+      const message = await createNotificationMessage(updated);
+      if (!message) {
+        throw new Error("Updated a notification that cannot be displayed");
+      }
+
+      await trx.commit();
+      return transformNotificationMessageToGraphQL(message);
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
     }
-    const message = await createNotificationMessage(updated);
-    if (!message) {
-      throw new Error("Updated a notification that cannot be displayed");
-    }
-    return transformNotificationMessageToGraphQL(message);
   },
 };
 
@@ -224,24 +244,32 @@ const readNotifications: GraphQLEndpoint<
   ) => {
     const { ids } = args;
     const {
-      trx,
       session: { userId },
+      transactionProvider,
     } = context;
 
-    const notifications = await NotificationsDAO.markRead(ids, trx);
+    const trx = await transactionProvider();
 
-    const read = notifications.map((notification: Notification) => {
-      if (
-        !notification ||
-        (notification.recipientUserId !== null &&
-          notification.recipientUserId !== userId)
-      ) {
-        throw new ForbiddenError("Access denied for this resource");
-      }
-      return { id: notification.id, readAt: notification.readAt };
-    });
+    try {
+      const markedAsRead = await NotificationsDAO.markRead(ids, trx);
 
-    return read;
+      const notifications = markedAsRead.map((notification: Notification) => {
+        if (
+          !notification ||
+          (notification.recipientUserId !== null &&
+            notification.recipientUserId !== userId)
+        ) {
+          throw new ForbiddenError("Access denied for this resource");
+        }
+        return { id: notification.id, readAt: notification.readAt };
+      });
+      await trx.commit();
+
+      return notifications;
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
+    }
   },
 };
 

@@ -279,8 +279,8 @@ function addTeamUserEmail(query: Knex.QueryBuilder): Knex.QueryBuilder {
     .whereNull("team_users.deleted_at");
 }
 
-function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
-  return trx
+function baseQuery(ktx: Knex): Knex.QueryBuilder {
+  return ktx
     .select("n.*")
     .from("notifications as n")
     .modify(addActor)
@@ -304,11 +304,11 @@ function baseQuery(trx: Knex.Transaction): Knex.QueryBuilder {
 }
 
 export async function findByUserId(
-  trx: Knex.Transaction,
+  ktx: Knex,
   userId: string,
   options: SearchInterface
 ): Promise<FullNotification[]> {
-  const notifications = await baseQuery(trx)
+  const notifications = await baseQuery(ktx)
     .leftJoin("collaborators as cl", "cl.id", "n.collaborator_id")
     .whereNotIn("n.type", DEPRECATED_NOTIFICATION_TYPES)
     .andWhereRaw("(cl.cancelled_at is null or cl.cancelled_at > now())")

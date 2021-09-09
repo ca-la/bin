@@ -38,23 +38,31 @@ export const DeleteCanvasEndpoint: GraphQLEndpoint<
     args: DeleteCanvasArgs,
     context: GraphQLContextBase<CanvasWithEnrichedComponents>
   ) => {
-    const { trx } = context;
+    const { transactionProvider } = context;
     const { canvasId } = args;
+    const trx = await transactionProvider();
 
-    const canvas = await CanvasesDAO.del(trx, canvasId);
-    if (!canvas) {
-      throw new NotFoundError(`Could not find canvas ${canvasId}`);
+    try {
+      const canvas = await CanvasesDAO.del(trx, canvasId);
+      if (!canvas) {
+        throw new NotFoundError(`Could not find canvas ${canvasId}`);
+      }
+
+      const components = await ComponentsDAO.findAllByCanvasId(canvasId, trx);
+      await trx.commit();
+
+      const enrichedComponents = await Promise.all(
+        components.map(EnrichmentService.addAssetLink)
+      );
+      const enrichedCanvas: CanvasWithEnrichedComponents = {
+        ...canvas,
+        components: enrichedComponents,
+      };
+
+      return enrichedCanvas;
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
     }
-
-    const components = await ComponentsDAO.findAllByCanvasId(canvasId);
-    const enrichedComponents = await Promise.all(
-      components.map(EnrichmentService.addAssetLink)
-    );
-    const enrichedCanvas: CanvasWithEnrichedComponents = {
-      ...canvas,
-      components: enrichedComponents,
-    };
-
-    return enrichedCanvas;
   },
 };

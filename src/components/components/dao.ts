@@ -103,8 +103,11 @@ export async function findById(id: string): Promise<Component | null> {
   return adapter.fromDb(component);
 }
 
-export async function findAllByCanvasId(id: string): Promise<Component[]> {
-  const rows: ComponentRow[] = await db(TABLE_NAME)
+export async function findAllByCanvasId(
+  id: string,
+  ktx: Knex = db
+): Promise<Component[]> {
+  const rows: ComponentRow[] = await ktx(TABLE_NAME)
     .select("components.*")
     .from(TABLE_NAME)
     .innerJoin(

@@ -14,6 +14,7 @@ import {
   buildGraphQLFilterType,
   buildGraphQLSortType,
 } from "../published-types/graphql-type-builders";
+import db from "../../services/db";
 
 export interface FindArgs<Model> {
   limit?: number;
@@ -118,17 +119,16 @@ export function buildFindEndpoint<
     resolver: async (
       _: any,
       args: FindArgs<Model>,
-      context: GraphQLContextAuthenticated<FindResult<Model>>,
+      __: GraphQLContextAuthenticated<FindResult<Model>>,
       info: GraphQLResolveInfo
     ) => {
       const { limit, offset, sort, filter } = args;
-      const { trx } = context;
 
       if ((limit && limit < 0) || (offset && offset < 0)) {
         throw new UserInputError("Offset / Limit cannot be negative!");
       }
 
-      const items = await dao.find(trx, filter, (query: QueryBuilder) => {
+      const items = await dao.find(db, filter, (query: QueryBuilder) => {
         let result: QueryBuilder = query;
         if (limit !== undefined) {
           result = result.limit(limit);
@@ -142,7 +142,7 @@ export function buildFindEndpoint<
         return result;
       });
       const total = isMetaTotalRequested(listType.name, info)
-        ? await dao.count(trx, filter)
+        ? await dao.count(db, filter)
         : null;
 
       return {
@@ -185,16 +185,27 @@ export function buildCreateEndpoint<
       context: GraphQLContextAuthenticated<Model>
     ) => {
       const { data } = args;
-      const { trx } = context;
+      const { transactionProvider } = context;
 
       const createdAt = new Date();
-      return await dao.create(trx, {
-        ...data,
-        id: data.id || uuid.v4(),
-        createdAt,
-        updatedAt: createdAt,
-        deletedAt: null,
-      });
+
+      const trx = await transactionProvider();
+
+      try {
+        const created = await dao.create(trx, {
+          ...data,
+          id: data.id || uuid.v4(),
+          createdAt,
+          updatedAt: createdAt,
+          deletedAt: null,
+        });
+
+        await trx.commit();
+
+        return created;
+      } catch (err) {
+        return trx.rollback(err);
+      }
     },
   };
 }

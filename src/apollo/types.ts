@@ -5,7 +5,7 @@ export { GraphQLType };
 
 export interface GraphQLContextBase<Result> {
   session: AuthedState | null;
-  trx: Transaction;
+  transactionProvider: () => Promise<Transaction>;
   earlyResult: Result | null;
 }
 

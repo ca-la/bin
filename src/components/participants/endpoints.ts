@@ -15,6 +15,7 @@ import * as AnnotationsDAO from "../product-design-canvas-annotations/dao";
 import * as CanvasesDAO from "../canvases/dao";
 import * as ParticipantsDAO from "./dao";
 import syncTeamUsersLabelWithCollaborators from "./sync-team-users-label-with-collaborators";
+import db from "../../services/db";
 
 export interface GetParticipantsArgs {
   designId: string | null;
@@ -64,10 +65,10 @@ const getParticipants: GraphQLEndpoint<
     args: GetParticipantsArgs,
     context: GraphQLContextBase<Participant[]>
   ) => {
-    const { trx, session } = useRequireAuth(context);
+    const { session } = useRequireAuth(context);
     const { userId, role } = session;
 
-    const designId = await extractDesignIdFromArgs(trx, args);
+    const designId = await extractDesignIdFromArgs(db, args);
     const designPermissions = await getDesignPermissions({
       designId,
       sessionRole: role,
@@ -79,7 +80,7 @@ const getParticipants: GraphQLEndpoint<
         "Not authorized to view participants on this design"
       );
     }
-    const participants = await ParticipantsDAO.findByDesign(trx, designId);
+    const participants = await ParticipantsDAO.findByDesign(db, designId);
     return syncTeamUsersLabelWithCollaborators(participants);
   },
 };

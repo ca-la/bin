@@ -49,43 +49,50 @@ const CreateAnnotationEndpoint: GraphQLEndpoint<
     context: GraphQLContextAuthenticated<ProductDesignCanvasAnnotation>
   ) => {
     const {
-      trx,
+      transactionProvider,
       session: { userId },
     } = context;
     const { annotation: input } = args;
 
-    const annotation = await AnnotationsDAO.create(
-      {
-        ...pick(input, "id", "canvasId", "x", "y"),
-        deletedAt: null,
-        createdBy: userId,
-      },
-      trx
-    );
+    const trx = await transactionProvider();
+    try {
+      const annotation = await AnnotationsDAO.create(
+        {
+          ...pick(input, "id", "canvasId", "x", "y"),
+          deletedAt: null,
+          createdBy: userId,
+        },
+        trx
+      );
 
-    const comment = await createCommentWithAttachments(trx, {
-      comment: {
-        id: uuid.v4(),
-        createdAt: new Date(),
-        deletedAt: null,
-        text: input.commentText,
-        parentCommentId: null,
+      const comment = await createCommentWithAttachments(trx, {
+        comment: {
+          id: uuid.v4(),
+          createdAt: new Date(),
+          deletedAt: null,
+          text: input.commentText,
+          parentCommentId: null,
+          userId,
+          isPinned: false,
+        },
+        attachments: [],
         userId,
-        isPinned: false,
-      },
-      attachments: [],
-      userId,
-    });
+      });
 
-    await AnnotationCommentsDAO.create(
-      {
-        commentId: comment.id,
-        annotationId: annotation.id,
-      },
-      trx
-    );
+      await AnnotationCommentsDAO.create(
+        {
+          commentId: comment.id,
+          annotationId: annotation.id,
+        },
+        trx
+      );
 
-    return annotation;
+      await trx.commit();
+      return annotation;
+    } catch (err) {
+      await trx.rollback(err);
+      throw err;
+    }
   },
 };
 

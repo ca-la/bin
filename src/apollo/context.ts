@@ -41,6 +41,6 @@ export async function context({
     ctx.req.headers.authorization,
     ctx.query.token
   );
-  const trx = await db.transaction();
-  return { session, trx, earlyResult: null };
+  const transactionProvider = await db.transactionProvider();
+  return { session, transactionProvider, earlyResult: null };
 }

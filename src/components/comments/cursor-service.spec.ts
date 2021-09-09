@@ -20,7 +20,7 @@ test("CursorService.getPreviousPage", async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const fullPage = await CursorService.getPreviousPage({
-      trx,
+      ktx: trx,
       comments: [comment1, comment2, comment3],
       currentCursor: "currentCursor",
       limit: 2,
@@ -43,7 +43,7 @@ test("CursorService.getPreviousPage", async (t: Test) => {
     );
 
     const partialPage = await CursorService.getPreviousPage({
-      trx,
+      ktx: trx,
       comments: [comment1, comment2],
       currentCursor: "currentCursor",
       limit: 2,
@@ -77,7 +77,7 @@ test("CursorService.getNextPage", async (t: Test) => {
 
   await db.transaction(async (trx: Knex.Transaction) => {
     const fullPage = await CursorService.getNextPage({
-      trx,
+      ktx: trx,
       comments: [comment1, comment2, comment3, comment4],
       currentCursor: "currentCursor",
       limit: 2,
@@ -100,7 +100,7 @@ test("CursorService.getNextPage", async (t: Test) => {
     );
 
     const partialPage = await CursorService.getNextPage({
-      trx,
+      ktx: trx,
       comments: [comment1, comment2, comment3],
       currentCursor: "currentCursor",
       limit: 2,

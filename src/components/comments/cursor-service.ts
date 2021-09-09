@@ -8,10 +8,10 @@ import { transformMentionsToGraphQL } from "./service";
 import Comment, { CommentWithResources, PaginatedComments } from "./types";
 
 export async function addCommentResources(
-  trx: Knex.Transaction,
+  ktx: Knex,
   comments: Comment[]
 ): Promise<CommentWithResourcesGraphQLType[]> {
-  const commentsWithMentions = await addAtMentionDetails(trx, comments);
+  const commentsWithMentions = await addAtMentionDetails(ktx, comments);
   const commentsWithAttachments = commentsWithMentions.map(addAttachmentLinks);
   return commentsWithAttachments.map((comment: CommentWithResources) => ({
     ...comment,
@@ -44,12 +44,12 @@ export function readCursor(data: string): Cursor {
 }
 
 export async function getNextPage({
-  trx,
+  ktx,
   comments,
   currentCursor,
   limit,
 }: {
-  trx: Knex.Transaction;
+  ktx: Knex;
   comments: Comment[];
   currentCursor: string;
   limit: number;
@@ -58,17 +58,17 @@ export async function getNextPage({
     previousCursor: currentCursor,
     nextCursor:
       comments.length > limit + 1 ? createCursor(comments[limit]) : null,
-    data: await addCommentResources(trx, comments.slice(1, limit + 1)),
+    data: await addCommentResources(ktx, comments.slice(1, limit + 1)),
   };
 }
 
 export async function getPreviousPage({
-  trx,
+  ktx,
   comments,
   currentCursor,
   limit,
 }: {
-  trx: Knex.Transaction;
+  ktx: Knex;
   comments: Comment[];
   currentCursor?: string;
   limit: number;
@@ -77,7 +77,7 @@ export async function getPreviousPage({
     previousCursor:
       comments.length > limit ? createCursor(comments[limit]) : null,
     nextCursor: currentCursor || null,
-    data: await addCommentResources(trx, comments.slice(0, limit).reverse()),
+    data: await addCommentResources(ktx, comments.slice(0, limit).reverse()),
   };
 }
 

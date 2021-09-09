@@ -193,7 +193,6 @@ test("GetProductDesignList: valid: offset/limit with valid filters", async (t: T
         limit: 1,
         offset: 20,
         userId: user.id,
-        trx: findDesignsStub.args[0][0].trx,
       },
     ],
   ]);

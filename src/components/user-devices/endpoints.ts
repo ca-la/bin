@@ -10,6 +10,7 @@ import {
   GraphQLContextAuthenticated,
   requireAuth,
 } from "../../apollo/middleware";
+import db from "../../services/db";
 
 export async function checkDeviceBelongsToUser(
   args: CreateArgs<UserDevice>,
@@ -27,13 +28,13 @@ export async function lookForExistingDevice(
   args: CreateArgs<UserDevice>,
   context: GraphQLContextAuthenticated<UserDevice>
 ): Promise<GraphQLContextAuthenticated<UserDevice>> {
-  const { session, trx } = context;
+  const { session } = context;
   const { data } = args;
   if (session.userId !== data.userId) {
     throw new ForbiddenError("Not authorized");
   }
 
-  const existingDevice = await dao.findOne(trx, {
+  const existingDevice = await dao.findOne(db, {
     deviceToken: data.deviceToken,
   });
   return existingDevice ? { ...context, earlyResult: existingDevice } : context;

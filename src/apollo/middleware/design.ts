@@ -4,6 +4,7 @@ import ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as CanvasesDAO from "../../components/canvases/dao";
 import { UserInputError } from "apollo-server-koa";
 import { NotFoundError } from "../services";
+import db from "../../services/db";
 
 export interface GraphQLContextWithDesign<Result>
   extends GraphQLContextBase<Result> {
@@ -78,9 +79,8 @@ export async function getAttachDesignByApprovalStep<Args, Result>(
     args: Args,
     context: GraphQLContextBase<Result>
   ) {
-    const { trx } = context;
     const approvalStepId = await getApprovalStepId(args, context);
-    const approvalStep = await ApprovalStepsDAO.findById(trx, approvalStepId);
+    const approvalStep = await ApprovalStepsDAO.findById(db, approvalStepId);
     if (!approvalStep) {
       throw new NotFoundError("ApprovalStep not found");
     }

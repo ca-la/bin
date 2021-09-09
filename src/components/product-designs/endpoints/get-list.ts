@@ -66,7 +66,6 @@ export const GetProductDesignList: GraphQLEndpoint<
 
     const { limit, offset, filters } = argResult.data.input;
     const {
-      trx,
       session: { userId },
     } = context;
 
@@ -75,7 +74,6 @@ export const GetProductDesignList: GraphQLEndpoint<
       limit,
       offset,
       userId,
-      trx,
     });
   },
 };

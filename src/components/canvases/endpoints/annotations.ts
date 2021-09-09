@@ -4,6 +4,7 @@ import { gtProductDesignCanvasAnnotation } from "../../product-design-canvas-ann
 
 import { ProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/types";
 import * as AnnotationsDAO from "../../product-design-canvas-annotations/dao";
+import db from "../../../services/db";
 
 export const AnnotationsEndpoint: GraphQLEndpoint<
   {},
@@ -14,14 +15,9 @@ export const AnnotationsEndpoint: GraphQLEndpoint<
   endpointType: "CanvasAndEnvironment",
   types: [gtProductDesignCanvasAnnotation],
   name: "annotations",
-  resolver: async (
-    parent: CanvasAndEnvironmentParent,
-    _args: {},
-    context: GraphQLContextBase<ProductDesignCanvasAnnotation[]>
-  ) => {
-    const { trx } = context;
+  resolver: async (parent: CanvasAndEnvironmentParent) => {
     const { canvasId } = parent;
 
-    return AnnotationsDAO.findAllWithCommentsByCanvasId(trx, canvasId);
+    return AnnotationsDAO.findAllWithCommentsByCanvasId(db, canvasId);
   },
 };

@@ -1,11 +1,6 @@
 import { ApolloServer, IResolvers } from "apollo-server-koa";
-import {
-  GraphQLRequestContextWillSendResponse,
-  GraphQLRequestContextDidEncounterErrors,
-} from "apollo-server-types";
 import { GraphQLError } from "graphql";
 import { context } from "./context";
-import { GraphQLContextBase } from "./types";
 import { endpoints, Endpoint } from "./endpoints";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { ENABLE_APOLLO_PLAYGROUND } from "../config";
@@ -103,29 +98,5 @@ ${extractSchema()}`;
     },
     typeDefs,
     playground: ENABLE_APOLLO_PLAYGROUND,
-    plugins: [
-      {
-        requestDidStart() {
-          return {
-            didEncounterErrors: async (
-              requestContext: GraphQLRequestContextDidEncounterErrors<
-                GraphQLContextBase<null>
-              >
-            ) => {
-              await requestContext.context.trx.rollback();
-            },
-            willSendResponse: async (
-              requestContext: GraphQLRequestContextWillSendResponse<
-                GraphQLContextBase<null>
-              >
-            ) => {
-              if (!requestContext.context.trx.isCompleted()) {
-                await requestContext.context.trx.commit();
-              }
-            },
-          };
-        },
-      },
-    ],
   });
 }
