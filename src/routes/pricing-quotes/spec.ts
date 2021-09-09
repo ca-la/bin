@@ -22,7 +22,7 @@ import {
   ScreenPrintingComplexity,
 } from "../../domain-objects/pricing";
 
-test("/pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
+test("GET /pricing-quotes?designId retrieves the set of quotes for a design", async (t: Test) => {
   const {
     collectionDesigns: [design],
     quotes,
@@ -41,7 +41,42 @@ test("/pricing-quotes?designId retrieves the set of quotes for a design", async 
   t.equal(getResponse.status, 200);
   t.deepEquals(
     designQuotes,
-    [JSON.parse(JSON.stringify(quotes[0]))],
+    [
+      JSON.parse(
+        JSON.stringify({
+          ...quotes[0],
+          timeTotalMs: 1270588235,
+        })
+      ),
+    ],
+    "Retrieves only the quote associated with this design"
+  );
+});
+
+test("GET /pricing-quotes/:quoteId retrieves the specific quote by id", async (t: Test) => {
+  const {
+    quotes,
+    user: { admin },
+  } = await checkout();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const [getResponse, designQuote] = await get(
+    `/pricing-quotes/${quotes[0].id}`,
+    {
+      headers: authHeader(admin.session.id),
+    }
+  );
+
+  t.equal(getResponse.status, 200);
+  t.deepEquals(
+    designQuote,
+    JSON.parse(
+      JSON.stringify({
+        ...quotes[0],
+        timeTotalMs: 1270588235,
+      })
+    ),
     "Retrieves only the quote associated with this design"
   );
 });

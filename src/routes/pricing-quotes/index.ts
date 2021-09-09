@@ -26,14 +26,30 @@ import InsufficientPlanError from "../../errors/insufficient-plan";
 
 const router = new Router();
 
-function* getQuote(this: AuthedContext): Iterator<any, any, any> {
-  const { quoteId } = this.params;
+interface PricingQuoteWithTimeTotal extends PricingQuote {
+  timeTotalMs: number;
+}
 
-  const quote = yield findById(quoteId);
-  this.assert(quote, 404);
+interface GetSingleQuoteContext
+  extends StrictContext<PricingQuoteWithTimeTotal | null> {
+  params: {
+    quoteId: string;
+  };
+}
 
-  this.body = quote;
-  this.status = 200;
+async function getQuote(ctx: GetSingleQuoteContext) {
+  const { quoteId } = ctx.params;
+
+  const quote = await findById(quoteId);
+  ctx.assert(quote, 404);
+
+  const { timeTotalMs } = calculateAmounts(quote);
+
+  ctx.body = {
+    ...quote,
+    timeTotalMs,
+  };
+  ctx.status = 200;
 }
 
 const getQuotesQuerySchema = z.object({
@@ -42,7 +58,8 @@ const getQuotesQuerySchema = z.object({
 
 type GetQuotesQuery = z.infer<typeof getQuotesQuerySchema>;
 
-interface GetQuotesContext extends StrictContext<PricingQuote[] | null> {
+interface GetQuotesContext
+  extends StrictContext<PricingQuoteWithTimeTotal[] | null> {
   state: SafeQueryState<GetQuotesQuery>;
 }
 
@@ -50,8 +67,18 @@ async function getQuotes(ctx: GetQuotesContext) {
   const { designId } = ctx.state.safeQuery;
 
   const quotes = await findByDesignId(designId);
+  const quotesWithTimeTotal =
+    quotes &&
+    quotes.map((quote: PricingQuote) => {
+      const { timeTotalMs } = calculateAmounts(quotes[0]);
 
-  ctx.body = quotes;
+      return {
+        ...quote,
+        timeTotalMs,
+      };
+    });
+
+  ctx.body = quotesWithTimeTotal;
   ctx.status = 200;
 }
 
@@ -144,7 +171,7 @@ router.get(
   safeQuery<GetQuotesQuery>(getQuotesQuerySchema),
   convert.back(getQuotes)
 );
-router.get("/:quoteId", getQuote);
+router.get("/:quoteId", requireAdmin, convert.back(getQuote));
 
 router.post("/preview", requireAdmin, previewQuote);
 
