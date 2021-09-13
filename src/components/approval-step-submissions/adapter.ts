@@ -10,6 +10,9 @@ import { defaultEncoder } from "../../services/data-adapter";
 export const rawAdapter = fromSchema({
   modelSchema: approvalStepSubmissionDbSchema,
   rowSchema: approvalStepSubmissionDbRowSchema,
+  encodeTransformer: approvalStepSubmissionDbRowSchema
+    .transform(defaultEncoder)
+    .transform(approvalStepSubmissionDbSchema.parse).parse,
 });
 
 export const adapter = fromSchema({
