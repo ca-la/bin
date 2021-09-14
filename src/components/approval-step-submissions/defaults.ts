@@ -198,6 +198,7 @@ export async function getDefaultsByDesign(
     collaboratorId: null,
     teamUserId: null,
     state: ApprovalStepSubmissionState.UNSUBMITTED,
+    annotationId: null,
     ...sub,
     createdAt: new Date(now.getTime() + index),
     createdBy: null,

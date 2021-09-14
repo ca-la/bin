@@ -71,6 +71,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     collaboratorId: null,
     teamUserId: null,
     title: "Technical Design",
+    annotationId: null,
   };
   const sub2: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
@@ -83,6 +84,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     collaboratorId: null,
     teamUserId: null,
     title: "Technical Design",
+    annotationId: null,
   };
   const sub3: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
@@ -95,6 +97,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     collaboratorId: null,
     teamUserId: null,
     title: "Technical Design",
+    annotationId: null,
   };
   const sub4: ApprovalStepSubmissionDb = {
     state: ApprovalStepSubmissionState.UNSUBMITTED,
@@ -107,6 +110,7 @@ test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by
     collaboratorId: null,
     teamUserId: null,
     title: "Technical Design",
+    annotationId: null,
   };
   const { comment: com1 } = await generateComment();
   const { comment: com2 } = await generateComment();

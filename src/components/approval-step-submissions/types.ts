@@ -37,6 +37,7 @@ export const approvalStepSubmissionDbSchema = z.object({
   collaboratorId: z.string().nullable(),
   teamUserId: z.string().nullable(),
   title: z.string(),
+  annotationId: z.string().nullable(),
 });
 
 export type ApprovalStepSubmissionDb = z.infer<
@@ -66,6 +67,7 @@ export const approvalStepSubmissionDbRowSchema = z.object({
   collaborator_id: approvalStepSubmissionDbSchema.shape.collaboratorId,
   team_user_id: approvalStepSubmissionDbSchema.shape.teamUserId,
   title: approvalStepSubmissionDbSchema.shape.title,
+  annotation_id: approvalStepSubmissionSchema.shape.annotationId,
 });
 
 export type ApprovalStepSubmissionDbRow = z.infer<

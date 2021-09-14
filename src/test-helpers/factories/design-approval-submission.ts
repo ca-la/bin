@@ -36,6 +36,7 @@ export default async function generateApprovalSubmission(
     createdBy: null,
     deletedAt: null,
     stepId,
+    annotationId: null,
     ...options,
   });
   const submission = await ApprovalStepSubmissionsDAO.findById(trx, created.id);

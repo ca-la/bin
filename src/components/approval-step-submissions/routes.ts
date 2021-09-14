@@ -285,6 +285,13 @@ const createSubmissionContextSchema = z.object({
       collaboratorId: z.string().nullable(),
       teamUserId: z.string().nullable(),
       artifactType: z.nativeEnum(ApprovalStepSubmissionArtifactType),
+      annotationId: z
+        .string()
+        .nullable()
+        .optional()
+        .transform((optionalStr: string | null | undefined): string | null =>
+          typeof optionalStr === "string" ? optionalStr : null
+        ),
     }),
   }),
   state: z.object({

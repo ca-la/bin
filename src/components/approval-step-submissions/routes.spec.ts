@@ -612,7 +612,7 @@ test("PATCH /:submissionId with state: APPROVED", async (t: Test) => {
   );
 });
 
-test("POST /design-approval-step-submissions", async (t: Test) => {
+test("POST /design-approval-step-submissions: no annotationId", async (t: Test) => {
   const { design, designer } = await setupSubmission();
   const steps = await db.transaction((trx: Knex.Transaction) =>
     ApprovalStepsDAO.findByDesign(trx, design.id)
@@ -628,6 +628,48 @@ test("POST /design-approval-step-submissions", async (t: Test) => {
       title: "Submarine",
       collaboratorId: null,
       teamUserId: null,
+    },
+  });
+
+  t.is(response.status, 200);
+  t.is(body.title, "Submarine");
+  t.is(body.state, "UNSUBMITTED");
+  t.is(body.stepId, steps[1].id);
+  t.is(body.createdBy, designer.user.id, "Creator is defined");
+  t.is(body.deletedAt, null);
+
+  const submissionEvents = await DesignEventsDAO.findSubmissionEvents(
+    db,
+    body.id
+  );
+  const creationEvent = submissionEvents.find(
+    (event: DesignEventWithMeta) => event.type === "STEP_SUBMISSION_CREATION"
+  );
+  t.ok(creationEvent, "creates a creation event");
+  t.is(
+    creationEvent!.approvalSubmissionId,
+    body.id,
+    "sets the submission ID on the event"
+  );
+});
+
+test("POST /design-approval-step-submissions: null annotationId", async (t: Test) => {
+  const { design, designer } = await setupSubmission();
+  const steps = await db.transaction((trx: Knex.Transaction) =>
+    ApprovalStepsDAO.findByDesign(trx, design.id)
+  );
+  const [response, body] = await post(`/design-approval-step-submissions`, {
+    headers: authHeader(designer.session.id),
+    body: {
+      id: uuid.v4(),
+      createdAt: new Date(),
+      stepId: steps[1].id,
+      state: ApprovalStepSubmissionState.UNSUBMITTED,
+      artifactType: ApprovalStepSubmissionArtifactType.CUSTOM,
+      title: "Submarine",
+      collaboratorId: null,
+      teamUserId: null,
+      annotationId: null,
     },
   });
 

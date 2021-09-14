@@ -38,6 +38,7 @@ const submission: ApprovalStepSubmissionDb = {
   collaboratorId: null,
   teamUserId: null,
   title: "Garment Sample",
+  annotationId: null,
 };
 
 function setup() {
@@ -111,6 +112,7 @@ test("dao.updated.state", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
           commentCount: 0,
+          annotationId: null,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
@@ -159,6 +161,7 @@ test("dao.created", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
           commentCount: 0,
+          annotationId: null,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },
@@ -1055,6 +1058,7 @@ test("route.deleted", async (t: Test) => {
           teamUserId: null,
           title: "Garment Sample",
           commentCount: 0,
+          annotationId: null,
         },
         channels: ["approval-steps/step-1", "submissions/sub-1"],
       },

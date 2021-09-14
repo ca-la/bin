@@ -26,6 +26,7 @@ test("announceSubmissionCommentCreation supports sending a message", async (t: T
     deletedAt: null,
     stepId: "a-step-id",
     commentCount: 1,
+    annotationId: null,
   };
   sandbox().stub(SubmissionsDAO, "findById").resolves(submission);
   const sendStub = sandbox()
@@ -80,6 +81,7 @@ test("announceSubmissionCommentDeletion supports sending a message", async (t: T
     deletedAt: null,
     stepId: "a-step-id",
     commentCount: 0,
+    annotationId: null,
   };
   sandbox().stub(SubmissionsDAO, "findById").resolves(submission);
   const sendStub = sandbox()
