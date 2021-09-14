@@ -135,33 +135,41 @@ export async function findAllByCanvasId(
   );
 }
 
-export async function findAllWithCommentsByDesign(
+export async function findNotEmptyByDesign(
   ktx: Knex,
   designId: string
 ): Promise<Annotation[]> {
   const annotations: AnnotationRow[] = await ktx(TABLE_NAME)
     .distinct("product_design_canvas_annotations.id")
     .select("product_design_canvas_annotations.*")
-    .join(
-      "product_design_canvas_annotation_comments",
-      "product_design_canvas_annotation_comments.annotation_id",
-      "product_design_canvas_annotations.id"
+    .joinRaw(
+      `
+JOIN (
+  SELECT annotations.id as annotation_id
+    FROM product_design_canvas_annotations AS annotations
+         LEFT JOIN product_design_canvas_annotation_comments
+                ON product_design_canvas_annotation_comments.annotation_id = annotations.id
+         LEFT JOIN comments
+                ON comments.id = product_design_canvas_annotation_comments.comment_id
+               AND comments.deleted_at IS NULL
+         LEFT JOIN design_approval_submissions
+                ON design_approval_submissions.annotation_id = annotations.id
+               AND design_approval_submissions.deleted_at IS NULL
+   WHERE product_design_canvas_annotation_comments.annotation_id IS NOT NULL
+      OR design_approval_submissions.id IS NOT NULL
+) AS annotation_content ON annotation_content.annotation_id = product_design_canvas_annotations.id
+`
     )
     .join(
       "canvases",
       "canvases.id",
       "product_design_canvas_annotations.canvas_id"
     )
-    .join(
-      "comments",
-      "comments.id",
-      "product_design_canvas_annotation_comments.comment_id"
-    )
     .whereRaw(
       `
 canvases.design_id = ?
+AND canvases.deleted_at IS NULL
 AND product_design_canvas_annotations.deleted_at IS null
-AND comments.deleted_at IS null
 `,
       [designId]
     )

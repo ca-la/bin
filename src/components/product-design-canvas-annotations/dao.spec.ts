@@ -9,10 +9,12 @@ import createUser from "../../test-helpers/create-user";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import * as AnnotationCommentsDAO from "../annotation-comments/dao";
 import * as CommentsDAO from "../comments/dao";
+import * as SubmissionsDAO from "../approval-step-submissions/dao";
 import generateComment from "../../test-helpers/factories/comment";
 import generateAnnotation from "../../test-helpers/factories/product-design-canvas-annotation";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createDesign from "../../services/create-design";
+import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
 
 test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: tape.Test) => {
   const { user } = await createUser();
@@ -73,7 +75,7 @@ test("findAllByCanvasId returns in order of newest to oldest", async (t: tape.Te
   );
 });
 
-test("findAllWithCommentsByDesign with comments", async (t: tape.Test) => {
+test("findNotEmptyByDesign with comments and submissions", async (t: tape.Test) => {
   const { user } = await createUser({ withSession: false });
   const { annotation: a1, canvas, design } = await generateAnnotation({
     createdBy: user.id,
@@ -94,14 +96,44 @@ test("findAllWithCommentsByDesign with comments", async (t: tape.Test) => {
     createdBy: user.id,
   });
   const { comment: c3 } = await generateComment();
-  await AnnotationCommentsDAO.create({ annotationId: a2.id, commentId: c3.id });
+  await AnnotationCommentsDAO.create({
+    annotationId: a2.id,
+    commentId: c3.id,
+  });
 
-  const result = await db.transaction((trx: Knex.Transaction) =>
-    AnnotationsDAO.findAllWithCommentsByDesign(trx, design.id)
+  // Annotation with submission
+  const { annotation: a3 } = await generateAnnotation({
+    canvasId: canvas.id,
+    createdBy: user.id,
+  });
+  await db.transaction((trx: Knex.Transaction) =>
+    generateApprovalSubmission(trx, {
+      annotationId: a3.id,
+    })
   );
+
+  // Annotation with deleted submission
+  const { annotation: a4 } = await generateAnnotation({
+    canvasId: canvas.id,
+    createdBy: user.id,
+  });
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const { submission } = await generateApprovalSubmission(trx, {
+      annotationId: a4.id,
+    });
+    await SubmissionsDAO.deleteById(trx, submission.id);
+  });
+
+  // Empty annotation
+  await generateAnnotation({
+    canvasId: canvas.id,
+    createdBy: user.id,
+  });
+
+  const result = await AnnotationsDAO.findNotEmptyByDesign(db, design.id);
   t.deepEqual(
     result,
-    [a2, a1],
+    [a3, a2, a1],
     "Returns annotations with comments from newest to oldest"
   );
 });

@@ -4,14 +4,7 @@ import { z } from "zod";
 
 import db from "../../services/db";
 import { ProductDesignCanvasAnnotation as Annotation } from "./types";
-import {
-  create,
-  deleteById,
-  findAllByCanvasId,
-  findAllWithCommentsByCanvasId,
-  update,
-  findAllWithCommentsByDesign,
-} from "./dao";
+import { create, deleteById, update, findNotEmptyByDesign } from "./dao";
 import * as AnnotationCommentDAO from "../../components/annotation-comments/dao";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import requireAuth = require("../../middleware/require-auth");
@@ -27,14 +20,9 @@ import {
   dateStringToDate,
   nullableDateStringToNullableDate,
 } from "../../services/zod-helpers";
+import { parseContext } from "../../services/parse-context";
 
 const router = new Router();
-
-interface GetListQuery {
-  designId?: string;
-  canvasId?: string;
-  hasComments?: string;
-}
 
 const annotationFromIO = (request: Annotation, userId: string): Annotation => {
   return {
@@ -88,23 +76,17 @@ async function deleteAnnotation(
   ctx.status = 204;
 }
 
-async function getList(ctx: AuthedContext) {
-  const query: GetListQuery = ctx.query;
+const getListContextSchema = z.object({
+  query: z.object({ designId: z.string() }),
+});
 
-  let annotations = [];
+async function getList(ctx: StrictContext<Annotation[]>) {
+  const { query } = parseContext(ctx, getListContextSchema);
 
-  if (query.canvasId && query.hasComments) {
-    annotations = await findAllWithCommentsByCanvasId(db, query.canvasId);
-  } else if (query.canvasId) {
-    annotations = await findAllByCanvasId(db, query.canvasId);
-  } else if (query.designId) {
-    annotations = await findAllWithCommentsByDesign(db, query.designId);
-  } else {
-    ctx.throw(
-      400,
-      "Must provide either a canvasId or designId query parameter"
-    );
-  }
+  const annotations: Annotation[] = await findNotEmptyByDesign(
+    db,
+    query.designId
+  );
 
   ctx.status = 200;
   ctx.body = annotations;

@@ -42,7 +42,7 @@ function setup() {
       .stub(AnnotationDAO, "findAllWithCommentsByCanvasId")
       .resolves(annotations),
     findByDesignStub: sandbox()
-      .stub(AnnotationDAO, "findAllWithCommentsByDesign")
+      .stub(AnnotationDAO, "findNotEmptyByDesign")
       .resolves(annotations),
   };
 }
@@ -167,31 +167,6 @@ test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) =
     headers: authHeader(session.id),
   });
   t.equal(unknownErrorResponse.status, 500);
-});
-
-test(`GET ${API_PATH}/?canvasId=:canvasId returns Annotations`, async (t: Test) => {
-  const { annotations, findByCanvasStub } = setup();
-
-  const [response, body] = await get(`${API_PATH}/?canvasId="a-canvas-id"`, {
-    headers: authHeader("a-session-id"),
-  });
-  t.equal(response.status, 200, "returns success status");
-  t.deepEqual(body, annotations, "returns annotations in body");
-  t.true(findByCanvasStub.calledOnce, "calls correct DAO method");
-});
-
-test(`GET ${API_PATH}/?canvasId=:canvasId?hasComments=true returns Annotations with comments`, async (t: Test) => {
-  const { annotations, findByCanvasWithCommentsStub } = setup();
-
-  const [withCommentsResponse, withComments] = await get(
-    `${API_PATH}?canvasId=a-canvas-id&hasComments=true`,
-    {
-      headers: authHeader("a-session-id"),
-    }
-  );
-  t.equal(withCommentsResponse.status, 200, "returns success status");
-  t.deepEqual(withComments, annotations, "returns annotations in body");
-  t.true(findByCanvasWithCommentsStub.calledOnce, "calls correct DAO method");
 });
 
 test(`GET ${API_PATH}/?designId returns Annotations`, async (t: Test) => {
