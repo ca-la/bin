@@ -143,7 +143,7 @@ test("computeUniqueSku", async (t: Test) => {
         sizeName: "S",
         colorName: "Red, Blue",
       },
-      sku: "YIWO-GTWB-S-RB",
+      sku: "YIWO-GTWB-RB-S",
     },
   ];
 

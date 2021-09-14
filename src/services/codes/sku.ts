@@ -66,5 +66,5 @@ export async function computeUniqueSku(
   const designPart = `${abbreviate(design.title)}-`;
   const numericPart = formatSequenceValue(increment);
 
-  return `${collectionPart}${designPart}${sizePart}${colorPart}${numericPart}`;
+  return `${collectionPart}${designPart}${colorPart}${sizePart}${numericPart}`;
 }
