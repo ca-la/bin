@@ -6,6 +6,7 @@ export const channelResourceSchema = z.enum([
   "submissions",
   "teams",
   "updates",
+  "collections",
 ]);
 export type ChannelResource = z.infer<typeof channelResourceSchema>;
 

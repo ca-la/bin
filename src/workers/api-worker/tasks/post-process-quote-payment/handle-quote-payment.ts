@@ -10,8 +10,7 @@ import DesignEventsDAO from "../../../../components/design-events/dao";
 import { DesignEventWithMeta } from "../../../../components/design-events/types";
 import { realtimeDesignEventCreated } from "../../../../components/design-events/realtime";
 import ApprovalStepsDAO from "../../../../components/approval-steps/dao";
-import ApprovalStep from "../../../../components/approval-steps/types";
-import { realtimeApprovalStepUpdated } from "../../../../components/approval-steps/realtime";
+import { realtimeApprovalStepListUpdated } from "../../../../components/approval-steps/realtime";
 import { logServerError } from "../../../../services/logger";
 
 export async function handleQuotePayment(
@@ -46,10 +45,8 @@ async function sendApprovalStepsUpdates(
     collectionId
   );
 
-  await Promise.all(
-    approvalSteps.map((step: ApprovalStep) =>
-      IrisService.sendMessage(realtimeApprovalStepUpdated(step))
-    )
+  await IrisService.sendMessage(
+    realtimeApprovalStepListUpdated(collectionId, approvalSteps)
   );
 }
 

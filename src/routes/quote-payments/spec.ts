@@ -346,6 +346,9 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   const realtimeStepUpdates = irisStub.args.filter(
     (arg: any) => arg[0].type === "approval-step/updated"
   );
+  const realtimeStepListUpdates = irisStub.args.filter(
+    (arg: any) => arg[0].type === "approval-step-list/updated"
+  );
   const realtimeCollectionStatus = irisStub.args.filter(
     (arg: any) => arg[0].type === "collection/status-updated"
   );
@@ -358,8 +361,19 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
   // (4 steps receiving due dates * 2 designs) + 2 CHECKOUT STEPS being COMPLETED
   t.equals(
     realtimeStepUpdates.length,
-    10,
-    // 8 of them sent from the api-worker
+    2,
+    "Realtime message emitted for approval step status"
+  );
+  t.equals(
+    // all collection steps are update via single realtime request
+    realtimeStepListUpdates.length,
+    1,
+    "Realtime message emitted for approval step status"
+  );
+  t.equals(
+    // all collection steps are update via single realtime request
+    realtimeStepListUpdates[0][0].resource.length,
+    8,
     "Realtime message emitted for approval step status"
   );
   t.equals(

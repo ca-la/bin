@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { dateStringToDate } from "../../services/zod-helpers";
+import {
+  dateStringToDate,
+  nullableDateStringToNullableDate,
+} from "../../services/zod-helpers";
 import { permissionsSchema } from "../permissions/types";
 import { designImageAssetSchema } from "../../components/assets/types";
 
@@ -80,6 +83,12 @@ export const collectionSubmissionStatus = z.object({
   isPaired: z.boolean(),
   pricingExpiresAt: z.date().nullable(),
 });
+
+export const serializedCollectionSubmissionStatus = collectionSubmissionStatus.extend(
+  {
+    pricingExpiresAt: nullableDateStringToNullableDate,
+  }
+);
 
 export type CollectionSubmissionStatus = z.infer<
   typeof collectionSubmissionStatus

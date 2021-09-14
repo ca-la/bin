@@ -1,28 +1,26 @@
-import { CollectionSubmissionStatus } from "./types";
+import { z } from "zod";
+import { buildChannelName } from "../iris/build-channel";
 
-export interface RealtimeCollectionStatusUpdated {
-  collectionId: string;
-  resource: CollectionSubmissionStatus;
-  type: "collection/status-updated";
-}
+import {
+  CollectionSubmissionStatus,
+  serializedCollectionSubmissionStatus,
+} from "./types";
 
-export function isRealtimeCollectionStatusUpdated(
-  data: any
-): data is RealtimeCollectionStatusUpdated {
-  return (
-    "collectionId" in data &&
-    "resource" in data &&
-    "type" in data &&
-    data.type === "collection/status-updated"
-  );
-}
+export const realtimeCollectionStatusUpdatedSchema = z.object({
+  type: z.literal("collection/status-updated"),
+  resource: serializedCollectionSubmissionStatus,
+  channels: z.array(z.string()),
+});
+export type RealtimeCollectionStatusUpdated = z.infer<
+  typeof realtimeCollectionStatusUpdatedSchema
+>;
 
 export function realtimeCollectionStatusUpdated(
   submissionStatus: CollectionSubmissionStatus
 ): RealtimeCollectionStatusUpdated {
   return {
     type: "collection/status-updated",
-    collectionId: submissionStatus.collectionId,
     resource: submissionStatus,
+    channels: [buildChannelName("collections", submissionStatus.collectionId)],
   };
 }

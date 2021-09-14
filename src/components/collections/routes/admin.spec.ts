@@ -190,7 +190,6 @@ test("POST /:collectionId/reject", async (t: Test) => {
       [
         {
           type: "collection/status-updated",
-          collectionId: collection.id,
           resource: {
             collectionId: collection.id,
             isSubmitted: false,
@@ -199,6 +198,7 @@ test("POST /:collectionId/reject", async (t: Test) => {
             isPaired: false,
             pricingExpiresAt: null,
           },
+          channels: [`collections/${collection.id}`],
         },
       ],
     ],

@@ -9,7 +9,10 @@ import {
   realtimeApprovalSubmissionRevisionRequestSchema,
   realtimeApprovalSubmissionUpdatedSchema,
 } from "../approval-step-submissions/realtime";
-import { realtimeApprovalStepUpdatedSchema } from "../approval-steps/realtime";
+import {
+  realtimeApprovalStepUpdatedSchema,
+  realtimeApprovalStepListUpdatedSchema,
+} from "../approval-steps/realtime";
 import { realtimeDesignEventCreatedSchema } from "../design-events/realtime";
 import { realtimeNotificationCreatedSchema } from "../notifications/realtime";
 import {
@@ -24,6 +27,7 @@ import {
   realtimeTeamListUpdatedSchema,
   realtimeTeamUsersListUpdatedSchema,
 } from "../team-users/realtime";
+import { realtimeCollectionStatusUpdatedSchema } from "../collections/realtime";
 
 // Generic catch-all to allow expanding types without throwing
 export const unknownRealtimeMessageSchema = z.object({
@@ -48,6 +52,8 @@ export const realtimeMessageSchema = z.union([
   realtimeApprovalStepCommentCreatedSchema,
   realtimeApprovalStepCommentDeletedSchema,
   realtimeApprovalStepUpdatedSchema,
+  realtimeApprovalStepListUpdatedSchema,
+  realtimeCollectionStatusUpdatedSchema,
 ]);
 
 export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;

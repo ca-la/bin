@@ -20,3 +20,23 @@ export function realtimeApprovalStepUpdated(
     resource: step,
   };
 }
+
+export const realtimeApprovalStepListUpdatedSchema = z.object({
+  type: z.literal("approval-step-list/updated"),
+  resource: z.array(serializedApprovalStepSchema),
+  channels: z.array(z.string()),
+});
+export type RealtimeApprovalStepListUpdated = z.infer<
+  typeof realtimeApprovalStepListUpdatedSchema
+>;
+
+export function realtimeApprovalStepListUpdated(
+  collectionId: string,
+  steps: ApprovalStep[]
+): RealtimeApprovalStepListUpdated {
+  return {
+    type: "approval-step-list/updated",
+    resource: steps,
+    channels: [buildChannelName("collections", collectionId)],
+  };
+}
