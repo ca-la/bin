@@ -13,6 +13,7 @@ import * as TaskEventsDAO from "../../dao/task-events";
 import * as CanvasesDAO from "../../components/canvases/dao";
 import * as ComponentsDAO from "../../components/components/dao";
 import * as VariantsDAO from "../../components/product-design-variants/dao";
+import * as DesignsDAO from "../../components/product-designs/dao";
 
 import { findAndDuplicateDesign } from "./designs";
 
@@ -34,6 +35,7 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
     colorNamePosition: 1,
   });
 
+  const originalDesign = await DesignsDAO.findById(design.id);
   const duplicatedDesign = await db.transaction((trx: Knex.Transaction) =>
     findAndDuplicateDesign(trx, design.id, duplicatingUser.id)
   );
@@ -41,12 +43,15 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
   t.deepEqual(
     duplicatedDesign,
     {
-      ...design,
+      ...originalDesign,
+      firstStepCreatedAt: duplicatedDesign.firstStepCreatedAt,
+      approvalSteps: duplicatedDesign.approvalSteps,
+      imageLinks: duplicatedDesign.imageLinks,
       createdAt: duplicatedDesign.createdAt,
       id: duplicatedDesign.id,
       userId: duplicatingUser.id,
     },
-    "Returns the same design but with a new id and created at timestamp"
+    "Returns the same design but with a new sub-resources, dates, and id"
   );
 
   const duplicateVariants = await VariantsDAO.findByDesignId(

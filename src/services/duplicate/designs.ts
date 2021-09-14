@@ -23,7 +23,7 @@ export async function findAndDuplicateDesign(
   newCreatorId: string,
   collectionIds?: string[]
 ): Promise<Design> {
-  const design = await DesignsDAO.findById(designId);
+  const design = await DesignsDAO.findById(designId, undefined, undefined, trx);
   if (!design) {
     throw new ResourceNotFoundError(`Design ${designId} not found`);
   }
@@ -58,5 +58,18 @@ export async function findAndDuplicateDesign(
 
   await findAndDuplicateVariants(designId, duplicatedDesign.id, trx);
 
-  return duplicatedDesign;
+  const found = await DesignsDAO.findById(
+    duplicatedDesign.id,
+    undefined,
+    undefined,
+    trx
+  );
+
+  if (!found) {
+    throw new ResourceNotFoundError(
+      `Could not find design after duplication with id: ${duplicatedDesign.id}`
+    );
+  }
+
+  return found;
 }

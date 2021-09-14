@@ -1,5 +1,6 @@
 import { ThumbnailAndPreviewLinks } from "../../../services/attach-asset-links";
 import { DesignImageAsset } from "../../../components/assets/types";
+import ApprovalStep from "../../approval-steps/types";
 
 declare class ProductDesign {
   public id: string;
@@ -18,6 +19,8 @@ declare class ProductDesign {
   public collaboratorRoles?: string[];
   public teamRoles?: string[];
   public isCheckedOut?: boolean;
+  public approvalSteps?: ApprovalStep[];
+  public firstStepCreatedAt?: Date | null;
 
   constructor(data: any);
 }
