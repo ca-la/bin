@@ -8,6 +8,10 @@ import {
   validateEvery,
 } from "../../services/validate-from-db";
 
+import {
+  QueryModifier,
+  identity,
+} from "../../services/cala-component/cala-dao";
 import { Process } from "../../domain-objects/pricing";
 import {
   BasePricingQuoteRequest,
@@ -307,7 +311,8 @@ export async function findById(id: string): Promise<PricingQuote | null> {
 
 export async function findByDesignId(
   designId: string,
-  trx?: Knex.Transaction
+  trx?: Knex.Transaction,
+  modifier: QueryModifier = identity
 ): Promise<PricingQuote[] | null> {
   const TABLE_NAME = "pricing_quotes";
   const quotes: object[] = await db(TABLE_NAME)
@@ -317,7 +322,8 @@ export async function findByDesignId(
       if (trx) {
         query.transacting(trx);
       }
-    });
+    })
+    .modify(modifier);
 
   if (!quotes.every(isPricingQuoteRow)) {
     return null;

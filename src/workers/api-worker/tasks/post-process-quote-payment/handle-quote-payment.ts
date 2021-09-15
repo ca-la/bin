@@ -1,4 +1,4 @@
-import Knex from "knex";
+import Knex, { QueryBuilder } from "knex";
 
 import createUPCsForCollection from "../../../../services/create-upcs-for-collection";
 import createSKUsForCollection from "../../../../services/create-skus-for-collection";
@@ -10,6 +10,11 @@ import DesignEventsDAO from "../../../../components/design-events/dao";
 import { DesignEventWithMeta } from "../../../../components/design-events/types";
 import { realtimeDesignEventCreated } from "../../../../components/design-events/realtime";
 import ApprovalStepsDAO from "../../../../components/approval-steps/dao";
+import {
+  ApprovalStepType,
+  ApprovalStepState,
+} from "../../../../components/approval-steps/domain-object";
+import { createSubmissionsByProductType } from "../../../../services/approval-step-state";
 import { realtimeApprovalStepListUpdated } from "../../../../components/approval-steps/realtime";
 import { logServerError } from "../../../../services/logger";
 
@@ -33,6 +38,7 @@ export async function handleQuotePayment(
   );
   await sendCollectionStatusUpdated(trx, collectionId);
   await sendApprovalStepsUpdates(trx, collectionId);
+  await createAndSendSubmissions(trx, collectionId);
   await sendQuotesDesignEvents(trx, invoiceId);
 }
 
@@ -82,4 +88,23 @@ async function sendCollectionStatusUpdated(
   await IrisService.sendMessage(
     realtimeCollectionStatusUpdated(collectionStatus)
   );
+}
+
+async function createAndSendSubmissions(
+  trx: Knex.Transaction,
+  collectionId: string
+): Promise<void> {
+  const approvalSteps = await ApprovalStepsDAO.findByCollection(
+    trx,
+    collectionId,
+    (query: QueryBuilder) =>
+      query.where({
+        "design_approval_steps.type": ApprovalStepType.CHECKOUT,
+        "design_approval_steps.state": ApprovalStepState.COMPLETED,
+      })
+  );
+
+  for (const step of approvalSteps) {
+    await createSubmissionsByProductType(trx, step);
+  }
 }

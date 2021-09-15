@@ -1,8 +1,11 @@
-import Knex from "knex";
+import Knex, { QueryBuilder } from "knex";
 import * as uuid from "node-uuid";
 
+import Logger from "../../services/logger";
+import * as IrisService from "../../components/iris/send-message";
 import * as ProductDesignsDAO from "../../components/product-designs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
+import { realtimeApprovalStepListUpdated } from "../../components/approval-steps/realtime";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 import * as BidTaskTypesDAO from "../../components/bid-task-types/dao";
 import DesignEventsDAO from "../../components/design-events/dao";
@@ -166,29 +169,77 @@ export async function handleUserStepReopen(
   // TODO: cause any related notification to not be returned any more
 }
 
+type ApprovalStepCheckoutPatch = Partial<ApprovalStep> & {
+  id: string;
+};
+
 export async function transitionCheckoutState(
   trx: Knex.Transaction,
   collectionId: string
 ): Promise<void> {
-  const designs = await ProductDesignsDAO.findByCollectionId(collectionId, trx);
+  const collectionSteps = await ApprovalStepsDAO.findByCollection(
+    trx,
+    collectionId,
+    (query: QueryBuilder) =>
+      query.whereNot({
+        "design_approval_steps.state": ApprovalStepState.SKIP,
+      })
+  );
 
-  for (const design of designs) {
-    const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
-      designId: design.id,
-      type: ApprovalStepType.CHECKOUT,
-    });
+  const checkoutSteps = collectionSteps.filter((step: ApprovalStep) => {
+    return step.type === ApprovalStepType.CHECKOUT;
+  });
 
-    if (!checkoutStep) {
-      throw new Error(
-        `Unable to find checkout approval step for design "${design.id}"`
-      );
-    }
+  const stepPatchList: ApprovalStepCheckoutPatch[] = [];
 
-    await ApprovalStepsDAO.update(trx, checkoutStep.id, {
+  for (const checkoutStep of checkoutSteps) {
+    // checkout step should be completed
+    const checkoutStepPatch: ApprovalStepCheckoutPatch = {
+      id: checkoutStep.id,
       reason: null,
       state: ApprovalStepState.COMPLETED,
+    };
+
+    stepPatchList.push(checkoutStepPatch);
+
+    // next step should become current
+    const nextStep = collectionSteps.find((step: ApprovalStep) => {
+      return (
+        step.designId === checkoutStep.designId &&
+        step.ordering > checkoutStep.ordering
+      );
     });
+
+    if (!nextStep) {
+      continue;
+    }
+    if (nextStep.state !== ApprovalStepState.UNSTARTED) {
+      continue;
+    }
+
+    const nextStepPatch: ApprovalStepCheckoutPatch = {
+      id: nextStep.id,
+      reason: null,
+      state: ApprovalStepState.CURRENT,
+      startedAt: new Date(),
+    };
+
+    stepPatchList.push(nextStepPatch);
   }
+
+  // actual sequential update of steps without emitting dao.updated
+  const updatedSteps = [];
+  for (const stepPatch of stepPatchList) {
+    const { id, ...patch } = stepPatch;
+    const step = await ApprovalStepsDAO.update(trx, id, patch, {
+      shouldEmitDaoUpdatedEvent: false,
+    });
+    updatedSteps.push(step.updated);
+  }
+
+  await IrisService.sendMessage(
+    realtimeApprovalStepListUpdated(collectionId, updatedSteps)
+  ).catch(Logger.logServerError);
 }
 
 export async function actualizeDesignStepsAfterBidAcceptance(

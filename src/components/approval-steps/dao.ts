@@ -1,5 +1,9 @@
 import Knex, { Transaction } from "knex";
-import { buildDao } from "../../services/cala-component/cala-dao";
+import {
+  buildDao,
+  QueryModifier,
+  identity,
+} from "../../services/cala-component/cala-dao";
 import adapter from "./adapter";
 import ApprovalStep, { ApprovalStepRow, approvalStepDomain } from "./types";
 
@@ -37,7 +41,8 @@ const dao = {
   },
   async findByCollection(
     ktx: Knex,
-    collectionId: string
+    collectionId: string,
+    modifier: QueryModifier = identity
   ): Promise<ApprovalStep[]> {
     return ktx(tableName)
       .select("design_approval_steps.*")
@@ -55,6 +60,7 @@ const dao = {
         "collection_designs.collection_id": collectionId,
         "product_designs.deleted_at": null,
       })
+      .modify(modifier)
       .then(adapter.fromDbArray.bind(adapter));
   },
 };

@@ -1,4 +1,4 @@
-import Knex from "knex";
+import Knex, { QueryBuilder } from "knex";
 import * as uuid from "node-uuid";
 import { uniqBy } from "lodash";
 
@@ -178,7 +178,11 @@ export async function getDefaultsByDesign(
     );
   }
 
-  const designQuotes = await PricingQuotesDAO.findByDesignId(designId, trx);
+  const designQuotes = await PricingQuotesDAO.findByDesignId(
+    designId,
+    trx,
+    (query: QueryBuilder) => query.limit(1)
+  );
 
   if (!designQuotes || designQuotes.length === 0) {
     throw new Error(`Unable to find a PricingQuote for design "${designId}`);

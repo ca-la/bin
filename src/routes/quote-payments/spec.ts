@@ -358,28 +358,35 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     "Realtime message emitted for design checkout"
   );
 
-  // (4 steps receiving due dates * 2 designs) + 2 CHECKOUT STEPS being COMPLETED
   t.equals(
     realtimeStepUpdates.length,
+    0,
+    "No Realtime message emitted for single approval step"
+  );
+  t.equals(
+    // all collection steps are update via single realtime request
+    // first is to update checkout steps and make next steps current
+    // second to update all steps as due date has been updated (api-worker)
+    realtimeStepListUpdates.length,
+    2,
+    "Realtime message emitted for list approval step"
+  );
+  t.equals(
+    // + 2 CHECKOUT STEPS being COMPLETED
+    realtimeStepListUpdates[0][0].resource.length,
     2,
     "Realtime message emitted for approval step status"
   );
   t.equals(
-    // all collection steps are update via single realtime request
-    realtimeStepListUpdates.length,
-    1,
-    "Realtime message emitted for approval step status"
-  );
-  t.equals(
-    // all collection steps are update via single realtime request
-    realtimeStepListUpdates[0][0].resource.length,
+    // (4 steps receiving due dates * 2 designs)
+    realtimeStepListUpdates[1][0].resource.length,
     8,
     "Realtime message emitted for approval step status"
   );
   t.equals(
     realtimeCollectionStatus.length,
     1,
-    "Realtime message emitted for approval step status"
+    "Realtime message emitted for collection status"
   );
   await db.transaction(async (trx: Knex.Transaction) => {
     const cutAndSewApprovalSteps = await ApprovalStepsDAO.findByDesign(
