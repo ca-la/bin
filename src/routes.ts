@@ -54,6 +54,7 @@ import templateDesignRoutes from "./components/templates/designs/routes";
 import templateCategoryComponent from "./components/templates/categories";
 import timelineRoutes from "./components/timeline/routes";
 import userRoutes from "./components/users/routes";
+import userFeaturesRouter from "./components/user-features/routes";
 import userOnboardingRoutes from "./components/user-onboardings/routes";
 import userPageOnboardingRoutes from "./components/user-page-onboardings/routes";
 
@@ -139,5 +140,6 @@ plugComponentRouter(router, teamComponent.router);
 plugComponentRouter(router, teamUserComponent.router);
 plugComponentRouter(router, participantRouter);
 plugComponentRouter(router, financingAccountsRouter);
+plugComponentRouter(router, userFeaturesRouter);
 
 export default router;
