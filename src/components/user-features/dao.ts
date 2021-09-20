@@ -41,6 +41,7 @@ export async function deleteByUserAndFeature(
     .where({
       user_id: userId,
       name: featureName,
+      deleted_at: null,
     });
 
   if (result.length !== 1) {

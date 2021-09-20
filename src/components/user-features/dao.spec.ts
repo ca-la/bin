@@ -118,6 +118,9 @@ test("UserFeaturesDAO end-to-end", async (t: Test) => {
     const emptyAgain = await UserFeaturesDAO.findNamesByUser(trx, user.id);
 
     t.deepEqual(emptyAgain, [], "removed feature does not show in name list");
+
+    await UserFeaturesDAO.create(trx, user.id, "a-new-feature");
+    await UserFeaturesDAO.deleteByUserAndFeature(trx, user.id, "a-new-feature");
   } catch (err) {
     t.fail(err);
   } finally {
