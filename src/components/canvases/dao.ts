@@ -61,15 +61,16 @@ export async function create(
 }
 
 export async function update(
+  trx: Knex.Transaction,
   id: string,
   data: Unsaved<Canvas>
 ): Promise<Canvas> {
   const rowData = dataAdapter.forInsertion({
-    ...data,
     deletedAt: null,
+    ...data,
     id,
   });
-  const updated = await db(TABLE_NAME)
+  const updated = await trx(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update(rowData, "*")
     .then((rows: CanvasRow[]) => first<CanvasRow>(rows));

@@ -1,6 +1,7 @@
 import Router from "koa-router";
 import Knex from "knex";
 import convert from "koa-convert";
+import { z } from "zod";
 
 import * as CanvasesDAO from "./dao";
 import requireAuth = require("../../middleware/require-auth");
@@ -14,6 +15,7 @@ import {
   serializedComponentArraySchema,
   serializedComponentSchema,
 } from "../components/types";
+import { nullableDateStringToNullableDate } from "../../services/zod-helpers";
 import * as EnrichmentService from "../../services/attach-asset-links";
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
@@ -21,7 +23,8 @@ import ProductDesignImage from "../assets/types";
 import ProductDesignOption from "../../domain-objects/product-design-option";
 import { hasProperties } from "../../services/require-properties";
 import { omit } from "lodash";
-import { typeGuard, typeGuardFromSchema } from "../../middleware/type-guard";
+import { typeGuard } from "../../middleware/type-guard";
+import { parseContext } from "../../services/parse-context";
 import { gatherChanges } from "./services/gather-changes";
 import { deserializeAsset } from "../assets/services/serializer";
 import { Serialized } from "../../types/serialized";
@@ -181,53 +184,111 @@ async function createComponent(
   return EnrichmentService.addAssetLink(created);
 }
 
-function* addComponent(this: AuthedContext): Iterator<any, any, any> {
-  const { assetLink, ...body } = attachUser(
-    this.request.body,
-    this.state.userId
-  );
+export const addComponentContextSchema = z.object({
+  request: z.object({
+    body: serializedComponentSchema,
+  }),
+  params: z.object({
+    canvasId: z.string(),
+  }),
+});
 
-  const safeComponent = serializedComponentSchema.safeParse(body);
-  if (!safeComponent.success) {
-    logServerError(safeComponent.error);
-    throw new Error("Could not create component");
-  }
-
-  const component = yield ComponentsDAO.create(safeComponent.data);
-  const canvas = yield CanvasesDAO.findById(this.params.canvasId);
-
-  const updatedCanvas = yield CanvasesDAO.update(this.params.canvasId, {
-    ...canvas,
-    componentId: component.id,
-  });
-  const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
-  this.status = 200;
-  this.body = { ...updatedCanvas, components };
+interface AddComponentContext
+  extends StrictContext<CanvasWithEnrichedComponents> {
+  state: AuthedState;
 }
 
-function* update(this: AuthedContext): Iterator<any, any, any> {
-  const body = attachUser(this.request.body, this.state.userId);
-  if (!this.request.body || !isSaveableCanvas(body)) {
-    this.throw(400, "Request does not match Canvas");
+async function addComponent(ctx: AddComponentContext) {
+  const {
+    request: { body: data },
+    params,
+  } = parseContext(ctx, addComponentContextSchema);
+
+  const canvas = await CanvasesDAO.findById(params.canvasId);
+  if (!canvas) {
+    ctx.throw(404, `Canvas not found with id: ${params.canvasId}`);
   }
 
-  const updatedCanvas = yield CanvasesDAO.update(
-    this.params.canvasId,
-    body
-  ).catch(
-    filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
-      this.throw(404, err);
-    })
+  const updatedCanvasWithEnrichedComponent = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const component = await ComponentsDAO.create(data, trx);
+      const updatedCanvas = await CanvasesDAO.update(trx, params.canvasId, {
+        ...canvas,
+        componentId: component.id,
+      });
+      const components = await ComponentsDAO.findAllByCanvasId(canvas.id, trx);
+      const enrichedComponents = await Promise.all(
+        components.map(EnrichmentService.addAssetLink)
+      );
+
+      return { ...updatedCanvas, components: enrichedComponents };
+    }
   );
-  const components = yield ComponentsDAO.findAllByCanvasId(updatedCanvas.id);
-  const enrichedComponents = yield Promise.all(
-    components.map(EnrichmentService.addAssetLink)
+  ctx.status = 200;
+  ctx.body = updatedCanvasWithEnrichedComponent;
+}
+
+export const updateCanvasContextSchema = z.object({
+  request: z.object({
+    body: z
+      .object({
+        designId: z.string(),
+        createdBy: z.string(),
+        title: z.string(),
+        width: z.number().nonnegative(),
+        height: z.number().nonnegative(),
+        x: z.number(),
+        y: z.number(),
+        ordering: z.number().int(),
+        deletedAt: nullableDateStringToNullableDate,
+        archivedAt: nullableDateStringToNullableDate,
+      })
+      .partial(),
+  }),
+  params: z.object({
+    canvasId: z.string(),
+  }),
+});
+
+interface UpdateCanvasContext
+  extends StrictContext<CanvasWithEnrichedComponents> {
+  state: AuthedState;
+}
+
+async function update(ctx: UpdateCanvasContext) {
+  const {
+    request: { body: patch },
+    params,
+  } = parseContext(ctx, updateCanvasContextSchema);
+
+  const canvasWithEnrichedComponents = await db.transaction(
+    async (trx: Knex.Transaction) => {
+      const updatedCanvas = await CanvasesDAO.update(
+        trx,
+        params.canvasId,
+        patch as MaybeUnsaved<Canvas>
+      ).catch(
+        filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+          ctx.throw(404, err);
+        })
+      );
+      const components = await ComponentsDAO.findAllByCanvasId(
+        updatedCanvas.id,
+        trx
+      );
+      const enrichedComponents = await Promise.all(
+        components.map(EnrichmentService.addAssetLink)
+      );
+
+      return {
+        ...updatedCanvas,
+        components: enrichedComponents,
+      };
+    }
   );
-  this.status = 200;
-  this.body = {
-    ...updatedCanvas,
-    components: enrichedComponents,
-  };
+
+  ctx.status = 200;
+  ctx.body = canvasWithEnrichedComponents;
 }
 
 type ReorderRequest = CanvasesDAO.ReorderRequest;
@@ -294,6 +355,95 @@ function* getChangeLog(this: AuthedContext): Iterator<any, any, any> {
   this.body = changes;
 }
 
+export const canvasGroupUpdateSchema = z.object({
+  id: z.string(),
+  archivedAt: nullableDateStringToNullableDate.optional(),
+  ordering: z.number().int().optional(),
+});
+export type CanvasGroupUpdate = z.infer<typeof canvasGroupUpdateSchema>;
+
+export const canvasesListUpdateSchema = z.object({
+  request: z.object({
+    body: z.array(canvasGroupUpdateSchema),
+  }),
+});
+
+interface UpdateCanvasesListContext
+  extends StrictContext<CanvasWithEnrichedComponents[]> {
+  state: AuthedState;
+}
+
+async function updateCanvases(ctx: UpdateCanvasesListContext) {
+  const {
+    request: { body: patchList },
+  } = parseContext(ctx, canvasesListUpdateSchema);
+
+  const updatedList = await db.transaction(async (trx: Knex.Transaction) => {
+    const updatedCanvases: Canvas[] = await Promise.all(
+      patchList.map(
+        async ({ id, ...patch }: CanvasGroupUpdate) =>
+          await CanvasesDAO.update(
+            trx,
+            id,
+            patch as MaybeUnsaved<Canvas>
+          ).catch(
+            filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+              ctx.throw(404, err);
+            })
+          )
+      )
+    );
+
+    const canvasWithComponentsList: CanvasWithEnrichedComponents[] = await Promise.all(
+      updatedCanvases.map(async (canvas: Canvas) => {
+        const components = await ComponentsDAO.findAllByCanvasId(
+          canvas.id,
+          trx
+        );
+        const enrichedComponents = await Promise.all(
+          components.map(EnrichmentService.addAssetLink)
+        );
+
+        return { ...canvas, components: enrichedComponents };
+      })
+    );
+
+    return canvasWithComponentsList;
+  });
+
+  ctx.status = 200;
+  ctx.body = updatedList;
+}
+
+const canvasesListDeleteSchema = z.object({
+  request: z.object({
+    body: z.array(z.string()),
+  }),
+});
+
+interface DeleteCanvasesListContext extends StrictContext {
+  state: AuthedState;
+}
+async function deleteCanvases(ctx: DeleteCanvasesListContext) {
+  const {
+    request: { body: deleteList },
+  } = parseContext(ctx, canvasesListDeleteSchema);
+
+  await db.transaction(async (trx: Knex.Transaction) =>
+    Promise.all(
+      deleteList.map(async (id: string) =>
+        CanvasesDAO.del(trx, id).catch(
+          filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+            ctx.throw(404, err);
+          })
+        )
+      )
+    )
+  );
+
+  ctx.status = 204;
+}
+
 interface SplitContext extends StrictContext<CanvasWithEnrichedComponents[]> {
   state: TransactionState & AuthedState;
   params: { canvasId: string };
@@ -345,7 +495,7 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
 
 router.post("/", requireAuth, create);
 router.put("/:canvasId", requireAuth, create);
-router.patch("/:canvasId", requireAuth, update);
+router.patch("/:canvasId", requireAuth, convert.back(update));
 router.patch(
   "/reorder",
   requireAuth,
@@ -353,13 +503,15 @@ router.patch(
   reorder
 );
 
+router.patch("/", requireAuth, convert.back(updateCanvases));
+
 router.put(
   "/:canvasId/component/:componentId",
   requireAuth,
-  typeGuardFromSchema(serializedComponentSchema),
-  addComponent
+  convert.back(addComponent)
 );
 router.del("/:canvasId", requireAuth, del);
+router.del("/", requireAuth, convert.back(deleteCanvases));
 
 router.get("/", requireAuth, getList);
 router.get("/:canvasId", requireAuth, getById);

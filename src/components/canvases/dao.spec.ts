@@ -91,11 +91,13 @@ test("ProductDesignCanvases DAO supports update", async (t: tape.Test) => {
     y: 1,
   };
   const { id, createdAt, deletedAt, ...canvas } = await create(data);
-  const inserted = await update(id, {
-    ...canvas,
-    title: "updated",
-    archivedAt: new Date("2019-01-01"),
-  });
+  const inserted = await db.transaction((trx: Knex.Transaction) =>
+    update(trx, id, {
+      ...canvas,
+      title: "updated",
+      archivedAt: new Date("2019-01-01"),
+    })
+  );
 
   const result = await findById(inserted.id);
   if (!result) {

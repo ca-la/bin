@@ -1,6 +1,7 @@
+import Knex from "knex";
 import tape from "tape";
 import uuid from "node-uuid";
-import { omit } from "lodash";
+import { omit, pick } from "lodash";
 
 import * as ProductDesignCanvasesDAO from "./dao";
 import * as ProductDesignImagesDAO from "../assets/dao";
@@ -10,6 +11,7 @@ import * as ComponentsDAO from "../components/dao";
 import * as CanvasSplitService from "./services/split";
 import Logger from "../../services/logger";
 import { Component, ComponentType } from "../components/types";
+import Canvas from "./domain-object";
 
 import createUser from "../../test-helpers/create-user";
 import {
@@ -20,7 +22,7 @@ import {
   post,
   put,
 } from "../../test-helpers/http";
-import { sandbox, test } from "../../test-helpers/fresh";
+import { sandbox, test, db } from "../../test-helpers/fresh";
 import createDesign from "../../services/create-design";
 import * as EnrichmentService from "../../services/attach-asset-links";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
@@ -559,6 +561,100 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
   t.equal(missingCanvasResponse.status, 404);
 });
 
+test("PATCH /product-design-canvases/ updates and returns list of Canvases", async (t: tape.Test) => {
+  const { user, session } = await createUser();
+  const { canvas: canvas1, design } = await generateCanvas({
+    createdBy: user.id,
+  });
+  const { canvas: canvas2 } = await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+  });
+  const { canvas: canvas3 } = await generateCanvas({
+    createdBy: user.id,
+    designId: design.id,
+  });
+
+  const archivedDate = new Date(2012, 10, 19);
+  const deletedDate = new Date(2013, 10, 19);
+  const [response, body] = await patch(`/product-design-canvases/`, {
+    body: [
+      { id: canvas1.id, archivedAt: archivedDate },
+      { id: canvas2.id, deletedAt: deletedDate },
+      { id: canvas3.id, ordering: 99 },
+    ],
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 200);
+
+  t.deepEqual(
+    body.map((canvas: Canvas) => omit(canvas, "components")),
+    JSON.parse(
+      JSON.stringify([
+        {
+          ...canvas1,
+          archivedAt: archivedDate,
+        },
+        canvas2, // stays the same as we don't allow to update deletedAt
+        {
+          ...canvas3,
+          ordering: 99,
+        },
+      ])
+    ),
+    "patch returned the passed canvas with updated structure"
+  );
+
+  const [notAuthed] = await patch(`/product-design-canvases/`, {
+    body: [
+      { id: canvas1.id, archivedAt: archivedDate },
+      { id: canvas2.id, deletedAt: deletedDate },
+      { id: canvas3.id, ordering: 99 },
+    ],
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(notAuthed.status, 401, "responds with unauthorized response");
+});
+
+test("DEL /product-design-canvases/ deletes list of canvases", async (t: tape.Test) => {
+  const { session } = await createUser();
+
+  const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
+  sandbox().stub(db, "transaction").yields(trxStub);
+  const deleteStub = sandbox().stub(ProductDesignCanvasesDAO, "del").resolves();
+
+  const [response] = await del(`/product-design-canvases/`, {
+    body: ["a-canvas-id-1", "a-canvas-id-2"],
+    headers: authHeader(session.id),
+  });
+  t.equal(response.status, 204);
+  t.deepEqual(deleteStub.args, [
+    [trxStub, "a-canvas-id-1"],
+    [trxStub, "a-canvas-id-2"],
+  ]);
+
+  deleteStub.resetHistory();
+  deleteStub.rejects(
+    new ProductDesignCanvasesDAO.CanvasNotFoundError("Could not find canvas")
+  );
+  const [notFound] = await del(`/product-design-canvases/`, {
+    body: ["a-canvas-id-1", "a-canvas-id-2"],
+    headers: authHeader(session.id),
+  });
+  t.equal(notFound.status, 404, "Response with 404 on error");
+  t.equal(deleteStub.callCount, 2);
+
+  deleteStub.resetHistory();
+  const [notAuthed] = await del(`/product-design-canvases/`, {
+    body: ["a-canvas-id"],
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(notAuthed.status, 401, "responds with unauthorized response");
+  t.equal(deleteStub.callCount, 0);
+});
+
 test("PATCH /product-design-canvases/reorder", async (t: tape.Test) => {
   const { session } = await createUser();
 
@@ -647,7 +743,7 @@ test("PUT /product-design-canvases/:canvasId/component/:componentId adds a compo
 
   t.equal(response.status, 200);
   t.deepEqual(
-    body.components[0],
+    omit(pick(body.components[0], Object.keys(data)), "assetLink"),
     omit(data, "assetLink"),
     "Creates a component"
   );
@@ -704,7 +800,7 @@ pre-existing preview image`, async (t: tape.Test) => {
 
   t.equal(response.status, 200);
   t.deepEqual(
-    body.components[0],
+    omit(pick(body.components[0], Object.keys(data)), "assetLink"),
     omit(data, "assetLink"),
     "Creates a component"
   );
