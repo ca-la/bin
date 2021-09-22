@@ -127,7 +127,7 @@ test("GetProductDesignList: valid: offset/limit", async (t: Test) => {
     body: {
       operationName: "pd",
       query: `query pd($limit: Int!, $offset: Int!) {
-        productDesigns(input: { limit: $limit, offset: $offset }) {
+        productDesigns(limit: $limit, offset: $offset) {
           id
           title
           collections {
@@ -162,7 +162,7 @@ test("GetProductDesignList: valid: offset/limit with valid filters", async (t: T
     body: {
       operationName: "pd",
       query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
-        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+        productDesigns(limit: $limit, offset: $offset, filters: $filters) {
           id
           title
           collections {
@@ -209,7 +209,7 @@ test("GetProductDesignList: invalid: invalid filters", async (t: Test) => {
     body: {
       operationName: "pd",
       query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
-        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+        productDesigns(limit: $limit, offset: $offset, filters: $filters) {
           id
           title
           collections {
@@ -250,7 +250,7 @@ test("GetProductDesignList: invalid: negative offset", async (t: Test) => {
     body: {
       operationName: "pd",
       query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
-        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+        productDesigns(limit: $limit, offset: $offset, filters: $filters) {
           id
           title
           collections {
@@ -289,7 +289,7 @@ test("GetProductDesignList: invalid: negative limit", async (t: Test) => {
     body: {
       operationName: "pd",
       query: `query pd($limit: Int!, $offset: Int!, $filters: [DesignFilter]!) {
-        productDesigns(input: { limit: $limit, offset: $offset, filters: $filters }) {
+        productDesigns(limit: $limit, offset: $offset, filters: $filters) {
           id
           title
           collections {

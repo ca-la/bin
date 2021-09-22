@@ -97,13 +97,3 @@ export const gtDesignFilter: GraphQLType = {
     value: "String",
   },
 };
-
-export const gtDesignListInput: GraphQLType = {
-  name: "DesignListInput",
-  type: "input",
-  body: {
-    limit: "Int = 20",
-    offset: "Int = 0",
-    filters: "[DesignFilter] = []",
-  },
-};

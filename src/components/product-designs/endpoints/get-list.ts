@@ -9,7 +9,6 @@ import {
 import {
   gtCollectionMeta,
   gtDesignFilter,
-  gtDesignListInput,
   gtProductDesign,
 } from "./graphql-types";
 import * as ProductDesignsDAO from "../dao/dao";
@@ -28,11 +27,9 @@ interface GetProductDesignListArgs {
 }
 
 const argSchema = z.object({
-  input: z.object({
-    limit: z.number().min(0),
-    offset: z.number().min(0),
-    filters: z.array(designFilterSchema),
-  }),
+  limit: z.number().min(0),
+  offset: z.number().min(0),
+  filters: z.array(designFilterSchema),
 });
 
 type GetProductDesignListResult = ProductDesign[];
@@ -43,9 +40,10 @@ export const GetProductDesignList: GraphQLEndpoint<
   GraphQLContextAuthenticated<GetProductDesignListResult>
 > = {
   endpointType: "Query",
-  types: [gtDesignFilter, gtDesignListInput, gtCollectionMeta, gtProductDesign],
+  types: [gtDesignFilter, gtCollectionMeta, gtProductDesign],
   name: "productDesigns",
-  signature: "(input: DesignListInput! = {}): [ProductDesign]",
+  signature:
+    "(limit: Int = 20, offset: Int = 0, filters: [DesignFilter] = []): [ProductDesign]",
   middleware: requireAuth as Middleware<
     GetProductDesignListArgs,
     GraphQLContextAuthenticated<GetProductDesignListResult>,
@@ -64,7 +62,7 @@ export const GetProductDesignList: GraphQLEndpoint<
       });
     }
 
-    const { limit, offset, filters } = argResult.data.input;
+    const { limit, offset, filters } = argResult.data;
     const {
       session: { userId },
     } = context;
