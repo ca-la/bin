@@ -16,11 +16,11 @@ import {
 } from "../published-types/graphql-type-builders";
 import db from "../../services/db";
 
-export interface FindArgs<Model> {
+export interface FindArgs<Model, Filter = Partial<Model>> {
   limit?: number;
   offset?: number;
   sort?: Record<keyof Model, number | null>;
-  filter: Partial<Model>;
+  filter: Filter;
 }
 
 export interface FindResult<Model> {
@@ -40,6 +40,10 @@ function translateSort(sort: Record<string, number | null>): string {
 interface FindOptions<Model extends Record<string, any>> {
   allowedFilterAttributes?: (keyof Model)[];
   allowedSortAttributes?: (keyof Model)[];
+  gtModelType?: GraphQLType;
+  gtFilterType?: GraphQLType;
+  gtListType?: GraphQLType;
+  isFilterRequired?: boolean;
 }
 
 function pluralizeModelTypeName(modelTypeName: string) {
@@ -79,28 +83,41 @@ export function buildFindEndpoint<
   Model extends Record<string, any>,
   ResolverContext extends GraphQLContextBase<
     FindResult<Model>
-  > = GraphQLContextBase<FindResult<Model>>
+  > = GraphQLContextBase<FindResult<Model>>,
+  FilterType = Partial<Model>
 >(
   modelTypeName: string,
   schema: z.AnyZodObject,
   dao: CalaDao<Model>,
-  middleware: Middleware<FindArgs<Model>, ResolverContext, FindResult<Model>>,
+  middleware: Middleware<
+    FindArgs<Model, FilterType>,
+    ResolverContext,
+    FindResult<Model>
+  >,
   {
     allowedFilterAttributes = [],
     allowedSortAttributes = [],
+    gtModelType,
+    gtFilterType,
+    gtListType,
+    isFilterRequired,
   }: FindOptions<Model> = {}
 ) {
-  const modelType = schemaToGraphQLType(modelTypeName, schema);
-  const listType = buildGraphQLListType(modelType);
+  const modelType = gtModelType || schemaToGraphQLType(modelTypeName, schema);
+  const listType = gtListType || buildGraphQLListType(modelType);
 
   const types: GraphQLType[] = [modelType, listType];
   const signatureParts = ["limit: Int = 20", "offset: Int = 0"];
-  if (allowedFilterAttributes.length) {
-    const filterType = buildGraphQLFilterType(modelType, {
-      allowedAttributes: allowedFilterAttributes,
-    });
+  if (gtFilterType || allowedFilterAttributes.length) {
+    const filterType =
+      gtFilterType ||
+      buildGraphQLFilterType(modelType, {
+        allowedAttributes: allowedFilterAttributes,
+      });
     types.push(filterType);
-    signatureParts.push(`filter: ${filterType.name}`);
+    signatureParts.push(
+      `filter: ${filterType.name}${isFilterRequired ? "!" : ""}`
+    );
   }
   if (allowedSortAttributes.length) {
     const sortType = buildGraphQLSortType(modelType, {
@@ -118,7 +135,7 @@ export function buildFindEndpoint<
     middleware,
     resolver: async (
       _: any,
-      args: FindArgs<Model>,
+      args: FindArgs<Model, FilterType>,
       __: GraphQLContextAuthenticated<FindResult<Model>>,
       info: GraphQLResolveInfo
     ) => {

@@ -8,6 +8,7 @@ import teamAdapter, { rawAdapter } from "./adapter";
 import { SubscriptionsDAO, isSubscriptionFree } from "../subscriptions";
 import { cancelSubscription } from "../../services/stripe/cancel-subscription";
 import ResourceNotFoundError from "../../errors/resource-not-found";
+import { TeamFilter } from "./endpoints/graphql-types";
 
 const TABLE_NAME = "teams";
 
@@ -31,6 +32,10 @@ export const withTeamUserMetaDao = buildDao<Team, TeamRow>(
     queryModifier: (query: Knex.QueryBuilder) =>
       query
         .select(["team_users.role as role", "team_users.id as team_user_id"])
+        .join("team_users", "team_users.team_id", "teams.id")
+        .where({ "team_users.deleted_at": null }),
+    countModifier: (query: Knex.QueryBuilder) =>
+      query
         .join("team_users", "team_users.team_id", "teams.id")
         .where({ "team_users.deleted_at": null }),
   }
@@ -67,9 +72,14 @@ async function findUnpaidTeams(
   return rawAdapter.fromDbArray(rows);
 }
 
-async function findByUser(ktx: Knex, userId: string) {
+async function findByUser(
+  ktx: Knex,
+  userId: string,
+  modifier: (query: QueryBuilder) => QueryBuilder = (query: QueryBuilder) =>
+    query
+) {
   return withTeamUserMetaDao.find(ktx, {}, (query: QueryBuilder) =>
-    query.where({ "team_users.user_id": userId })
+    modifier(query.where({ "team_users.user_id": userId }))
   );
 }
 
@@ -126,6 +136,23 @@ async function findByDesign(ktx: Knex, designId: string) {
         "product_designs.id": designId,
         "product_designs.deleted_at": null,
       })
+  );
+}
+
+export async function findForEndpoint(
+  ktx: Knex,
+  filter: TeamFilter,
+  modifier: (query: QueryBuilder) => QueryBuilder
+) {
+  return findByUser(ktx, filter.userId, modifier);
+}
+
+export async function countForEndpoint(
+  ktx: Knex,
+  filter: TeamFilter
+): Promise<number> {
+  return withTeamUserMetaDao.count(ktx, {}, (query: QueryBuilder) =>
+    query.where({ "team_users.user_id": filter.userId })
   );
 }
 

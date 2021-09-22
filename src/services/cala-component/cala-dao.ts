@@ -16,6 +16,7 @@ interface DaoOptions<ModelRow> {
   excludeDeletedAt?: boolean;
   queryModifier?: QueryModifier;
   insertModifier?: QueryModifier;
+  countModifier?: QueryModifier;
 }
 
 interface Identifiable {
@@ -35,6 +36,7 @@ export function buildDao<
     excludeDeletedAt = true,
     queryModifier = identity,
     insertModifier = identity,
+    countModifier = identity,
   }: DaoOptions<ModelRow>
 ): CalaDao<Model> {
   const namespacedSplatSelect = `${tableName}.*`;
@@ -82,6 +84,7 @@ export function buildDao<
     const result = await ktx(tableName)
       .count("*")
       .where(namespacedFilter)
+      .modify(countModifier)
       .modify(modifier);
 
     return Number(result[0].count);
