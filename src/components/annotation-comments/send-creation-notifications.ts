@@ -21,7 +21,7 @@ export default async function sendCreationNotifications(
 ): Promise<void> {
   const { comment, annotationId, actorUserId } = options;
 
-  const annotation = await AnnotationsDAO.findById(annotationId);
+  const annotation = await AnnotationsDAO.findById(trx, annotationId);
   if (!annotation) {
     throw new Error(
       `Could not find matching annotation for comment ${comment.id}`

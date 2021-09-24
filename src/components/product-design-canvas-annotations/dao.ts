@@ -1,145 +1,126 @@
 import Knex from "knex";
 import { pick } from "lodash";
 import db from "../../services/db";
-import {
-  dataAdapter,
-  isProductDesignCanvasAnnotationRow as isAnnotationRow,
-  parseNumerics,
-  parseNumericsList,
-  UPDATABLE_PROPERTIES,
-} from "./domain-object";
-import {
-  ProductDesignCanvasAnnotation as Annotation,
-  ProductDesignCanvasAnnotationRow as AnnotationRow,
-} from "./types";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import first from "../../services/first";
-import { validate, validateEvery } from "../../services/validate-from-db";
+
+import {
+  AnnotationDb,
+  Annotation,
+  AnnotationRow,
+  AnnotationDbRow,
+} from "./types";
+import { adapter, rawAdapter } from "./adapter";
 
 const TABLE_NAME = "product_design_canvas_annotations";
 
+export const UPDATABLE_PROPERTIES: (keyof AnnotationDb)[] = [
+  "canvasId",
+  "x",
+  "y",
+];
+
+const withCounts = (ktx: Knex) => (query: Knex.QueryBuilder) =>
+  query.select([
+    "product_design_canvas_annotations.*",
+    ktx.raw(`
+(
+SELECT count(product_design_canvas_annotation_comments.*)
+  FROM product_design_canvas_annotation_comments
+       JOIN comments ON comments.id = product_design_canvas_annotation_comments.comment_id
+ WHERE comments.deleted_at IS NULL
+   AND product_design_canvas_annotation_comments.annotation_id = product_design_canvas_annotations.id
+) AS comment_count
+`),
+    ktx.raw(`
+(
+SELECT count(design_approval_submissions.*)
+  FROM design_approval_submissions
+ WHERE design_approval_submissions.deleted_at IS NULL
+   AND design_approval_submissions.annotation_id = product_design_canvas_annotations.id
+) AS submission_count
+`),
+  ]);
+
+export async function findById(
+  ktx: Knex,
+  id: string
+): Promise<Annotation | null> {
+  const annotationRow = await ktx(TABLE_NAME)
+    .modify(withCounts(ktx))
+    .where({ id, deleted_at: null })
+    .first();
+
+  return annotationRow ? adapter.fromDb(annotationRow) : null;
+}
+
 export async function create(
-  data: Uninserted<Annotation>,
-  trx?: Knex.Transaction
+  trx: Knex.Transaction,
+  data: Uninserted<AnnotationDb>
 ): Promise<Annotation> {
-  const rowData = dataAdapter.forInsertion({
+  const rowData = rawAdapter.toDbPartial({
     ...data,
     deletedAt: null,
   });
 
-  const created = await db(TABLE_NAME)
-    .insert(rowData, "*")
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    })
-    .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
+  await trx(TABLE_NAME).insert(rowData);
 
-  if (!created) {
-    throw new Error("Failed to create a annotation");
+  const found = await findById(trx, data.id);
+
+  if (!found) {
+    throw new Error(`There was a problem creating Annotation ${data.id}`);
   }
 
-  return parseNumerics(
-    validate<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      created
-    )
-  );
-}
-
-export async function findById(id: string): Promise<Annotation | null> {
-  const annotations: AnnotationRow[] = await db(TABLE_NAME)
-    .select("*")
-    .where({ id, deleted_at: null })
-    .limit(1);
-
-  const annotation = annotations[0];
-
-  if (!annotation) {
-    return null;
-  }
-
-  return parseNumerics(
-    validate<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      annotation
-    )
-  );
+  return found;
 }
 
 export async function update(
   id: string,
-  data: Annotation
+  data: AnnotationDb
 ): Promise<Annotation> {
-  const rowData = pick(dataAdapter.forInsertion(data), UPDATABLE_PROPERTIES);
-  const updated = await db(TABLE_NAME)
-    .where({ id, deleted_at: null })
-    .update(rowData, "*")
-    .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
+  const rowData = rawAdapter.toDbPartial(pick(data, UPDATABLE_PROPERTIES));
+  await db(TABLE_NAME).where({ id, deleted_at: null }).update(rowData);
+
+  const updated = await findById(db, id);
 
   if (!updated) {
     throw new Error("Failed to update row");
   }
 
-  return parseNumerics(
-    validate<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      updated
-    )
-  );
+  return updated;
 }
 
-export async function deleteById(id: string): Promise<Annotation> {
+export async function deleteById(id: string): Promise<AnnotationDb> {
   const deleted = await db(TABLE_NAME)
     .where({ id, deleted_at: null })
     .update({ deleted_at: new Date() }, "*")
-    .then((rows: AnnotationRow[]) => first<AnnotationRow>(rows));
+    .then(first);
 
   if (!deleted) {
     throw new ResourceNotFoundError("Failed to delete row");
   }
 
-  return parseNumerics(
-    validate<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      deleted
-    )
-  );
+  return rawAdapter.fromDb(deleted);
 }
 
 export async function findAllByCanvasId(
   ktx: Knex,
   canvasId: string
 ): Promise<Annotation[]> {
-  const annotations: AnnotationRow[] = await ktx(TABLE_NAME)
-    .select("*")
+  const rows: AnnotationRow[] = await ktx(TABLE_NAME)
+    .select("product_design_canvas_annotations.*")
     .where({ canvas_id: canvasId, deleted_at: null })
+    .modify(withCounts(ktx))
     .orderBy("created_at", "desc");
 
-  return parseNumericsList(
-    validateEvery<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      annotations
-    )
-  );
+  return adapter.fromDbArray(rows);
 }
 
 export async function findNotEmptyByDesign(
   ktx: Knex,
   designId: string
 ): Promise<Annotation[]> {
-  const annotations: AnnotationRow[] = await ktx(TABLE_NAME)
+  const rows: AnnotationRow[] = await ktx(TABLE_NAME)
     .distinct("product_design_canvas_annotations.id")
     .select("product_design_canvas_annotations.*")
     .joinRaw(
@@ -173,23 +154,17 @@ AND product_design_canvas_annotations.deleted_at IS null
 `,
       [designId]
     )
+    .modify(withCounts(ktx))
     .orderBy("product_design_canvas_annotations.created_at", "desc");
 
-  return parseNumericsList(
-    validateEvery<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      annotations
-    )
-  );
+  return adapter.fromDbArray(rows);
 }
 
 export async function findAllWithCommentsByCanvasId(
   ktx: Knex,
   canvasId: string
-): Promise<Annotation[]> {
-  const annotations: AnnotationRow[] = await ktx(TABLE_NAME)
+): Promise<AnnotationDb[]> {
+  const annotations: AnnotationDbRow[] = await ktx(TABLE_NAME)
     .distinct("product_design_canvas_annotations.id")
     .select("product_design_canvas_annotations.*")
     .join(
@@ -212,12 +187,5 @@ AND comments.deleted_at IS null
     )
     .orderBy("product_design_canvas_annotations.created_at", "desc");
 
-  return parseNumericsList(
-    validateEvery<AnnotationRow, Annotation>(
-      TABLE_NAME,
-      isAnnotationRow,
-      dataAdapter,
-      annotations
-    )
-  );
+  return rawAdapter.fromDbArray(annotations);
 }

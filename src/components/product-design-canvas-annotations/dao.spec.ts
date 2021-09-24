@@ -1,9 +1,8 @@
 import uuid from "node-uuid";
-import tape from "tape";
 import Knex from "knex";
+import { omit } from "lodash";
 
-import db from "../../services/db";
-import { test } from "../../test-helpers/fresh";
+import { test, Test, db } from "../../test-helpers/fresh";
 import * as AnnotationsDAO from "./dao";
 import createUser from "../../test-helpers/create-user";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -15,8 +14,9 @@ import generateAnnotation from "../../test-helpers/factories/product-design-canv
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createDesign from "../../services/create-design";
 import generateApprovalSubmission from "../../test-helpers/factories/design-approval-submission";
+import { Annotation } from "./types";
 
-test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: tape.Test) => {
+test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: Test) => {
   const { user } = await createUser();
   const design = await createDesign({
     title: "Green Tee",
@@ -33,16 +33,18 @@ test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: 
     x: 0,
     y: 0,
   });
-  const designCanvasAnnotation = await AnnotationsDAO.create({
-    canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 20,
-    y: 10,
-  });
+  const designCanvasAnnotation = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.create(trx, {
+      canvasId: designCanvas.id,
+      createdBy: user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      x: 20,
+      y: 10,
+    })
+  );
 
-  const result = await AnnotationsDAO.findById(designCanvasAnnotation.id);
+  const result = await AnnotationsDAO.findById(db, designCanvasAnnotation.id);
   t.deepEqual(
     result,
     designCanvasAnnotation,
@@ -59,7 +61,7 @@ test("ProductDesignCanvasAnnotation DAO supports creation/retrieval", async (t: 
   );
 });
 
-test("findAllByCanvasId returns in order of newest to oldest", async (t: tape.Test) => {
+test("findAllByCanvasId returns in order of newest to oldest", async (t: Test) => {
   const { annotation, canvas } = await generateAnnotation();
   const { annotation: annotationTwo } = await generateAnnotation({
     canvasId: canvas.id,
@@ -75,7 +77,7 @@ test("findAllByCanvasId returns in order of newest to oldest", async (t: tape.Te
   );
 });
 
-test("findNotEmptyByDesign with comments and submissions", async (t: tape.Test) => {
+test("findNotEmptyByDesign with comments and submissions", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { annotation: a1, canvas, design } = await generateAnnotation({
     createdBy: user.id,
@@ -133,12 +135,16 @@ test("findNotEmptyByDesign with comments and submissions", async (t: tape.Test) 
   const result = await AnnotationsDAO.findNotEmptyByDesign(db, design.id);
   t.deepEqual(
     result,
-    [a3, a2, a1],
+    [
+      { ...a3, submissionCount: 1 },
+      { ...a2, commentCount: 1 },
+      { ...a1, commentCount: 2 },
+    ],
     "Returns annotations with comments from newest to oldest"
   );
 });
 
-test("findAllWithCommentsByCanvasId with no comments", async (t: tape.Test) => {
+test("findAllWithCommentsByCanvasId with no comments", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const design = await createDesign({
     title: "Green Tee",
@@ -170,7 +176,7 @@ test("findAllWithCommentsByCanvasId with no comments", async (t: tape.Test) => {
   );
 });
 
-test("findAllWithCommentsByCanvasId with comments", async (t: tape.Test) => {
+test("findAllWithCommentsByCanvasId with comments", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { annotation: a1, canvas } = await generateAnnotation({
     createdBy: user.id,
@@ -198,12 +204,14 @@ test("findAllWithCommentsByCanvasId with comments", async (t: tape.Test) => {
   );
   t.deepEqual(
     result,
-    [a2, a1],
+    [a2, a1].map((fullAnnotation: Annotation) =>
+      omit(fullAnnotation, ["commentCount", "submissionCount"])
+    ),
     "Returns annotations with comments from newest to oldest"
   );
 });
 
-test("findAllWithCommentsByCanvasId with deletions", async (t: tape.Test) => {
+test("findAllWithCommentsByCanvasId with deletions", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { annotation: a1, canvas } = await generateAnnotation({
     createdBy: user.id,
@@ -233,7 +241,7 @@ test("findAllWithCommentsByCanvasId with deletions", async (t: tape.Test) => {
   );
 });
 
-test("ProductDesignCanvasAnnotation DAO supports updating", async (t: tape.Test) => {
+test("ProductDesignCanvasAnnotation DAO supports updating", async (t: Test) => {
   const { user } = await createUser();
   const design = await createDesign({
     title: "Green Tee",
@@ -250,14 +258,16 @@ test("ProductDesignCanvasAnnotation DAO supports updating", async (t: tape.Test)
     x: 0,
     y: 0,
   });
-  const designCanvasAnnotation = await AnnotationsDAO.create({
-    canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 20,
-    y: 10,
-  });
+  const designCanvasAnnotation = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.create(trx, {
+      canvasId: designCanvas.id,
+      createdBy: user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      x: 20,
+      y: 10,
+    })
+  );
   const data = {
     canvasId: designCanvas.id,
     createdAt: designCanvasAnnotation.createdAt,
@@ -278,7 +288,7 @@ test("ProductDesignCanvasAnnotation DAO supports updating", async (t: tape.Test)
   );
 });
 
-test("ProductDesignCanvasAnnotation DAO supports deletion", async (t: tape.Test) => {
+test("ProductDesignCanvasAnnotation DAO supports deletion", async (t: Test) => {
   const { user } = await createUser();
   const design = await createDesign({
     title: "Green Tee",
@@ -295,18 +305,20 @@ test("ProductDesignCanvasAnnotation DAO supports deletion", async (t: tape.Test)
     x: 0,
     y: 0,
   });
-  const designCanvasAnnotation = await AnnotationsDAO.create({
-    canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 20,
-    y: 10,
-  });
+  const designCanvasAnnotation = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.create(trx, {
+      canvasId: designCanvas.id,
+      createdBy: user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      x: 20,
+      y: 10,
+    })
+  );
 
   const result = await AnnotationsDAO.deleteById(designCanvasAnnotation.id);
   t.notEqual(result.deletedAt, null, "Successfully deleted one row");
-  const removed = await AnnotationsDAO.findById(designCanvasAnnotation.id);
+  const removed = await AnnotationsDAO.findById(db, designCanvasAnnotation.id);
   t.equal(removed, null, "Succesfully removed from database");
 
   await AnnotationsDAO.deleteById(designCanvasAnnotation.id)

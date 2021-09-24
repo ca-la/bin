@@ -2,14 +2,14 @@ import { GraphQLContextBase, GraphQLEndpoint } from "../../../apollo";
 import { CanvasAndEnvironmentParent } from "./graphql-types";
 import { gtProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/graphql-types";
 
-import { ProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/types";
+import { AnnotationDb } from "../../product-design-canvas-annotations/types";
 import * as AnnotationsDAO from "../../product-design-canvas-annotations/dao";
 import db from "../../../services/db";
 
 export const AnnotationsEndpoint: GraphQLEndpoint<
   {},
-  ProductDesignCanvasAnnotation[],
-  GraphQLContextBase<ProductDesignCanvasAnnotation[]>,
+  AnnotationDb[],
+  GraphQLContextBase<AnnotationDb[]>,
   CanvasAndEnvironmentParent
 > = {
   endpointType: "CanvasAndEnvironment",

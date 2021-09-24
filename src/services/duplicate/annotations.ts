@@ -1,9 +1,10 @@
 import Knex from "knex";
+import { omit } from "lodash";
 
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CommentsDAO from "../../components/comments/dao";
-import { ProductDesignCanvasAnnotation as Annotation } from "../../components/product-design-canvas-annotations/types";
+import { AnnotationDb as Annotation } from "../../components/product-design-canvas-annotations/types";
 import prepareForDuplication from "./prepare-for-duplication";
 import Comment from "../../components/comments/types";
 import db from "../db";
@@ -56,8 +57,11 @@ export async function findAndDuplicateAnnotations(
     annotations.map(
       async (annotation: Annotation): Promise<Annotation> => {
         const duplicateAnnotation = await AnnotationsDAO.create(
-          prepareForDuplication(annotation, { canvasId: newCanvasId }),
-          trx
+          trx,
+          prepareForDuplication(
+            omit(annotation, ["commentCount", "submissionCount"]),
+            { canvasId: newCanvasId }
+          )
         );
 
         await findAndDuplicateAnnotationComments(

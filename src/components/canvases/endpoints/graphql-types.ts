@@ -2,7 +2,7 @@ import {
   GraphQLType,
   schemaToGraphQLType,
 } from "../../../apollo/published-types";
-import { ProductDesignCanvasAnnotation } from "../../product-design-canvas-annotations/types";
+import { AnnotationDb } from "../../product-design-canvas-annotations/types";
 import {
   ProductDesignCanvasMeasurement,
   productDesignCanvasMeasurementSchema,
@@ -30,6 +30,6 @@ export const gtCanvasAndEnvironment: GraphQLType = {
 
 export interface CanvasAndEnvironment extends CanvasAndEnvironmentParent {
   canvasId: string;
-  annotations: ProductDesignCanvasAnnotation[];
+  annotations: AnnotationDb[];
   measurements: ProductDesignCanvasMeasurement[];
 }

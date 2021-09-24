@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { schemaToGraphQLType } from "../../apollo/published-types";
-import { productDesignCanvasAnnotationSchema } from "./types";
+import { annotationDbSchema } from "./types";
 
 export const gtProductDesignCanvasAnnotation = schemaToGraphQLType(
   "ProductDesignCanvasAnnotation",
-  productDesignCanvasAnnotationSchema
+  annotationDbSchema
 );
 
 const annotationInputSchema = z.object({

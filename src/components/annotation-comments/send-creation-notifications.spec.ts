@@ -5,7 +5,7 @@ import Sinon from "sinon";
 
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import * as CommentsDAO from "../../components/comments/dao";
-import { ProductDesignCanvasAnnotation as Annotation } from "../../components/product-design-canvas-annotations/types";
+import { Annotation } from "../../components/product-design-canvas-annotations/types";
 import Collaborator from "../../components/collaborators/types";
 import CollectionDb from "../../components/collections/domain-object";
 import sendCreationNotifications from "./send-creation-notifications";
@@ -75,14 +75,16 @@ async function setup(): Promise<{
     y: 0,
   });
 
-  const annotation = await AnnotationsDAO.create({
-    canvasId: designCanvas.id,
-    createdBy: ownerUser.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 1,
-    y: 1,
-  });
+  const annotation = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationsDAO.create(trx, {
+      canvasId: designCanvas.id,
+      createdBy: ownerUser.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      x: 1,
+      y: 1,
+    })
+  );
 
   return {
     annotation,

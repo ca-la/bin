@@ -38,7 +38,7 @@ async function attachPermissions(ctx: CreateCommentContext, next: any) {
   const { trx } = ctx.state;
   const { annotationId } = ctx.params;
 
-  const annotation = await AnnotationsDAO.findById(annotationId);
+  const annotation = await AnnotationsDAO.findById(trx, annotationId);
   if (!annotation) {
     ctx.throw(404, `Annotation ${annotationId} not found`);
   }

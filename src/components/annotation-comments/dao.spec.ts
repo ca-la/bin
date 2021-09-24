@@ -42,14 +42,16 @@ async function setup() {
     x: 0,
     y: 0,
   });
-  const annotation = await createAnnotation({
-    canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: uuid.v4(),
-    x: 20,
-    y: 10,
-  });
+  const annotation = await db.transaction((trx: Knex.Transaction) =>
+    createAnnotation(trx, {
+      canvasId: designCanvas.id,
+      createdBy: user.id,
+      deletedAt: null,
+      id: uuid.v4(),
+      x: 20,
+      y: 10,
+    })
+  );
 
   return {
     user,

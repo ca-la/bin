@@ -235,7 +235,7 @@ export async function extractDesignIdFromCommentParent(
     }
     return step.designId;
   } else if (input.annotationId) {
-    const annotation = await AnnotationsDAO.findById(input.annotationId);
+    const annotation = await AnnotationsDAO.findById(ktx, input.annotationId);
     if (!annotation) {
       throw new NotFoundError(`Annotation ${input.annotationId} not found`);
     }

@@ -13,7 +13,7 @@ import {
 import { createCommentWithAttachments } from "../../services/create-comment-with-attachments";
 import * as AnnotationsDAO from "./dao";
 import * as AnnotationCommentsDAO from "../annotation-comments/dao";
-import { ProductDesignCanvasAnnotation } from "./types";
+import { AnnotationDb } from "./types";
 import {
   gtProductDesignCanvasAnnotation,
   gtAnnotationInput,
@@ -26,8 +26,8 @@ interface CreateAnnotationArgs {
 
 const CreateAnnotationEndpoint: GraphQLEndpoint<
   CreateAnnotationArgs,
-  ProductDesignCanvasAnnotation,
-  GraphQLContextAuthenticated<ProductDesignCanvasAnnotation>
+  AnnotationDb,
+  GraphQLContextAuthenticated<AnnotationDb>
 > = {
   endpointType: "Mutation",
   types: [gtAnnotationInput, gtProductDesignCanvasAnnotation],
@@ -40,13 +40,13 @@ const CreateAnnotationEndpoint: GraphQLEndpoint<
     requireDesignEditPermissions
   ) as Middleware<
     CreateAnnotationArgs,
-    GraphQLContextAuthenticated<ProductDesignCanvasAnnotation>,
-    ProductDesignCanvasAnnotation
+    GraphQLContextAuthenticated<AnnotationDb>,
+    AnnotationDb
   >,
   resolver: async (
     _: any,
     args: CreateAnnotationArgs,
-    context: GraphQLContextAuthenticated<ProductDesignCanvasAnnotation>
+    context: GraphQLContextAuthenticated<AnnotationDb>
   ) => {
     const {
       transactionProvider,
@@ -56,14 +56,11 @@ const CreateAnnotationEndpoint: GraphQLEndpoint<
 
     const trx = await transactionProvider();
     try {
-      const annotation = await AnnotationsDAO.create(
-        {
-          ...pick(input, "id", "canvasId", "x", "y"),
-          deletedAt: null,
-          createdBy: userId,
-        },
-        trx
-      );
+      const annotation = await AnnotationsDAO.create(trx, {
+        ...pick(input, "id", "canvasId", "x", "y"),
+        deletedAt: null,
+        createdBy: userId,
+      });
 
       const comment = await createCommentWithAttachments(trx, {
         comment: {

@@ -1,9 +1,10 @@
+import Knex from "knex";
 import Router from "koa-router";
 import convert from "koa-convert";
 import { z } from "zod";
 
 import db from "../../services/db";
-import { ProductDesignCanvasAnnotation as Annotation } from "./types";
+import { AnnotationDb as Annotation } from "./types";
 import { create, deleteById, update, findNotEmptyByDesign } from "./dao";
 import * as AnnotationCommentDAO from "../../components/annotation-comments/dao";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -50,7 +51,9 @@ interface CreateOrUpdateAnnotationContext extends StrictContext<Annotation> {
 
 async function createAnnotation(ctx: CreateOrUpdateAnnotationContext) {
   const { safeBody } = ctx.state;
-  const annotation = await create(annotationFromIO(safeBody, ctx.state.userId));
+  const annotation = await db.transaction((trx: Knex.Transaction) =>
+    create(trx, annotationFromIO(safeBody, ctx.state.userId))
+  );
   ctx.status = 201;
   ctx.body = annotation;
 }

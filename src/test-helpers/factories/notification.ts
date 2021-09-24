@@ -29,7 +29,7 @@ import CollectionDb from "../../components/collections/domain-object";
 import User from "../../components/users/domain-object";
 import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 import { templateNotification } from "../../components/notifications/models/base";
-import { ProductDesignCanvasAnnotation } from "../../components/product-design-canvas-annotations/types";
+import { AnnotationDb } from "../../components/product-design-canvas-annotations/types";
 import { DetailsTask } from "../../domain-objects/task-event";
 import Canvas from "../../components/canvases/domain-object";
 import ProductDesignStage from "../../domain-objects/product-design-stage";
@@ -62,7 +62,7 @@ interface NotificationWithResources {
   design: ProductDesign;
   collection: CollectionDb;
   collaborator: CollaboratorWithUser;
-  annotation: ProductDesignCanvasAnnotation;
+  annotation: AnnotationDb;
   measurement: ProductDesignCanvasMeasurement;
   task: DetailsTask;
   canvas: Canvas;
@@ -129,7 +129,7 @@ export default async function generateNotification(
   }
 
   const { annotation } = options.annotationId
-    ? { annotation: await AnnotationsDAO.findById(options.annotationId) }
+    ? { annotation: await AnnotationsDAO.findById(db, options.annotationId) }
     : await generateAnnotation({ createdBy: actor.id, canvasId: canvas.id });
   if (!annotation) {
     throw new Error("Could not create annotation");
@@ -652,7 +652,7 @@ interface NotificationsWithResources {
   designs: ProductDesign[];
   collections: CollectionDb[];
   collaborators: CollaboratorWithUser[];
-  annotations: ProductDesignCanvasAnnotation[];
+  annotations: AnnotationDb[];
   measurements: ProductDesignCanvasMeasurement[];
   tasks: DetailsTask[];
   canvases: Canvas[];

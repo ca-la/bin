@@ -36,7 +36,7 @@ async function extractDesignIdFromArgs(ktx: Knex, args: GetParticipantsArgs) {
     return approvalStep.designId;
   }
   if (annotationId) {
-    const annotation = await AnnotationsDAO.findById(annotationId);
+    const annotation = await AnnotationsDAO.findById(ktx, annotationId);
     if (!annotation) {
       throw new NotFoundError(`Annotation ${annotationId} not found`);
     }

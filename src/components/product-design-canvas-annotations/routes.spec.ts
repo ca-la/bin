@@ -1,10 +1,11 @@
 import uuid from "node-uuid";
+import Knex from "knex";
 
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import createUser from "../../test-helpers/create-user";
 import SessionsDAO from "../../dao/sessions";
 import { authHeader, del, get, patch, put } from "../../test-helpers/http";
-import { sandbox, test, Test } from "../../test-helpers/fresh";
+import { sandbox, test, Test, db } from "../../test-helpers/fresh";
 import * as AnnotationDAO from "./dao";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import createDesign from "../../services/create-design";
@@ -82,7 +83,7 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
     headers: authHeader(session.id),
   });
   t.equal(response.status, 201);
-  t.deepEqual(body, data);
+  t.deepEqual(body, { ...data, commentCount: 0, submissionCount: 0 });
 });
 
 test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) => {
@@ -104,14 +105,16 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
     x: 0,
     y: 0,
   });
-  const annotation = await AnnotationDAO.create({
-    canvasId: designCanvas.id,
-    createdBy: user.id,
-    deletedAt: null,
-    id: annotationId,
-    x: 1,
-    y: 1,
-  });
+  const annotation = await db.transaction((trx: Knex.Transaction) =>
+    AnnotationDAO.create(trx, {
+      canvasId: designCanvas.id,
+      createdBy: user.id,
+      deletedAt: null,
+      id: annotationId,
+      x: 1,
+      y: 1,
+    })
+  );
   const data = {
     canvasId: designCanvas.id,
     createdAt: "something completely invalid",
@@ -132,6 +135,8 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
     createdAt: annotation.createdAt.toISOString(),
     createdBy: annotation.createdBy,
     deletedAt: annotation.deletedAt,
+    commentCount: 0,
+    submissionCount: 0,
   });
 });
 
