@@ -106,7 +106,7 @@ test("calculateDesignQuote: with costOfGoodsShareBasisPoints", async (t: Test) =
       minimumOrderQuantity: 5432,
       lineItems: [
         {
-          description: "Production Fee",
+          description: "Service Fee",
           explainerCopy:
             "A fee for what you produce with us, based on your plan",
           cents: 2050,
@@ -299,7 +299,7 @@ test("getCartDetails: no credits", async (t: Test) => {
         lineItems: [
           {
             cents: 4_960_00 * 1.2 - 4_960_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -315,7 +315,7 @@ test("getCartDetails: no credits", async (t: Test) => {
         lineItems: [
           {
             cents: 2_146_00 * 1.2 - 2_146_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -330,7 +330,7 @@ test("getCartDetails: no credits", async (t: Test) => {
     combinedLineItems: [
       {
         cents: 7_106_00 * 1.2 - 7_106_00,
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
     ],
@@ -399,7 +399,7 @@ test("getCartDetails: with partial credit with no available financing", async (t
         lineItems: [
           {
             cents: 4_960_00 * 1.2 - 4_960_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -415,7 +415,7 @@ test("getCartDetails: with partial credit with no available financing", async (t
         lineItems: [
           {
             cents: 2_146_00 * 1.2 - 2_146_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -430,7 +430,7 @@ test("getCartDetails: with partial credit with no available financing", async (t
     combinedLineItems: [
       {
         cents: 7_106_00 * 1.2 - 7_106_00,
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
       {
@@ -495,7 +495,7 @@ test("getCartDetails: with partial credit and full financing", async (t: Test) =
         lineItems: [
           {
             cents: 4_960_00 * 0.2,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -511,7 +511,7 @@ test("getCartDetails: with partial credit and full financing", async (t: Test) =
         lineItems: [
           {
             cents: 2_146_00 * 0.2,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -526,7 +526,7 @@ test("getCartDetails: with partial credit and full financing", async (t: Test) =
     combinedLineItems: [
       {
         cents: 7_106_00 * 0.2,
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
       {
@@ -604,7 +604,7 @@ test("getCartDetails: with partial credit with partial financing", async (t: Tes
         lineItems: [
           {
             cents: Math.round(4_960_00 * 0.2),
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -620,7 +620,7 @@ test("getCartDetails: with partial credit with partial financing", async (t: Tes
         lineItems: [
           {
             cents: Math.round(2_146_00 * 0.2),
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -635,7 +635,7 @@ test("getCartDetails: with partial credit with partial financing", async (t: Tes
     combinedLineItems: [
       {
         cents: Math.round(7_106_00 * 0.2),
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
       {
@@ -705,7 +705,7 @@ test("getCartDetails: with partial credits", async (t: Test) => {
         lineItems: [
           {
             cents: 4_960_00 * 1.2 - 4_960_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -721,7 +721,7 @@ test("getCartDetails: with partial credits", async (t: Test) => {
         lineItems: [
           {
             cents: 2_146_00 * 1.2 - 2_146_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -736,7 +736,7 @@ test("getCartDetails: with partial credits", async (t: Test) => {
     combinedLineItems: [
       {
         cents: 7_106_00 * 1.2 - 7_106_00,
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
       {
@@ -791,7 +791,7 @@ test("getCartDetails: with full credits", async (t: Test) => {
         lineItems: [
           {
             cents: 4_960_00 * 1.2 - 4_960_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -807,7 +807,7 @@ test("getCartDetails: with full credits", async (t: Test) => {
         lineItems: [
           {
             cents: 2_146_00 * 1.2 - 2_146_00,
-            description: "Production Fee",
+            description: "Service Fee",
             explainerCopy:
               "A fee for what you produce with us, based on your plan",
           },
@@ -822,7 +822,7 @@ test("getCartDetails: with full credits", async (t: Test) => {
     combinedLineItems: [
       {
         cents: 7_106_00 * 1.2 - 7_106_00,
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
       },
       {

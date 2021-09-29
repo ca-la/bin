@@ -73,7 +73,7 @@ function fromUnsavedQuote(
 
   if (quote.productionFeeCents > 0) {
     lineItems.push({
-      description: "Production Fee",
+      description: "Service Fee",
       explainerCopy: "A fee for what you produce with us, based on your plan",
       cents: quote.productionFeeCents,
     });

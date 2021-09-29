@@ -56,7 +56,7 @@ test("GET /design-quotes?designId&units: valid", async (t: Test) => {
     minimumOrderQuantity: 1,
     lineItems: [
       {
-        description: "Production Fee",
+        description: "Service Fee",
         explainerCopy: "A fee for what you produce with us, based on your plan",
         cents: 1000,
       },
@@ -128,7 +128,7 @@ test("POST /design-quotes: valid", async (t: Test) => {
       combinedLineItems: [
         {
           cents: 1_421_20,
-          description: "Production Fee",
+          description: "Service Fee",
           explainerCopy:
             "A fee for what you produce with us, based on your plan",
         },
@@ -148,7 +148,7 @@ test("POST /design-quotes: valid", async (t: Test) => {
           lineItems: [
             {
               cents: 99200,
-              description: "Production Fee",
+              description: "Service Fee",
               explainerCopy:
                 "A fee for what you produce with us, based on your plan",
             },
@@ -164,7 +164,7 @@ test("POST /design-quotes: valid", async (t: Test) => {
           lineItems: [
             {
               cents: 42920,
-              description: "Production Fee",
+              description: "Service Fee",
               explainerCopy:
                 "A fee for what you produce with us, based on your plan",
             },
