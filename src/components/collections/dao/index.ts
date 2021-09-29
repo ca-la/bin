@@ -40,6 +40,11 @@ import {
 
 export const TABLE_NAME = "collections";
 
+export interface ListOptions {
+  limit?: number;
+  offset?: number;
+}
+
 export function addDesignMetaToCollection(
   query: Knex.QueryBuilder
 ): Knex.QueryBuilder {
@@ -174,11 +179,9 @@ type CollectionDbRowWithCollaboratorAndTeamRoles = CollectionDbRowWithCollaborat
 
 export async function findByUser(
   ktx: Knex,
-  options: {
+  options: ListOptions & {
     userId: string;
     sessionRole: string;
-    limit?: number;
-    offset?: number;
     search?: string;
   }
 ): Promise<Collection[]> {
@@ -253,11 +256,9 @@ export async function findByUser(
 // collection. These collections may or may not belong to other teams.
 export async function findDirectlySharedWithUser(
   ktx: Knex,
-  options: {
+  options: ListOptions & {
     userId: string;
     sessionRole: string;
-    limit?: number;
-    offset?: number;
     search?: string;
   }
 ): Promise<Collection[]> {
@@ -319,7 +320,8 @@ export async function findDirectlySharedWithUser(
 
 export async function findByTeam(
   ktx: Knex,
-  teamId: string
+  teamId: string,
+  options: ListOptions = {}
 ): Promise<CollectionDb[]> {
   const collections: CollectionDbRow[] = await ktx
     .from(TABLE_NAME)
@@ -330,6 +332,7 @@ export async function findByTeam(
       "teams.id": teamId,
     })
     .modify(addDesignMetaToCollection)
+    .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc")
     .catch(rethrow);
 
@@ -339,9 +342,10 @@ export async function findByTeam(
 export async function findByTeamWithPermissionsByRole(
   ktx: Knex,
   teamId: string,
-  teamRole: TeamUserRole
+  teamRole: TeamUserRole,
+  options: ListOptions = {}
 ): Promise<Collection[]> {
-  const collectionsDb = await findByTeam(ktx, teamId);
+  const collectionsDb = await findByTeam(ktx, teamId, options);
   const permissions = calculateTeamCollectionPermissions(teamRole);
   return collectionsDb.map((collection: CollectionDb) => ({
     ...collection,

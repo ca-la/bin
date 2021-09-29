@@ -1,4 +1,10 @@
-export type GraphQLTypeBody = Record<string, string>;
+export type GraphQLTypeFieldDescription =
+  | string
+  | {
+      type: string;
+      signature: string;
+    };
+export type GraphQLTypeBody = Record<string, GraphQLTypeFieldDescription>;
 
 interface GraphQLTypeBase {
   name: string;

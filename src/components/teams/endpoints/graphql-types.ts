@@ -3,7 +3,8 @@ import {
   schemaToGraphQLType,
   GraphQLType,
 } from "../../../apollo/published-types";
-import { teamSchema } from "../types";
+import { teamSchema, Team } from "../types";
+import { CollectionDb } from "../../collections/types";
 
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
 
@@ -19,4 +20,27 @@ export const gtTeamFilter: GraphQLType = {
 
 export interface TeamFilter {
   userId: string;
+}
+
+export interface TeamAndEnvironmentParent {
+  teamId: string;
+}
+
+export const gtTeamAndEnvironment: GraphQLType = {
+  name: "TeamAndEnvironment",
+  type: "type",
+  body: {
+    teamId: "String!",
+    team: "Team",
+    collections: {
+      signature: "(limit: Int, offset: Int)",
+      type: "[Collection]",
+    },
+  },
+  requires: ["Team", "Collection"],
+};
+
+export interface TeamAndEnvironment extends TeamAndEnvironmentParent {
+  team: Team;
+  collections: CollectionDb[];
 }

@@ -108,7 +108,7 @@ async function claimAllByEmail(
 }
 
 async function findByUserAndTeam(
-  trx: Knex.Transaction,
+  ktx: Knex,
   {
     userId,
     userEmail,
@@ -119,7 +119,7 @@ async function findByUserAndTeam(
     teamId: string;
   }
 ) {
-  const found: TeamUserRow | undefined = await trx(TABLE_NAME)
+  const found: TeamUserRow | undefined = await ktx(TABLE_NAME)
     .select("team_users.*")
     .where({ user_id: userId, user_email: userEmail, team_id: teamId })
     .modify(withUser)

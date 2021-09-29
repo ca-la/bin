@@ -1,7 +1,7 @@
 import { Transaction } from "knex";
 import { GraphQLResolveInfo } from "graphql";
-import { GraphQLType } from "./published-types";
-export { GraphQLType };
+import { GraphQLTypeFieldDescription, GraphQLType } from "./published-types";
+export { GraphQLTypeFieldDescription, GraphQLType };
 
 export interface GraphQLContextBase<Result> {
   session: AuthedState | null;

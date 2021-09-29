@@ -1,6 +1,7 @@
 import { toPairs } from "lodash";
 import {
   GraphQLType,
+  GraphQLTypeFieldDescription,
   GraphQLContextBase,
   TypesContainer,
   Middleware,
@@ -53,7 +54,11 @@ function assembleTypeBody(type: GraphQLType): string {
       return type.body.trim();
     default:
       return toPairs(type.body)
-        .map(([k, v]: [string, string]) => `  ${k}: ${v}`)
+        .map(([k, v]: [string, GraphQLTypeFieldDescription]) =>
+          typeof v === "string"
+            ? `  ${k}: ${v}`
+            : `  ${k}${v.signature}: ${v.type}`
+        )
         .join("\n")
         .trim();
   }

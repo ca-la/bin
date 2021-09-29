@@ -24,7 +24,7 @@ export async function checkFilterUserId<
   return context;
 }
 
-export const findTeamsEndpoint = buildFindEndpoint<
+export const FindTeamsEndpoint = buildFindEndpoint<
   Team,
   GraphQLContextBase<FindResult<Team>>,
   TeamFilter
