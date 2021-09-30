@@ -3,8 +3,8 @@ import {
   GraphQLContextWithTeamAndUser,
   GraphQLEndpoint,
 } from "../../../apollo";
-import { TeamAndEnvironmentParent } from "./graphql-types";
-import { Collection, gtCollection } from "../../collections";
+import { TeamAndEnvironmentParent, TeamAndEnvironment } from "./graphql-types";
+import { gtCollection } from "../../collections";
 import { Role as TeamUserRole } from "../../team-users/types";
 import * as CollectionsDAO from "../../collections/dao";
 
@@ -13,20 +13,22 @@ interface CollectionsArgs {
   offset?: number;
 }
 
+type Result = TeamAndEnvironment["collections"];
+
 export const CollectionsEndpoint: GraphQLEndpoint<
   CollectionsArgs,
-  Collection[],
-  GraphQLContextWithTeamAndUser<Collection[]>,
+  Result,
+  GraphQLContextWithTeamAndUser<Result>,
   TeamAndEnvironmentParent
 > = {
   endpointType: "TeamAndEnvironment",
   types: [gtCollection],
   name: "collections",
-  signature: `(limit: Int, offset: Int): Collection[]`,
+  signature: `(limit: Int, offset: Int): [Collection]`,
   resolver: async (
     parent: TeamAndEnvironmentParent,
     args: CollectionsArgs,
-    context: GraphQLContextWithTeamAndUser<Collection[]>
+    context: GraphQLContextWithTeamAndUser<Result>
   ) => {
     const { teamId } = parent;
     const { teamUser } = context;

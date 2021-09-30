@@ -4,16 +4,21 @@ import {
   GraphQLEndpoint,
   NotFoundError,
 } from "../../../apollo";
-import { TeamAndEnvironmentParent, gtTeam } from "./graphql-types";
-import { TeamDb } from "../types";
+import {
+  TeamAndEnvironmentParent,
+  gtTeam,
+  TeamAndEnvironment,
+} from "./graphql-types";
 import { withTeamUserMetaDao } from "../dao";
 import ResourceNotFoundError from "../../../errors/resource-not-found";
 import filterError from "../../../services/filter-error";
 
+type Result = TeamAndEnvironment["team"];
+
 export const TeamEndpoint: GraphQLEndpoint<
   {},
-  TeamDb,
-  GraphQLContextBase<TeamDb>,
+  Result,
+  GraphQLContextBase<Result>,
   TeamAndEnvironmentParent
 > = {
   endpointType: "TeamAndEnvironment",

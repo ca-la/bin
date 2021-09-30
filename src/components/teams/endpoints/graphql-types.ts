@@ -4,7 +4,7 @@ import {
   GraphQLType,
 } from "../../../apollo/published-types";
 import { teamSchema, Team } from "../types";
-import { CollectionDb } from "../../collections/types";
+import { Collection } from "../../collections/types";
 
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
 
@@ -42,5 +42,5 @@ export const gtTeamAndEnvironment: GraphQLType = {
 
 export interface TeamAndEnvironment extends TeamAndEnvironmentParent {
   team: Team;
-  collections: CollectionDb[];
+  collections: Collection[];
 }
