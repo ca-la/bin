@@ -122,7 +122,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     userEmail: null,
     userId: editor.user.id,
   });
-  await ProductDesignVariantsDAO.create({
+  const greenVariant = await ProductDesignVariantsDAO.create({
     colorName: "Green",
     designId: design.id,
     id: uuid.v4(),
@@ -130,7 +130,7 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
     sizeName: "M",
     unitsToProduce: 999,
     universalProductCode: null,
-    sku: null,
+    sku: "PLAWHITEE-GRE-M",
     isSample: false,
     colorNamePosition: 1,
   });
@@ -174,9 +174,38 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
       createdAt: new Date(),
       designId: design.id,
       id: uuid.v4(),
+      position: 3,
+      sizeName: "M",
+      unitsToProduce: 899,
+    },
+    {
+      colorName: "Green",
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      position: 4,
+      sizeName: "M",
+      unitsToProduce: 899,
+    },
+    {
+      colorName: "Green",
+      createdAt: new Date(),
+      designId: design.id,
+      id: greenVariant.id,
       position: 1,
       sizeName: "M",
       unitsToProduce: 899,
+      sku: "PLAWHITEE-GRE-M",
+    },
+    {
+      colorName: "Green",
+      createdAt: new Date(),
+      designId: design.id,
+      id: uuid.v4(),
+      position: 2,
+      sizeName: "M",
+      unitsToProduce: 899,
+      sku: "PLAWHITEE-GRE-M-2",
     },
   ];
 
@@ -196,7 +225,26 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   t.equal(initialResponse.status, 200);
   t.deepEqual(
     initialBody.map((variant: Variant): string => variant.id),
-    [variants[0].id, variants[1].id]
+    [
+      variants[0].id,
+      variants[1].id,
+      variants[2].id,
+      variants[3].id,
+      variants[4].id,
+    ]
+  );
+  t.deepEqual(
+    initialBody.map(
+      (variant: Variant): string | null | undefined => variant.sku
+    ),
+    [
+      sku,
+      "PLAWHITEE-GRE-M-3",
+      "PLAWHITEE-GRE-M-4",
+      "PLAWHITEE-GRE-M",
+      "PLAWHITEE-GRE-M-2",
+    ],
+    "generates unique SKUs"
   );
 
   const [emptyResponse, emptyBody] = await API.put(
@@ -219,7 +267,13 @@ test(`PUT ${API_PATH}?designId replaces all variants for a design`, async (t: ta
   t.equal(editorResponse.status, 200);
   t.deepEqual(
     editorBody.map((variant: Variant): string => variant.id),
-    [variants[0].id, variants[1].id]
+    [
+      variants[0].id,
+      variants[1].id,
+      variants[2].id,
+      variants[3].id,
+      variants[4].id,
+    ]
   );
 
   t.deepEqual(

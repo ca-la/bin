@@ -113,7 +113,7 @@ function findAll({ limit, offset, search, needsQuote }) {
     .then((designs) => designs.map(instantiate));
 }
 
-function findById(id, filters, options = {}, trx) {
+function findById(id, filters, options = {}, ktx = db) {
   const query = Object.assign(
     {},
     {
@@ -126,13 +126,8 @@ function findById(id, filters, options = {}, trx) {
     query["product_designs.deleted_at"] = null;
   }
   return (
-    queryWithCollectionMeta(db)
+    queryWithCollectionMeta(ktx)
       .where(query)
-      .modify((currentQuery) => {
-        if (trx) {
-          currentQuery.transacting(trx);
-        }
-      })
       .modify(attachApprovalSteps)
       .modify((q) => {
         if (options.bidUserId) {

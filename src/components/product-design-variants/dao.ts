@@ -15,7 +15,7 @@ import {
 import first from "../../services/first";
 import { validate, validateEvery } from "../../services/validate-from-db";
 
-const TABLE_NAME = "product_design_variants";
+export const TABLE_NAME = "product_design_variants";
 
 export async function create(
   data: Uninserted<VariantDb>,

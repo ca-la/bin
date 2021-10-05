@@ -25,7 +25,12 @@ export async function enrichVariantInputsWithCodesIfCheckedOut(
       ...input,
       universalProductCode:
         input.universalProductCode || (await computeUniqueUpc()),
-      sku: input.sku || (await computeUniqueSku(trx, input)),
+      sku:
+        input.sku ||
+        (await computeUniqueSku(trx, input, [
+          ...enrichedInputs,
+          ...variantInputs,
+        ])),
     });
   }
   return enrichedInputs;
