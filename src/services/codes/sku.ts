@@ -119,11 +119,9 @@ async function makeSkuUnique(
       return variantDb.id;
     }),
   ];
-  const skuRegexpString = `^${sku}(-\\d+)?$`;
-  const skuRawRegexp = db.raw(skuRegexpString.replace("?", "\\?"));
   const query = ktx(VARIANTS_TABLE)
     .select("sku")
-    .whereRaw("sku ~ '?'", [skuRawRegexp])
+    .whereRaw("sku like '?%'", [db.raw(sku)])
     .whereNotIn("id", variantIdsToExclude)
     .whereNotNull("sku");
 
@@ -137,7 +135,7 @@ async function makeSkuUnique(
     }
   );
 
-  const skuRegexp = new RegExp(skuRegexpString);
+  const skuRegexp = new RegExp(`^${sku}(-\\d+)?$`);
   const similarSkusFromUnsavedVariants: string[] = skusFromUnsavedVariants.filter(
     (unsavedSku: string | null): unsavedSku is string => {
       if (unsavedSku === null) {
