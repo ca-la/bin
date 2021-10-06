@@ -21,3 +21,15 @@ export const gtCollection: GraphQLType = schemaToGraphQLType(
     },
   }
 );
+
+export const gtCollectionFilter: GraphQLType = {
+  type: "input",
+  name: "CollectionFilter",
+  body: {
+    userId: "String!",
+  },
+};
+
+export interface CollectionFilter {
+  userId: string;
+}

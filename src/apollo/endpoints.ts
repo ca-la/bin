@@ -9,6 +9,7 @@ import { CanvasEndpoints } from "../components/canvases/endpoints";
 import { TeamEndpoints } from "../components/teams/endpoints";
 import { CommentEndpoints } from "../components/comments/endpoints";
 import { ParticipantEndpoints } from "../components/participants/endpoints";
+import { CollectionEndpoints } from "../components/collections/endpoints";
 
 export const endpoints = [
   ...SessionEndpoints,
@@ -22,6 +23,7 @@ export const endpoints = [
   ...TeamEndpoints,
   ...CommentEndpoints,
   ...ParticipantEndpoints,
+  ...CollectionEndpoints,
 ];
 
 export type Endpoint = typeof endpoints[number];
