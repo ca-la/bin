@@ -61,7 +61,7 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     sizeName: "L",
     unitsToProduce: 456,
     universalProductCode: null,
-    sku: null,
+    sku: "red-variant-sku",
     isSample: false,
   });
 
@@ -91,11 +91,7 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     },
     "Returns a duplicate of the first variant pointing to the new design"
   );
-  t.notEqual(
-    variantOne.sku,
-    dupeOne.sku,
-    "First variant duplicate has another sku"
-  );
+  t.equal(dupeOne.sku, null, "First variant duplicate has null SKU");
   const dupeTwo = sortedDupes[1];
   t.deepEqual(
     { ...dupeTwo, sku: null },
@@ -108,9 +104,9 @@ test("findAndDuplicateVariants for a design with variants", async (t: tape.Test)
     },
     "Returns a duplicate of the second variant pointing to the new design"
   );
-  t.notEqual(
-    variantTwo.sku,
+  t.equal(
     dupeTwo.sku,
-    "Second variant duplicate has another sku"
+    null,
+    "Second variant duplicate has null SKU even though the variant has an sku"
   );
 });

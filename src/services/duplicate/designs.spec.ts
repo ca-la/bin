@@ -5,7 +5,7 @@ import uuid from "node-uuid";
 import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import * as ProductDesignStagesDAO from "../../dao/product-design-stages";
@@ -30,7 +30,7 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
     sizeName: "M",
     unitsToProduce: 123,
     universalProductCode: null,
-    sku: null,
+    sku: "a-variant-SKU",
     isSample: false,
     colorNamePosition: 1,
   });
@@ -70,10 +70,10 @@ test("findAndDuplicateDesign", async (t: tape.Test) => {
     },
     "A variant duplicate was generated that is based off the original design variant"
   );
-  t.notEqual(
+  t.equal(
     variantDupeOne.sku,
-    variantOne.sku,
-    "A variant duplicate should have another sku"
+    null,
+    "A variant duplicate should not have computed or duplicated sku"
   );
 
   const duplicateCollaborators = await CollaboratorsDAO.findByDesign(

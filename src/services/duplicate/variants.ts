@@ -3,7 +3,6 @@ import { VariantDb } from "../../components/product-design-variants/types";
 
 import * as VariantsDAO from "../../components/product-design-variants/dao";
 import prepareForDuplication from "./prepare-for-duplication";
-import { computeUniqueSku } from "../codes";
 
 /**
  * Finds all variants for the given design and creates duplicates.
@@ -21,10 +20,7 @@ export async function findAndDuplicateVariants(
           prepareForDuplication<VariantDb>(variant, {
             designId: newDesignId,
             universalProductCode: null,
-            sku: await computeUniqueSku(trx, {
-              ...variant,
-              designId: newDesignId,
-            }),
+            sku: null,
           }),
           trx
         )
