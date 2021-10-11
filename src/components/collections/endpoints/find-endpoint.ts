@@ -4,27 +4,27 @@ import {
   GraphQLContextAuthenticated,
   ForbiddenError,
   GraphQLEndpoint,
-} from "../../apollo";
-import db from "../../services/db";
+} from "../../../apollo";
+import db from "../../../services/db";
 import {
   gtCollection,
   gtCollectionFilter,
   CollectionFilter,
 } from "./graphql-types";
-import { Collection } from "./types";
-import * as CollectionsDAO from "./dao";
+import { Collection } from "../types";
+import * as CollectionsDAO from "../dao";
 
-interface Args {
+interface FindArgs {
   filter: CollectionFilter;
   limit?: number;
   offset?: number;
 }
 
-type Result = Collection[];
+type FindResult = Collection[];
 
 export async function checkFilterUserId(
-  args: Args,
-  context: GraphQLContextAuthenticated<Result>
+  args: FindArgs,
+  context: GraphQLContextAuthenticated<FindResult>
 ) {
   const { session } = context;
   const { filter } = args;
@@ -34,10 +34,10 @@ export async function checkFilterUserId(
   return context;
 }
 
-const findEndpoint: GraphQLEndpoint<
-  Args,
-  Result,
-  GraphQLContextAuthenticated<Result>
+export const findEndpoint: GraphQLEndpoint<
+  FindArgs,
+  FindResult,
+  GraphQLContextAuthenticated<FindResult>
 > = {
   endpointType: "Query",
   types: [gtCollection, gtCollectionFilter],
@@ -46,8 +46,8 @@ const findEndpoint: GraphQLEndpoint<
   middleware: composeMiddleware(requireAuth, checkFilterUserId),
   resolver: async (
     _parent: any,
-    args: Args,
-    context: GraphQLContextAuthenticated<Result>
+    args: FindArgs,
+    context: GraphQLContextAuthenticated<FindResult>
   ) => {
     const { session } = context;
     const { limit, offset, filter } = args;
@@ -60,5 +60,3 @@ const findEndpoint: GraphQLEndpoint<
     });
   },
 };
-
-export const CollectionEndpoints = [findEndpoint];

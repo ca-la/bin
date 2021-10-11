@@ -1,3 +1,3 @@
 export * from "./types";
-export * from "./graphql-types";
+export * from "./endpoints/graphql-types";
 export * from "./dao";

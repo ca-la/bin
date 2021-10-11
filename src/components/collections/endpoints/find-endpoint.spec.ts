@@ -1,7 +1,7 @@
-import { test, Test } from "../../test-helpers/fresh";
-import createUser from "../../test-helpers/create-user";
-import { authHeader, post } from "../../test-helpers/http";
-import generateCollection from "../../test-helpers/factories/collection";
+import { test, Test } from "../../../test-helpers/fresh";
+import createUser from "../../../test-helpers/create-user";
+import { authHeader, post } from "../../../test-helpers/http";
+import generateCollection from "../../../test-helpers/factories/collection";
 
 function buildRequest(userId: string, offset?: number, limit?: number) {
   return {

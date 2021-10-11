@@ -5,7 +5,7 @@ import { CollectionDb } from "../../collections/types";
 import {
   gtCollection,
   gtCollectionDesignsMeta,
-} from "../../collections/graphql-types";
+} from "../../collections/endpoints/graphql-types";
 
 export const CollectionEndpoint: GraphQLEndpoint<
   {},
