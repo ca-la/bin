@@ -23,6 +23,15 @@ export const nullableNumberStringToNumber = z
       : parseNumericString(nullableNumberString)
   );
 
+export const nullableNumberEmptyStringToNumber = z
+  .string()
+  .nullable()
+  .transform((nullableNumberString: string | null) =>
+    nullableNumberString === null || nullableNumberString === ""
+      ? null
+      : parseNumericString(nullableNumberString)
+  );
+
 export const serializedDates = {
   createdAt: dateStringToDate,
   deletedAt: nullableDateStringToNullableDate,

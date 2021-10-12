@@ -9,7 +9,7 @@ import db from "../../../services/db";
 import { parseContext } from "../../../services/parse-context";
 import {
   booleanStringToBoolean,
-  numberStringToNumber,
+  nullableNumberEmptyStringToNumber,
 } from "../../../services/zod-helpers";
 import {
   canAccessCollectionInParam,
@@ -142,8 +142,8 @@ const getListContextSchema = z.object({
       isSubmitted: booleanStringToBoolean,
       isExpired: booleanStringToBoolean,
       isDirectlyShared: booleanStringToBoolean,
-      limit: numberStringToNumber,
-      offset: numberStringToNumber,
+      limit: nullableNumberEmptyStringToNumber,
+      offset: nullableNumberEmptyStringToNumber,
       search: z.string(),
     })
     .partial(),

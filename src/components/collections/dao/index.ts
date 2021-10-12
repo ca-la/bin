@@ -41,8 +41,8 @@ import {
 export const TABLE_NAME = "collections";
 
 export interface ListOptions {
-  limit?: number;
-  offset?: number;
+  limit?: number | null;
+  offset?: number | null;
 }
 
 export function addDesignMetaToCollection(

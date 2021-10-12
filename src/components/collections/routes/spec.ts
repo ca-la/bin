@@ -586,7 +586,7 @@ test("GET /collections", async (t: tape.Test) => {
   });
 
   const [getResponse, collections] = await API.get(
-    `/collections?userId=${user.id}`,
+    `/collections?userId=${user.id}&offset=&limit=`,
     {
       headers: API.authHeader(session.id),
     }
