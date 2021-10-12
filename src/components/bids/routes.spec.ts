@@ -1,5 +1,6 @@
 import uuid from "node-uuid";
 import { omit } from "lodash";
+import rethrow from "pg-rethrow";
 
 import DesignEvent, { templateDesignEvent } from "../design-events/types";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -858,8 +859,8 @@ test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {
   t.equal(enqueueSendStub.callCount, 0);
 });
 
-test("POST /bids", async (t: Test) => {
-  const { sessionStub } = setup("ADMIN");
+test("POST /bids: valid", async (t: Test) => {
+  setup("ADMIN");
   const bidCreationPayload: BidCreationPayload = {
     quoteId: "a-quote-id",
     description: "a description",
@@ -882,6 +883,24 @@ test("POST /bids", async (t: Test) => {
 
   t.equal(response.status, 201, "returns a Created status");
   t.deepEqual(body, b1, "returns the created bid");
+});
+
+test("POST /bids: unauthorized", async (t: Test) => {
+  const { sessionStub } = setup("ADMIN");
+  const bidCreationPayload: BidCreationPayload = {
+    quoteId: "a-quote-id",
+    description: "a description",
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 0,
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    taskTypeIds: [],
+    revenueShareBasisPoints: 200,
+    assignee: {
+      type: "USER",
+      id: "a-user-id",
+    },
+  };
 
   sessionStub.resolves({ role: "USER", userId: "a-user-id" });
   const [unauthorized] = await post("/bids", {
@@ -893,6 +912,38 @@ test("POST /bids", async (t: Test) => {
     unauthorized.status,
     403,
     "returns an Unauthorized status for non-admins"
+  );
+});
+
+test("POST /bids: constraint violation", async (t: Test) => {
+  const { createStub } = setup("ADMIN");
+  const bidCreationPayload: BidCreationPayload = {
+    quoteId: "a-quote-id",
+    description: "a description",
+    bidPriceCents: 1000,
+    bidPriceProductionOnlyCents: 0,
+    dueDate: new Date().toISOString(),
+    projectDueInMs: 0,
+    taskTypeIds: [],
+    revenueShareBasisPoints: 200,
+    assignee: {
+      type: "USER",
+      id: "a-user-id",
+    },
+  };
+  createStub.rejects(new rethrow.ERRORS.CheckViolation("Oh no!"));
+  const [badRequest] = await post("/bids", {
+    headers: authHeader("a-session-id"),
+    body: {
+      ...bidCreationPayload,
+      bidPriceProductionOnlyCents: 1,
+      bidPriceCents: 0,
+    },
+  });
+  t.equal(
+    badRequest.status,
+    400,
+    "returns a Bad Request status if create throw check violation error"
   );
 });
 

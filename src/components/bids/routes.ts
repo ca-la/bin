@@ -3,6 +3,7 @@ import uuid from "node-uuid";
 import Knex from "knex";
 import { z } from "zod";
 import convert from "koa-convert";
+import rethrow from "pg-rethrow";
 
 import {
   Bid,
@@ -97,6 +98,14 @@ function* createAndAssignBid(
 
   yield createQuoteLock(trx, body.quoteId);
   const created = yield createBid(trx, uuid.v4(), userId, body)
+    .catch(
+      filterError(
+        rethrow.ERRORS.CheckViolation,
+        (err: rethrow.ERRORS.CheckViolation) => {
+          this.throw(400, err.message);
+        }
+      )
+    )
     .catch(
       filterError(InvalidDataError, (err: InvalidDataError) => {
         this.throw(400, err.message);

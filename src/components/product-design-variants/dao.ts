@@ -143,7 +143,7 @@ export async function createForDesign(
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
-        (err: typeof rethrow.ERRORS.UniqueViolation) => {
+        (err: rethrow.ERRORS.UniqueViolation) => {
           if (err.constraint === "product_design_variant_position") {
             throw new InvalidDataError(
               "Cannot create two variants with the same position"

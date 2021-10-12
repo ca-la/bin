@@ -36,7 +36,7 @@ export class MeasurementNotFoundError extends Error {
 
 function handleForeignKeyViolation(
   canvasId: string,
-  err: typeof rethrow.ERRORS.ForeignKeyViolation
+  err: rethrow.ERRORS.ForeignKeyViolation
 ): never {
   if (err.constraint === "product_design_canvas_measurements_canvas_id_fkey") {
     throw new InvalidDataError(`Invalid canvas ID: ${canvasId}`);

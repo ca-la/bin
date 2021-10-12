@@ -1,5 +1,6 @@
 import uuid from "node-uuid";
 import Knex from "knex";
+import rethrow from "pg-rethrow";
 
 import db from "../../services/db";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -296,6 +297,26 @@ test("Bids DAO supports creation and retrieval", async (t: Test) => {
     quoteId: quote.id,
     revenueShareBasisPoints: 10,
   };
+  await db.transaction(async (trx: Knex.Transaction) => {
+    try {
+      await create(trx, {
+        ...inputBid,
+        bidPriceProductionOnlyCents: 1,
+        bidPriceCents: 0,
+      });
+    } catch (err) {
+      t.true(
+        err instanceof rethrow.ERRORS.CheckViolation,
+        "when production is higher than bid price, throw a CheckViolation error"
+      );
+      t.equal(
+        err.constraint,
+        "price_greater_than_production",
+        "show relevant constraint name"
+      );
+    }
+  });
+
   await db.transaction(async (trx: Knex.Transaction) => {
     const bid = await create(trx, inputBid);
     const retrieved = await findById(trx, inputBid.id);

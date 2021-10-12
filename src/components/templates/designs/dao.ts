@@ -19,7 +19,7 @@ const TABLE_NAME = "template_designs";
 function onNoDesignError(designId: string): typeof filterError {
   return filterError(
     rethrow.ERRORS.ForeignKeyViolation,
-    (error: typeof rethrow.ERRORS.ForeignKeyViolation) => {
+    (error: rethrow.ERRORS.ForeignKeyViolation) => {
       if (error.constraint === "template_designs_design_id_fkey") {
         throw new InvalidDataError(`Design ${designId} does not exist.`);
       }

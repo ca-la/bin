@@ -214,7 +214,7 @@ function createLineItems(
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
-        (err: typeof rethrow.ERRORS.UniqueViolation) => {
+        (err: rethrow.ERRORS.UniqueViolation) => {
           if (err.constraint === "one_line_item_per_design") {
             logServerError(err);
             throw new InvalidDataError("Design has already been paid for");

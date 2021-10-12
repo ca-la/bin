@@ -100,7 +100,7 @@ const dao = {
       .catch(
         filterError(
           rethrow.ERRORS.UniqueViolation,
-          (err: typeof rethrow.ERRORS.UniqueViolation) => {
+          (err: rethrow.ERRORS.UniqueViolation) => {
             if (err.constraint === "one_accept_or_reject_per_bid") {
               throw new DuplicateAcceptRejectError(
                 "This bid has already been accepted or rejected"

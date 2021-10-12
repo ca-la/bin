@@ -55,7 +55,7 @@ function handleForeignKeyViolation(
   collectionId: string | null | undefined,
   designId: string | null | undefined,
   userId: string | null | undefined,
-  err: typeof rethrow.ERRORS.ForeignKeyViolation
+  err: rethrow.ERRORS.ForeignKeyViolation
 ): never {
   if (err.constraint === "collaborators_collection_id_fkey") {
     throw new InvalidDataError(`Invalid collection ID: ${collectionId}`);

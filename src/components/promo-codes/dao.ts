@@ -56,7 +56,7 @@ export async function create(
     .catch(
       filterError(
         rethrow.ERRORS.UniqueViolation,
-        (err: typeof rethrow.ERRORS.UniqueViolation) => {
+        (err: rethrow.ERRORS.UniqueViolation) => {
           if (err.constraint === "promo_code_unique") {
             throw new InvalidDataError("Promo code already exists");
           }

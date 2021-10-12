@@ -1,4 +1,5 @@
 import Knex from "knex";
+import rethrow from "pg-rethrow";
 
 import db from "../../services/db";
 import { Bid, BidDb, BidSortByParam, BidWithEvents } from "./types";
@@ -149,7 +150,7 @@ const orderByDueDate = (query: Knex.QueryBuilder) =>
 
 export async function create(trx: Knex.Transaction, bid: BidDb): Promise<Bid> {
   const rowData = rawAdapter.forInsertion(bid);
-  await trx(TABLE_NAME).insert(rowData).transacting(trx);
+  await trx(TABLE_NAME).insert(rowData).transacting(trx).catch(rethrow);
 
   const withAcceptedAt = await findById(trx, bid.id);
 
