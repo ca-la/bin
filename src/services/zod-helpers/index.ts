@@ -33,6 +33,10 @@ export const serializedDatesWithUpdated = {
   updatedAt: dateStringToDate,
 };
 
+export const booleanStringToBoolean = z
+  .union([z.literal("true"), z.literal("false")])
+  .transform((value: string) => (value === "true" ? true : false));
+
 type ZTypeJsonShapeItem = Record<string, ZTypeJson>;
 type ZTypeJsonShape = Record<string, ZTypeJsonShapeItem>;
 

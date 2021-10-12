@@ -6,6 +6,11 @@ import { z } from "zod";
 import filterError = require("../../../services/filter-error");
 import InvalidDataError from "../../../errors/invalid-data";
 import db from "../../../services/db";
+import { parseContext } from "../../../services/parse-context";
+import {
+  booleanStringToBoolean,
+  numberStringToNumber,
+} from "../../../services/zod-helpers";
 import {
   canAccessCollectionInParam,
   canDeleteCollection,
@@ -51,6 +56,7 @@ import { commitCostInputs, recostInputs, rejectCollection } from "./admin";
 import {
   fetchExpiredWithLabels,
   fetchUncostedWithLabels,
+  CollectionWithLabels,
 } from "../services/fetch-with-labels";
 import deleteCollectionAndRemoveDesigns from "../services/delete";
 import { Role as TeamUserRole } from "../../team-users/types";
@@ -127,70 +133,94 @@ const createCollection = convert.back(async (ctx: CreateContext) => {
   ctx.status = 201;
 });
 
-function* getList(this: AuthedContext): Iterator<any, any, any> {
+const getListContextSchema = z.object({
+  query: z
+    .object({
+      userId: z.string(),
+      teamId: z.string(),
+      isCosted: booleanStringToBoolean,
+      isSubmitted: booleanStringToBoolean,
+      isExpired: booleanStringToBoolean,
+      isDirectlyShared: booleanStringToBoolean,
+      limit: numberStringToNumber,
+      offset: numberStringToNumber,
+      search: z.string(),
+    })
+    .partial(),
+  state: z.object({
+    userId: z.string(),
+    role: z.string(),
+  }),
+});
+
+interface GetListContext
+  extends StrictContext<(Collection | CollectionWithLabels)[]> {
+  state: AuthedState;
+}
+
+async function getList(ctx: GetListContext) {
   const {
-    userId,
-    teamId,
-    isCosted,
-    isSubmitted,
-    isExpired,
-    isDirectlyShared,
-    limit,
-    offset,
-    search,
-  } = this.query;
-  const { role, userId: currentUserId } = this.state;
+    query: {
+      userId,
+      teamId,
+      isCosted,
+      isSubmitted,
+      isExpired,
+      isDirectlyShared,
+      limit,
+      offset,
+      search,
+    },
+    state: { userId: currentUserId, role },
+  } = parseContext(ctx, getListContextSchema);
+
   const userIdToQuery =
     role === "ADMIN" ? userId : currentUserId === userId ? currentUserId : null;
 
   if (userIdToQuery) {
     const options = {
       userId: userIdToQuery,
-      limit: Number(limit),
-      offset: Number(offset),
+      limit,
+      offset,
       sessionRole: role,
       search,
     };
 
-    const collections: Collection[] =
-      isDirectlyShared === "true"
-        ? yield CollectionsDAO.findDirectlySharedWithUser(db, options)
-        : yield CollectionsDAO.findByUser(db, options);
+    const collections: Collection[] = isDirectlyShared
+      ? await CollectionsDAO.findDirectlySharedWithUser(db, options)
+      : await CollectionsDAO.findByUser(db, options);
 
-    this.body = collections;
-    this.status = 200;
+    ctx.body = collections;
+    ctx.status = 200;
   } else if (teamId !== undefined) {
     let teamUserRole = TeamUserRole.ADMIN;
     if (role !== "ADMIN") {
-      const teamUser = yield TeamUsersDAO.findOne(db, {
+      const teamUser = await TeamUsersDAO.findOne(db, {
         teamId,
         userId: currentUserId,
       });
-      this.assert(teamUser, 403, "Only team users can list team collections");
+      ctx.assert(teamUser, 403, "Only team users can list team collections");
       teamUserRole = teamUser.role;
     }
-    const collections: Collection[] = yield CollectionsDAO.findByTeamWithPermissionsByRole(
+    const collections: Collection[] = await CollectionsDAO.findByTeamWithPermissionsByRole(
       db,
       teamId,
       teamUserRole
     );
 
-    this.body = collections;
-    this.status = 200;
-  } else if (
-    role === "ADMIN" &&
-    isCosted === "false" &&
-    isSubmitted === "true"
-  ) {
-    this.body = yield fetchUncostedWithLabels();
-    this.status = 200;
-  } else if (role === "ADMIN" && isExpired === "true") {
-    this.body = yield fetchExpiredWithLabels();
-    this.status = 200;
+    ctx.body = collections;
+    ctx.status = 200;
+  } else if (role === "ADMIN" && !isCosted && isSubmitted) {
+    ctx.body = await fetchUncostedWithLabels();
+    ctx.status = 200;
+  } else if (role === "ADMIN" && isExpired) {
+    ctx.body = await fetchExpiredWithLabels();
+    ctx.status = 200;
   } else {
-    this.throw(403, "Unable to match query");
+    ctx.throw(403, "Unable to match query");
   }
 }
+
 interface DeleteContext extends StrictContext {
   state: AuthedState;
   params: { collectionId: string };
@@ -322,7 +352,7 @@ router.post(
   ),
   createCollection
 );
-router.get("/", requireAuth, getList);
+router.get("/", requireAuth, convert.back(getList));
 
 router.del(
   "/:collectionId",

@@ -7,7 +7,7 @@ import {
 import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objects/with-meta";
 import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
 
-interface CollectionWithLabels extends CollectionDb {
+export interface CollectionWithLabels extends CollectionDb {
   label: string;
 }
 
