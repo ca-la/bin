@@ -41,6 +41,7 @@ import {
   CollectionDb,
   collectionUpdateSchema,
   CollectionUpdate,
+  CartDetailsCollection,
 } from "../types";
 import { ROLES } from "../../users/types";
 import { createSubmission, getSubmissionStatus } from "./submissions";
@@ -65,6 +66,7 @@ import {
   canUserMoveCollectionBetweenTeams,
   RequireTeamRolesContext,
 } from "../../team-users/service";
+import { getCostedAndSubmittedCollections as getUserCostedAndSubmittedCollections } from "../services/cost-meta";
 import { StrictContext } from "../../../router-context";
 
 const router = new Router();
@@ -154,7 +156,9 @@ const getListContextSchema = z.object({
 });
 
 interface GetListContext
-  extends StrictContext<(Collection | CollectionWithLabels)[]> {
+  extends StrictContext<
+    (Collection | CollectionWithLabels | CartDetailsCollection)[]
+  > {
   state: AuthedState;
 }
 
@@ -208,6 +212,16 @@ async function getList(ctx: GetListContext) {
       teamUserRole
     );
 
+    ctx.body = collections;
+    ctx.status = 200;
+  } else if (isCosted && isSubmitted) {
+    const collections: CartDetailsCollection[] = await getUserCostedAndSubmittedCollections(
+      db,
+      {
+        userId: currentUserId,
+        role,
+      }
+    );
     ctx.body = collections;
     ctx.status = 200;
   } else if (role === "ADMIN" && !isCosted && isSubmitted) {

@@ -190,9 +190,9 @@ export async function findByDesignId(
 
 export async function findByCollectionId(
   collectionId: string,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<VariantDb[]> {
-  const variants = await db(TABLE_NAME)
+  const variants = await ktx(TABLE_NAME)
     .select("product_design_variants.*")
     .from(TABLE_NAME)
     .join(
@@ -208,11 +208,6 @@ export async function findByCollectionId(
     .where({
       "collection_designs.collection_id": collectionId,
       "product_designs.deleted_at": null,
-    })
-    .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
     })
     .catch(rethrow);
 

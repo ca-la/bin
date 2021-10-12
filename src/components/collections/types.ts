@@ -6,6 +6,7 @@ import {
 } from "../../services/zod-helpers";
 import { permissionsSchema } from "../permissions/types";
 import { designImageAssetSchema } from "../../components/assets/types";
+import { cartSubtotalSchema } from "../../components/design-quotes/types";
 
 export const designMetaDbRowSchema = z.object({
   id: z.string(),
@@ -103,3 +104,25 @@ export const collectionUpdateSchema = z
   .partial();
 
 export type CollectionUpdate = z.infer<typeof collectionUpdateSchema>;
+
+const costedCollectionCartDetailSchema = collectionSchema.extend({
+  cartStatus: z.literal("COSTED"),
+  cartSubtotal: cartSubtotalSchema,
+});
+export type CostedCollectionCartDetail = z.infer<
+  typeof costedCollectionCartDetailSchema
+>;
+
+const submittedCollectionCartDetailSchema = collectionSchema.extend({
+  cartStatus: z.literal("SUBMITTED"),
+});
+export type SubmittedCollectionCartDetail = z.infer<
+  typeof submittedCollectionCartDetailSchema
+>;
+
+const cartDetailsCollectionSchema = z.union([
+  submittedCollectionCartDetailSchema,
+  costedCollectionCartDetailSchema,
+]);
+
+export type CartDetailsCollection = z.infer<typeof cartDetailsCollectionSchema>;

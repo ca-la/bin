@@ -4,6 +4,7 @@ import { sum } from "lodash";
 import * as PlansDAO from "../plans/dao";
 import {
   CartDetails,
+  CartSubtotal,
   DesignQuote,
   DesignQuoteLineItem,
   FinancingItem,
@@ -105,13 +106,8 @@ export async function calculateDesignQuote(
   return fromUnsavedQuote(unsavedQuote, units, costInput.minimumOrderQuantity);
 }
 
-type CartSubtotal = Pick<
-  CartDetails,
-  "quotes" | "subtotalCents" | "combinedLineItems" | "totalUnits"
-> & { teamTotalsMap: Record<string, number> };
-
-function calculateSubtotal(
-  trx: Knex.Transaction,
+export function calculateSubtotal(
+  ktx: Knex,
   quoteRequests: CreateQuotePayload[]
 ): Promise<CartSubtotal> {
   return quoteRequests.reduce(
@@ -122,7 +118,7 @@ function calculateSubtotal(
       const existing = await acc;
       const costInputs = await PricingCostInputsDAO.findByDesignId({
         designId,
-        trx,
+        ktx,
       });
 
       if (costInputs.length === 0) {
@@ -149,7 +145,7 @@ function calculateSubtotal(
         };
       }
 
-      const designTeam = await TeamsDAO.findByDesign(trx, designId);
+      const designTeam = await TeamsDAO.findByDesign(ktx, designId);
       if (!designTeam) {
         throw new ResourceNotFoundError(
           `Could not find a team for the design: ${designId}`

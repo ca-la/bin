@@ -18,7 +18,7 @@ interface DesignsByCollection {
   [collectionId: string]: ProductDesignDataWithMeta[];
 }
 
-function determineStatusFromDesigns(
+export function determineStatusFromDesigns(
   collectionId: string,
   designs: ProductDesignDataWithMeta[]
 ): CollectionSubmissionStatus {

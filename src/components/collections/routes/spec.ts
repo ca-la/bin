@@ -2,6 +2,7 @@ import uuid from "node-uuid";
 import sinon from "sinon";
 import tape from "tape";
 import Knex from "knex";
+import { pick } from "lodash";
 
 import * as CollectionsDAO from "../dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
@@ -13,7 +14,7 @@ import generatePlan from "../../../test-helpers/factories/plan";
 import { rawDao as RawTeamUsersDAO } from "../../team-users/dao";
 import { Role as TeamUserRole } from "../../team-users/types";
 import API from "../../../test-helpers/http";
-import { sandbox, test } from "../../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
 import { stubFetchUncostedWithLabels } from "../../../test-helpers/stubs/collections";
 import CollectionDb from "../domain-object";
@@ -23,11 +24,125 @@ import db from "../../../services/db";
 import ApprovalStepsDAO from "../../approval-steps/dao";
 import * as IrisService from "../../iris/send-message";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import { generateTeamUser } from "../../../test-helpers/factories/team-user";
+import { costCollection } from "../../../test-helpers/cost-collection";
+import { submitCollection } from "../../../test-helpers/submit-collection";
 import * as TeamsService from "../../teams/service";
 import * as TeamUsersService from "../../team-users/service";
 import { ApprovalStepType } from "../../approval-steps/types";
 import createDesign from "../../../services/create-design";
 import { generatePaymentMethod } from "../../../test-helpers/factories/payment-method";
+
+test("GET /collections?isCosted=true&isSubmitted=true returns submitted collection", async (t: Test) => {
+  const {
+    user: {
+      designer: { session },
+    },
+    collection,
+  } = await submitCollection();
+
+  const [getResponse, getCollections] = await API.get(
+    `/collections?isCosted=true&isSubmitted=true`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+  t.equal(getResponse.status, 200);
+  t.equal(getCollections.length, 1);
+
+  const receivedCollection = getCollections[0];
+  t.deepEqual(
+    pick(receivedCollection, "id", "cartStatus"),
+    {
+      id: collection.id,
+      cartStatus: "SUBMITTED",
+    },
+    "returns submitted collection"
+  );
+});
+
+test("GET /collections?isCosted=true&isSubmitted=true returns costed collection", async (t: Test) => {
+  const {
+    user: {
+      designer: { session },
+    },
+    collection,
+  } = await costCollection();
+
+  const [getResponse, getCollections] = await API.get(
+    `/collections?isCosted=true&isSubmitted=true`,
+    {
+      headers: API.authHeader(session.id),
+    }
+  );
+  t.equal(getResponse.status, 200);
+  t.equal(getCollections.length, 1);
+
+  const receivedCollection = getCollections[0];
+  t.deepEqual(
+    pick(receivedCollection, "id", "cartStatus"),
+    {
+      id: collection.id,
+      cartStatus: "COSTED",
+    },
+    "returns costed collection"
+  );
+  t.true(receivedCollection.hasOwnProperty("cartSubtotal"));
+});
+
+test("GET /collections?isCosted=true&isSubmitted=true returns only submitted and costed collections", async (t: Test) => {
+  // create submitted collection
+  const {
+    user: { designer },
+    collection: submittedCollection,
+  } = await submitCollection(false);
+
+  // create costed collection
+  const {
+    team: costCollectionTeam,
+    collection: costedCollection,
+  } = await costCollection();
+
+  // add designer to a costed collection team
+  await generateTeamUser({
+    userId: designer.user.id,
+    teamId: costCollectionTeam.id,
+    role: TeamUserRole.EDITOR,
+  });
+
+  const [getResponse, getCollections] = await API.get(
+    `/collections?isCosted=true&isSubmitted=true`,
+    {
+      headers: API.authHeader(designer.session.id),
+    }
+  );
+  t.equal(getResponse.status, 200);
+  t.equal(
+    getCollections.length,
+    2,
+    "returns only costed and submitted collections"
+  );
+
+  const receivedCostedCollection = getCollections[0];
+  t.deepEqual(
+    pick(receivedCostedCollection, "id", "cartStatus"),
+    {
+      id: costedCollection.id,
+      cartStatus: "COSTED",
+    },
+    "returns costed collection"
+  );
+
+  const receivedSubmittedCollection = getCollections[1];
+  t.deepEqual(
+    pick(receivedSubmittedCollection, "id", "cartStatus"),
+    {
+      id: submittedCollection.id,
+      cartStatus: "SUBMITTED",
+    },
+    "returns submitted collection"
+  );
+});
 
 test("GET /collections/:id returns a created collection", async (t: tape.Test) => {
   const { session, user } = await createUser();

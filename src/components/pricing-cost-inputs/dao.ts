@@ -146,18 +146,15 @@ export async function findById(id: string): Promise<PricingCostInput | null> {
 export async function findByDesignId(options: {
   designId: string;
   showExpired?: boolean;
-  trx?: Knex.Transaction;
+  ktx?: Knex;
 }): Promise<PricingCostInput[]> {
-  const { designId, showExpired, trx } = options;
+  const { designId, showExpired, ktx = db } = options;
 
-  const withoutProcesses: WithoutProcesses[] = await db(TABLE_NAME)
+  const withoutProcesses: WithoutProcesses[] = await ktx(TABLE_NAME)
     .select("*")
     .where({ design_id: designId, deleted_at: null })
     .orderBy("created_at", "DESC")
     .modify((query: Knex.QueryBuilder) => {
-      if (trx) {
-        query.transacting(trx);
-      }
       if (!showExpired) {
         query.andWhereRaw("(expires_at IS null OR expires_at > now())");
       }
@@ -165,7 +162,7 @@ export async function findByDesignId(options: {
   const inputs: PricingCostInputRow[] = [];
 
   for (const costInput of withoutProcesses) {
-    const input = await attachProcesses(costInput, trx);
+    const input = await attachProcesses(costInput, ktx);
     inputs.push(input);
   }
 

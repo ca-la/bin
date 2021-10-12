@@ -38,3 +38,16 @@ export const cartDetailsSchema = z.object({
   financingItems: z.array(financingItemSchema),
 });
 export type CartDetails = z.infer<typeof cartDetailsSchema>;
+
+export const cartSubtotalSchema = cartDetailsSchema
+  .pick({
+    quotes: true,
+    subtotalCents: true,
+    combinedLineItems: true,
+    totalUnits: true,
+  })
+  .extend({
+    teamTotalsMap: z.record(z.number()),
+  });
+
+export type CartSubtotal = z.infer<typeof cartSubtotalSchema>;
