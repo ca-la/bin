@@ -10,7 +10,7 @@ import * as ProductDesignsDAO from "../dao/dao";
 
 import { authHeader, get, post } from "../../../test-helpers/http";
 import { sandbox, test } from "../../../test-helpers/fresh";
-import createUser = require("../../../test-helpers/create-user");
+import createUser from "../../../test-helpers/create-user";
 import createDesign from "../../../services/create-design";
 
 test("GET /product-designs allows getting designs", async (t: tape.Test) => {
@@ -94,6 +94,27 @@ test("GET /product-designs allows filtering by collection", async (t: tape.Test)
     {
       type: "COLLECTION",
       value: "*",
+    },
+  ]);
+});
+
+test("GET /product-designs allows getting drafts", async (t: tape.Test) => {
+  const { user, session } = await createUser({ role: "USER" });
+
+  const getDesignsStub = sandbox()
+    .stub(ProductDesignsDAO, "findAllDesignsThroughCollaboratorAndTeam")
+    .resolves([]);
+
+  const [response] = await get(
+    `/product-designs?userId=${user.id}&isDraft=true`,
+    {
+      headers: authHeader(session.id),
+    }
+  );
+  t.equal(response.status, 200);
+  t.deepEqual(getDesignsStub.args[0][0].filters, [
+    {
+      type: "DRAFT",
     },
   ]);
 });

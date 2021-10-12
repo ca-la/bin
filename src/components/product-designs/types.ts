@@ -72,6 +72,9 @@ export const designFilterSchema = z.union([
       z.literal("CHECKED_OUT"),
     ]),
   }),
+  z.object({
+    type: z.literal("DRAFT"),
+  }),
 ]);
 
 export type DesignFilter = z.infer<typeof designFilterSchema>;

@@ -1181,6 +1181,44 @@ test("findAllDesignsThroughCollaboratorAndTeam find designs through a team", asy
   );
 });
 
+test("findAllDesignsThroughCollaboratorAndTeam find draft designs", async (t: tape.Test) => {
+  const { user } = await createUser();
+
+  const design1 = await createDesign({
+    title: "design 1",
+    userId: user.id,
+  });
+  const design2 = await createDesign({
+    title: "design 2",
+    userId: user.id,
+  });
+  const draftDesign1 = await createDesign({
+    title: "draftDesign 1",
+    userId: user.id,
+  });
+  const draftDesign2 = await createDesign({
+    title: "draftDesign 2",
+    userId: user.id,
+  });
+
+  const { collection } = await generateCollection({
+    createdBy: user.id,
+  });
+  await addDesign(collection.id, design1.id);
+  await addDesign(collection.id, design2.id);
+
+  const draftDesigns = await findAllDesignsThroughCollaboratorAndTeam({
+    userId: user.id,
+    filters: [{ type: "DRAFT" }],
+  });
+
+  t.deepEqual(
+    draftDesigns.map((d: ProductDesign) => d.id),
+    [draftDesign2.id, draftDesign1.id],
+    "returns draft designs"
+  );
+});
+
 test("findById returns approval steps", async (t: tape.Test) => {
   const { user } = await createUser();
 

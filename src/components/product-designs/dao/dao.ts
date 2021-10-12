@@ -191,6 +191,10 @@ function applyFilter(
   query: Knex.QueryBuilder
 ): void {
   switch (designFilter.type) {
+    case "DRAFT": {
+      query.whereNull("collection_designs.collection_id");
+      break;
+    }
     case "COLLECTION": {
       if (designFilter.value === "*") {
         query.whereNotNull("collection_designs.collection_id");

@@ -93,7 +93,13 @@ function* getDesignsByUser() {
   const { role, userId } = this.state;
   canAccessUserResource.call(this, this.query.userId);
   const filters = [];
-  const { collectionFilterId, teamId, currentStepType, stageType } = this.query;
+  const {
+    collectionFilterId,
+    teamId,
+    currentStepType,
+    stageType,
+    isDraft,
+  } = this.query;
   if (collectionFilterId) {
     filters.push({ type: "COLLECTION", value: collectionFilterId });
   }
@@ -110,6 +116,9 @@ function* getDesignsByUser() {
 
       filters.push({ type: "TEAM", value: teamId });
     }
+  }
+  if (isDraft) {
+    filters.push({ type: "DRAFT" });
   }
   if (currentStepType) {
     filters.push({ type: "STEP", value: currentStepType });
