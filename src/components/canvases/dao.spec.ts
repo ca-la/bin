@@ -148,20 +148,23 @@ test("ProductDesignCanvases DAO supports reorder", async (t: tape.Test) => {
     x: 1,
     y: 1,
   };
-  const canvas = await create(data);
-  const canvas2 = await create(data2);
-  const inserted = await reorder([
-    { id: canvas2.id, ordering: 0 },
-    { id: canvas.id, ordering: 1 },
-  ]);
 
-  const result = await findAllByDesignId(design.id);
-  if (!result) {
-    return t.fail("no result");
-  }
-  t.deepEqual(result, inserted, "Returned inserted canvases");
-  t.deepEqual(result[1].id, canvas.id, "First canvas is correct");
-  t.equal(result[1].ordering, 1, "Canvas has new ordering");
+  await db.transaction(async (trx: Knex.Transaction) => {
+    const canvas = await create(data, trx);
+    const canvas2 = await create(data2, trx);
+    const inserted = await reorder(trx, [
+      { id: canvas2.id, ordering: 0 },
+      { id: canvas.id, ordering: 1 },
+    ]);
+
+    const result = await findAllByDesignId(design.id, trx);
+    if (!result) {
+      return t.fail("no result");
+    }
+    t.deepEqual(result, inserted, "Returned inserted canvases");
+    t.deepEqual(result[1].id, canvas.id, "First canvas is correct");
+    t.equal(result[1].ordering, 1, "Canvas has new ordering");
+  });
 });
 
 test("ProductDesignCanvases DAO supports delete", async (t: tape.Test) => {

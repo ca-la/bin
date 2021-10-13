@@ -23,7 +23,6 @@ import ProductDesignImage from "../assets/types";
 import ProductDesignOption from "../../domain-objects/product-design-option";
 import { hasProperties } from "../../services/require-properties";
 import { omit } from "lodash";
-import { typeGuard } from "../../middleware/type-guard";
 import { parseContext } from "../../services/parse-context";
 import { gatherChanges } from "./services/gather-changes";
 import { deserializeAsset } from "../assets/services/serializer";
@@ -291,17 +290,23 @@ async function update(ctx: UpdateCanvasContext) {
   ctx.body = canvasWithEnrichedComponents;
 }
 
-type ReorderRequest = CanvasesDAO.ReorderRequest;
+interface ReorderContext extends StrictContext {}
 
-function isReorderRequest(data: any[]): data is ReorderRequest[] {
-  return data.every((value: any) => hasProperties(value, "id", "ordering"));
-}
+const reorderContextSchema = z.object({
+  request: z.object({
+    body: z.array(z.object({ id: z.string(), ordering: z.number() })),
+  }),
+});
 
-function* reorder(
-  this: AuthedContext<ReorderRequest[]>
-): Iterator<any, any, any> {
-  yield CanvasesDAO.reorder(this.request.body);
-  this.status = 204;
+async function reorder(ctx: ReorderContext) {
+  const {
+    request: { body },
+  } = parseContext(ctx, reorderContextSchema);
+
+  await db.transaction((trx: Knex.Transaction) =>
+    CanvasesDAO.reorder(trx, body)
+  );
+  ctx.status = 204;
 }
 
 function* del(this: AuthedContext): Iterator<any, any, any> {
@@ -496,12 +501,7 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
 router.post("/", requireAuth, create);
 router.put("/:canvasId", requireAuth, create);
 router.patch("/:canvasId", requireAuth, convert.back(update));
-router.patch(
-  "/reorder",
-  requireAuth,
-  typeGuard<ReorderRequest[]>(isReorderRequest),
-  reorder
-);
+router.patch("/reorder", requireAuth, convert.back(reorder));
 
 router.patch("/", requireAuth, convert.back(updateCanvases));
 

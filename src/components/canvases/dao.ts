@@ -92,27 +92,25 @@ export interface ReorderRequest {
   ordering: number;
 }
 
-export async function reorder(data: ReorderRequest[]): Promise<Canvas[]> {
-  let updated: CanvasRow[] = [];
-  await db.transaction(async (trx: Knex.Transaction) => {
-    updated = await Promise.all(
-      data.map(async (reorderReq: ReorderRequest) => {
-        const { id, ordering } = reorderReq;
-        const rowData = partialDataAdapter.forInsertion({
-          ordering,
-        });
-        const row = await db(TABLE_NAME)
-          .update(rowData, "*")
-          .where({ id })
-          .transacting(trx)
-          .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
-        if (!row) {
-          throw new Error("Row could not be updated");
-        }
-        return row;
-      })
-    );
-  });
+export async function reorder(
+  trx: Knex.Transaction,
+  data: ReorderRequest[]
+): Promise<Canvas[]> {
+  const updated: CanvasRow[] = [];
+  for (const { id, ordering } of data) {
+    const rowData = partialDataAdapter.forInsertion({
+      ordering,
+    });
+    const row = await trx(TABLE_NAME)
+      .update(rowData, "*")
+      .where({ id })
+      .then((rows: CanvasRow[]) => first<CanvasRow>(rows));
+    if (!row) {
+      throw new Error("Row could not be updated");
+    }
+
+    updated.push(row);
+  }
 
   return validateEvery<CanvasRow, Canvas>(
     TABLE_NAME,
@@ -162,8 +160,11 @@ export async function findById(
   );
 }
 
-export async function findAllByDesignId(id: string): Promise<Canvas[]> {
-  const canvases: CanvasRow[] = await db(TABLE_NAME)
+export async function findAllByDesignId(
+  id: string,
+  ktx: Knex = db
+): Promise<Canvas[]> {
+  const canvases: CanvasRow[] = await ktx(TABLE_NAME)
     .select("*")
     .where({ design_id: id, deleted_at: null })
     .orderBy("ordering");
