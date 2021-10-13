@@ -3,7 +3,7 @@ import {
   schemaToGraphQLType,
   GraphQLType,
 } from "../../../apollo/published-types";
-import { collectionDbSchema, designMetaSchema } from "../types";
+import { Collection, collectionDbSchema, designMetaSchema } from "../types";
 
 export const gtCollectionDesignsMeta = schemaToGraphQLType(
   "CollectionDesignsMeta",
@@ -56,3 +56,22 @@ export const gtCollectionFilter: GraphQLType = {
 export interface CollectionFilter {
   userId: string;
 }
+
+export interface CollectionAndEnvironmentParent {
+  collectionId: string;
+  collection: Collection;
+}
+
+export const gtCollectionAndEnvironment: GraphQLType = {
+  name: "CollectionAndEnvironment",
+  type: "type",
+  body: {
+    collectionId: "String!",
+    collection: "Collection",
+    designs: {
+      signature: "(limit: Int, offset: Int)",
+      type: "[ProductDesign]",
+    },
+  },
+  requires: ["ProductDesign", "Collection"],
+};
