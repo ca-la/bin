@@ -74,3 +74,8 @@ export const teamTestBlank: Team = {
   title: "A team",
   type: TeamType.DESIGNER,
 };
+
+export interface TeamInput {
+  id?: string;
+  title: string;
+}

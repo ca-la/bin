@@ -11,8 +11,6 @@ import requireAuth from "../../middleware/require-auth";
 import TeamsDAO from "./dao";
 import TeamUsersDAO from "../team-users/dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
-import * as PlansDAO from "../plans/dao";
-import { createSubscription } from "../subscriptions/create";
 import attachPlan from "../subscriptions/attach-plan";
 import { upgradeTeamSubscription } from "../subscriptions/upgrade";
 import {
@@ -31,7 +29,7 @@ import {
   typeGuardFromSchema,
 } from "../../middleware/type-guard";
 import { buildRouter } from "../../services/cala-component/cala-router";
-import { createTeamWithOwner } from "./service";
+import { createTeamWithOwnerAndSubscription } from "./service";
 import {
   requireTeamRoles,
   RequireTeamRolesContext,
@@ -65,18 +63,11 @@ function* createTeam(this: TrxContext<AuthedContext>) {
 
   const unsavedTeam = parsed.data;
 
-  const created = yield createTeamWithOwner(trx, unsavedTeam.title, actorId);
-
-  // subscribe team to a free plan or don't if default plan is not free
-  const freeDefaultPlan = yield PlansDAO.findFreeAndDefaultForTeams(trx);
-  if (freeDefaultPlan) {
-    yield createSubscription(trx, {
-      teamId: created.id,
-      planId: freeDefaultPlan.id,
-      stripeCardToken: null,
-      isPaymentWaived: false,
-    });
-  }
+  const created = yield createTeamWithOwnerAndSubscription(
+    trx,
+    { title: unsavedTeam.title },
+    actorId
+  );
 
   yield emit<TeamDb, RouteCreated<TeamDb, typeof domain>>({
     type: "route.created",

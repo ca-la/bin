@@ -7,13 +7,16 @@ import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role, teamUserDbTestBlank } from "../team-users/types";
 
 import TeamsDAO from "./dao";
-import { rawDao as PlansRawDAO } from "../plans/dao";
 import { PlanDb } from "../plans/types";
 import { TeamType, TeamDb } from "./types";
 import * as TeamsService from "./service";
 import { SubscriptionWithPlan } from "../subscriptions/domain-object";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as CollectionsDAO from "../collections/dao";
+import * as PlansDAO from "../plans/dao";
+import * as SubscriptionService from "../subscriptions/create";
+
+const { rawDao: PlansRawDAO } = PlansDAO;
 
 const testDate = new Date(2012, 11, 23);
 const t1: TeamDb = {
@@ -33,7 +36,11 @@ test("createTeamWithOwner", async (t: Test) => {
     .resolves({ ...teamUserDbTestBlank, role: Role.OWNER });
 
   const created = await db.transaction((trx: Knex.Transaction) =>
-    TeamsService.createTeamWithOwner(trx, "A team title", "a-user-id")
+    TeamsService.createTeamWithOwner(
+      trx,
+      { title: "A team title" },
+      "a-user-id"
+    )
   );
 
   t.deepEqual(
@@ -70,6 +77,157 @@ test("createTeamWithOwner", async (t: Test) => {
       },
     ],
     "creates the team owner"
+  );
+});
+
+test("createTeamWithOwnerAndSubscription with free plan", async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  sandbox().stub(uuid, "v4").returns("a-uuid");
+  const createTeamStub = sandbox().stub(TeamsDAO, "create").resolves(t1);
+  const createTeamUserStub = sandbox()
+    .stub(RawTeamUsersDAO, "create")
+    .resolves({ ...teamUserDbTestBlank, role: Role.OWNER });
+
+  const findFreeDefaultPlanStub = sandbox()
+    .stub(PlansDAO, "findFreeAndDefaultForTeams")
+    .resolves({ id: "a-free-plan-id" });
+
+  const createSubscriptionStub = sandbox()
+    .stub(SubscriptionService, "createSubscription")
+    .resolves();
+
+  const created = await db.transaction((trx: Knex.Transaction) =>
+    TeamsService.createTeamWithOwnerAndSubscription(
+      trx,
+      { title: "A team title" },
+      "a-user-id"
+    )
+  );
+
+  t.deepEqual(
+    created,
+    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
+    "returns the created team with role"
+  );
+  t.deepEqual(
+    createTeamStub.args[0].slice(1),
+    [
+      {
+        id: "a-uuid",
+        title: "A team title",
+        createdAt: testDate,
+        deletedAt: null,
+        type: TeamType.DESIGNER,
+      },
+    ],
+    "creates a team"
+  );
+  t.deepEqual(
+    createTeamUserStub.args[0].slice(1),
+    [
+      {
+        teamId: "a-team-id",
+        userId: "a-user-id",
+        userEmail: null,
+        id: "a-uuid",
+        role: Role.OWNER,
+        label: null,
+        createdAt: testDate,
+        updatedAt: testDate,
+        deletedAt: null,
+      },
+    ],
+    "creates the team owner"
+  );
+
+  t.equal(
+    findFreeDefaultPlanStub.callCount,
+    1,
+    "Calls correct DAO function to get free default plan"
+  );
+
+  t.deepEqual(
+    createSubscriptionStub.args[0][1].teamId,
+    "a-team-id",
+    "calls createOrUpdateSubscription with correct teamId"
+  );
+  t.deepEqual(
+    createSubscriptionStub.args[0][1].planId,
+    "a-free-plan-id",
+    "calls createOrUpdateSubscription with correct planId"
+  );
+});
+
+test("createTeamWithOwnerAndSubscription with no free plan", async (t: Test) => {
+  sandbox().useFakeTimers(testDate);
+  sandbox().stub(uuid, "v4").returns("a-uuid");
+  const createTeamStub = sandbox().stub(TeamsDAO, "create").resolves(t1);
+  const createTeamUserStub = sandbox()
+    .stub(RawTeamUsersDAO, "create")
+    .resolves({ ...teamUserDbTestBlank, role: Role.OWNER });
+
+  const findFreeDefaultPlanStub = sandbox()
+    .stub(PlansDAO, "findFreeAndDefaultForTeams")
+    .resolves(null);
+
+  const createSubscriptionStub = sandbox()
+    .stub(SubscriptionService, "createSubscription")
+    .resolves();
+
+  const created = await db.transaction((trx: Knex.Transaction) =>
+    TeamsService.createTeamWithOwnerAndSubscription(
+      trx,
+      { title: "A team title" },
+      "a-user-id"
+    )
+  );
+
+  t.deepEqual(
+    created,
+    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
+    "returns the created team with role"
+  );
+  t.deepEqual(
+    createTeamStub.args[0].slice(1),
+    [
+      {
+        id: "a-uuid",
+        title: "A team title",
+        createdAt: testDate,
+        deletedAt: null,
+        type: TeamType.DESIGNER,
+      },
+    ],
+    "creates a team"
+  );
+  t.deepEqual(
+    createTeamUserStub.args[0].slice(1),
+    [
+      {
+        teamId: "a-team-id",
+        userId: "a-user-id",
+        userEmail: null,
+        id: "a-uuid",
+        role: Role.OWNER,
+        label: null,
+        createdAt: testDate,
+        updatedAt: testDate,
+        deletedAt: null,
+      },
+    ],
+    "creates the team owner"
+  );
+
+  t.equal(
+    findFreeDefaultPlanStub.callCount,
+    1,
+    "Calls correct DAO function to get free default plan"
+  );
+
+  t.equal(
+    createSubscriptionStub.callCount,
+    0,
+    "don't call createOrUpdateSubscription for the team when default plan is not free"
   );
 });
 

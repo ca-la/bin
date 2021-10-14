@@ -77,7 +77,7 @@ async function createWithTeam(
     { requirePassword: true, trx }
   );
 
-  const team = await createTeamWithOwner(trx, teamTitle, user.id);
+  const team = await createTeamWithOwner(trx, { title: teamTitle }, user.id);
 
   await createSubscription(trx, {
     teamId: team.id,
@@ -338,7 +338,7 @@ function* updateUser(
       if (beforeUpdate.name === null && Boolean(updatedValues.name)) {
         await createTeamWithOwner(
           trx,
-          `${updatedValues.name}'s Team`,
+          { title: `${updatedValues.name}'s Team` },
           this.params.userId
         );
       }

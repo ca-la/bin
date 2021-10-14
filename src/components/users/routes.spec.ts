@@ -366,7 +366,7 @@ test("PATCH /users/:id allows completing a user registration", async (t: Test) =
   t.equal(body.name, "New Name");
   t.deepEqual(
     createTeamStub.args[0].slice(1),
-    ["New Name's Team", body.id],
+    [{ title: "New Name's Team" }, body.id],
     "Creates a new team with the newly set user name"
   );
 

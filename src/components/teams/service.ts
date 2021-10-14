@@ -4,22 +4,46 @@ import Knex from "knex";
 import { rawDao as RawTeamUsersDAO } from "../team-users/dao";
 import { Role } from "../team-users/types";
 import TeamsDAO from "./dao";
-import { Team, TeamType } from "./types";
+import { Team, TeamType, TeamInput } from "./types";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as CollectionsDAO from "../collections/dao";
-import { rawDao as PlansRawDAO } from "../plans/dao";
+import {
+  rawDao as PlansRawDAO,
+  findFreeAndDefaultForTeams,
+} from "../plans/dao";
 import { PlanDb } from "../plans/types";
 import { URLSearchParams } from "url";
 import * as Teams from "./";
+import { createSubscription } from "../subscriptions/create";
+
+export async function createTeamWithOwnerAndSubscription(
+  trx: Knex.Transaction,
+  input: TeamInput,
+  ownerUserId: string
+): Promise<Team> {
+  const team = await createTeamWithOwner(trx, input, ownerUserId);
+
+  const freeDefaultPlan = await findFreeAndDefaultForTeams(trx);
+  if (freeDefaultPlan) {
+    await createSubscription(trx, {
+      teamId: team.id,
+      planId: freeDefaultPlan.id,
+      stripeCardToken: null,
+      isPaymentWaived: false,
+    });
+  }
+
+  return team;
+}
 
 export async function createTeamWithOwner(
   trx: Knex.Transaction,
-  title: string,
+  input: TeamInput,
   ownerUserId: string
 ): Promise<Team> {
   const created = await TeamsDAO.create(trx, {
-    id: uuid.v4(),
-    title,
+    id: input.id || uuid.v4(),
+    title: input.title,
     createdAt: new Date(),
     deletedAt: null,
     type: TeamType.DESIGNER,

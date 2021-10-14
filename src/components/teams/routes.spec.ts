@@ -40,8 +40,8 @@ function setup({
       role,
       userId: "a-user-id",
     }),
-    createWithOwnerStub: sandbox()
-      .stub(TeamsService, "createTeamWithOwner")
+    createTeamWithOwnerAndSubscriptionStub: sandbox()
+      .stub(TeamsService, "createTeamWithOwnerAndSubscription")
       .resolves({
         ...t1,
         role: TeamUserRole.OWNER,
@@ -81,7 +81,7 @@ function setup({
 }
 
 test("POST /teams", async (t: Test) => {
-  const { createWithOwnerStub, sessionsStub } = setup();
+  const { createTeamWithOwnerAndSubscriptionStub, sessionsStub } = setup();
 
   const [response, body] = await post("/teams", {
     headers: authHeader("a-session-id"),
@@ -103,8 +103,8 @@ test("POST /teams", async (t: Test) => {
     "returns the created team"
   );
   t.deepEqual(
-    createWithOwnerStub.args[0].slice(1),
-    [t1.title, "a-user-id"],
+    createTeamWithOwnerAndSubscriptionStub.args[0].slice(1),
+    [{ title: t1.title }, "a-user-id"],
     "calls createTeamWithOwner with the correct values"
   );
 
@@ -127,84 +127,6 @@ test("POST /teams", async (t: Test) => {
   });
 
   t.equal(unauthenticated.status, 401, "Does not allow unauthenticated users");
-});
-
-test("POST /teams creates subscription with free plan", async (t: Test) => {
-  const { findFreeDefaultPlanStub, createSubscriptionStub } = setup();
-
-  const [response, body] = await post("/teams", {
-    headers: authHeader("a-session-id"),
-    body: {
-      title: t1.title,
-    },
-  });
-
-  t.equal(response.status, 201);
-  t.deepEqual(
-    body,
-    JSON.parse(
-      JSON.stringify({
-        ...t1,
-        role: TeamUserRole.OWNER,
-        teamUserId: "a-team-user-id",
-      })
-    ),
-    "returns the created team"
-  );
-
-  t.equal(
-    findFreeDefaultPlanStub.callCount,
-    1,
-    "Calls correct DAO function to get free default plan"
-  );
-
-  t.deepEqual(
-    createSubscriptionStub.args[0][1].teamId,
-    "a-team-id",
-    "calls createOrUpdateSubscription with correct teamId"
-  );
-  t.deepEqual(
-    createSubscriptionStub.args[0][1].planId,
-    "a-free-plan-id",
-    "calls createOrUpdateSubscription with correct planId"
-  );
-});
-
-test("POST /teams creates the team without subscription if plan is not free", async (t: Test) => {
-  const { findFreeDefaultPlanStub, createSubscriptionStub } = setup();
-  findFreeDefaultPlanStub.resolves(null);
-
-  const [response, body] = await post("/teams", {
-    headers: authHeader("a-session-id"),
-    body: {
-      title: t1.title,
-    },
-  });
-
-  t.equal(response.status, 201);
-  t.deepEqual(
-    body,
-    JSON.parse(
-      JSON.stringify({
-        ...t1,
-        role: TeamUserRole.OWNER,
-        teamUserId: "a-team-user-id",
-      })
-    ),
-    "returns the created team"
-  );
-
-  t.equal(
-    findFreeDefaultPlanStub.callCount,
-    1,
-    "Calls correct DAO function to get free default plan"
-  );
-
-  t.equal(
-    createSubscriptionStub.callCount,
-    0,
-    "don't call createOrUpdateSubscription for the team when default plan is not free"
-  );
 });
 
 test("GET /teams", async (t: Test) => {
