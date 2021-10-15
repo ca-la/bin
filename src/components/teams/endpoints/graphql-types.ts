@@ -1,9 +1,10 @@
+import { z } from "zod";
 import {
   buildGraphQLListType,
   schemaToGraphQLType,
   GraphQLType,
 } from "../../../apollo/published-types";
-import { teamSchema, Team } from "../types";
+import { teamSchema, teamDbSchema, Team } from "../types";
 import { Collection } from "../../collections/types";
 
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
@@ -44,3 +45,18 @@ export interface TeamAndEnvironment extends TeamAndEnvironmentParent {
   team: Team;
   collections: Collection[];
 }
+
+const teamInputSchema = teamDbSchema.pick({
+  id: true,
+  title: true,
+});
+
+export const gtTeamInput: GraphQLType = schemaToGraphQLType(
+  "TeamInput",
+  teamInputSchema,
+  {
+    type: "input",
+  }
+);
+
+export type TeamInput = z.infer<typeof teamInputSchema>;
