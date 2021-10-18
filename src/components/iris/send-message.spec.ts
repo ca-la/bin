@@ -18,7 +18,11 @@ import { NotificationMessage } from "../../published-types";
 import { sendMessage } from "./send-message";
 import { RealtimeMessage } from "./types";
 
-test("sendMessage supports sending a message", async (t: tape.Test) => {
+const STRING_EXCEED_SQS_MSG_SIZE_LIMIT = Array(256 * 1024)
+  .fill("a")
+  .join("");
+
+test("sendMessage supports sending a message via storing the body in S3 when message size exceeded the SQS limit", async (t: tape.Test) => {
   sandbox()
     .stub(NotificationAnnouncer, "announceNotificationCreation")
     .resolves({});
@@ -42,7 +46,10 @@ test("sendMessage supports sending a message", async (t: tape.Test) => {
   if (!fullNotification) {
     throw new Error("Could not find notification");
   }
-  const notificationMessage = await createNotificationMessage(fullNotification);
+  const notificationMessage = {
+    ...(await createNotificationMessage(fullNotification)),
+    commentText: STRING_EXCEED_SQS_MSG_SIZE_LIMIT,
+  };
 
   if (!notificationMessage || !notification.recipientUserId) {
     throw new Error(
@@ -93,7 +100,7 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
     id: "",
     title: "",
     html: "",
-    text: "",
+    text: STRING_EXCEED_SQS_MSG_SIZE_LIMIT,
     readAt: null,
     link: "",
     createdAt: new Date(),
@@ -119,4 +126,54 @@ test("Does not throw when upload fails", async (t: tape.Test) => {
   } catch {
     t.fail("Throws an error when trying to send message");
   }
+});
+
+test("sendMessage supports sending a message directly using SQS (without S3) when message doesn't exceed the SQS message body limit", async (t: tape.Test) => {
+  sandbox()
+    .stub(NotificationAnnouncer, "announceNotificationCreation")
+    .resolves({});
+  const s3Stub = sandbox().stub(S3Service, "uploadToS3");
+  const sqsStub = sandbox().stub(SQSService, "enqueueMessage").resolves({});
+  sandbox().stub(Configuration, "AWS_IRIS_S3_BUCKET").value("iris-s3-foo");
+  sandbox().stub(Configuration, "AWS_IRIS_SQS_URL").value("iris-sqs-url-bar");
+  sandbox()
+    .stub(Configuration, "AWS_IRIS_SQS_REGION")
+    .value("iris-sqs-region-biz");
+
+  const { notification } = await generateNotification({
+    type: NotificationType.TASK_ASSIGNMENT,
+  });
+  const fullNotification = await db.transaction((trx: Knex.Transaction) =>
+    findById(trx, notification.id)
+  );
+  if (!fullNotification) {
+    throw new Error("Could not find notification");
+  }
+  const notificationMessage = await createNotificationMessage(fullNotification);
+
+  if (!notificationMessage || !notification.recipientUserId) {
+    throw new Error(
+      "Expected there to be a notification message and a recipient!"
+    );
+  }
+
+  const realtimeNotification: RealtimeMessage = {
+    type: "notification/created",
+    channels: [`notifications/${notification.recipientUserId}`],
+    resource: JSON.parse(JSON.stringify(notificationMessage)),
+  };
+  await sendMessage(realtimeNotification);
+
+  const sqsMessage: any = sqsStub.args.find((arg: any) =>
+    isEqual(arg[0], {
+      messageGroupId: "notification/created",
+      messageType: "realtime-message",
+      payload: realtimeNotification,
+      queueRegion: "iris-sqs-region-biz",
+      queueUrl: "iris-sqs-url-bar",
+    })
+  );
+
+  t.is(s3Stub.callCount, 0, "Doesn't use S3, message body is small enough");
+  t.true(Boolean(sqsMessage), "Sends to SQS");
 });
