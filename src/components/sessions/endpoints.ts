@@ -2,6 +2,7 @@ import {
   GraphQLEndpoint,
   GraphQLContextBase,
   ForbiddenError,
+  NotFoundError,
 } from "../../apollo";
 import Session from "../../domain-objects/session";
 import * as GraphQLTypes from "./graphql-types";
@@ -46,4 +47,28 @@ const login: GraphQLEndpoint<
   },
 };
 
-export const SessionEndpoints = [login];
+interface GetSessionArgs {
+  id: string;
+}
+
+export const getSession: GraphQLEndpoint<
+  GetSessionArgs,
+  Session,
+  GraphQLContextBase<Session>
+> = {
+  endpointType: "Query",
+  types: [GraphQLTypes.Session],
+  name: "session",
+  signature: "(id: String!): Session!",
+  resolver: async (_: any, { id }: GetSessionArgs) => {
+    const session = await SessionsDAO.findById(id, true);
+
+    if (!session) {
+      throw new NotFoundError(`Could not find session ${id}`);
+    }
+
+    return session;
+  },
+};
+
+export const SessionEndpoints = [login, getSession];

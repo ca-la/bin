@@ -72,3 +72,57 @@ test("login(id) can return a user", async (t: Test) => {
     },
   });
 });
+
+test("session(id) can return a session", async (t: Test) => {
+  const { user, session } = await createUser({
+    role: "ADMIN",
+  });
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: null,
+      query: `query($id: String!) {
+        session(id: $id) {
+          userId
+          role
+          expiresAt
+          user {
+            email
+          }
+        }
+      }`,
+      variables: { id: session.id },
+    },
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(body.data.session, {
+    role: "ADMIN",
+    userId: user.id,
+    expiresAt: null,
+    user: {
+      email: user.email,
+    },
+  });
+});
+
+test("session(id) returns a resource not found error", async (t: Test) => {
+  const [response, body] = await post("/v2", {
+    body: {
+      operationName: null,
+      query: `query($id: String!) {
+        session(id: $id) {
+          userId
+          role
+          expiresAt
+          user {
+            email
+          }
+        }
+      }`,
+      variables: { id: "a-fake-session" },
+    },
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(body.errors[0].message, `Could not find session a-fake-session`);
+});
