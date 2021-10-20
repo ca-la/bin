@@ -1,7 +1,5 @@
 import { z } from "zod";
 import convert from "koa-convert";
-import Knex from "knex";
-
 import {
   SafeBodyState,
   safeQuery,
@@ -13,75 +11,19 @@ import useTransaction, {
 } from "../../../middleware/use-transaction";
 import { StrictContext } from "../../../router-context";
 import createDesign from "../../../services/create-design";
-import * as CollaboratorsDAO from "../../collaborators/dao";
-import TeamUsersDAO from "../../team-users/dao";
 import {
   getDesignPermissions,
   Permissions,
 } from "../../../services/get-permissions";
 import { User } from "../../users/types";
-import { Role as TeamUserRole } from "../../team-users/types";
 import ProductDesign from "../domain-objects/product-design";
 import { findById as findDesignById } from "../dao/index";
 import * as UsersDAO from "../../users/dao";
 import requireAuth from "../../../middleware/require-auth";
-import * as CollectionsDAO from "../../collections/dao";
-import Collaborator, {
-  Roles as CollaboratorRole,
-} from "../../collaborators/types";
 import filterError from "../../../services/filter-error";
 import ResourceNotFoundError from "../../../errors/resource-not-found";
 import createFromDesignTemplate from "../../templates/services/create-from-design-template";
-
-const CAN_CREATE_TEAM_ROLES: TeamUserRole[] = [
-  TeamUserRole.ADMIN,
-  TeamUserRole.EDITOR,
-  TeamUserRole.OWNER,
-  TeamUserRole.TEAM_PARTNER,
-];
-
-const CAN_CREATE_COLLABORATOR_ROLES: CollaboratorRole[] = [
-  "EDIT",
-  "OWNER",
-  "PARTNER",
-];
-
-async function canCreate(
-  collectionId: string | null,
-  userId: string,
-  sessionRole: string,
-  trx: Knex.Transaction
-) {
-  if (collectionId === null || sessionRole === "ADMIN") {
-    return true;
-  }
-
-  const maybeCollection = await CollectionsDAO.findById(collectionId);
-  const collectionCollaborators = await CollaboratorsDAO.findByCollectionAndUser(
-    collectionId,
-    userId,
-    trx
-  );
-  const canCreateCollaborator = collectionCollaborators.some(
-    (collaborator: Collaborator) =>
-      CAN_CREATE_COLLABORATOR_ROLES.includes(collaborator.role)
-  );
-
-  if (canCreateCollaborator) {
-    return true;
-  }
-
-  const teamId = maybeCollection?.teamId;
-  const maybeTeamUser = teamId
-    ? await TeamUsersDAO.findOne(trx, { teamId, userId })
-    : null;
-
-  const canCreateTeamUser = maybeTeamUser
-    ? CAN_CREATE_TEAM_ROLES.includes(maybeTeamUser.role)
-    : false;
-
-  return canCreateTeamUser;
-}
+import { canCreate } from "../services/can-create";
 
 const createBodySchema = z.object({
   title: z.string(),

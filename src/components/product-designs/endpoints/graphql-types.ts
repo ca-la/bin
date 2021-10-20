@@ -97,3 +97,22 @@ export const gtDesignFilter: GraphQLType = {
     value: "String",
   },
 };
+
+const designInputSchema = productDesignSchema
+  .pick({
+    id: true,
+    title: true,
+  })
+  .extend({
+    collectionId: z.string().nullable(),
+  });
+
+export const gtDesignInput: GraphQLType = schemaToGraphQLType(
+  "DesignInput",
+  designInputSchema,
+  {
+    type: "input",
+  }
+);
+
+export type DesignInput = z.infer<typeof designInputSchema>;
