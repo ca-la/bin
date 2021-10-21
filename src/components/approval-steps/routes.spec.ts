@@ -369,7 +369,7 @@ test("PATCH /design-approval-steps/:stepId updates collaboratorId", async (t: Te
   const { user: assignee } = await createUser({ withSession: false });
 
   const d1: ProductDesign = await createDesign(
-    staticProductDesign({ id: "d1", userId: actor.id })
+    staticProductDesign({ userId: actor.id })
   );
 
   const { collaborator } = await generateCollaborator({
@@ -473,7 +473,7 @@ test("PATCH /design-approval-steps/:stepId updates teamUserId", async (t: Test) 
   const { user: assignee } = await createUser({ withSession: false });
 
   const d1: ProductDesign = await createDesign(
-    staticProductDesign({ id: "d1", userId: actor.id })
+    staticProductDesign({ userId: actor.id })
   );
 
   const { teamUser } = await generateTeam(assignee.id);
@@ -585,7 +585,7 @@ test("PATCH /design-approval-steps/:stepId updates due date", async (t: Test) =>
   const { user: actor, session } = await createUser({ withSession: true });
 
   const d1: ProductDesign = await createDesign(
-    staticProductDesign({ id: "d1", userId: actor.id })
+    staticProductDesign({ userId: actor.id })
   );
 
   const as1: ApprovalStep = {

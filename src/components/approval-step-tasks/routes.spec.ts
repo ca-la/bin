@@ -21,7 +21,7 @@ test("GET /design-approval-step-tasks?approvalStepId returns tasks", async (t: t
   const { session, user } = await createUser({});
 
   const design: ProductDesign = await createDesign(
-    staticProductDesign({ id: "d1", userId: user.id })
+    staticProductDesign({ userId: user.id })
   );
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
@@ -66,7 +66,7 @@ test("POST /design-approval-step-task creates a task", async (t: tape.Test) => {
   const { session, user } = await createUser({});
 
   const design: ProductDesign = await createDesign(
-    staticProductDesign({ id: "d1", userId: user.id })
+    staticProductDesign({ userId: user.id })
   );
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

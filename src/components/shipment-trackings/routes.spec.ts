@@ -442,7 +442,6 @@ test("POST /shipment-trackings/updates end-to-end", async (t: Test) => {
   } = await db.transaction(async (trx: Knex.Transaction) => {
     const d1 = await createDesign(
       staticProductDesign({
-        id: "d1",
         userId: user.id,
         title: "A design title",
       }),

@@ -27,7 +27,7 @@ import * as ApprovalStepSubmissionsDAO from "./dao";
 
 test("ApprovalStepSubmissionsDAO can create multiple submissions and retrieve by step and id", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await generateDesign({ id: "d1", userId: user.id });
+  const d1: ProductDesign = await generateDesign({ userId: user.id });
 
   const as1: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

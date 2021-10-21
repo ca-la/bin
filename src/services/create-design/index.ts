@@ -10,6 +10,7 @@ import { moveDesigns } from "../../components/collections/dao/design";
 import createDesignApproval from "../create-design-approval";
 
 export interface UnsavedDesign {
+  id?: string;
   title: string;
   userId: string;
   /** @deprecated */
@@ -24,7 +25,11 @@ async function createInTransaction(
   trx: Knex.Transaction,
   data: UnsavedDesignWithCollections
 ): Promise<ProductDesign> {
-  const design = await ProductDesignsDAO.create(trx, data.title, data.userId);
+  const design = await ProductDesignsDAO.create(trx, {
+    id: data.id,
+    userId: data.userId,
+    title: data.title,
+  });
   if (data.collectionIds && data.collectionIds.length > 1) {
     throw new Error(
       "Could not put design into multiple collections on creation"

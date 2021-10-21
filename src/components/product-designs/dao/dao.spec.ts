@@ -216,7 +216,7 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   const { user: notUser } = await createUser();
 
   const ownDesign = await db.transaction((trx: Knex.Transaction) =>
-    ProductDesignsDAO.create(trx, "Own Design", user.id)
+    ProductDesignsDAO.create(trx, { title: "Own Design", userId: user.id })
   );
   // ensure that the design has no collaborators to simulate v1 product designs.
   const existingCollaborators = await CollaboratorsDAO.findByDesign(
@@ -231,7 +231,10 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   );
 
   const designSharedDesign = await db.transaction((trx: Knex.Transaction) =>
-    ProductDesignsDAO.create(trx, "Design Shared Design", notUser.id)
+    ProductDesignsDAO.create(trx, {
+      title: "Design Shared Design",
+      userId: notUser.id,
+    })
   );
   await generateCollaborator({
     collectionId: null,
@@ -243,7 +246,10 @@ test("findAllDesignsThroughCollaboratorAndTeam finds all undeleted designs that 
   });
 
   const collectionSharedDesign = await db.transaction((trx: Knex.Transaction) =>
-    ProductDesignsDAO.create(trx, "Collection Shared Design", notUser.id)
+    ProductDesignsDAO.create(trx, {
+      title: "Collection Shared Design",
+      userId: notUser.id,
+    })
   );
   const { collection } = await generateCollection({ createdBy: notUser.id });
   await addDesign(collection.id, collectionSharedDesign.id);
@@ -1968,7 +1974,7 @@ test("create", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const trx = await db.transaction();
   try {
-    const created = await create(trx, "A design", user.id);
+    const created = await create(trx, { title: "A design", userId: user.id });
 
     t.equal(created.title, "A design", "sets the title");
     t.equal(created.userId, user.id, "sets the userId");

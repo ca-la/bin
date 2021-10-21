@@ -625,10 +625,15 @@ export async function findMinimalByIds(
   return result;
 }
 
+interface DesignInput {
+  title: string;
+  userId: string;
+  id?: string;
+}
+
 export async function create(
   trx: Knex.Transaction,
-  title: string,
-  userId: string
+  { title, userId, id }: DesignInput
 ): Promise<ProductDesign> {
   const ids = await trx<{ id: string; title: string; user_id: string }>(
     TABLE_NAME
@@ -636,7 +641,7 @@ export async function create(
     {
       title,
       user_id: userId,
-      id: uuid.v4(),
+      id: id || uuid.v4(),
     },
     "id"
   );

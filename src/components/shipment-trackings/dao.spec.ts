@@ -16,10 +16,7 @@ import ShipmentTrackingsDAO from "./dao";
 async function setup(trx: Knex.Transaction) {
   const { user } = await createUser({ withSession: false });
 
-  const d1 = await createDesign(
-    staticProductDesign({ id: "d1", userId: user.id }),
-    trx
-  );
+  const d1 = await createDesign(staticProductDesign({ userId: user.id }), trx);
   const checkoutStep = await ApprovalStepsDAO.findOne(trx, {
     designId: d1.id,
     type: ApprovalStepType.CHECKOUT,

@@ -45,7 +45,7 @@ async function setup() {
   };
 }
 
-function buildRequest(collectionId: string | null) {
+function buildRequest(id: string, collectionId: string | null) {
   return {
     query: `mutation ($design: DesignInput!) {
       createDesign(design: $design) {
@@ -55,7 +55,7 @@ function buildRequest(collectionId: string | null) {
     }`,
     variables: {
       design: {
-        id: uuid.v4(),
+        id,
         collectionId,
         title: "D1",
       },
@@ -66,7 +66,7 @@ function buildRequest(collectionId: string | null) {
 test("createDesign needs authentication", async (t: Test) => {
   const { collection } = await setup();
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(uuid.v4(), collection.id),
   });
   t.equal(forbiddenResponse.status, 200);
   t.equal(forbiddenBody.errors[0].message, "Unauthorized");
@@ -75,7 +75,7 @@ test("createDesign needs authentication", async (t: Test) => {
 test("createDesign is forbidden for arbitrary user", async (t: Test) => {
   const { arbitraryUser, collection } = await setup();
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(uuid.v4(), collection.id),
     headers: authHeader(arbitraryUser.session.id),
   });
   t.equal(forbiddenResponse.status, 200);
@@ -89,7 +89,7 @@ test("createDesign is forbidden for a viewer", async (t: Test) => {
   const { viewerUser, collection } = await setup();
 
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(uuid.v4(), collection.id),
     headers: authHeader(viewerUser.session.id),
   });
   t.equal(forbiddenResponse.status, 200);
@@ -107,36 +107,46 @@ test("createDesign for collection is allowed for CALA admin, owner, admin and ed
     calaAdminUser,
     collection,
   } = await setup();
+  const ownerId = uuid.v4();
   const [, ownerBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(ownerId, collection.id),
     headers: authHeader(ownerUser.session.id),
   });
   t.equal(ownerBody.data.createDesign.title, "D1");
+  t.equal(ownerBody.data.createDesign.id, ownerId);
 
+  const editorId = uuid.v4();
   const [, editorBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(editorId, collection.id),
     headers: authHeader(editorUser.session.id),
   });
   t.equal(editorBody.data.createDesign.title, "D1");
+  t.equal(editorBody.data.createDesign.id, editorId);
 
+  const adminId = uuid.v4();
   const [, adminBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(adminId, collection.id),
     headers: authHeader(adminUser.session.id),
   });
   t.equal(adminBody.data.createDesign.title, "D1");
+  t.equal(adminBody.data.createDesign.id, adminId);
 
+  const calaAdminId = uuid.v4();
   const [, calaAdminBody] = await post("/v2", {
-    body: buildRequest(collection.id),
+    body: buildRequest(calaAdminId, collection.id),
     headers: authHeader(calaAdminUser.session.id),
   });
   t.equal(calaAdminBody.data.createDesign.title, "D1");
+  t.equal(calaAdminBody.data.createDesign.id, calaAdminId);
 });
 
 test("createDesign (draft) is allowed for arbitrary user", async (t: Test) => {
   const { arbitraryUser } = await setup();
+  const id = uuid.v4();
   const [, body] = await post("/v2", {
-    body: buildRequest(null),
+    body: buildRequest(id, null),
     headers: authHeader(arbitraryUser.session.id),
   });
   t.equal(body.data.createDesign.title, "D1");
+  t.equal(body.data.createDesign.id, id);
 });

@@ -17,7 +17,7 @@ import generateComment from "../../test-helpers/factories/comment";
 
 test("ApprovalStepsDAO can create multiple steps and retrieve by design", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
-  const d1: ProductDesign = await generateDesign({ id: "d1", userId: user.id });
+  const d1: ProductDesign = await generateDesign({ userId: user.id });
 
   const approvalStep: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,

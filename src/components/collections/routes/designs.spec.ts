@@ -405,7 +405,7 @@ test("GET /collections/:id/designs", async (t: Test) => {
     title: "Drop 001/The Early Years",
   });
   const design = await db.transaction((trx: Knex.Transaction) =>
-    ProductDesignsDAO.create(trx, "Vader Mask", user.id)
+    ProductDesignsDAO.create(trx, { title: "Vader Mask", userId: user.id })
   );
   await generateCollaborator({
     collectionId: null,

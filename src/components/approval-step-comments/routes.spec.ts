@@ -35,7 +35,6 @@ test("POST /design-approval-step-comments/:stepId can create a comment by team m
   });
 
   const design: ProductDesign = await generateDesign({
-    id: "d1",
     userId: user.id,
   });
   generateCollaborator({
@@ -127,7 +126,6 @@ test("POST /design-approval-step-comments/:stepId sends @mention notifications",
   const { user: collaboratorUser } = await createUser();
 
   const design: ProductDesign = await generateDesign({
-    id: "d1",
     userId: user.id,
   });
   const { collaborator } = await generateCollaborator({

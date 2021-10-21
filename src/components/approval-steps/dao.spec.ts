@@ -19,8 +19,8 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by design", async 
   const { user } = await createUser({ withSession: false });
   const [d1, d2] = await db.transaction((trx: Knex.Transaction) =>
     Promise.all([
-      ProductDesignsDAO.create(trx, "Design One", user.id),
-      ProductDesignsDAO.create(trx, "Design Two", user.id),
+      ProductDesignsDAO.create(trx, { title: "Design One", userId: user.id }),
+      ProductDesignsDAO.create(trx, { title: "Design Two", userId: user.id }),
     ])
   );
 
@@ -107,10 +107,10 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by collectionId", 
     designOutOfCollection,
   ] = await db.transaction((trx: Knex.Transaction) =>
     Promise.all([
-      ProductDesignsDAO.create(trx, "Design One", user.id),
-      ProductDesignsDAO.create(trx, "Design Two", user.id),
-      ProductDesignsDAO.create(trx, "Design Tree", user.id),
-      ProductDesignsDAO.create(trx, "Design Four", user.id),
+      ProductDesignsDAO.create(trx, { title: "Design One", userId: user.id }),
+      ProductDesignsDAO.create(trx, { title: "Design Two", userId: user.id }),
+      ProductDesignsDAO.create(trx, { title: "Design Tree", userId: user.id }),
+      ProductDesignsDAO.create(trx, { title: "Design Four", userId: user.id }),
     ])
   );
   await db.transaction((trx: Knex.Transaction) =>
@@ -234,7 +234,7 @@ test("ApprovalStepsDAO can create multiple steps and retrieve by collectionId", 
 test("ApprovalStepsDAO can retrieve by step id", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const d1: ProductDesign = await db.transaction((trx: Knex.Transaction) =>
-    ProductDesignsDAO.create(trx, "Design One", user.id)
+    ProductDesignsDAO.create(trx, { title: "Design One", userId: user.id })
   );
   const as1: ApprovalStep = {
     state: ApprovalStepState.UNSTARTED,
