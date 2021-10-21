@@ -51,6 +51,8 @@ test("POST /collections/:id/recost creates new not expired costings", async (t: 
   t.equal(irisStub.args[0][0].resource.type, "COMMIT_COST_INPUTS");
   t.equal(irisStub.args[1][0].resource.type, "COMMIT_COST_INPUTS");
   t.equal(irisStub.args[2][0].type, "collection/status-updated");
+  t.equals(irisStub.args[3][0].type, "cart-details/collection-updated");
+  t.equals(irisStub.args[3][0].resource.cartStatus, "COSTED");
   irisStub.resetHistory();
 
   for (const d of designs) {

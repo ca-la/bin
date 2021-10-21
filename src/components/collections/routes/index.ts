@@ -197,7 +197,7 @@ async function getList(ctx: GetListContext) {
     ctx.body = collections;
     ctx.status = 200;
   } else if (teamId !== undefined) {
-    let teamUserRole = TeamUserRole.ADMIN;
+    let teamUserRole: TeamUserRole = TeamUserRole.ADMIN;
     if (role !== "ADMIN") {
       const teamUser = await TeamUsersDAO.findOne(db, {
         teamId,

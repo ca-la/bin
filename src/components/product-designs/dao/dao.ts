@@ -367,8 +367,8 @@ export async function findDesignByApprovalStepId(
   );
 }
 
-export function queryWithCostsAndEvents(): Knex.QueryBuilder {
-  return db
+export function queryWithCostsAndEvents(ktx: Knex = db): Knex.QueryBuilder {
+  return ktx
     .select([
       "d.*",
       "cost_inputs.input_list AS cost_inputs",
@@ -417,17 +417,12 @@ left join (
 
 export async function findAllWithCostsAndEvents(
   collectionIds: string[],
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<ProductDesignDataWithMeta[]> {
-  const rows = await queryWithCostsAndEvents()
+  const rows = await queryWithCostsAndEvents(ktx)
     .select("cd.collection_id AS collection_id")
     .joinRaw("INNER JOIN collection_designs AS cd ON cd.design_id = d.id")
-    .whereIn("cd.collection_id", collectionIds)
-    .modify((query: Knex.QueryBuilder): void => {
-      if (trx) {
-        query.transacting(trx);
-      }
-    });
+    .whereIn("cd.collection_id", collectionIds);
 
   return validateEvery<ProductDesignRowWithMeta, ProductDesignDataWithMeta>(
     TABLE_NAME,

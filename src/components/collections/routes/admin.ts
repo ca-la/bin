@@ -5,6 +5,7 @@ import {
   commitCostInputs as commitInputs,
   recostInputs as recost,
 } from "../services/cost-inputs";
+import { sendCartDetailsUpdate } from "../services/send-cart-details-update";
 import * as IrisService from "../../iris/send-message";
 import { realtimeCollectionStatusUpdated } from "../realtime";
 import { determineSubmissionStatus } from "../services/determine-submission-status";
@@ -12,6 +13,7 @@ import { StrictContext } from "../../../router-context";
 import { parseContext } from "../../../services/parse-context";
 import DesignEvent from "../../design-events/types";
 import { rejectCollection as rejectCollectionService } from "../../../services/reject-collection";
+import db from "../../../services/db";
 
 async function sendCollectionStatusUpdated(
   collectionId: string
@@ -25,6 +27,8 @@ async function sendCollectionStatusUpdated(
   await IrisService.sendMessage(
     realtimeCollectionStatusUpdated(collectionStatus)
   );
+
+  await sendCartDetailsUpdate(db, collectionId);
 }
 
 async function handleCommitCostInputs(

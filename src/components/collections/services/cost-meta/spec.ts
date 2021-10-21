@@ -8,7 +8,7 @@ import { Role as TeamUserRole } from "../../../team-users/types";
 import { costCollection } from "../../../../test-helpers/cost-collection";
 import { submitCollection } from "../../../../test-helpers/submit-collection";
 import { checkout as checkoutCollection } from "../../../../test-helpers/checkout-collection";
-import { getCostedAndSubmittedCollections } from ".";
+import { getCostedAndSubmittedCollections, getCollectionCartDetails } from ".";
 
 test("getCostedAndSubmittedCollections", async (t: Test) => {
   // create submitted collection
@@ -85,5 +85,78 @@ test("getCostedAndSubmittedCollections", async (t: Test) => {
       cartStatus: "SUBMITTED",
     },
     "returns submitted collection"
+  );
+});
+
+test("getCollectionCartDetails returns cart details for costed collection", async (t: Test) => {
+  // create costed collection
+  const { collection: costedCollection } = await costCollection();
+
+  const costedCollectionCartDetails = await getCollectionCartDetails(
+    db,
+    costedCollection.id
+  );
+
+  if (costedCollectionCartDetails === null) {
+    throw new Error(
+      "getCollectionCartDetails doesn't return cart details for costed collection"
+    );
+  }
+  t.deepEqual(
+    pick(costedCollectionCartDetails, "id", "cartStatus"),
+    {
+      id: costedCollection.id,
+      cartStatus: "COSTED",
+    },
+    "returns costed collection cart details"
+  );
+  t.true(
+    costedCollectionCartDetails.hasOwnProperty("cartSubtotal"),
+    "costed collection has cartSubtotal"
+  );
+  t.equal(
+    costedCollectionCartDetails.cartStatus === "COSTED"
+      ? costedCollectionCartDetails.cartSubtotal.subtotalCents
+      : undefined,
+    710600,
+    "costed collection cartSubtotal subtotalCents matches expected value"
+  );
+});
+
+test("getCollectionCartDetails returns cart details for submitted collection", async (t: Test) => {
+  const { collection: submittedCollection } = await submitCollection(false);
+
+  const submittedCollectionCartDetails = await getCollectionCartDetails(
+    db,
+    submittedCollection.id
+  );
+
+  if (submittedCollectionCartDetails === null) {
+    throw new Error(
+      "getCollectionCartDetails doesn't return cart details for submitted collection"
+    );
+  }
+  t.deepEqual(
+    pick(submittedCollectionCartDetails, "id", "cartStatus"),
+    {
+      id: submittedCollection.id,
+      cartStatus: "SUBMITTED",
+    },
+    "returns submitted collection cart details"
+  );
+});
+
+test("getCollectionCartDetails returns null for not submitted/costed collection", async (t: Test) => {
+  const { collection } = await generateCollection();
+
+  const collectionCartDetails = await getCollectionCartDetails(
+    db,
+    collection.id
+  );
+
+  t.is(
+    collectionCartDetails,
+    null,
+    "not submitted/costed collection has no cart details"
   );
 });

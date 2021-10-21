@@ -12,6 +12,8 @@ export const rolesSchema = z.enum([
 export type Roles = z.infer<typeof rolesSchema>;
 export const CollaboratorRoles = rolesSchema.enum;
 
+export const COLLABORATOR_ROLES: Roles[] = rolesSchema.options;
+
 export function isRole(role: string): role is Roles {
   return check(rolesSchema, role);
 }

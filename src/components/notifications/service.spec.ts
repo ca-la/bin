@@ -4,6 +4,8 @@ import {
   transformNotificationMessageToGraphQL,
   getRecipientsByDesign,
   getRecipientsByCollection,
+  getRecipientsWhoCanCheckoutByCollectionId,
+  getUsersWhoCanCheckoutByCollectionId,
 } from "./service";
 import { NotificationMessage, NotificationType } from "./types";
 
@@ -60,7 +62,7 @@ test("transformNotificationMessageToGraphQL endpoint", async (t: Test) => {
   });
 });
 
-test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
+test("getRecipients* and getUsers*", async (t: Test) => {
   const { user: userTeamOwner } = await createUser({ withSession: false });
   const { team, teamUser: tu1 } = await generateTeam(userTeamOwner.id, {});
 
@@ -226,30 +228,12 @@ test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
     });
 
     const designRecipients = await getRecipientsByDesign(trx, design1.id);
-    const collectionRecipients = await getRecipientsByCollection(
-      trx,
-      collection.id
-    );
-
     const expectedDesignCollaboratorsRecipients = [
       {
         recipientUserId: collaboratorDesignEditor.userId,
         recipientCollaboratorId: collaboratorDesignEditor.id,
         recipientTeamUserId: null,
       },
-      {
-        recipientUserId: collaboratorOwner.userId,
-        recipientCollaboratorId: collaboratorOwner.id,
-        recipientTeamUserId: null,
-      },
-      {
-        recipientUserId: null,
-        recipientCollaboratorId: collaboratorWithoutUserId.id,
-        recipientTeamUserId: null,
-      },
-    ];
-
-    const expectedCollectionCollaboratorsRecipients = [
       {
         recipientUserId: collaboratorOwner.userId,
         recipientCollaboratorId: collaboratorOwner.id,
@@ -299,6 +283,24 @@ test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
       "the design recipients list match expected items"
     );
 
+    const collectionRecipients = await getRecipientsByCollection(
+      trx,
+      collection.id
+    );
+
+    const expectedCollectionCollaboratorsRecipients = [
+      {
+        recipientUserId: collaboratorOwner.userId,
+        recipientCollaboratorId: collaboratorOwner.id,
+        recipientTeamUserId: null,
+      },
+      {
+        recipientUserId: null,
+        recipientCollaboratorId: collaboratorWithoutUserId.id,
+        recipientTeamUserId: null,
+      },
+    ];
+
     t.deepEquals(
       collectionRecipients,
       [
@@ -306,6 +308,70 @@ test("getRecipientsByDesign and getRecipientsByCollection", async (t: Test) => {
         ...expectedCollectionCollaboratorsRecipients,
       ],
       "the collection recipients list match expected items"
+    );
+
+    const collectionRecipientsWhoCanCheckout = await getRecipientsWhoCanCheckoutByCollectionId(
+      trx,
+      collection.id
+    );
+
+    t.deepEqual(
+      collectionRecipientsWhoCanCheckout,
+      [
+        {
+          recipientUserId: tu1.userId,
+          recipientCollaboratorId: null,
+          recipientTeamUserId: tu1.id,
+        },
+        {
+          recipientUserId: tu2.userId,
+          recipientCollaboratorId: null,
+          recipientTeamUserId: tu2.id,
+        },
+        {
+          recipientUserId: tu3.userId,
+          recipientCollaboratorId: null,
+          recipientTeamUserId: tu3.id,
+        },
+        {
+          recipientUserId: null,
+          recipientCollaboratorId: null,
+          recipientTeamUserId: teamUserWithoutUserId.id,
+        },
+        {
+          recipientUserId: teamUserAndCollaborator.userId,
+          recipientCollaboratorId: null,
+          recipientTeamUserId: teamUserAndCollaborator.id,
+        },
+        {
+          recipientUserId: collaboratorOwner.userId,
+          recipientCollaboratorId: collaboratorOwner.id,
+          recipientTeamUserId: null,
+        },
+        {
+          recipientUserId: null,
+          recipientCollaboratorId: collaboratorWithoutUserId.id,
+          recipientTeamUserId: null,
+        },
+      ],
+      "recipients who can checkout match the expected items"
+    );
+
+    const collectionUsersWhoCanCheckout = await getUsersWhoCanCheckoutByCollectionId(
+      trx,
+      collection.id
+    );
+
+    t.deepEqual(
+      collectionUsersWhoCanCheckout,
+      [
+        tu1.userId,
+        tu2.userId,
+        tu3.userId,
+        teamUserAndCollaborator.userId,
+        collaboratorOwner.userId,
+      ],
+      "users who can checkout match the expected items"
     );
   } finally {
     await trx.rollback();

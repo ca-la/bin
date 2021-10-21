@@ -11,6 +11,10 @@ import { TeamUser, Role as TeamUserRole } from "../team-users/types";
 import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator from "../../components/collaborators/types";
 import { transformMentionsToGraphQL } from "../comments/service";
+import {
+  getCanCheckoutCollaboroatorRoles,
+  getCanCheckoutTeamUserRoles,
+} from "../../services/get-permissions";
 
 export function transformNotificationMessageToGraphQL(
   notificationMessage: NotificationMessage
@@ -167,4 +171,76 @@ export async function getRecipientsByCollection(
   ]);
 
   return recipientsList;
+}
+
+/*
+ * Get the list of recipients who can checkout from collection team users and collaborators by
+ * collection id in the Recipient type format.
+ */
+export async function getRecipientsWhoCanCheckoutByCollectionId(
+  ktx: Knex,
+  collectionId: string
+): Promise<Recipient[]> {
+  const teamUserRoles = getCanCheckoutTeamUserRoles();
+  const teamUsers = await TeamUsersDao.findByCollection(
+    ktx,
+    collectionId,
+    (q: Knex.QueryBuilder) => {
+      return q.andWhereRaw("team_users.role = ANY(:allowedRoles)", {
+        allowedRoles: teamUserRoles,
+      });
+    }
+  );
+
+  const teamRecipients: Recipient[] = recipientsFromTeamUsers(teamUsers);
+
+  const collaboratorRoles = getCanCheckoutCollaboroatorRoles();
+  const collaborators = await CollaboratorsDAO.findByCollection(
+    collectionId,
+    ktx,
+    (q: Knex.QueryBuilder) => {
+      return q.andWhereRaw(
+        "collaborators_forcollaboratorsviewraw.role = ANY(:allowedRoles)",
+        {
+          allowedRoles: collaboratorRoles,
+        }
+      );
+    }
+  );
+
+  const collaboratorsRecipients: Recipient[] = recipientsFromCollaborators(
+    collaborators
+  );
+
+  // remove duplicated recipients by recipientUserId in case same user is the collaborator and team user
+  const recipientsList = deduplicateRecipients([
+    ...teamRecipients,
+    ...collaboratorsRecipients,
+  ]);
+
+  return recipientsList;
+}
+
+/*
+ * Get the list of users who can checkout from collection team users and collaborators by
+ * collection id in the userId format.
+ */
+export async function getUsersWhoCanCheckoutByCollectionId(
+  ktx: Knex,
+  collectionId: string
+): Promise<string[]> {
+  const recipients = await getRecipientsWhoCanCheckoutByCollectionId(
+    ktx,
+    collectionId
+  );
+
+  const userIds = recipients.reduce((acc: string[], recipient: Recipient) => {
+    if (recipient.recipientUserId) {
+      acc.push(recipient.recipientUserId);
+    }
+
+    return acc;
+  }, []);
+
+  return userIds;
 }

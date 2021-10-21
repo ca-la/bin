@@ -12,14 +12,17 @@ import { serializedDatesWithUpdated } from "../../services/zod-helpers";
 export const teamUserDomain = "TeamUser" as "TeamUser";
 export const rawTeamUserDomain = "TeamUserDb" as "TeamUserDb";
 
-export enum Role {
-  OWNER = "OWNER",
-  ADMIN = "ADMIN",
-  EDITOR = "EDITOR",
-  VIEWER = "VIEWER",
-  TEAM_PARTNER = "TEAM_PARTNER",
-}
-export const roleSchema = z.nativeEnum(Role);
+export const roleSchema = z.enum([
+  "OWNER",
+  "ADMIN",
+  "EDITOR",
+  "VIEWER",
+  "TEAM_PARTNER",
+]);
+export type Role = z.infer<typeof roleSchema>;
+export const Role = roleSchema.enum;
+
+export const TEAM_USER_ROLES: Role[] = roleSchema.options;
 
 export const TEAM_USER_ROLE_TO_COLLABORATOR_ROLE: Record<Role, Roles> = {
   [Role.OWNER]: "EDIT",

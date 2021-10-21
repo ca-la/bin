@@ -1062,6 +1062,8 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
   t.equals(irisStub.args[0][0].resource.type, "SUBMIT_DESIGN");
   t.equals(irisStub.args[1][0].resource.type, "SUBMIT_DESIGN");
   t.equals(irisStub.args[2][0].type, "collection/status-updated");
+  t.equals(irisStub.args[3][0].type, "cart-details/collection-updated");
+  t.equals(irisStub.args[3][0].resource.cartStatus, "SUBMITTED");
 
   t.deepEqual(response.status, 201, "Successfully posts");
   t.deepEqual(

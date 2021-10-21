@@ -1,3 +1,4 @@
+import Knex from "knex";
 import uuid from "node-uuid";
 import ProductDesignsDAO from "../../product-designs/dao";
 import DesignEventsDAO from "../../design-events/dao";
@@ -10,16 +11,20 @@ import * as IrisService from "../../iris/send-message";
 import { CollectionSubmissionStatus } from "../types";
 import { realtimeCollectionStatusUpdated } from "../realtime";
 import { templateDesignEvent } from "../../design-events/types";
+import { sendCartDetailsUpdate } from "../services/send-cart-details-update";
+import db from "../../../services/db";
 
 async function handleSubmit(
   collectionId: string,
   userId: string,
-  collectionStatus: CollectionSubmissionStatus
+  collectionStatus: CollectionSubmissionStatus,
+  ktx: Knex = db
 ): Promise<void> {
   await CreateNotifications.sendDesignerSubmitCollection(collectionId, userId);
   await IrisService.sendMessage(
     realtimeCollectionStatusUpdated(collectionStatus)
   );
+  await sendCartDetailsUpdate(ktx, collectionId);
 }
 
 export function* createSubmission(
@@ -57,7 +62,7 @@ export function* createSubmission(
     trx
   );
   const collectionStatus = submissionStatusByCollection[collectionId];
-  yield handleSubmit(collectionId, userId, collectionStatus);
+  yield handleSubmit(collectionId, userId, collectionStatus, trx);
 
   this.status = 201;
   this.body = collectionStatus;

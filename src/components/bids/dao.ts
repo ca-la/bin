@@ -9,6 +9,7 @@ import { MILLISECONDS_TO_EXPIRE } from "./constants";
 import {
   PARTNER_TEAM_BID_PREVIEWERS,
   Role as TeamUserRole,
+  TEAM_USER_ROLES,
 } from "../team-users/types";
 
 // Any payouts to a partner cannot be linked to a bid before this date, as
@@ -128,7 +129,7 @@ const removeUnassigned = (statusEvent: StatusEvent, query: Knex.QueryBuilder) =>
 
 const forUserQuery = (
   userId: string,
-  allowedTeamRoles: TeamUserRole[] = Object.values(TeamUserRole)
+  allowedTeamRoles: TeamUserRole[] = TEAM_USER_ROLES
 ) => (query: Knex.QueryBuilder) =>
   query.whereRaw(
     `

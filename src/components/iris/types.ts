@@ -27,7 +27,10 @@ import {
   realtimeTeamListUpdatedSchema,
   realtimeTeamUsersListUpdatedSchema,
 } from "../team-users/realtime";
-import { realtimeCollectionStatusUpdatedSchema } from "../collections/realtime";
+import {
+  realtimeCollectionStatusUpdatedSchema,
+  realtimeCartDetailsCollectionUpdatedSchema,
+} from "../collections/realtime";
 
 // Generic catch-all to allow expanding types without throwing
 export const unknownRealtimeMessageSchema = z.object({
@@ -54,6 +57,7 @@ export const realtimeMessageSchema = z.union([
   realtimeApprovalStepUpdatedSchema,
   realtimeApprovalStepListUpdatedSchema,
   realtimeCollectionStatusUpdatedSchema,
+  realtimeCartDetailsCollectionUpdatedSchema,
 ]);
 
 export type RealtimeMessage = z.infer<typeof realtimeMessageSchema>;

@@ -6,6 +6,7 @@ import * as CollaboratorsDAO from "../../components/collaborators/dao";
 import Collaborator, {
   CollaboratorRoles,
   Roles as CollaboratorRolesType,
+  COLLABORATOR_ROLES,
 } from "../../components/collaborators/types";
 import * as CollectionsDAO from "../../components/collections/dao";
 import * as ProductDesignsDAO from "../../components/product-designs/dao";
@@ -16,6 +17,7 @@ import { TeamUser, TeamUsersDAO } from "../../components/team-users";
 import {
   TEAM_USER_ROLE_TO_COLLABORATOR_ROLE,
   Role as TeamUserRole,
+  TEAM_USER_ROLES,
 } from "../../components/team-users/types";
 
 export { Permissions };
@@ -37,7 +39,7 @@ export const FULL_ACCESS: Permissions = {
   canView: true,
 };
 
-const NO_ACCESS: Permissions = {
+export const NO_ACCESS: Permissions = {
   canComment: false,
   canDelete: false,
   canEdit: false,
@@ -97,6 +99,11 @@ const COLLABORATOR_PERMISSIONS: Record<CollaboratorRolesType, Permissions> = {
   },
 };
 
+export function getCanCheckoutCollaboroatorRoles(): CollaboratorRolesType[] {
+  return COLLABORATOR_ROLES.filter((role: CollaboratorRolesType) => {
+    return COLLABORATOR_PERMISSIONS[role].canSubmit;
+  });
+}
 const TEAM_USER_PERMISSIONS: Record<TeamUserRole, Permissions> = {
   [TeamUserRole.OWNER]: FULL_ACCESS,
   [TeamUserRole.ADMIN]: FULL_ACCESS,
@@ -119,6 +126,12 @@ const PERMISSIONS_MODIFIERS: Record<string, Partial<Permissions>> = {
   },
   OWNER_OF_DRAFT_DESIGN: FULL_ACCESS,
 };
+
+export function getCanCheckoutTeamUserRoles(): TeamUserRole[] {
+  return TEAM_USER_ROLES.filter((role: TeamUserRole) => {
+    return TEAM_USER_PERMISSIONS[role].canSubmit;
+  });
+}
 
 export const mergePermissionsOR = (
   permissionsA: Permissions,

@@ -9,6 +9,7 @@ import { ProductDesignDataWithMeta } from "../../../product-designs/domain-objec
 import { determineEarliestExpiration } from "../../../pricing-cost-inputs/services/determine-earliest-expiration";
 import { PricingCostInputDb } from "../../../pricing-cost-inputs/domain-object";
 import { CollectionSubmissionStatus } from "../../types";
+import db from "../../../../services/db";
 
 export interface SubmissionStatusByCollection {
   [collectionId: string]: CollectionSubmissionStatus;
@@ -70,9 +71,9 @@ export function determineStatusFromDesigns(
 
 export async function getDesignsMetaByCollection(
   collectionIds: string[],
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<DesignsByCollection> {
-  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds, trx);
+  const designsWithMeta = await findAllWithCostsAndEvents(collectionIds, ktx);
   const designsByCollection: DesignsByCollection = {};
   for (const designWithMeta of designsWithMeta) {
     const { collectionId } = designWithMeta;
@@ -87,11 +88,11 @@ export async function getDesignsMetaByCollection(
  */
 export async function determineSubmissionStatus(
   collectionIds: string[],
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<SubmissionStatusByCollection> {
   const designsByCollection = await getDesignsMetaByCollection(
     collectionIds,
-    trx
+    ktx
   );
   const submissionStatusByCollection: SubmissionStatusByCollection = {};
 

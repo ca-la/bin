@@ -105,16 +105,18 @@ export const collectionUpdateSchema = z
 
 export type CollectionUpdate = z.infer<typeof collectionUpdateSchema>;
 
-const costedCollectionCartDetailSchema = collectionSchema.extend({
+const costedCollectionCartDetailSchema = collectionDbSchema.extend({
   cartStatus: z.literal("COSTED"),
   cartSubtotal: cartSubtotalSchema,
+  designs: z.array(designMetaSchema),
 });
 export type CostedCollectionCartDetail = z.infer<
   typeof costedCollectionCartDetailSchema
 >;
 
-const submittedCollectionCartDetailSchema = collectionSchema.extend({
+const submittedCollectionCartDetailSchema = collectionDbSchema.extend({
   cartStatus: z.literal("SUBMITTED"),
+  designs: z.array(designMetaSchema),
 });
 export type SubmittedCollectionCartDetail = z.infer<
   typeof submittedCollectionCartDetailSchema
@@ -126,3 +128,17 @@ const cartDetailsCollectionSchema = z.union([
 ]);
 
 export type CartDetailsCollection = z.infer<typeof cartDetailsCollectionSchema>;
+
+const serializedBaseDates = {
+  createdAt: dateStringToDate,
+  deletedAt: nullableDateStringToNullableDate,
+};
+
+export const serializedCartDetailsCollectionSchema = z.union([
+  submittedCollectionCartDetailSchema.extend(serializedBaseDates),
+  costedCollectionCartDetailSchema.extend(serializedBaseDates),
+]);
+
+export type SerializedCartDetailsCollection = z.infer<
+  typeof serializedCartDetailsCollectionSchema
+>;
