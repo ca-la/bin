@@ -34,6 +34,7 @@ test("sendTransfer with a Bid Id", async (t: Test) => {
     description: "here is money.",
     bidId: "a-real-bid-id",
     invoiceId: null,
+    sourceType: undefined,
   };
   await sendTransfer(data);
   t.deepEqual(makeRequestStub.firstCall.args[0].data, {
@@ -46,7 +47,7 @@ test("sendTransfer with a Bid Id", async (t: Test) => {
   });
 
   const idempotencyKey = insecureHash(
-    `${data.description}-${data.bidId}-${data.destination}`
+    `${data.description}-${data.bidId}-${data.destination}-${data.sourceType}-${data.amountCents}`
   );
   t.equal(makeRequestStub.firstCall.args[0].idempotencyKey, idempotencyKey);
 });
@@ -61,6 +62,7 @@ test("sendTransfer with a invoice Id", async (t: Test) => {
     description: "here is money.",
     bidId: null,
     invoiceId: "a-real-invoice-id",
+    sourceType: undefined,
   };
   await sendTransfer(data);
   t.deepEqual(makeRequestStub.firstCall.args[0].data, {
@@ -73,7 +75,7 @@ test("sendTransfer with a invoice Id", async (t: Test) => {
   });
 
   const idempotencyKey = insecureHash(
-    `${data.description}-${data.invoiceId}-${data.destination}`
+    `${data.description}-${data.invoiceId}-${data.destination}-${data.sourceType}-${data.amountCents}`
   );
   t.equal(makeRequestStub.firstCall.args[0].idempotencyKey, idempotencyKey);
 });
@@ -100,6 +102,27 @@ test("sendTransfer with a sourceType", async (t: Test) => {
     transfer_group: data.bidId,
     source_type: "financing",
   });
+});
+
+test("sendTransfer sends unique requests", async (t: Test) => {
+  const makeRequestStub = sandbox().stub(RequestService, "default").resolves({
+    id: "a-transfer-id",
+  });
+  const data = {
+    destination: "my wallet",
+    amountCents: 2222,
+    description: "here is money.",
+    bidId: "a-real-bid-id",
+    invoiceId: null,
+    sourceType: "bank_account",
+  };
+  await sendTransfer(data);
+  await sendTransfer({ ...data, sourceType: "card" });
+  t.notEqual(
+    makeRequestStub.firstCall.args[0].idempotencyKey,
+    makeRequestStub.secondCall.args[0].idempotencyKey,
+    "idempotency keys do not match with different sourceTypes"
+  );
 });
 
 test("getBalances", async (t: Test) => {

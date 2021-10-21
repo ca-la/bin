@@ -70,12 +70,21 @@ interface StripeTransferOptions {
 export async function sendTransfer(
   options: StripeTransferOptions
 ): Promise<Transfer> {
-  const { description, bidId, destination, amountCents, invoiceId } = options;
+  const {
+    description,
+    bidId,
+    destination,
+    amountCents,
+    invoiceId,
+    sourceType,
+  } = options;
   if (!invoiceId && !bidId) {
     throw new Error(`A Bid or Invoice ID is required`);
   }
   const idempotencyKey = insecureHash(
-    `${description}-${bidId || invoiceId}-${destination}`
+    `${description}-${
+      bidId || invoiceId
+    }-${destination}-${sourceType}-${amountCents}`
   );
 
   return StripeAPI.createTransfer(idempotencyKey, {
