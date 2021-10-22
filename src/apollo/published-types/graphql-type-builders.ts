@@ -54,7 +54,7 @@ export function schemaToGraphQLType(
       }
 
       const zType = value as z.ZodFirstPartySchemaTypes;
-      const maybeBang = zType.isNullable() ? "" : "!";
+      const maybeBang = zType.isNullable() || zType.isOptional() ? "" : "!";
 
       // This type casts our unknown to one of the base Zod schema types
       const internal: z.ZodFirstPartySchemaTypes =

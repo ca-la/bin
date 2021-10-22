@@ -14,7 +14,7 @@ import {
   canvasWithEnrichedComponentsSchema,
   componentWithAssetLinksSchema,
 } from "../../canvases/types";
-import { baseApprovalStepSchema } from "../../approval-steps/types";
+import { gtApprovalStep } from "../../approval-steps/graphql-types";
 
 export interface DesignAndEnvironmentParent {
   designId: string;
@@ -51,10 +51,14 @@ export const gtDesignAndEnvironment: GraphQLType = {
   body: {
     designId: "String!",
     design: "BaseProductDesign",
-    collection: "Collection",
+    collection: "CollectionDb",
     canvases: "[CanvasWithEnrichedComponents]",
   },
-  requires: ["BaseProductDesign", "Collection", "CanvasWithEnrichedComponents"],
+  requires: [
+    "BaseProductDesign",
+    "CollectionDb",
+    "CanvasWithEnrichedComponents",
+  ],
 };
 
 export interface DesignAndEnvironment extends DesignAndEnvironmentParent {
@@ -66,11 +70,6 @@ export interface DesignAndEnvironment extends DesignAndEnvironmentParent {
 export const gtCollectionMeta = schemaToGraphQLType(
   "CollectionMeta",
   z.object({ id: z.string(), title: z.string().nullable() })
-);
-
-export const gtApprovalStep = schemaToGraphQLType(
-  "ApprovalStep",
-  baseApprovalStepSchema
 );
 
 export const gtProductDesign: GraphQLType = schemaToGraphQLType(

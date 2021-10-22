@@ -3,7 +3,7 @@ import { DesignAndEnvironmentParent } from "./graphql-types";
 import * as CollectionsDAO from "../../collections/dao";
 import { CollectionDb } from "../../collections/types";
 import {
-  gtCollection,
+  gtCollectionDb,
   gtCollectionDesignsMeta,
 } from "../../collections/endpoints/graphql-types";
 
@@ -14,7 +14,7 @@ export const CollectionEndpoint: GraphQLEndpoint<
   DesignAndEnvironmentParent
 > = {
   endpointType: "DesignAndEnvironment",
-  types: [gtCollection, gtCollectionDesignsMeta],
+  types: [gtCollectionDb, gtCollectionDesignsMeta],
   name: "collection",
   resolver: async (parent: DesignAndEnvironmentParent) => {
     const { designId } = parent;

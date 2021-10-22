@@ -7,14 +7,13 @@ import {
 } from "../../../apollo";
 import db from "../../../services/db";
 import {
-  gtCollection,
+  gtCollectionDb,
   CollectionInput,
   gtCollectionInput,
 } from "./graphql-types";
-import { Collection } from "../types";
+import { CollectionDb } from "../types";
 import * as CollectionsDAO from "../dao";
 import TeamUsersDAO from "../../team-users/dao";
-import { getCollectionPermissions } from "../../../services/get-permissions";
 import {
   checkCollectionsLimit,
   generateUpgradeBodyDueToCollectionsLimit,
@@ -27,18 +26,18 @@ interface CreateArgs {
 
 export const createEndpoint: GraphQLEndpoint<
   CreateArgs,
-  Collection,
-  GraphQLContextAuthenticated<Collection>
+  CollectionDb,
+  GraphQLContextAuthenticated<CollectionDb>
 > = {
   endpointType: "Mutation",
-  types: [gtCollection, gtCollectionInput],
+  types: [gtCollectionDb, gtCollectionInput],
   name: "createCollection",
-  signature: `(collection: CollectionInput!): Collection`,
+  signature: `(collection: CollectionInput!): CollectionDb`,
   middleware: requireAuth,
   resolver: async (
     _parent: any,
     args: CreateArgs,
-    context: GraphQLContextAuthenticated<Collection>
+    context: GraphQLContextAuthenticated<CollectionDb>
   ) => {
     const { session } = context;
     const { collection: input } = args;
@@ -75,25 +74,12 @@ export const createEndpoint: GraphQLEndpoint<
       }
     }
 
-    const collectionDb = await CollectionsDAO.create({
+    return CollectionsDAO.create({
       ...input,
       createdAt: new Date(),
       deletedAt: null,
       createdBy: session.userId,
       description: null,
     });
-
-    const permissions = await getCollectionPermissions(
-      db,
-      collectionDb,
-      session.role,
-      session.userId
-    );
-
-    return {
-      ...collectionDb,
-      designs: [],
-      permissions,
-    };
   },
 };

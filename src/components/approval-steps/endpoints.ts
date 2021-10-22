@@ -11,6 +11,7 @@ import ApprovalStep, {
   approvalStepDomain,
   baseApprovalStepSchema,
 } from "./types";
+import { gtApprovalStep } from "./graphql-types";
 
 export const ApprovalStepEndpoints = [
   buildFindEndpoint<ApprovalStep>(
@@ -25,6 +26,7 @@ export const ApprovalStepEndpoints = [
     ),
     {
       allowedFilterAttributes: ["designId"],
+      gtModelType: gtApprovalStep,
     }
   ),
 ];

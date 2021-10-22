@@ -13,6 +13,7 @@ import {
 } from "./graphql-types";
 import { Collection } from "../types";
 import * as CollectionsDAO from "../dao";
+import { gtPermissions } from "../../permissions/graphql-types";
 
 interface FindArgs {
   filter: CollectionFilter;
@@ -40,7 +41,7 @@ export const findEndpoint: GraphQLEndpoint<
   GraphQLContextAuthenticated<FindResult>
 > = {
   endpointType: "Query",
-  types: [gtCollection, gtCollectionFilter],
+  types: [gtPermissions, gtCollection, gtCollectionFilter],
   name: "collections",
   signature: `(filter: CollectionFilter!, limit: Int = 20, offset: Int = 0): [Collection]`,
   middleware: composeMiddleware(requireAuth, checkFilterUserId),

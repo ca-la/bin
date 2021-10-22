@@ -3,7 +3,13 @@ import {
   schemaToGraphQLType,
   GraphQLType,
 } from "../../../apollo/published-types";
-import { Collection, collectionDbSchema, designMetaSchema } from "../types";
+import {
+  Collection,
+  collectionDbSchema,
+  collectionSchema,
+  designMetaSchema,
+} from "../types";
+import { gtPermissions } from "../../permissions/graphql-types";
 
 export const gtCollectionDesignsMeta = schemaToGraphQLType(
   "CollectionDesignsMeta",
@@ -16,12 +22,23 @@ export const gtCollectionDesignsMeta = schemaToGraphQLType(
   }
 );
 
-export const gtCollection: GraphQLType = schemaToGraphQLType(
-  "Collection",
+export const gtCollectionDb: GraphQLType = schemaToGraphQLType(
+  "CollectionDb",
   collectionDbSchema,
   {
     depTypes: {
       designs: gtCollectionDesignsMeta,
+    },
+  }
+);
+
+export const gtCollection: GraphQLType = schemaToGraphQLType(
+  "Collection",
+  collectionSchema,
+  {
+    depTypes: {
+      designs: gtCollectionDesignsMeta,
+      permissions: gtPermissions,
     },
   }
 );
