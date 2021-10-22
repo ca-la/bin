@@ -9,6 +9,6 @@
     "access": "restricted"
   },
   "dependencies": {
-    "zod": "^3.7.1"
+    "zod": "3.7.1"
   }
 }
