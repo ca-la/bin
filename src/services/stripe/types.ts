@@ -85,6 +85,15 @@ export const subscriptionSchema = z
     latest_invoice: z.string().nullable(),
     customer: z.string(),
     current_period_start: z.number(),
+    status: z.enum([
+      "active",
+      "past_due",
+      "unpaid",
+      "canceled",
+      "incomplete",
+      "incomplete_expired",
+      "trialing",
+    ]),
     items: z.object({
       object: z.literal("list"),
       data: z.array(subscriptionItemSchema),

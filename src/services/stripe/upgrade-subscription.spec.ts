@@ -86,6 +86,7 @@ async function setup({
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(testDateAtMidnight.getTime() / 1000) - 1,
+    status: "active",
     items: {
       object: "list",
       data: subscriptionItems,
@@ -120,6 +121,7 @@ async function setup({
         customer: "cus_123456789",
         current_period_start:
           Math.round(testDateAtMidnight.getTime() / 1000) - 1,
+        status: "active",
         items: {
           object: "list",
           data: [
@@ -1031,6 +1033,7 @@ test("prepareUpgrade: valid with a brand new subscription", async (t: Test) => {
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(testDateAtMidnight.getTime() / 1000) + 1,
+    status: "active",
     items: {
       object: "list",
       data: defaultSubscriptionItems,

@@ -7,6 +7,7 @@ import InvalidDataError from "../../errors/invalid-data";
 import { prepareUpgrade } from "../../services/stripe/upgrade-subscription";
 import { logServerError } from "../../services/logger";
 import { SubscriptionUpdateDetails } from "../teams/types";
+import { getSubscription } from "../../services/stripe/api";
 
 import { attachTeamOptionData } from "./service";
 
@@ -50,6 +51,25 @@ export async function getTeamSubscriptionUpdateDetails(
     throw new Error(
       `Subscription with id ${subscription.id} doesn't have the subscription Stripe id`
     );
+  }
+
+  const stripeSubscription = await getSubscription(
+    subscription.stripeSubscriptionId
+  );
+
+  if (stripeSubscription.status === "canceled") {
+    const cancelledAt = new Date();
+    await SubscriptionsDAO.update(
+      subscription.id,
+      {
+        cancelledAt,
+      },
+      trx
+    );
+    return {
+      proratedChargeCents: teamPlan.totalBillingIntervalCostCents,
+      prorationDate: cancelledAt,
+    };
   }
 
   const previousPlan = await PlansDAO.findById(trx, subscription.planId);

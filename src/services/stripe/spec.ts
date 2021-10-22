@@ -308,6 +308,7 @@ test("addSeatCharge", async (t: Test) => {
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
+    status: "active",
     items: {
       object: "list",
       data: [
@@ -517,6 +518,7 @@ test("addSeatCharge: failed payment", async (t: Test) => {
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
+    status: "active",
     items: {
       object: "list",
       data: [
@@ -688,6 +690,7 @@ test("removeSeatCharge", async (t: Test) => {
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
+    status: "active",
     items: {
       object: "list",
       data: [
@@ -897,6 +900,7 @@ test("removeSeatCharge: failed payment", async (t: Test) => {
     latest_invoice: null,
     customer: "cus_123456789",
     current_period_start: Math.round(new Date(2012, 11, 24).getTime() / 1000),
+    status: "active",
     items: {
       object: "list",
       data: [

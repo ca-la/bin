@@ -8,6 +8,7 @@ import { PlanStripePriceType } from "../../components/plan-stripe-price/types";
 import * as UpgradeStripeSubscription from "../../services/stripe/upgrade-subscription";
 import Logger from "../../services/logger";
 import InvalidDataError from "../../errors/invalid-data";
+import * as StripeAPI from "../../services/stripe/api";
 
 import { getTeamSubscriptionUpdateDetails } from "./get-update-details";
 
@@ -40,7 +41,11 @@ const mockedCalaSubscription = {
   teamId: "a-team-id",
 };
 
-function setup() {
+function setup({
+  subscriptionStatus = "active",
+}: {
+  subscriptionStatus?: string;
+} = {}) {
   const testDate = new Date(2012, 11, 25);
   const clock = sandbox().useFakeTimers(testDate);
   const trxStub = (sandbox().stub() as unknown) as Knex.Transaction;
@@ -70,6 +75,12 @@ function setup() {
         proration_behavior: "always_invoice",
       },
     });
+  const getSubscriptionStub = sandbox()
+    .stub(StripeAPI, "getSubscription")
+    .resolves({
+      status: subscriptionStatus,
+    });
+  const updateSubscriptionStub = sandbox().stub(SubscriptionsDAO, "update");
   const loggerStub = sandbox().stub(Logger, "logServerError");
   return {
     trxStub,
@@ -80,6 +91,8 @@ function setup() {
     loggerStub,
     testDate,
     clock,
+    getSubscriptionStub,
+    updateSubscriptionStub,
   };
 }
 
@@ -313,5 +326,36 @@ test("returns 0 cost when not prorating", async (t: Test) => {
       ],
     ],
     "calls upgrade stripe subscription with correct args"
+  );
+});
+
+test("returns plan price if subscription has been canceled in Stripe", async (t: Test) => {
+  const { trxStub, testDate, updateSubscriptionStub } = setup({
+    subscriptionStatus: "canceled",
+  });
+
+  const updateDetails = await getTeamSubscriptionUpdateDetails(trxStub, {
+    planId: "a-plan-id",
+    teamId: "a-team-id",
+  });
+
+  t.deepEqual(
+    updateDetails,
+    {
+      proratedChargeCents: 100_00 + 20_00 * 3,
+      prorationDate: testDate,
+    },
+    "returns full plan cost and today's date"
+  );
+
+  t.equal(
+    updateSubscriptionStub.firstCall.args[0],
+    "a-subscription-id",
+    "updates the correct subscription "
+  );
+  t.deepEqual(
+    updateSubscriptionStub.firstCall.args[1],
+    { cancelledAt: testDate },
+    "cancels the subscription"
   );
 });
