@@ -14,6 +14,7 @@ import {
   canvasWithEnrichedComponentsSchema,
   componentWithAssetLinksSchema,
 } from "../../canvases/types";
+import { uploadPolicySchema } from "../../../services/upload-policy/types";
 import { gtApprovalStep } from "../../approval-steps/graphql-types";
 
 export interface DesignAndEnvironmentParent {
@@ -115,3 +116,20 @@ export const gtDesignInput: GraphQLType = schemaToGraphQLType(
 );
 
 export type DesignInput = z.infer<typeof designInputSchema>;
+
+// Since we can't specify the arbitrary `formData` payload that AWS returns via
+// the GraphQL type system, we serialize it to a JSON string.
+export const graphqlSafeUploadPolicySchema = uploadPolicySchema
+  .omit({ formData: true })
+  .extend({
+    formDataPayload: z.string(),
+  });
+
+export type GraphqlSafeUploadPolicy = z.infer<
+  typeof graphqlSafeUploadPolicySchema
+>;
+
+export const gtUploadPolicy = schemaToGraphQLType(
+  "UploadPolicy",
+  graphqlSafeUploadPolicySchema
+);

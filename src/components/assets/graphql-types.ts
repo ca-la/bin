@@ -40,3 +40,9 @@ export const Attachment: GraphQLType = {
     ...AssetLinks.body,
   },
 };
+
+export const AttachmentInput: GraphQLType = {
+  name: "AttachmentInput",
+  type: "input",
+  body: Asset.body,
+};

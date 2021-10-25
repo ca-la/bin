@@ -1,8 +1,9 @@
 import { DesignAndEnvironmentEndpoint } from "./design-and-environment";
-import { ProductDesignEndpoint } from "./product-design-endpoint";
-import { CollectionEndpoint } from "./collection-endpoint";
+import { ProductDesignEndpoint } from "./product-design";
+import { CollectionEndpoint } from "./collection";
 import { CanvasesEndpoint } from "./canvases";
 import { GetProductDesignList } from "./get-list";
+import { CreateUploadPolicy } from "./upload-policy";
 import { CreateEndpoint } from "./create-endpoint";
 
 export const ProductDesignEndpoints = [
@@ -11,5 +12,6 @@ export const ProductDesignEndpoints = [
   CollectionEndpoint,
   CanvasesEndpoint,
   GetProductDesignList,
+  CreateUploadPolicy,
   CreateEndpoint,
 ];

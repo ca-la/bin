@@ -3,9 +3,7 @@ import uuid from "node-uuid";
 import createUser = require("../../../test-helpers/create-user");
 import { authHeader, get, patch, put } from "../../../test-helpers/http";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
-import * as AWSService from "../../../services/aws";
 import * as AssetsDAO from "../dao";
-import { USER_UPLOADS_BASE_URL } from "../../../config";
 import generateAsset from "../../../test-helpers/factories/asset";
 
 test("GET /product-design-images/:assetId returns an asset", async (t: Test) => {
@@ -100,38 +98,4 @@ test("PATCH /product-design-images/:assetId updates an asset", async (t: Test) =
     },
     updateBody
   );
-});
-
-test("GET /product-design-images/:assetId/upload-policy returns an upload policy", async (t: Test) => {
-  const { session } = await createUser();
-  const assetId = uuid.v4();
-
-  sandbox()
-    .stub(AWSService, "getUploadPolicy")
-    .returns({
-      fields: {
-        "x-aws-foo": "bar",
-      },
-      url: "stub aws url",
-    });
-
-  const [
-    response,
-    body,
-  ] = await get(
-    `/product-design-images/${assetId}/upload-policy?mimeType=image%2fpng`,
-    { headers: authHeader(session.id) }
-  );
-
-  t.equal(response.status, 200);
-  t.deepEqual(body, {
-    contentDisposition: `attachment; filename="${assetId}.png"`,
-    contentType: "image/png",
-    downloadUrl: `${USER_UPLOADS_BASE_URL}/${assetId}`,
-    formData: {
-      "x-aws-foo": "bar",
-    },
-    remoteFileName: assetId,
-    uploadUrl: "stub aws url",
-  });
 });

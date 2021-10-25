@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { GraphQLType, schemaToGraphQLType } from "../../apollo/published-types";
 import { Role } from "../users/graphql-types";
-import { Attachment } from "../assets/graphql-types";
+import { Attachment, AttachmentInput } from "../assets/graphql-types";
 import { Mention } from "../notifications/graphql-types";
 import { commentSchema } from "./types";
 import { assetLinksSchema, assetSchema } from "../assets/types";
@@ -41,6 +41,7 @@ const commentInputSchema = z.object({
   isPinned: z.boolean(),
   approvalStepId: z.string().nullable(),
   annotationId: z.string().nullable(),
+  attachments: z.array(assetSchema),
 });
 
 export type CommentInputType = z.infer<typeof commentInputSchema>;
@@ -50,6 +51,9 @@ export const CommentInput = schemaToGraphQLType(
   commentInputSchema,
   {
     type: "input",
+    depTypes: {
+      attachments: AttachmentInput,
+    },
   }
 );
 

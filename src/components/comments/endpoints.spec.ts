@@ -17,6 +17,7 @@ import * as CursorService from "../comments/cursor-service";
 import { omit } from "lodash";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import { generateAnnotationComment } from "../../test-helpers/factories/annotation-comment";
+import { staticAsset } from "../../test-helpers/factories/asset";
 import * as GetPermissionsService from "../../services/get-permissions";
 
 test("createComment", async (t: Test) => {
@@ -32,6 +33,7 @@ test("createComment", async (t: Test) => {
           id
           attachments {
             id
+            mimeType
             thumbnailLink
           }
         }
@@ -44,6 +46,7 @@ test("createComment", async (t: Test) => {
             isPinned: false,
             approvalStepId: null,
             annotationId: null,
+            attachments: [],
             ...comment,
           },
         },
@@ -99,6 +102,21 @@ test("createComment", async (t: Test) => {
     badInputBody.errors[0].extensions.code,
     "BAD_USER_INPUT",
     "Should throw BAD_USER_INPUT if no approvalStepId or annotationId is provided"
+  );
+
+  const [, withAttachmentBody] = await sendRequest(
+    {
+      id: uuid.v4(),
+      annotationId: annotation.id,
+      attachments: [staticAsset({ userId: null })],
+    },
+    authHeader(session.id)
+  );
+
+  t.is(
+    withAttachmentBody.data.createComment.attachments[0].mimeType,
+    "image/jpeg",
+    "Creates and returns an asset"
   );
 
   sandbox()

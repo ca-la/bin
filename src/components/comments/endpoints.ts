@@ -10,7 +10,7 @@ import {
   NotFoundError,
 } from "../../apollo";
 import * as GraphQLTypes from "./graphql-types";
-import { Attachment } from "../assets/graphql-types";
+import { Attachment, AttachmentInput } from "../assets/graphql-types";
 import {
   extractDesignIdFromCommentParent,
   FindCommentsByIdOptions,
@@ -49,7 +49,7 @@ const createComment: GraphQLEndpoint<
   types: [
     GraphQLTypes.CommentInput,
     GraphQLTypes.CommentWithResources,
-    Attachment,
+    AttachmentInput,
   ],
   name: "createComment",
   signature: `(comment: ${GraphQLTypes.CommentInput.name}): ${GraphQLTypes.CommentWithResources.name}`,
@@ -88,7 +88,7 @@ const createComment: GraphQLEndpoint<
           userId,
           isPinned: input.isPinned,
         },
-        attachments: [],
+        attachments: input.attachments,
         userId,
       });
 

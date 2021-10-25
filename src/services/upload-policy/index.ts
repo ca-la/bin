@@ -1,14 +1,7 @@
 import { generateFilename } from "../generate-filename";
 import * as AWSService from "../../services/aws";
 
-export interface UploadPolicy {
-  contentDisposition: string;
-  contentType: string;
-  downloadUrl: string;
-  formData: { [key: string]: any };
-  remoteFileName: string;
-  uploadUrl: string;
-}
+import { UploadPolicy } from "./types";
 
 interface Options {
   id: string;

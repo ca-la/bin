@@ -1,13 +1,14 @@
 import { pick } from "lodash";
 import { test, Test, sandbox } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
+import * as UploadPolicyService from "../../../services/upload-policy";
 import { authHeader, post } from "../../../test-helpers/http";
 import { generateDesign } from "../../../test-helpers/factories/product-design";
 import createCollectionDesign from "../../../test-helpers/factories/collection-design";
 import generateCanvas from "../../../test-helpers/factories/product-design-canvas";
 import * as ProductDesignsDAO from "../dao/dao";
 
-function buildRequest(designId: string) {
+function buildDesignAndEnvironmentRequest(designId: string) {
   return {
     query: `query ($designId: String) {
       DesignAndEnvironment(designId: $designId) {
@@ -34,7 +35,7 @@ function buildRequest(designId: string) {
 
 test("DesignAndEnvironment needs authentication", async (t: Test) => {
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildRequest("d1"),
+    body: buildDesignAndEnvironmentRequest("d1"),
   });
   t.equal(forbiddenResponse.status, 200);
   t.equal(forbiddenBody.errors[0].message, "Unauthorized");
@@ -46,7 +47,7 @@ test("DesignAndEnvironment is forbidden for arbitrary user", async (t: Test) => 
   const design = await generateDesign({ userId: user.id });
 
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
-    body: buildRequest(design.id),
+    body: buildDesignAndEnvironmentRequest(design.id),
     headers: authHeader(session.id),
   });
   t.equal(forbiddenResponse.status, 200);
@@ -69,7 +70,7 @@ test("DesignAndEnvironment returns design, collection and canvases", async (t: T
   });
 
   const [response, body] = await post("/v2", {
-    body: buildRequest(design.id),
+    body: buildDesignAndEnvironmentRequest(design.id),
     headers: authHeader(session.id),
   });
   t.equal(response.status, 200);
@@ -315,4 +316,66 @@ test("GetProductDesignList: invalid: negative limit", async (t: Test) => {
   );
   t.equal(body.errors[0].message, "Invalid query arguments");
   t.deepEqual(findDesignsStub.args, []);
+});
+
+function buildUploadPolicyRequest(assetId: string, mimeType: string) {
+  return {
+    operationName: "createUploadPolicy",
+    query: `
+mutation createUploadPolicy($assetId: String!, $mimeType: String!) {
+  createUploadPolicy(assetId: $assetId, mimeType: $mimeType) {
+    contentDisposition
+    contentType
+    downloadUrl
+    formDataPayload
+    remoteFileName
+    uploadUrl
+  }
+}
+    `,
+    variables: { assetId, mimeType },
+  };
+}
+
+test("CreateUploadPolicy needs authentication", async (t: Test) => {
+  const [forbiddenResponse, forbiddenBody] = await post("/v2", {
+    body: buildUploadPolicyRequest("123", "image/jpeg"),
+  });
+
+  t.equal(forbiddenResponse.status, 200);
+  t.equal(forbiddenBody.errors[0].message, "Unauthorized");
+});
+
+test("CreateUploadPolicy creates and returns a policy with serialized payload", async (t: Test) => {
+  const { session } = await createUser({ role: "USER" });
+
+  sandbox()
+    .stub(UploadPolicyService, "generateUploadPolicy")
+    .returns({
+      contentDisposition: "attachment",
+      contentType: "text/plain",
+      downloadUrl: "https://example.com",
+      formData: { foo: "bar" },
+      remoteFileName: "https://example.com",
+      uploadUrl: "https://example.com",
+    });
+
+  const [response, body] = await post("/v2", {
+    body: buildUploadPolicyRequest("123", "image/jpeg"),
+    headers: authHeader(session.id),
+  });
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      createUploadPolicy: {
+        contentDisposition: "attachment",
+        contentType: "text/plain",
+        downloadUrl: "https://example.com",
+        formDataPayload: '{\n  "foo": "bar"\n}',
+        remoteFileName: "https://example.com",
+        uploadUrl: "https://example.com",
+      },
+    },
+  });
 });
