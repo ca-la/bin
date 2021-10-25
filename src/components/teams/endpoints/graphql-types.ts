@@ -5,6 +5,7 @@ import {
   GraphQLType,
 } from "../../../apollo/published-types";
 import { teamSchema, teamDbSchema, Team } from "../types";
+import { TeamUser } from "../../team-users/types";
 import { Collection } from "../../collections/types";
 
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
@@ -25,6 +26,7 @@ export interface TeamFilter {
 
 export interface TeamAndEnvironmentParent {
   teamId: string;
+  teamUser: TeamUser | null;
 }
 
 export const gtTeamAndEnvironment: GraphQLType = {
@@ -33,12 +35,13 @@ export const gtTeamAndEnvironment: GraphQLType = {
   body: {
     teamId: "String!",
     team: "Team",
+    teamUser: "TeamUser",
     collections: {
       signature: "(limit: Int, offset: Int)",
       type: "[Collection]",
     },
   },
-  requires: ["Team", "Collection"],
+  requires: ["Team", "TeamUser", "Collection"],
 };
 
 export interface TeamAndEnvironment extends TeamAndEnvironmentParent {

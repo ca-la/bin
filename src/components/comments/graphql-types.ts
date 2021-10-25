@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { GraphQLType, schemaToGraphQLType } from "../../apollo/published-types";
-import { Role } from "../users/graphql-types";
+import { gtRole } from "../users/graphql-types";
 import { Attachment, AttachmentInput } from "../assets/graphql-types";
 import { Mention } from "../notifications/graphql-types";
 import { commentSchema } from "./types";
@@ -27,7 +27,7 @@ export const CommentWithResources = schemaToGraphQLType(
   commentWithResourcesSchema,
   {
     depTypes: {
-      userRole: Role,
+      userRole: gtRole,
       attachments: Attachment,
       mentions: Mention,
     },

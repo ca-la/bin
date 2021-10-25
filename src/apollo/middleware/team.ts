@@ -35,26 +35,18 @@ export async function attachTeamUserOrRequireAdmin<Args, Result>(
     teamId,
     session: { userId, role },
   } = context;
-
-  if (role === "ADMIN") {
-    return {
-      ...context,
-      teamUser: null,
-    };
-  }
-
   const teamUser = await TeamUsersDAO.findByUserAndTeam(db, {
     userId,
     userEmail: null,
     teamId,
   });
 
-  if (!teamUser) {
+  if (!teamUser && role !== "ADMIN") {
     throw new ForbiddenError("Not authorized to view this team");
   }
 
   return {
     ...context,
-    teamUser,
+    teamUser: teamUser || null,
   };
 }

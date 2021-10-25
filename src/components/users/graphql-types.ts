@@ -1,12 +1,12 @@
 import { GraphQLType } from "../../apollo/published-types/published-types";
 
-export const Role: GraphQLType = {
+export const gtRole: GraphQLType = {
   name: "Role",
   type: "enum",
   body: `ADMIN\n  FIT_PARTNER\n  PARTNER\n  USER`,
 };
 
-export const User: GraphQLType = {
+export const gtUser: GraphQLType = {
   name: "User",
   type: "type",
   body: {

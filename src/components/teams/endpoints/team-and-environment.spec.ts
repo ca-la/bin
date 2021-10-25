@@ -2,12 +2,17 @@ import { test, Test } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import { authHeader, post } from "../../../test-helpers/http";
 import { generateTeam } from "../../../test-helpers/factories/team";
+import { Role as TeamUserRole } from "../../team-users/types";
 
 function buildRequest(teamId: string) {
   return {
     query: `query ($teamId: String!) {
       TeamAndEnvironment(teamId: $teamId) {
         teamId
+        team {
+          teamUserId
+          role
+        }
       }
     }`,
     variables: {
@@ -39,7 +44,7 @@ test("TeamAndEnvironment is forbidden for arbitrary user", async (t: Test) => {
 
 test("TeamAndEnvironment returns teamId for team members", async (t: Test) => {
   const { user, session } = await createUser();
-  const { team } = await generateTeam(user.id);
+  const { team, teamUser } = await generateTeam(user.id);
 
   const [response, body] = await post("/v2", {
     body: buildRequest(team.id),
@@ -50,12 +55,16 @@ test("TeamAndEnvironment returns teamId for team members", async (t: Test) => {
     data: {
       TeamAndEnvironment: {
         teamId: team.id,
+        team: {
+          teamUserId: teamUser.id,
+          role: teamUser.role,
+        },
       },
     },
   });
 });
 
-test("TeamAndEnvironment returns teamId for CALA admins", async (t: Test) => {
+test("TeamAndEnvironment returns teamId === null for CALA admins", async (t: Test) => {
   const { user } = await createUser();
   const { session } = await createUser({ role: "ADMIN" });
   const { team } = await generateTeam(user.id);
@@ -69,6 +78,10 @@ test("TeamAndEnvironment returns teamId for CALA admins", async (t: Test) => {
     data: {
       TeamAndEnvironment: {
         teamId: team.id,
+        team: {
+          teamUserId: null,
+          role: TeamUserRole.ADMIN,
+        },
       },
     },
   });

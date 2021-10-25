@@ -11,6 +11,8 @@ import {
   gtTeam,
   TeamAndEnvironmentParent,
 } from "./graphql-types";
+import { gtTeamUser, gtTeamUserRole } from "../../team-users/graphql-types";
+import { gtUser, gtRole } from "../../users/graphql-types";
 import { gtCollection } from "../../collections";
 import { gtPermissions } from "../../permissions/graphql-types";
 
@@ -24,7 +26,16 @@ export const TeamAndEnvironmentEndpoint: GraphQLEndpoint<
   GraphQLContextWithTeamAndUser<TeamAndEnvironmentParent>
 > = {
   endpointType: "Query",
-  types: [gtTeam, gtPermissions, gtCollection, gtTeamAndEnvironment],
+  types: [
+    gtTeam,
+    gtTeamUser,
+    gtTeamUserRole,
+    gtUser,
+    gtRole,
+    gtPermissions,
+    gtCollection,
+    gtTeamAndEnvironment,
+  ],
   name: "TeamAndEnvironment",
   signature: `(teamId: String): TeamAndEnvironment`,
   middleware: composeMiddleware(
@@ -32,9 +43,14 @@ export const TeamAndEnvironmentEndpoint: GraphQLEndpoint<
     attachTeamFromTeamId,
     attachTeamUserOrRequireAdmin
   ),
-  resolver: async (_: any, args: TeamAndEnvironmentArgs) => {
+  resolver: async (
+    _: any,
+    args: TeamAndEnvironmentArgs,
+    ctx: GraphQLContextWithTeamAndUser<TeamAndEnvironmentParent>
+  ) => {
     return {
       teamId: args.teamId,
+      teamUser: ctx.teamUser,
     };
   },
 };

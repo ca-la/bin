@@ -28,7 +28,7 @@ export type TeamDbRow = z.infer<typeof teamDbRowSchema>;
 
 export const teamSchema = teamDbSchema.extend({
   role: z.nativeEnum(TeamUserRole),
-  teamUserId: z.string(),
+  teamUserId: z.string().nullable(),
 });
 export type Team = z.infer<typeof teamSchema>;
 

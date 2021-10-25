@@ -8,7 +8,7 @@ import {
 } from "../../apollo";
 import { User } from "./types";
 import { findById } from "./dao";
-import * as GraphQLTypes from "./graphql-types";
+import { gtRole, gtUser } from "./graphql-types";
 
 interface UserArgs {
   id: string;
@@ -20,7 +20,7 @@ const user: GraphQLEndpoint<
   GraphQLContextAuthenticated<User>
 > = {
   endpointType: "Query",
-  types: [GraphQLTypes.Role, GraphQLTypes.User],
+  types: [gtRole, gtUser],
   name: "user",
   signature: "(id: String!): User!",
   middleware: composeMiddleware<

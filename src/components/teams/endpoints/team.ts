@@ -1,6 +1,6 @@
 import db from "../../../services/db";
 import {
-  GraphQLContextBase,
+  GraphQLContextWithTeamAndUser,
   GraphQLEndpoint,
   NotFoundError,
 } from "../../../apollo";
@@ -9,27 +9,37 @@ import {
   gtTeam,
   TeamAndEnvironment,
 } from "./graphql-types";
-import { withTeamUserMetaDao } from "../dao";
+import { standardDao } from "../dao";
 import ResourceNotFoundError from "../../../errors/resource-not-found";
 import filterError from "../../../services/filter-error";
+import { TeamDb } from "../types";
+import { Role as TeamUserRole } from "../../team-users/types";
 
 type Result = TeamAndEnvironment["team"];
 
 export const TeamEndpoint: GraphQLEndpoint<
   {},
   Result,
-  GraphQLContextBase<Result>,
+  GraphQLContextWithTeamAndUser<Result>,
   TeamAndEnvironmentParent
 > = {
   endpointType: "TeamAndEnvironment",
   types: [gtTeam],
   name: "team",
   resolver: async (parent: TeamAndEnvironmentParent) => {
-    const { teamId } = parent;
-    return withTeamUserMetaDao.findById(db, teamId).catch(
+    const { teamId, teamUser } = parent;
+
+    const team: TeamDb = await standardDao.findById(db, teamId).catch(
       filterError(ResourceNotFoundError, (err: ResourceNotFoundError) => {
         throw new NotFoundError(err.message);
       })
     );
+
+    return {
+      ...team,
+      ...(teamUser
+        ? { teamUserId: teamUser.id, role: teamUser.role }
+        : { teamUserId: null, role: TeamUserRole.ADMIN }),
+    };
   },
 };

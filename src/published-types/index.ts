@@ -56,6 +56,7 @@ import * as ProductDesignGraphQLTypes from "../components/product-designs/endpoi
 import * as CanvasGraphQLTypes from "../components/canvases/endpoints/graphql-types";
 import * as AnnotationGraphQLTypes from "../components/product-design-canvas-annotations/graphql-types";
 import * as TeamGraphQLTypes from "../components/teams/endpoints/graphql-types";
+import * as TeamUserGraphQLTypes from "../components/team-users/graphql-types";
 import * as CollectionGraphQLTypes from "../components/collections/endpoints/graphql-types";
 
 export const GraphQLTypes = {
@@ -68,6 +69,7 @@ export const GraphQLTypes = {
   ...CanvasGraphQLTypes,
   ...AnnotationGraphQLTypes,
   ...TeamGraphQLTypes,
+  ...TeamUserGraphQLTypes,
   ...CollectionGraphQLTypes,
 };
 
