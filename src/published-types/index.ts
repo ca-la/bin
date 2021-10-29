@@ -7,6 +7,7 @@ export * from "../components/canvases/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
 export * from "../components/product-designs/types";
+export * from "../components/product-design-variants/types";
 export * from "../components/product-design-canvas-annotations/types";
 export * from "../components/product-design-canvas-measurements/types";
 export * from "../components/notifications/types";

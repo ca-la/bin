@@ -1,8 +1,10 @@
 import Knex from "knex";
-import { ProductDesignVariantIO } from "./types";
+import { VariantDb } from "./types";
 import { computeUniqueUpc, computeUniqueSku } from "../../services/codes";
 import ApprovalStepsDao from "../approval-steps/dao";
 import { ApprovalStepState, ApprovalStepType } from "../approval-steps/types";
+
+export type ProductDesignVariantIO = Uninserted<VariantDb>;
 
 export async function enrichVariantInputsWithCodesIfCheckedOut(
   trx: Knex.Transaction,

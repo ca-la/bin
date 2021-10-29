@@ -10,8 +10,10 @@ import { hasProperties } from "../../services/require-properties";
 import db from "../../services/db";
 import { requireQueryParam } from "../../middleware/require-query-param";
 import backfillUpcsForDesign from "../../services/backfill-upcs-for-design";
-import { ProductDesignVariantIO } from "./types";
-import { enrichVariantInputsWithCodesIfCheckedOut } from "./service";
+import {
+  enrichVariantInputsWithCodesIfCheckedOut,
+  ProductDesignVariantIO,
+} from "./service";
 import requireAuth = require("../../middleware/require-auth");
 import requireAdmin = require("../../middleware/require-admin");
 
