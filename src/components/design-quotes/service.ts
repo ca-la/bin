@@ -18,6 +18,7 @@ import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import TeamsDAO from "../teams/dao";
 import { PricingCostInput } from "../pricing-cost-inputs/types";
 import db from "../../services/db";
+import { logServerError } from "../../services/logger";
 import { CreditsDAO } from "../credits";
 import addMargin from "../../services/add-margin";
 import { FINANCING_MARGIN } from "../../config";
@@ -53,6 +54,9 @@ export function calculateAmounts(
 export async function getDesignProductionFeeBasisPoints(designId: string) {
   const plan = await PlansDAO.findLatestDesignTeamPlan(db, designId);
   if (!plan) {
+    logServerError(
+      `Plan (to get costOfGoodsShareBasisPoints) with active subscription is not found for this design id: ${designId}`
+    );
     throw new InsufficientPlanError("No active subscriptions for this team");
   }
 
