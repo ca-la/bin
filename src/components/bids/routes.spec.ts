@@ -670,36 +670,19 @@ test("Partner pairing: reject as team member", async (t: Test) => {
 
 test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
   const admin = await createUser({ role: "ADMIN" });
-  const getByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
+  const getByIdStub = sandbox()
+    .stub(BidsDAO, "findById")
+    .resolves({ quoteId: "a-quote-id" });
+  const getDesignStub = sandbox()
+    .stub(ProductDesignsDAO, "findByQuoteId")
+    .resolves({});
   sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves(null);
   await get(`/bids/a-real-bid-id`, {
     headers: authHeader(admin.session.id),
   });
   t.equal(getByIdStub.callCount, 1);
   t.deepEqual(getByIdStub.args[0][1], "a-real-bid-id");
-
-  const partner = await createUser({ role: "PARTNER" });
-  const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {
-    headers: authHeader(partner.session.id),
-  });
-  t.equal(failedResponsePartner.status, 404, "Only admins have full access");
-
-  const user = await createUser({ role: "USER" });
-  const [failedResponseUser] = await get(`/bids/a-real-bid-id`, {
-    headers: authHeader(user.session.id),
-  });
-  t.equal(failedResponseUser.status, 404, "Only admins have full access");
-});
-
-test("GET /bids/:bidId gets a bid by an id for admins", async (t: Test) => {
-  const admin = await createUser({ role: "ADMIN" });
-  const getByIdStub = sandbox().stub(BidsDAO, "findById").resolves({});
-  sandbox().stub(BidsDAO, "findByBidIdAndUser").resolves(null);
-  await get(`/bids/a-real-bid-id`, {
-    headers: authHeader(admin.session.id),
-  });
-  t.equal(getByIdStub.callCount, 1);
-  t.deepEqual(getByIdStub.args[0][1], "a-real-bid-id");
+  t.deepEqual(getDesignStub.args[0][1], "a-quote-id");
 
   const partner = await createUser({ role: "PARTNER" });
   const [failedResponsePartner] = await get(`/bids/a-real-bid-id`, {
@@ -724,7 +707,7 @@ test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: 
       createdAt: new Date(),
       createdBy: "a-real-ops-user",
       dueDate: new Date(),
-      quoteId: "quote-id",
+      quoteId: "a-quote-id",
       bidPriceCents: 1000,
       bidPriceProductionOnlyCents: 0,
       description: "",
@@ -735,6 +718,9 @@ test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: 
         name: partner.name,
       },
     });
+  const getDesignStub = sandbox()
+    .stub(ProductDesignsDAO, "findByQuoteId")
+    .resolves({});
 
   const [response] = await get(`/bids/a-real-bid-id`, {
     headers: authHeader(session.id),
@@ -742,6 +728,7 @@ test("GET /bids/:bidId gets a bid by an id for the partner assigned", async (t: 
   t.equal(response.status, 200, "Returns bid to the assigned partner");
   t.equal(getBidStub.callCount, 1);
   t.deepEqual(getBidStub.args[0].slice(1), ["a-real-bid-id", partner.id]);
+  t.deepEqual(getDesignStub.args[0][1], "a-quote-id");
 });
 
 test("POST /bids/:bidId/pay-out-to-partner", async (t: Test) => {

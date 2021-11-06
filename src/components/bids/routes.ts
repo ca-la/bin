@@ -398,26 +398,27 @@ export function* rejectDesignBid(
   this.status = 204;
 }
 
-interface GetByIdContext extends AuthedContext {
+interface GetByIdContext extends StrictContext<IOBid> {
   params: {
     bidId: string;
   };
+  state: AuthedState;
 }
 
-function* getById(this: GetByIdContext): Iterator<any, any, any> {
-  const { bidId } = this.params;
-  const { role, userId } = this.state;
+async function getById(ctx: GetByIdContext) {
+  const { bidId } = ctx.params;
+  const { role, userId } = ctx.state;
   const bid =
     role === "ADMIN"
-      ? yield BidsDAO.findById(db, bidId)
-      : yield BidsDAO.findByBidIdAndUser(db, bidId, userId);
+      ? await BidsDAO.findById(db, bidId)
+      : await BidsDAO.findByBidIdAndUser(db, bidId, userId);
+  ctx.assert(bid, 404, `Missing bid ${bidId}`);
 
-  if (bid) {
-    this.body = bid;
-    this.status = 200;
-  } else {
-    this.throw(404);
-  }
+  const ioBid = await attachDesignToBid(db, bid);
+  ctx.assert(ioBid, 404, `Missing design for bid ${bidId}`);
+
+  ctx.body = ioBid;
+  ctx.status = 200;
 }
 
 const postPayoutBodySchema = z.object({
@@ -496,7 +497,7 @@ router.post(
 router.get("/", requireAuth, listBids);
 router.get("/unpaid", requireAdmin, getUnpaidBids);
 
-router.get("/:bidId", requireAuth, getById);
+router.get("/:bidId", requireAuth, convert.back(getById));
 router.get("/:bidId/assignees", requireAdmin, listBidAssignees);
 router.del(
   "/:bidId/assignees/:partnerId",
