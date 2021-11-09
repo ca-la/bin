@@ -32,7 +32,6 @@ export async function readMessage(): Promise<SQSMessage | null> {
       MaxNumberOfMessages: 1,
       MessageAttributeNames: ["All"],
       QueueUrl: AWS_API_WORKER_SQS_URL,
-      VisibilityTimeout: 30,
       WaitTimeSeconds: 20,
     })
     .promise();
