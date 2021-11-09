@@ -183,7 +183,8 @@ export async function findByUser(
     userId: string;
     sessionRole: string;
     search?: string;
-  }
+  },
+  modifier: QueryModifier = identity
 ): Promise<Collection[]> {
   const collectionRows: CollectionDbRowWithCollaboratorAndTeamRoles[] = await ktx
     .from(TABLE_NAME)
@@ -232,6 +233,7 @@ export async function findByUser(
 )`,
       { userId: options.userId }
     )
+    .modify(modifier)
     .modify(addDesignMetaToCollection)
     .modify(limitOrOffset(options.limit, options.offset))
     .orderBy("collections.created_at", "desc");
@@ -249,6 +251,24 @@ export async function findByUser(
       teamUserRoles: collectionRows[index].team_roles || [],
     }),
   }));
+}
+
+export async function findByUserFromTeamsWithActiveSubscription(
+  ktx: Knex,
+  options: ListOptions & {
+    userId: string;
+    sessionRole: string;
+    search?: string;
+  }
+): Promise<Collection[]> {
+  return findByUser(ktx, options, (query: Knex.QueryBuilder) =>
+    query
+      .leftJoin("subscriptions", "subscriptions.team_id", "collections.team_id")
+      .whereRaw(
+        "(subscriptions.cancelled_at is null or subscriptions.cancelled_at > ?)",
+        [new Date()]
+      )
+  );
 }
 
 // Find a list of collections which a user was "directly" shared on - i.e. via
@@ -356,12 +376,17 @@ export async function findByTeamWithPermissionsByRole(
 
 export async function findById(
   id: string,
-  ktx: Knex = db
+  ktx: Knex = db,
+  modifier: QueryModifier = identity
 ): Promise<CollectionDb | null> {
   const collection = await ktx(TABLE_NAME)
-    .select("*")
-    .where({ id, deleted_at: null })
+    .select("collections.*")
+    .where({
+      "collections.id": id,
+      "collections.deleted_at": null,
+    })
     .modify(addDesignMetaToCollection)
+    .modify(modifier)
     .first()
     .catch(rethrow);
 
@@ -370,6 +395,20 @@ export async function findById(
   }
 
   return dataAdapter.fromDb(collection);
+}
+
+export async function findByIdWithActiveTeamSubscription(
+  id: string,
+  ktx: Knex = db
+): Promise<CollectionDb | null> {
+  return findById(id, ktx, (query: Knex.QueryBuilder) =>
+    query
+      .leftJoin("subscriptions", "subscriptions.team_id", "collections.team_id")
+      .whereRaw(
+        "(subscriptions.cancelled_at is null or subscriptions.cancelled_at > ?)",
+        [new Date()]
+      )
+  );
 }
 
 export async function findByDesign(

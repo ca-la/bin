@@ -61,10 +61,14 @@ export async function getCostedAndSubmittedCollections(
     role: string;
   }
 ): Promise<CartDetailsCollection[]> {
-  const userCollections = await CollectionsDAO.findByUser(ktx, {
-    userId: options.userId,
-    sessionRole: options.role,
-  });
+  const userCollections = await CollectionsDAO.findByUserFromTeamsWithActiveSubscription(
+    ktx,
+    {
+      userId: options.userId,
+      sessionRole: options.role,
+    }
+  );
+
   const collectionIds = userCollections.map(
     (collection: Collection): string => collection.id
   );
@@ -109,7 +113,10 @@ export async function getCollectionCartDetails(
   ktx: Knex,
   collectionId: string
 ): Promise<CartDetailsCollection | null> {
-  const collectionDb = await CollectionsDAO.findById(collectionId, ktx);
+  const collectionDb = await CollectionsDAO.findByIdWithActiveTeamSubscription(
+    collectionId,
+    ktx
+  );
   if (!collectionDb) {
     return null;
   }

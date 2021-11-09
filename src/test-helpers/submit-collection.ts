@@ -7,6 +7,7 @@ import createUser from "./create-user";
 import createDesign from "../services/create-design";
 import generatePricingValues from "./factories/pricing-values";
 import generateCollection from "./factories/collection";
+import { generateTeam } from "./factories/team";
 import { templateDesignEvent } from "../components/design-events/types";
 
 const variantBlank = {
@@ -25,8 +26,10 @@ export async function submitCollection(generatePricing: boolean = true) {
 
   const designer = await createUser();
   const admin = await createUser({ role: "ADMIN" });
-  const { collection, team } = await generateCollection({
+  const { team, subscription } = await generateTeam(designer.user.id);
+  const { collection } = await generateCollection({
     createdBy: designer.user.id,
+    teamId: team.id,
   });
 
   const collectionDesigns = [
@@ -153,6 +156,7 @@ export async function submitCollection(generatePricing: boolean = true) {
 
     return {
       team,
+      subscription,
       collection,
       collectionDesigns,
       draftDesigns,

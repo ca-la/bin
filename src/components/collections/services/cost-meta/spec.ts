@@ -1,3 +1,4 @@
+import Knex from "knex";
 import { pick } from "lodash";
 
 import { test, Test, db } from "../../../../test-helpers/fresh";
@@ -9,6 +10,7 @@ import { costCollection } from "../../../../test-helpers/cost-collection";
 import { submitCollection } from "../../../../test-helpers/submit-collection";
 import { checkout as checkoutCollection } from "../../../../test-helpers/checkout-collection";
 import { getCostedAndSubmittedCollections, getCollectionCartDetails } from ".";
+import * as SubscriptionsDAO from "../../../../components/subscriptions/dao";
 
 test("getCostedAndSubmittedCollections", async (t: Test) => {
   // create submitted collection
@@ -20,6 +22,7 @@ test("getCostedAndSubmittedCollections", async (t: Test) => {
   // create costed collection
   const {
     team: costCollectionTeam,
+    subscription: costCollectionTeamSubscription,
     collection: costedCollection,
   } = await costCollection();
 
@@ -86,11 +89,45 @@ test("getCostedAndSubmittedCollections", async (t: Test) => {
     },
     "returns submitted collection"
   );
+
+  // cancel team subscription
+  await db.transaction((trx: Knex.Transaction) =>
+    SubscriptionsDAO.update(
+      costCollectionTeamSubscription.id,
+      { cancelledAt: new Date(2019, 2, 14) },
+      trx
+    )
+  );
+
+  const collectionsAfterSubscriptionCancelled = await getCostedAndSubmittedCollections(
+    db,
+    {
+      userId: designer.user.id,
+      role: designer.user.role,
+    }
+  );
+
+  t.equal(
+    collectionsAfterSubscriptionCancelled.length,
+    1,
+    "returns only collections with active subscriptions"
+  );
+
+  const receivedSubmittedCollectionWithActiveSubscription =
+    collectionsAfterSubscriptionCancelled[0];
+  t.deepEqual(
+    pick(receivedSubmittedCollectionWithActiveSubscription, "id", "cartStatus"),
+    {
+      id: submittedCollection.id,
+      cartStatus: "SUBMITTED",
+    },
+    "returns submitted collection"
+  );
 });
 
 test("getCollectionCartDetails returns cart details for costed collection", async (t: Test) => {
   // create costed collection
-  const { collection: costedCollection } = await costCollection();
+  const { collection: costedCollection, subscription } = await costCollection();
 
   const costedCollectionCartDetails = await getCollectionCartDetails(
     db,
@@ -121,10 +158,30 @@ test("getCollectionCartDetails returns cart details for costed collection", asyn
     710600,
     "costed collection cartSubtotal subtotalCents matches expected value"
   );
+
+  // cancel team subscription
+  await db.transaction((trx: Knex.Transaction) =>
+    SubscriptionsDAO.update(
+      subscription.id,
+      { cancelledAt: new Date(2019, 2, 14) },
+      trx
+    )
+  );
+
+  const notFound = await getCollectionCartDetails(db, costedCollection.id);
+
+  t.equal(
+    notFound,
+    null,
+    "don't return collection with cancelled team subscription"
+  );
 });
 
 test("getCollectionCartDetails returns cart details for submitted collection", async (t: Test) => {
-  const { collection: submittedCollection } = await submitCollection(false);
+  const {
+    collection: submittedCollection,
+    subscription,
+  } = await submitCollection(false);
 
   const submittedCollectionCartDetails = await getCollectionCartDetails(
     db,
@@ -143,6 +200,23 @@ test("getCollectionCartDetails returns cart details for submitted collection", a
       cartStatus: "SUBMITTED",
     },
     "returns submitted collection cart details"
+  );
+
+  // cancel team subscription
+  await db.transaction((trx: Knex.Transaction) =>
+    SubscriptionsDAO.update(
+      subscription.id,
+      { cancelledAt: new Date(2019, 2, 14) },
+      trx
+    )
+  );
+
+  const notFound = await getCollectionCartDetails(db, submittedCollection.id);
+
+  t.equal(
+    notFound,
+    null,
+    "don't return collection with cancelled team subscription"
   );
 });
 

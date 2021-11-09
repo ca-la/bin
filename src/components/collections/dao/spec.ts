@@ -4,6 +4,7 @@ import Knex from "knex";
 import * as CollectionsDAO from ".";
 import DesignEventsDAO from "../../design-events/dao";
 import * as ProductDesignsDAO from "../../product-designs/dao/dao";
+import * as SubscriptionsDAO from "../../subscriptions/dao";
 import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import createUser from "../../../test-helpers/create-user";
 import ProductDesign = require("../../product-designs/domain-objects/product-design");
@@ -1125,5 +1126,123 @@ test("findById", async (t: Test) => {
     found,
     { ...collection, designs: [] },
     "returns all collection data"
+  );
+});
+
+test("findByIdWithActiveTeamSubscription", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team, subscription } = await generateTeam(user.id);
+
+  const { collection } = await generateCollection({
+    teamId: team.id,
+    title: "The collection",
+  });
+  await generateCollection({ teamId: team.id, title: "Another collection" });
+
+  const found = await CollectionsDAO.findByIdWithActiveTeamSubscription(
+    collection.id
+  );
+  t.deepEqual(
+    found,
+    { ...collection, designs: [] },
+    "returns all collection data"
+  );
+
+  // cancel team subscription
+  await db.transaction((trx: Knex.Transaction) =>
+    SubscriptionsDAO.update(
+      subscription.id,
+      { cancelledAt: new Date(2019, 2, 14) },
+      trx
+    )
+  );
+
+  const notFound = await CollectionsDAO.findByIdWithActiveTeamSubscription(
+    collection.id
+  );
+  t.equal(
+    notFound,
+    null,
+    "returns null if collection belongs to a team without active subscription"
+  );
+});
+
+test("findByUserFromTeamsWithActiveSubscription", async (t: Test) => {
+  const { user } = await createUser({ withSession: false });
+  const { team, subscription } = await generateTeam(user.id);
+  const { team: team2 } = await generateTeam(user.id);
+
+  const { collection: collection1Team1 } = await generateCollection({
+    teamId: team.id,
+    title: "The collection: team 1",
+  });
+  const { collection: collection2Team1 } = await generateCollection({
+    teamId: team.id,
+    title: "Another collection: team 1",
+  });
+
+  const { collection: collection3Team2 } = await generateCollection({
+    teamId: team2.id,
+    title: "The collection: team 2",
+  });
+  const { collection: collection4Team2 } = await generateCollection({
+    teamId: team2.id,
+    title: "Another collection: team 2",
+  });
+
+  const { user: user2 } = await createUser({ withSession: false });
+  const { team: team3 } = await generateTeam(user2.id);
+  await generateCollection({
+    teamId: team3.id,
+    title: "Another user collection: team 3",
+  });
+
+  const foundListAllTeamsHaveActiveSubscription = await CollectionsDAO.findByUserFromTeamsWithActiveSubscription(
+    db,
+    { userId: user.id, sessionRole: "USER" }
+  );
+
+  const permissions = {
+    canComment: true,
+    canDelete: true,
+    canEdit: true,
+    canEditTitle: true,
+    canEditVariants: true,
+    canSubmit: true,
+    canView: true,
+  };
+
+  t.deepEqual(
+    foundListAllTeamsHaveActiveSubscription,
+    [
+      { ...collection4Team2, designs: [], permissions },
+      { ...collection3Team2, designs: [], permissions },
+      { ...collection2Team1, designs: [], permissions },
+      { ...collection1Team1, designs: [], permissions },
+    ],
+    "returns all user collections"
+  );
+
+  // cancel team subscription
+  await db.transaction((trx: Knex.Transaction) =>
+    SubscriptionsDAO.update(
+      subscription.id,
+      { cancelledAt: new Date(2019, 2, 14) },
+      trx
+    )
+  );
+
+  const foundListTeam2HaveActiveSubscription = await CollectionsDAO.findByUserFromTeamsWithActiveSubscription(
+    db,
+    { userId: user.id, sessionRole: "USER" }
+  );
+
+  t.deepEqual(
+    foundListTeam2HaveActiveSubscription,
+    [
+      { ...collection4Team2, designs: [], permissions },
+      { ...collection3Team2, designs: [], permissions },
+    ],
+    "returns all user collections"
   );
 });
