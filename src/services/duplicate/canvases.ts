@@ -3,7 +3,6 @@ import Knex from "knex";
 import * as ComponentsDAO from "../../components/components/dao";
 import * as CanvasesDAO from "../../components/canvases/dao";
 
-import { Component } from "../../components/components/types";
 import Canvas from "../../components/canvases/domain-object";
 
 import { findAndDuplicateComponent } from "./components";
@@ -31,22 +30,17 @@ export async function findAndDuplicateCanvas(
   // Duplicate: Components --> Options; (images maintain same record).
   const components = await ComponentsDAO.findAllByCanvasId(canvasId);
   let rootComponentId: string | null = null;
-  await Promise.all(
-    components.map(
-      async (component: Component): Promise<void> => {
-        // TODO: how would you guarantee that the parent/child relationships maintain??
-        const newComponent = await findAndDuplicateComponent(
-          component.id,
-          component.parentId,
-          trx
-        );
+  for (const component of components) {
+    const newComponent = await findAndDuplicateComponent(
+      component.id,
+      component.parentId,
+      trx
+    );
 
-        if (component.id === canvas.componentId) {
-          rootComponentId = newComponent.id;
-        }
-      }
-    )
-  );
+    if (component.id === canvas.componentId) {
+      rootComponentId = newComponent.id;
+    }
+  }
 
   // Duplicate: Canvas
   const duplicateCanvas = await CanvasesDAO.create(

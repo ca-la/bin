@@ -5,7 +5,6 @@ import * as CanvasesDAO from "../../components/canvases/dao";
 import DesignsDAO = require("../../components/product-designs/dao");
 import createDesign from "../create-design";
 
-import Canvas from "../../components/canvases/domain-object";
 import Design = require("../../components/product-designs/domain-objects/product-design");
 import prepareForDuplication from "./prepare-for-duplication";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -48,13 +47,9 @@ export async function findAndDuplicateDesign(
   );
 
   const canvases = await CanvasesDAO.findAllByDesignId(designId);
-  await Promise.all(
-    canvases.map(
-      async (canvas: Canvas): Promise<void> => {
-        await findAndDuplicateCanvas(canvas.id, duplicatedDesign.id, trx);
-      }
-    )
-  );
+  for (const canvas of canvases) {
+    await findAndDuplicateCanvas(canvas.id, duplicatedDesign.id, trx);
+  }
 
   await findAndDuplicateVariants(designId, duplicatedDesign.id, trx);
 

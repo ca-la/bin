@@ -13,17 +13,30 @@ export async function duplicateDesigns(
   trx?: Knex.Transaction
 ): Promise<Design[]> {
   if (trx) {
-    return Promise.all(
-      initialDesignIds.map((initialDesignId: string) => {
-        return findAndDuplicateDesign(trx, initialDesignId, userId);
-      })
-    );
+    const duplicatedDesigns: Design[] = [];
+    for (const initialDesignId of initialDesignIds) {
+      const newDesign = await findAndDuplicateDesign(
+        trx,
+        initialDesignId,
+        userId
+      );
+      duplicatedDesigns.push(newDesign);
+    }
+
+    return duplicatedDesigns;
   }
+
   return db.transaction(async (localTrx: Knex.Transaction) => {
-    return Promise.all(
-      initialDesignIds.map((initialDesignId: string) => {
-        return findAndDuplicateDesign(localTrx, initialDesignId, userId);
-      })
-    );
+    const duplicatedDesigns: Design[] = [];
+    for (const initialDesignId of initialDesignIds) {
+      const newDesign = await findAndDuplicateDesign(
+        localTrx,
+        initialDesignId,
+        userId
+      );
+      duplicatedDesigns.push(newDesign);
+    }
+
+    return duplicatedDesigns;
   });
 }

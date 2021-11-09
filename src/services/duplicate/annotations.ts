@@ -7,7 +7,6 @@ import * as CommentsDAO from "../../components/comments/dao";
 import { AnnotationDb as Annotation } from "../../components/product-design-canvas-annotations/types";
 import prepareForDuplication from "./prepare-for-duplication";
 import Comment from "../../components/comments/types";
-import db from "../db";
 
 /**
  * Finds all comments associated with the given annotation, creates duplicates, and associates
@@ -18,26 +17,52 @@ async function findAndDuplicateAnnotationComments(
   newAnnotationId: string,
   trx: Knex.Transaction
 ): Promise<Comment[]> {
-  const comments =
-    (await AnnotationCommentsDAO.findByAnnotationId(db, { annotationId })) ||
-    [];
+  const comments = await AnnotationCommentsDAO.findByAnnotationId(trx, {
+    annotationId,
+  });
 
-  return Promise.all(
-    comments.map(async (comment: Comment) => {
-      const duplicateComment = await CommentsDAO.create(
-        prepareForDuplication(comment),
-        trx
-      );
-      await AnnotationCommentsDAO.create(
-        {
-          annotationId: newAnnotationId,
-          commentId: duplicateComment.id,
-        },
-        trx
-      );
-      return duplicateComment;
-    })
-  );
+  const originalCommentToDuplicatedCommentIdMap: Record<string, string> = {};
+  const duplicatedComments: Comment[] = [];
+  for (const comment of comments) {
+    // original comments are in the ASC order so we can guarantee that
+    // parent comments will be duplicated first and will be in the map
+    // in time when we try to duplicate comments in the thread
+    let parentCommentId: string | null = null;
+    if (comment.parentCommentId) {
+      parentCommentId =
+        originalCommentToDuplicatedCommentIdMap[comment.parentCommentId];
+      if (!parentCommentId) {
+        throw new Error(`Cannot map original parentCommentId to duplicated parent commentId:
+check the order of original comments, they should be in the ASC order (thread parents should go first). Comment id: ${comment.id}`);
+      }
+    }
+
+    const duplicateComment = await CommentsDAO.create(
+      {
+        ...prepareForDuplication({ ...comment, parentCommentId }),
+        // to keep the original order of comments
+        createdAt: comment.createdAt,
+      },
+      trx,
+      {
+        excludeDeletedAt: false,
+      }
+    );
+
+    originalCommentToDuplicatedCommentIdMap[comment.id] = duplicateComment.id;
+
+    await AnnotationCommentsDAO.create(
+      {
+        annotationId: newAnnotationId,
+        commentId: duplicateComment.id,
+      },
+      trx
+    );
+
+    duplicatedComments.push(duplicateComment);
+  }
+
+  return duplicatedComments;
 }
 
 /**
@@ -53,25 +78,24 @@ export async function findAndDuplicateAnnotations(
   const annotations = await AnnotationsDAO.findAllByCanvasId(trx, canvasId);
 
   // create annotation duplicates.
-  return Promise.all(
-    annotations.map(
-      async (annotation: Annotation): Promise<Annotation> => {
-        const duplicateAnnotation = await AnnotationsDAO.create(
-          trx,
-          prepareForDuplication(
-            omit(annotation, ["commentCount", "submissionCount"]),
-            { canvasId: newCanvasId }
-          )
-        );
+  const duplicatedAnnotations: Annotation[] = [];
+  for (const annotation of annotations) {
+    const duplicateAnnotation = await AnnotationsDAO.create(
+      trx,
+      prepareForDuplication(
+        omit(annotation, ["commentCount", "submissionCount"]),
+        { canvasId: newCanvasId }
+      )
+    );
 
-        await findAndDuplicateAnnotationComments(
-          annotation.id,
-          duplicateAnnotation.id,
-          trx
-        );
+    await findAndDuplicateAnnotationComments(
+      annotation.id,
+      duplicateAnnotation.id,
+      trx
+    );
 
-        return duplicateAnnotation;
-      }
-    )
-  );
+    duplicatedAnnotations.push(duplicateAnnotation);
+  }
+
+  return duplicatedAnnotations;
 }

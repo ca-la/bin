@@ -13,13 +13,16 @@ export async function findAndDuplicateMeasurements(
   trx: Knex.Transaction
 ): Promise<Measurement[]> {
   const measurements = await MeasurementsDAO.findAllByCanvasId(canvasId);
-  return Promise.all(
-    measurements.map(
-      (measurement: Measurement): Promise<Measurement> =>
-        MeasurementsDAO.create(
-          prepareForDuplication(measurement, { canvasId: newCanvasId }),
-          trx
-        )
-    )
-  );
+  const duplicatedMeasurements: Measurement[] = [];
+
+  for (const measurement of measurements) {
+    const newMeasurement = await MeasurementsDAO.create(
+      prepareForDuplication(measurement, { canvasId: newCanvasId }),
+      trx
+    );
+
+    duplicatedMeasurements.push(newMeasurement);
+  }
+
+  return duplicatedMeasurements;
 }

@@ -13,17 +13,20 @@ export async function findAndDuplicateVariants(
   trx: Knex.Transaction
 ): Promise<VariantDb[]> {
   const variants = await VariantsDAO.findByDesignId(designId);
-  return Promise.all(
-    variants.map(
-      async (variant: VariantDb): Promise<VariantDb> =>
-        VariantsDAO.create(
-          prepareForDuplication<VariantDb>(variant, {
-            designId: newDesignId,
-            universalProductCode: null,
-            sku: null,
-          }),
-          trx
-        )
-    )
-  );
+
+  const duplicatedVariants: VariantDb[] = [];
+  for (const variant of variants) {
+    const newVariant = await VariantsDAO.create(
+      prepareForDuplication<VariantDb>(variant, {
+        designId: newDesignId,
+        universalProductCode: null,
+        sku: null,
+      }),
+      trx
+    );
+
+    duplicatedVariants.push(newVariant);
+  }
+
+  return duplicatedVariants;
 }
