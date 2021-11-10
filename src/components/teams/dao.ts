@@ -3,8 +3,8 @@ import {
   buildDao,
   QueryModifier,
 } from "../../services/cala-component/cala-dao";
-import { TeamDb, TeamDbRow, Team, TeamRow } from "./types";
-import teamAdapter, { rawAdapter } from "./adapter";
+import { TeamDb, TeamDbRow, Team } from "./types";
+import { rawAdapter } from "./adapter";
 import { SubscriptionsDAO, isSubscriptionFree } from "../subscriptions";
 import { cancelSubscription } from "../../services/stripe/cancel-subscription";
 import ResourceNotFoundError from "../../errors/resource-not-found";
@@ -19,25 +19,6 @@ export const standardDao = buildDao<TeamDb, TeamDbRow>(
   {
     orderColumn: "created_at",
     orderDirection: "DESC",
-  }
-);
-
-export const withTeamUserMetaDao = buildDao<Team, TeamRow>(
-  "Team",
-  TABLE_NAME,
-  teamAdapter,
-  {
-    orderColumn: "created_at",
-    orderDirection: "DESC",
-    queryModifier: (query: Knex.QueryBuilder) =>
-      query
-        .select(["team_users.role as role", "team_users.id as team_user_id"])
-        .join("team_users", "team_users.team_id", "teams.id")
-        .where({ "team_users.deleted_at": null }),
-    countModifier: (query: Knex.QueryBuilder) =>
-      query
-        .join("team_users", "team_users.team_id", "teams.id")
-        .where({ "team_users.deleted_at": null }),
   }
 );
 
@@ -77,10 +58,18 @@ async function findByUser(
   userId: string,
   modifier: (query: QueryBuilder) => QueryBuilder = (query: QueryBuilder) =>
     query
-) {
-  return withTeamUserMetaDao.find(ktx, {}, (query: QueryBuilder) =>
-    modifier(query.where({ "team_users.user_id": userId }))
-  );
+): Promise<Team[]> {
+  return standardDao.find(ktx, {}, (query: QueryBuilder) =>
+    modifier(
+      query
+        .join("team_users", "team_users.team_id", "teams.id")
+        .select(["team_users.role as role", "team_users.id as team_user_id"])
+        .where({
+          "team_users.deleted_at": null,
+          "team_users.user_id": userId,
+        })
+    )
+  ) as Promise<Team[]>;
 }
 
 async function deleteById(
@@ -151,8 +140,11 @@ export async function countForEndpoint(
   ktx: Knex,
   filter: TeamFilter
 ): Promise<number> {
-  return withTeamUserMetaDao.count(ktx, {}, (query: QueryBuilder) =>
-    query.where({ "team_users.user_id": filter.userId })
+  return standardDao.count(ktx, {}, (query: QueryBuilder) =>
+    query.join("team_users", "team_users.team_id", "teams.id").where({
+      "team_users.deleted_at": null,
+      "team_users.user_id": filter.userId,
+    })
   );
 }
 
