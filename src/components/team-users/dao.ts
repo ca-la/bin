@@ -15,6 +15,7 @@ import {
   Role as TeamUserRole,
   FREE_TEAM_USER_ROLES,
 } from "./types";
+import normalizeEmail from "../../services/normalize-email";
 import adapter, { rawAdapter } from "./adapter";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import ConflictError from "../../errors/conflict";
@@ -31,9 +32,13 @@ const rawStandardDao = buildDao<TeamUserDb, TeamUserDbRow>(
 );
 
 export async function create(trx: Knex.Transaction, data: TeamUserDb) {
+  const userEmail = data.userEmail
+    ? normalizeEmail(data.userEmail)
+    : data.userEmail;
+
   const found = await findByUserAndTeam(trx, {
     userId: data.userId,
-    userEmail: data.userEmail,
+    userEmail,
     teamId: data.teamId,
   });
 
@@ -59,7 +64,7 @@ export async function create(trx: Knex.Transaction, data: TeamUserDb) {
     return revived;
   }
 
-  return rawStandardDao.create(trx, data);
+  return rawStandardDao.create(trx, { ...data, userEmail });
 }
 
 export const rawDao = { ...rawStandardDao, create };
@@ -102,7 +107,7 @@ async function claimAllByEmail(
 ): Promise<TeamUserDb[]> {
   const rows = await trx(TABLE_NAME)
     .update({ user_email: null, user_id: userId }, "*")
-    .where({ user_email: email });
+    .where({ user_email: normalizeEmail(email) });
 
   return rows.map(rawAdapter.fromDb);
 }

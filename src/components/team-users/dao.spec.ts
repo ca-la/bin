@@ -33,7 +33,7 @@ test("RawTeamUsersDAO.create", async (t: Test) => {
     const invited = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       userId: null,
-      userEmail: "foo@example.com",
+      userEmail: "FOO@example.com",
       teamId: team.id,
       role: Role.ADMIN,
       label: null,
@@ -41,6 +41,12 @@ test("RawTeamUsersDAO.create", async (t: Test) => {
       deletedAt: null,
       updatedAt: testDate,
     });
+
+    t.equal(
+      invited.userEmail,
+      "foo@example.com",
+      "Should normalise email when creating team user"
+    );
 
     try {
       await RawTeamUsersDAO.create(trx, {
@@ -127,12 +133,42 @@ test("TeamUsersDAO.claimAllByEmail", async (t: Test) => {
     t.equal(claimed[0].userEmail, null);
     t.equal(claimed[0].userId, user.id);
 
+    const team2 = await TeamsDAO.create(trx, {
+      id: uuid.v4(),
+      title: "Test Team 2",
+      createdAt: new Date(),
+      deletedAt: null,
+      type: TeamType.DESIGNER,
+    });
+
+    await RawTeamUsersDAO.create(trx, {
+      id: uuid.v4(),
+      userId: null,
+      userEmail: "foo2@example.com",
+      teamId: team2.id,
+      role: Role.ADMIN,
+      label: null,
+      createdAt: new Date(),
+      deletedAt: null,
+      updatedAt: new Date(),
+    });
+
     const claimed2 = await TeamUsersDAO.claimAllByEmail(
+      trx,
+      "FOO2@example.com",
+      user.id
+    );
+
+    t.equal(claimed2.length, 1, "Handles upper-cased emails");
+    t.equal(claimed2[0].userEmail, null);
+    t.equal(claimed2[0].userId, user.id);
+
+    const claimed3 = await TeamUsersDAO.claimAllByEmail(
       trx,
       "another@example.com",
       user.id
     );
-    t.equal(claimed2.length, 0, "Claims no results for a non-matching email");
+    t.equal(claimed3.length, 0, "Claims no results for a non-matching email");
   } finally {
     await trx.rollback();
   }
