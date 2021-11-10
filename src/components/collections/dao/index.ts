@@ -263,7 +263,11 @@ export async function findByUserFromTeamsWithActiveSubscription(
 ): Promise<Collection[]> {
   return findByUser(ktx, options, (query: Knex.QueryBuilder) =>
     query
-      .leftJoin("subscriptions", "subscriptions.team_id", "collections.team_id")
+      .innerJoin(
+        "subscriptions",
+        "subscriptions.team_id",
+        "collections.team_id"
+      )
       .whereRaw(
         "(subscriptions.cancelled_at is null or subscriptions.cancelled_at > ?)",
         [new Date()]
@@ -403,7 +407,11 @@ export async function findByIdWithActiveTeamSubscription(
 ): Promise<CollectionDb | null> {
   return findById(id, ktx, (query: Knex.QueryBuilder) =>
     query
-      .leftJoin("subscriptions", "subscriptions.team_id", "collections.team_id")
+      .innerJoin(
+        "subscriptions",
+        "subscriptions.team_id",
+        "collections.team_id"
+      )
       .whereRaw(
         "(subscriptions.cancelled_at is null or subscriptions.cancelled_at > ?)",
         [new Date()]

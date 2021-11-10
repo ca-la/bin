@@ -1165,12 +1165,30 @@ test("findByIdWithActiveTeamSubscription", async (t: Test) => {
     null,
     "returns null if collection belongs to a team without active subscription"
   );
+
+  // delete subscription
+  await db("subscriptions").where({ id: subscription.id }).del();
+
+  const notFoundWithDeletedSubscription = await CollectionsDAO.findByIdWithActiveTeamSubscription(
+    collection.id
+  );
+  t.equal(
+    notFoundWithDeletedSubscription,
+    null,
+    "returns null if collection belongs to a team without active subscription"
+  );
 });
 
 test("findByUserFromTeamsWithActiveSubscription", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { team, subscription } = await generateTeam(user.id);
   const { team: team2 } = await generateTeam(user.id);
+  const {
+    team: team3NoSubscription,
+    subscription: subscriptionToDelete,
+  } = await generateTeam(user.id);
+
+  await db("subscriptions").where({ id: subscriptionToDelete.id }).del();
 
   const { collection: collection1Team1 } = await generateCollection({
     teamId: team.id,
@@ -1190,11 +1208,20 @@ test("findByUserFromTeamsWithActiveSubscription", async (t: Test) => {
     title: "Another collection: team 2",
   });
 
-  const { user: user2 } = await createUser({ withSession: false });
-  const { team: team3 } = await generateTeam(user2.id);
   await generateCollection({
-    teamId: team3.id,
-    title: "Another user collection: team 3",
+    teamId: team3NoSubscription.id,
+    title: "The collection: team 3 without subscription",
+  });
+  await generateCollection({
+    teamId: team3NoSubscription.id,
+    title: "Another collection: team 3 without subscription",
+  });
+
+  const { user: user2 } = await createUser({ withSession: false });
+  const { team: team4 } = await generateTeam(user2.id);
+  await generateCollection({
+    teamId: team4.id,
+    title: "Another user collection: team 4",
   });
 
   const foundListAllTeamsHaveActiveSubscription = await CollectionsDAO.findByUserFromTeamsWithActiveSubscription(

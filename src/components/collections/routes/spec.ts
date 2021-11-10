@@ -18,6 +18,7 @@ import { sandbox, test, Test } from "../../../test-helpers/fresh";
 import * as CreateNotifications from "../../../services/create-notifications";
 import { stubFetchUncostedWithLabels } from "../../../test-helpers/stubs/collections";
 import CollectionDb from "../domain-object";
+import generateCollection from "../../../test-helpers/factories/collection";
 import generateCollaborator from "../../../test-helpers/factories/collaborator";
 import * as SubmissionStatusService from "../services/determine-submission-status";
 import db from "../../../services/db";
@@ -940,6 +941,7 @@ test("DELETE /collections/:id", async (t: tape.Test) => {
 test("POST /collections/:id/submissions", async (t: tape.Test) => {
   const owner = await createUser();
   const collaborator = await createUser();
+  const { team } = await generateTeam(owner.user.id);
 
   const plan = await db.transaction(
     async (trx: Knex.Transaction) =>
@@ -978,19 +980,6 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
         planId: plan.id,
         paymentMethodId: paymentMethod.id,
         stripeSubscriptionId: "123",
-        userId: owner.user.id,
-        teamId: null,
-        isPaymentWaived: false,
-      },
-      trx
-    );
-    await SubscriptionsDAO.create(
-      {
-        id: uuid.v4(),
-        cancelledAt: null,
-        planId: plan.id,
-        paymentMethodId: paymentMethod.id,
-        stripeSubscriptionId: "123",
         userId: collaborator.user.id,
         teamId: null,
         isPaymentWaived: false,
@@ -999,13 +988,10 @@ test("POST /collections/:id/submissions", async (t: tape.Test) => {
     );
   });
 
-  const collection = await CollectionsDAO.create({
-    createdAt: new Date(),
+  const { collection } = await generateCollection({
     createdBy: owner.user.id,
-    deletedAt: null,
     description: "Initial commit",
-    id: uuid.v4(),
-    teamId: null,
+    teamId: team.id,
     title: "Drop 001/The Early Years",
   });
   await generateCollaborator({
