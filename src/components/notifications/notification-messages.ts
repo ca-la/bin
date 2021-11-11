@@ -217,6 +217,85 @@ export function getApprovalBaseWithAssets(
   };
 }
 
+interface SubmissionBaseWithAssets {
+  base: Omit<NotificationMessage, "html" | "title" | "text">;
+  actorName: string;
+  designHtmlLink: string;
+  stepHtmlLink: string;
+  submissionHtmlLink: string;
+}
+
+export function getSubmissionBaseWithAssets(
+  notification: FullNotification
+): SubmissionBaseWithAssets | null {
+  const {
+    designId,
+    designTitle,
+    designImageIds,
+    collectionId,
+    collectionTitle,
+    approvalStepId,
+    approvalStepTitle,
+    approvalSubmissionId,
+    approvalSubmissionTitle,
+    type,
+  } = notification;
+
+  if (!approvalStepId || !designId || !approvalSubmissionId) {
+    return null;
+  }
+
+  const design = { id: designId, title: designTitle };
+  const collection = collectionId
+    ? {
+        id: collectionId,
+        title: collectionTitle,
+      }
+    : null;
+  const approvalStep = {
+    id: approvalStepId,
+    title: approvalStepTitle,
+  };
+  const approvalSubmission = {
+    id: approvalSubmissionId,
+    title: approvalSubmissionTitle,
+  };
+
+  const { deepLink } = getLinks({
+    design,
+    approvalStep,
+    approvalSubmission,
+    type: LinkType.ApprovalStepSubmission,
+  });
+  const designHtmlLink = constructHtmlLink(deepLink, normalizeTitle(design));
+  const stepHtmlLink = constructHtmlLink(
+    deepLink,
+    normalizeTitle(approvalStep)
+  );
+  const submissionHtmlLink = constructHtmlLink(
+    deepLink,
+    normalizeTitle(approvalSubmission)
+  );
+  const baseMessage = createBaseMessage(notification);
+  const actorName = escapeHtml(
+    baseMessage.actor.name || baseMessage.actor.email
+  );
+
+  return {
+    base: {
+      ...baseMessage,
+      imageUrl: buildImageUrl(designImageIds),
+      link: deepLink,
+      location: getLocation({ collection, design }),
+      type,
+    },
+    actorName,
+    designHtmlLink,
+    stepHtmlLink,
+    submissionHtmlLink,
+  };
+}
+
 interface TeamBaseWithAssets {
   base: Omit<NotificationMessage, "html" | "title" | "text">;
   actorName: string;

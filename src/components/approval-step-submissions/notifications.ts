@@ -8,7 +8,7 @@ import {
 } from "../../services/cala-component/cala-notifications";
 import {
   span,
-  getApprovalBaseWithAssets,
+  getSubmissionBaseWithAssets,
 } from "../notifications/notification-messages";
 
 export interface NotificationLayerSchema {
@@ -42,7 +42,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
   >(
     NotificationType.APPROVAL_STEP_SUBMISSION_ASSIGNMENT,
     async (notification: FullNotification) => {
-      const assets = getApprovalBaseWithAssets(notification);
+      const assets = getSubmissionBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
@@ -64,7 +64,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
   >(
     NotificationType.APPROVAL_STEP_SUBMISSION_APPROVAL,
     async (notification: FullNotification) => {
-      const assets = getApprovalBaseWithAssets(notification);
+      const assets = getSubmissionBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
@@ -86,7 +86,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
   >(
     NotificationType.APPROVAL_STEP_SUBMISSION_UNSTARTED,
     async (notification: FullNotification) => {
-      const assets = getApprovalBaseWithAssets(notification);
+      const assets = getSubmissionBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
@@ -109,7 +109,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
   >(
     NotificationType.APPROVAL_STEP_SUBMISSION_REVISION_REQUEST,
     async (notification: FullNotification) => {
-      const assets = getApprovalBaseWithAssets(notification);
+      const assets = getSubmissionBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
@@ -131,7 +131,7 @@ const layer: NotificationsLayer<NotificationLayerSchema> = {
   >(
     NotificationType.APPROVAL_STEP_SUBMISSION_REREVIEW_REQUEST,
     async (notification: FullNotification) => {
-      const assets = getApprovalBaseWithAssets(notification);
+      const assets = getSubmissionBaseWithAssets(notification);
       if (!assets) {
         return null;
       }
