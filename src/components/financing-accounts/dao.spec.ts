@@ -7,14 +7,14 @@ import { test, Test, db } from "../../test-helpers/fresh";
 
 import CreditsDAO from "../credits/dao";
 import { CreditType } from "../credits/types";
-import FinancingAccountsDAO, { rawDao } from "./dao";
+import FinancingAccountsDAO from "./dao";
 
 test("FinancingAccountsDAO.findActive", async (t: Test) => {
   const { user } = await createUser({ withSession: false });
   const { team } = await generateTeam(user.id);
 
   const financingAccount = await db.transaction((trx: Knex.Transaction) =>
-    rawDao.create(trx, {
+    FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 5_000_00,

@@ -9,7 +9,7 @@ import { UnsavedQuote } from "../../services/generate-pricing-quote";
 import createUser from "../../test-helpers/create-user";
 import { costCollection } from "../../test-helpers/cost-collection";
 import { CreditsDAO, CreditType } from "../credits";
-import { rawDao as RawFinancingAccountsDAO } from "../financing-accounts/dao";
+import FinancingAccountsDAO from "../financing-accounts/dao";
 import * as ProductDesignsDAO from "../product-designs/dao/dao";
 import { generateSubscription } from "../../test-helpers/factories/subscription";
 import * as SubscriptionsDAO from "../subscriptions/dao";
@@ -352,7 +352,7 @@ test("getCartDetails: with partial credit with no available financing", async (t
   } = await costCollection();
   let financingAccount: FinancingAccountDb;
   await db.transaction(async (trx: Knex.Transaction) => {
-    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+    financingAccount = await FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 500000,
@@ -457,7 +457,7 @@ test("getCartDetails: with partial credit and full financing", async (t: Test) =
   } = await costCollection();
   let financingAccount: FinancingAccountDb;
   await db.transaction(async (trx: Knex.Transaction) => {
-    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+    financingAccount = await FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 25_000_00,
@@ -566,7 +566,7 @@ test("getCartDetails: with partial credit with partial financing", async (t: Tes
   } = await costCollection();
   let financingAccount: FinancingAccountDb;
   await db.transaction(async (trx: Knex.Transaction) => {
-    financingAccount = await RawFinancingAccountsDAO.create(trx, {
+    financingAccount = await FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 500000,

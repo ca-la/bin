@@ -9,9 +9,7 @@ import { CreditsDAO, CreditType } from "../../components/credits";
 import * as InvoicesDAO from "../../dao/invoices";
 import { create as createAddress } from "../../dao/addresses";
 import { findByAddressId } from "../../dao/invoice-addresses";
-import FinancingAccountsDAO, {
-  rawDao as RawFinancingAccountsDAO,
-} from "../../components/financing-accounts/dao";
+import FinancingAccountsDAO from "../../components/financing-accounts/dao";
 import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
 import * as LineItemsDAO from "../../dao/line-items";
 import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
@@ -215,7 +213,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     user,
   } = await setup();
   await db.transaction((trx: Knex.Transaction) =>
-    RawFinancingAccountsDAO.create(trx, {
+    FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 500000,
@@ -462,7 +460,7 @@ test("/quote-payments POST with full financing", async (t: Test) => {
     user,
   } = await setup();
   await db.transaction((trx: Knex.Transaction) =>
-    RawFinancingAccountsDAO.create(trx, {
+    FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 25_000_00,
@@ -580,7 +578,7 @@ test("/quote-payments POST with full financing and full credit", async (t: Test)
     user,
   } = await setup();
   await db.transaction(async (trx: Knex.Transaction) => {
-    await RawFinancingAccountsDAO.create(trx, {
+    await FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 25_000_00,

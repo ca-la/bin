@@ -55,6 +55,9 @@ function findActive(
 }
 
 export default {
-  ...standardDao,
+  create: rawDao.create,
+  update: rawDao.update,
+  find: standardDao.find,
+  findById: standardDao.findById,
   findActive,
 };

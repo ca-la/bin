@@ -44,6 +44,7 @@ export * from "../components/components/types";
 export * from "../components/design-quotes/types";
 export * from "../components/invoice-fee/types";
 export * from "../services/upload-policy/types";
+export * from "../components/financing-accounts/types";
 
 import * as CommentService from "../components/comments/service";
 export { CommentService };

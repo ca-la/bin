@@ -7,7 +7,7 @@ import SessionsDAO from "../../dao/sessions";
 import * as PricingCostInputsDAO from "../pricing-cost-inputs/dao";
 import { costCollection } from "../../test-helpers/cost-collection";
 import ProductDesign from "../product-designs/domain-objects/product-design";
-import { rawDao as RawFinancingAccountsDAO } from "../financing-accounts/dao";
+import FinancingAccountsDAO from "../financing-accounts/dao";
 
 import { DesignQuote } from "./types";
 import * as DesignQuoteService from "./service";
@@ -101,7 +101,7 @@ test("POST /design-quotes: valid", async (t: Test) => {
   } = await costCollection();
 
   const financingAccount = await db.transaction((trx: Knex.Transaction) =>
-    RawFinancingAccountsDAO.create(trx, {
+    FinancingAccountsDAO.create(trx, {
       closedAt: null,
       createdAt: new Date(),
       creditLimitCents: 5_000_00,

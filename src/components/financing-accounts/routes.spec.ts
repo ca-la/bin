@@ -5,7 +5,7 @@ import createUser from "../../test-helpers/create-user";
 import { generateTeam } from "../../test-helpers/factories/team";
 import SessionsDAO from "../../dao/sessions";
 
-import { rawDao } from "./dao";
+import FinancingAccountsDAO from "./dao";
 
 const valid = {
   teamId: "a-team-id",
@@ -21,7 +21,7 @@ test("PATCH /financing-accounts", async (t: Test) => {
     .stub(SessionsDAO, "findById")
     .resolves({ role: "ADMIN", userId: "a-user-id" });
   const updateStub = sandbox()
-    .stub(rawDao, "update")
+    .stub(FinancingAccountsDAO, "update")
     .resolves({
       updated: {
         ...valid,
@@ -29,6 +29,15 @@ test("PATCH /financing-accounts", async (t: Test) => {
         createdAt: testDate,
         closedAt: testDate,
       },
+    });
+  sandbox()
+    .stub(FinancingAccountsDAO, "findById")
+    .resolves({
+      ...valid,
+      id: "a-financing-account-id",
+      createdAt: testDate,
+      closedAt: testDate,
+      availableBalanceCents: 100_000_00,
     });
 
   const [response, body] = await patch(
@@ -50,6 +59,7 @@ test("PATCH /financing-accounts", async (t: Test) => {
         id: "a-financing-account-id",
         createdAt: testDate,
         closedAt: testDate,
+        availableBalanceCents: 100_000_00,
       })
     ),
     "responds with the updated account"
@@ -113,12 +123,21 @@ test("POST /financing-accounts", async (t: Test) => {
     .stub(SessionsDAO, "findById")
     .resolves({ role: "ADMIN", userId: "a-user-id" });
   const createStub = sandbox()
-    .stub(rawDao, "create")
+    .stub(FinancingAccountsDAO, "create")
     .resolves({
       ...valid,
       id: "a-financing-account-id",
       createdAt: testDate,
       closedAt: null,
+    });
+  sandbox()
+    .stub(FinancingAccountsDAO, "findById")
+    .resolves({
+      ...valid,
+      id: "a-financing-account-id",
+      createdAt: testDate,
+      closedAt: null,
+      availableBalanceCents: 100_000_00,
     });
 
   const [response, body] = await post("/financing-accounts", {
@@ -135,6 +154,7 @@ test("POST /financing-accounts", async (t: Test) => {
         id: "a-financing-account-id",
         createdAt: testDate,
         closedAt: null,
+        availableBalanceCents: 100_000_00,
       })
     ),
     "responds with the created account"
@@ -192,7 +212,7 @@ test("GET /financing-accounts?teamId", async (t: Test) => {
     .stub(SessionsDAO, "findById")
     .resolves({ role: "ADMIN", userId: "a-user-id" });
   const findStub = sandbox()
-    .stub(rawDao, "find")
+    .stub(FinancingAccountsDAO, "find")
     .resolves([
       {
         id: "a-financing-account-id",
@@ -202,6 +222,7 @@ test("GET /financing-accounts?teamId", async (t: Test) => {
         termLengthDays: 30,
         feeBasisPoints: 10_00,
         creditLimitCents: 100_000_00,
+        availableBalanceCents: 100_000_00,
       },
     ]);
 
@@ -221,6 +242,7 @@ test("GET /financing-accounts?teamId", async (t: Test) => {
         termLengthDays: 30,
         feeBasisPoints: 10_00,
         creditLimitCents: 100_000_00,
+        availableBalanceCents: 100_000_00,
       },
     ],
     "responds with all found accounts by team"
