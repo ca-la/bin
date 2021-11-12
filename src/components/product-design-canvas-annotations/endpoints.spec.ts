@@ -2,7 +2,7 @@ import { pick } from "lodash";
 import db from "../../services/db";
 
 import uuid from "node-uuid";
-import { test, Test } from "../../test-helpers/fresh";
+import { sandbox, test, Test } from "../../test-helpers/fresh";
 import createUser from "../../test-helpers/create-user";
 import { authHeader, post } from "../../test-helpers/http";
 import { generateDesign } from "../../test-helpers/factories/product-design";
@@ -12,6 +12,7 @@ import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import * as AnnotationCommentsDAO from "../annotation-comments/dao";
 import { AnnotationInput } from "./graphql-types";
 import { Role } from "../team-users/types";
+import { staticAsset } from "../../test-helpers/factories/asset";
 
 const annotationInput: AnnotationInput = {
   id: uuid.v4(),
@@ -19,7 +20,43 @@ const annotationInput: AnnotationInput = {
   x: 1,
   y: 1,
   commentText: "abc",
+  commentAttachments: [],
 };
+
+async function setup() {
+  const { user: owner } = await createUser({ withSession: false });
+  const { user, session } = await createUser();
+  const attachment = staticAsset({
+    userId: user.id,
+    id: uuid.v4(),
+  });
+
+  const { team } = await generateTeam(
+    owner.id,
+    {},
+    {
+      role: Role.EDITOR,
+      userId: user.id,
+    }
+  );
+  const { collection } = await generateCollection({ teamId: team.id });
+  const design = await generateDesign({
+    userId: owner.id,
+    collectionIds: [collection.id],
+  });
+  const { canvas } = await generateCanvas({ designId: design.id });
+
+  return {
+    owner,
+    user,
+    session,
+    attachment,
+    team,
+    collection,
+    design,
+    canvas,
+  };
+}
 
 function buildRequest(annotation: AnnotationInput) {
   return {
@@ -45,11 +82,8 @@ test("CreateAnnotation needs authentication", async (t: Test) => {
 });
 
 test("CreateAnnotation is forbidden for arbitrary user", async (t: Test) => {
-  const { user } = await createUser({ withSession: false });
+  const { canvas } = await setup();
   const { session } = await createUser();
-
-  const design = await generateDesign({ userId: user.id });
-  const { canvas } = await generateCanvas({ designId: design.id });
 
   const [forbiddenResponse, forbiddenBody] = await post("/v2", {
     body: buildRequest({ ...annotationInput, canvasId: canvas.id }),
@@ -93,26 +127,13 @@ test("CreateAnnotation is forbidden for viewer", async (t: Test) => {
   );
 });
 
-test("CreateAnnotation returns annotation and creates a comment", async (t: Test) => {
-  const { user: owner } = await createUser({ withSession: false });
-  const { user, session } = await createUser();
-
-  const { team } = await generateTeam(
-    owner.id,
-    {},
-    {
-      role: Role.EDITOR,
-      userId: user.id,
-    }
-  );
-  const { collection } = await generateCollection({ teamId: team.id });
-  const design = await generateDesign({
-    userId: owner.id,
-    collectionIds: [collection.id],
-  });
-  const { canvas } = await generateCanvas({ designId: design.id });
+test("CreateAnnotation returns annotation and creates a comment without attachments", async (t: Test) => {
+  const { user, session, canvas } = await setup();
   const [response, body] = await post("/v2", {
-    body: buildRequest({ ...annotationInput, canvasId: canvas.id }),
+    body: buildRequest({
+      ...annotationInput,
+      canvasId: canvas.id,
+    }),
     headers: authHeader(session.id),
   });
 
@@ -128,9 +149,47 @@ test("CreateAnnotation returns annotation and creates a comment", async (t: Test
   });
   t.equal(comments.length, 1, "should create exactly 1 comment");
 
-  t.deepEqual(pick(comments[0], "annotationId", "text", "userId"), {
-    annotationId: annotationInput.id,
-    text: annotationInput.commentText,
-    userId: user.id,
+  t.deepEquals(
+    pick(comments[0], "annotationId", "text", "userId"),
+    {
+      annotationId: annotationInput.id,
+      text: annotationInput.commentText,
+      userId: user.id,
+    },
+    "created comment matches expected values"
+  );
+});
+
+test("CreateAnnotation returns annotation and creates a comment with attachments", async (t: Test) => {
+  const testTime = new Date();
+  sandbox().useFakeTimers(testTime);
+
+  const { session, attachment, canvas } = await setup();
+
+  const [response, body] = await post("/v2", {
+    body: buildRequest({
+      ...annotationInput,
+      canvasId: canvas.id,
+      commentAttachments: [attachment],
+    }),
+    headers: authHeader(session.id),
   });
+
+  t.equal(response.status, 200);
+  t.deepEqual(body, {
+    data: {
+      CreateAnnotation: pick(annotationInput, "id", "x", "y"),
+    },
+  });
+
+  const comments = await AnnotationCommentsDAO.findByAnnotationId(db, {
+    annotationId: annotationInput.id,
+  });
+  t.equal(comments.length, 1, "should create exactly 1 comment");
+
+  t.deepEquals(
+    comments[0].attachments,
+    [attachment],
+    "created comment attachments matches expected values"
+  );
 });

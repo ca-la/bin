@@ -72,7 +72,7 @@ const CreateAnnotationEndpoint: GraphQLEndpoint<
           userId,
           isPinned: false,
         },
-        attachments: [],
+        attachments: input.commentAttachments || [],
         userId,
       });
 
