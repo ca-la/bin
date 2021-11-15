@@ -4,7 +4,6 @@ import InvoicesDAO from "../../../../dao/invoices";
 import * as UsersDAO from "../../../../components/users/dao";
 import * as CollectionsDAO from "../../../../components/collections/dao";
 import * as LineItemsDAO from "../../../../dao/line-items";
-import * as PricingQuotesDAO from "../../../../dao/pricing-quotes";
 import TeamsDAO from "../../../../components/teams/dao";
 import * as SlackService from "../../../../services/slack";
 import db from "../../../../services/db";
@@ -13,13 +12,10 @@ import Logger from "../../../../services/logger";
 
 function setup() {
   const findLineItemsStub = sandbox()
-    .stub(LineItemsDAO, "findByInvoiceId")
-    .resolves([{ designId: "d1" }, { designId: "d2" }]);
-  const findQuotesStub = sandbox()
-    .stub(PricingQuotesDAO, "findByDesignIds")
+    .stub(LineItemsDAO, "getLineItemsWithMetaByInvoiceId")
     .resolves([
-      { unitCostCents: 10_00, units: 100 },
-      { unitCostCents: 5_00, units: 100 },
+      { designId: "d1", quotedUnitCostCents: 10_00, quotedUnits: 100 },
+      { designId: "d2", quotedUnitCostCents: 5_00, quotedUnits: 100 },
     ]);
   const findInvoiceStub = sandbox().stub(InvoicesDAO, "findById").resolves({
     id: "an-invoice-id",
@@ -42,7 +38,6 @@ function setup() {
 
   return {
     findLineItemsStub,
-    findQuotesStub,
     findInvoiceStub,
     findUserStub,
     findCollectionStub,
