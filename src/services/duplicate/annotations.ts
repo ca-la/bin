@@ -1,6 +1,7 @@
 import Knex from "knex";
 import { omit } from "lodash";
 
+import Logger from "../../services/logger";
 import * as AnnotationsDAO from "../../components/product-design-canvas-annotations/dao";
 import * as AnnotationCommentsDAO from "../../components/annotation-comments/dao";
 import * as CommentsDAO from "../../components/comments/dao";
@@ -32,8 +33,13 @@ async function findAndDuplicateAnnotationComments(
       parentCommentId =
         originalCommentToDuplicatedCommentIdMap[comment.parentCommentId];
       if (!parentCommentId) {
-        throw new Error(`Cannot map original parentCommentId to duplicated parent commentId:
-check the order of original comments, they should be in the ASC order (thread parents should go first). Comment id: ${comment.id}`);
+        // It's a non-fatal error if we cannot find the parent. Just skip this
+        // comment to avoid weird side effects. Logging for now to have
+        // visibility for if it ever happens.
+        Logger.logServerError(
+          `Could not find the parent comment for ${comment.id}`
+        );
+        continue;
       }
     }
 

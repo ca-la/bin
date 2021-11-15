@@ -69,7 +69,10 @@ export async function findByAnnotationId(
     .where({
       annotation_id: annotationId,
     })
-    .orderBy("created_at", "asc")
+    .clearOrder()
+    .orderBy("created_at", sortOrder || "ASC")
+    .orderByRaw("parent_comment_id ASC NULLS FIRST")
+    .orderBy("id", sortOrder || "ASC")
     .groupBy("ac.annotation_id")
     .modify(modify)
     .modify((query: Knex.QueryBuilder) => {
