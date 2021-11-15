@@ -8,14 +8,12 @@ import Canvas from "../../components/canvases/domain-object";
 import { findAndDuplicateComponent } from "./components";
 import prepareForDuplication from "./prepare-for-duplication";
 import { findAndDuplicateMeasurements } from "./measurements";
-import { findAndDuplicateAnnotations } from "./annotations";
 
 /**
  * Finds the given canvas and duplicates it. Does the same with all related components.
  * Duplication Tree:
  * Canvas --> Components --> Options; (images maintain the same record).
  *        --> Measurements.
- *        --> Annotations --> AnnotationComments --> Comments.
  */
 export async function findAndDuplicateCanvas(
   canvasId: string,
@@ -51,11 +49,8 @@ export async function findAndDuplicateCanvas(
     trx
   );
 
-  // Duplicate Annotations, Measurements.
-  await Promise.all([
-    findAndDuplicateMeasurements(canvasId, duplicateCanvas.id, trx),
-    findAndDuplicateAnnotations(canvasId, duplicateCanvas.id, trx),
-  ]);
+  // Duplicate measurements.
+  await findAndDuplicateMeasurements(canvasId, duplicateCanvas.id, trx);
 
   return duplicateCanvas;
 }
