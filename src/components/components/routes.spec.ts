@@ -2,7 +2,7 @@ import * as ComponentsDAO from "./dao";
 import * as ProductDesignImagesDAO from "../assets/dao";
 import tape from "tape";
 import uuid from "node-uuid";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 import {
   authHeader,
   del,
@@ -61,7 +61,8 @@ test("GET /components/:componentId returns Component", async (t: tape.Test) => {
       "thumbnailLink",
       "originalHeightPx",
       "originalWidthPx",
-      "assetId"
+      "assetId",
+      "key"
     ),
     {
       ...data,

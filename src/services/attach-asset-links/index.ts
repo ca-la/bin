@@ -81,6 +81,7 @@ function constructAssetLinks(
 
   return {
     assetId: asset.id,
+    key: `${asset.id}${pageNumber || ""}`,
     assetLink: hasPreview
       ? buildImgixLink(asset.id, {
           ...DESIGN_PREVIEW_TOOL_FORMAT,
@@ -138,6 +139,7 @@ async function getLink(
 
   return {
     assetId: null,
+    key: "",
     assetLink: null,
     asset3xLink: null,
     downloadLink: "",
@@ -233,6 +235,7 @@ export function constructAttachmentAssetLinks(asset: Asset): AssetLinks {
   const hasPreview = isPreviewable(asset.mimeType);
   return {
     assetId: asset.id,
+    key: asset.id,
     assetLink: hasPreview
       ? buildImgixLink(asset.id, DESIGN_PREVIEW_TOOL_FORMAT)
       : null,

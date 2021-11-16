@@ -2,6 +2,8 @@ import * as z from "zod";
 
 export const assetLinksSchema = z.object({
   assetId: z.string().nullable(),
+  // combination of assetId + page number (if present) to keep assetLinks uniqueness
+  key: z.string(),
   assetLink: z.string().nullable(),
   asset3xLink: z.string().nullable(),
   downloadLink: z.string(),

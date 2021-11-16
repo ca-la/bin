@@ -139,6 +139,7 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
           originalWidthPx: 640,
           originalHeightPx: 480,
           assetId: "test",
+          key: "test",
         };
       }
     );
@@ -223,7 +224,8 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
       "fileType",
       "originalHeightPx",
       "originalWidthPx",
-      "assetId"
+      "assetId",
+      "key"
     ),
     omit(component, "image")
   );
@@ -448,6 +450,7 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
 
   const assetLink = {
     assetId: "test",
+    key: "test",
     assetLink: "https://foo.bar/test.png",
     asset3xLink: "https://foo.bar/test3x.png",
     downloadLink: "",
