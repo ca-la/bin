@@ -15,6 +15,7 @@ export enum BidTaskTypeId {
   PRODUCTION = "31c52ddf-88be-4ed2-9f32-8279ae62fcab",
   PRODUCT_PHOTOGRAPHY = "9a188eba-b472-4b50-85ac-eb86319e642b",
   QUALITY_CONTROL = "48520934-a0e9-436d-ab56-cb2829ccdfed",
+  THREE_D_SERVICES = "cfcd9846-b454-4e7f-9d7e-dff91515bb90",
 }
 export const bidTaskTypeIdSchema = z.nativeEnum(BidTaskTypeId);
 
@@ -49,6 +50,11 @@ export const taskTypesById: Record<BidTaskTypeId, TaskType> = {
     title: "Quality Control",
     assigneeRole: CollaboratorRole.PARTNER,
   },
+  [BidTaskTypeId.THREE_D_SERVICES]: {
+    id: "48520934-a0e9-436d-ab56-cb2829ccdfed",
+    title: "3D Services",
+    assigneeRole: CollaboratorRole.PARTNER,
+  },
 };
 
 export const idsByTaskTypeTitle: Record<string, BidTaskTypeId> = {
@@ -61,4 +67,6 @@ export const idsByTaskTypeTitle: Record<string, BidTaskTypeId> = {
     BidTaskTypeId.PRODUCT_PHOTOGRAPHY,
   [taskTypesById[BidTaskTypeId.QUALITY_CONTROL].title]:
     BidTaskTypeId.QUALITY_CONTROL,
+  [taskTypesById[BidTaskTypeId.THREE_D_SERVICES].title]:
+    BidTaskTypeId.THREE_D_SERVICES,
 };
