@@ -31,6 +31,7 @@ const tuDb1: TeamUserDb = {
   userId: "a-user-id",
   userEmail: null,
   role: Role.ADMIN,
+  teamOrdering: 0,
   label: null,
   createdAt: now,
   deletedAt: null,
@@ -1454,6 +1455,71 @@ test("DEL /team-users/:id doesn't allow CALA admin to delete team owner", async 
   t.equal(deleteStub.callCount, 0, "Does not delete the team owner");
 });
 
+test("PATCH /reorder valid", async (t: Test) => {
+  const { updateStub } = setup();
+  const body = [
+    { id: "1", teamOrdering: 0 },
+    { id: "2", teamOrdering: 1 },
+  ];
+  const [response] = await patch("/team-users/reorder", {
+    headers: authHeader("a-session-id"),
+    body,
+  });
+
+  t.equal(response.status, 204, "Allows reordering");
+  t.equal(updateStub.callCount, 2, "Calls update method twice");
+  t.equal(updateStub.firstCall.args[1], body[0].id, "First call id is correct");
+  t.deepEqual(
+    updateStub.firstCall.args[2],
+    { teamOrdering: 0 },
+    "First call ordering is correct"
+  );
+  t.equal(
+    updateStub.secondCall.args[1],
+    body[1].id,
+    "Second call id is correct"
+  );
+  t.deepEqual(
+    updateStub.secondCall.args[2],
+    { teamOrdering: 1 },
+    "Second call is with correct ordering"
+  );
+});
+
+test("PATCH /reorder invalid", async (t: Test) => {
+  setup();
+  const [response1] = await patch("/team-users/reorder", {
+    headers: authHeader("a-session-id"),
+    body: [{ id: "1" }, { id: "2", teamOrdering: 0 }],
+  });
+
+  t.equal(response1.status, 400, "teamOrdering should be provided");
+
+  const [response2] = await patch("/team-users/reorder", {
+    headers: authHeader("a-session-id"),
+    body: [{ teamOrdering: 3 }, { id: "2", teamOrdering: 0 }],
+  });
+
+  t.equal(response2.statusText, "Bad Request", "id should be provided");
+
+  const [response3] = await patch("/team-users/reorder", {
+    headers: authHeader("a-session-id"),
+  });
+
+  t.equal(response3.statusText, "Bad Request", "body can't be empty");
+});
+
+test("PATCH /reorder unauthenticated", async (t: Test) => {
+  const { sessionsStub } = setup();
+  sessionsStub.resolves(null);
+  const [unauthenticated] = await patch("/team-users/reorder", {
+    headers: authHeader("a-session-id"),
+    body: [{ id: 0, teamOrdering: 1 }],
+  });
+
+  t.equal(unauthenticated.status, 401, "Responds with unauthenticated");
+});
+
 test("/team-users end-to-end", async (t: Test) => {
   sandbox()
     .stub(FindTeamPlans, "areThereAvailableSeatsInTeamPlan")
@@ -1482,6 +1548,7 @@ test("/team-users end-to-end", async (t: Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: Role.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: unusedTeam.id,
       userId: teamAdmin.user.id,
@@ -1501,6 +1568,7 @@ test("/team-users end-to-end", async (t: Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: Role.ADMIN,
+      teamOrdering: 0,
       label: null,
       teamId,
       userId: teamAdmin.user.id,

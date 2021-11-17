@@ -45,7 +45,12 @@ test("createTeamWithOwner", async (t: Test) => {
 
   t.deepEqual(
     created,
-    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
+    {
+      ...t1,
+      role: Role.OWNER,
+      teamUserId: teamUserDbTestBlank.id,
+      teamOrdering: teamUserDbTestBlank.teamOrdering,
+    },
     "returns the created team with role"
   );
   t.deepEqual(
@@ -70,6 +75,7 @@ test("createTeamWithOwner", async (t: Test) => {
         userEmail: null,
         id: "a-uuid",
         role: Role.OWNER,
+        teamOrdering: 0,
         label: null,
         createdAt: testDate,
         updatedAt: testDate,
@@ -106,7 +112,12 @@ test("createTeamWithOwnerAndSubscription with free plan", async (t: Test) => {
 
   t.deepEqual(
     created,
-    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
+    {
+      ...t1,
+      role: Role.OWNER,
+      teamUserId: teamUserDbTestBlank.id,
+      teamOrdering: teamUserDbTestBlank.teamOrdering,
+    },
     "returns the created team with role"
   );
   t.deepEqual(
@@ -131,6 +142,7 @@ test("createTeamWithOwnerAndSubscription with free plan", async (t: Test) => {
         userEmail: null,
         id: "a-uuid",
         role: Role.OWNER,
+        teamOrdering: 0,
         label: null,
         createdAt: testDate,
         updatedAt: testDate,
@@ -184,7 +196,12 @@ test("createTeamWithOwnerAndSubscription with no free plan", async (t: Test) => 
 
   t.deepEqual(
     created,
-    { ...t1, role: Role.OWNER, teamUserId: teamUserDbTestBlank.id },
+    {
+      ...t1,
+      role: Role.OWNER,
+      teamUserId: teamUserDbTestBlank.id,
+      teamOrdering: teamUserDbTestBlank.teamOrdering,
+    },
     "returns the created team with role"
   );
   t.deepEqual(
@@ -209,6 +226,7 @@ test("createTeamWithOwnerAndSubscription with no free plan", async (t: Test) => 
         userEmail: null,
         id: "a-uuid",
         role: Role.OWNER,
+        teamOrdering: 0,
         label: null,
         createdAt: testDate,
         updatedAt: testDate,

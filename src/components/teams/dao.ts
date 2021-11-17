@@ -63,7 +63,16 @@ async function findByUser(
     modifier(
       query
         .join("team_users", "team_users.team_id", "teams.id")
-        .select(["team_users.role as role", "team_users.id as team_user_id"])
+        .select([
+          "team_users.role as role",
+          "team_users.id as team_user_id",
+          "team_users.team_ordering",
+        ])
+        .clearOrder()
+        .orderBy([
+          "team_users.team_ordering",
+          { column: "created_at", order: "DESC" },
+        ])
         .where({
           "team_users.deleted_at": null,
           "team_users.user_id": userId,

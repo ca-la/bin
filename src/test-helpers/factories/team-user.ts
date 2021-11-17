@@ -30,6 +30,7 @@ export async function generateTeamUser(
   const teamUserData: TeamUserDb = {
     id: uuid.v4(),
     role: TeamUserRole.OWNER,
+    teamOrdering: 0,
     label: null,
     userEmail: null,
     userId: userId as string,

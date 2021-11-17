@@ -38,8 +38,16 @@ export const TeamEndpoint: GraphQLEndpoint<
     return {
       ...team,
       ...(teamUser
-        ? { teamUserId: teamUser.id, role: teamUser.role }
-        : { teamUserId: null, role: TeamUserRole.ADMIN }),
+        ? {
+            teamUserId: teamUser.id,
+            role: teamUser.role,
+            teamOrdering: teamUser.teamOrdering,
+          }
+        : {
+            teamUserId: null,
+            role: TeamUserRole.ADMIN,
+            teamOrdering: 0,
+          }),
     };
   },
 };

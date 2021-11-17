@@ -14,6 +14,8 @@ import {
   teamUserUpdateLabelSchema,
   FREE_TEAM_USER_ROLES,
   TEAM_ROLE_PERMISSIVENESS,
+  TeamUserRow,
+  TeamUserReorder,
 } from "./types";
 import TeamUsersDAO, { rawDao as RawTeamUsersDAO } from "./dao";
 import * as SubscriptionsDAO from "../subscriptions/dao";
@@ -289,6 +291,7 @@ export async function createTeamUser(
     createdAt: new Date(),
     deletedAt: null,
     updatedAt: new Date(),
+    teamOrdering: 0,
     ...(user
       ? { userId: user.id, userEmail: null }
       : { userEmail, userId: null }),
@@ -431,4 +434,17 @@ async function transferOwnership(
   await updateCustomer(customer.customerId, {
     email: teamUser.user.email || "",
   });
+}
+
+export async function reorderUserTeams(
+  trx: Knex.Transaction,
+  data: TeamUserReorder
+): Promise<Partial<TeamUserRow>[]> {
+  const result: Partial<TeamUserRow>[] = [];
+  for (const { id, teamOrdering } of data) {
+    const { updated } = await RawTeamUsersDAO.update(trx, id, { teamOrdering });
+    result.push(updated);
+  }
+
+  return result;
 }

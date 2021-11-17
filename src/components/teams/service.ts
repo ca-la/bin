@@ -55,12 +55,18 @@ export async function createTeamWithOwner(
     id: uuid.v4(),
     role: Role.OWNER,
     label: null,
+    teamOrdering: 0,
     createdAt: new Date(),
     deletedAt: null,
     updatedAt: new Date(),
   });
 
-  return { ...created, role: createdUser.role, teamUserId: createdUser.id };
+  return {
+    ...created,
+    role: createdUser.role,
+    teamUserId: createdUser.id,
+    teamOrdering: createdUser.teamOrdering,
+  };
 }
 
 export type CheckLimitResult =

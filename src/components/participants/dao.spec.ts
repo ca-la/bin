@@ -94,6 +94,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      teamOrdering: 0,
       label: "Tech Designer",
       teamId: team.id,
       userId: teamViewer.id,
@@ -107,6 +108,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: null,
@@ -120,6 +122,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      teamOrdering: 0,
       label: "Team user label",
       teamId: team.id,
       userId: user7.id,
@@ -133,6 +136,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: null,
@@ -146,6 +150,7 @@ async function setup() {
     RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: partnerTeam.id,
       userId: null,

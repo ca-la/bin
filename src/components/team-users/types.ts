@@ -57,6 +57,7 @@ const baseDb = {
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
+  teamOrdering: z.number().nonnegative(),
 };
 
 export const registeredDbSchema = z.object({
@@ -74,6 +75,7 @@ export const registeredDbRowSchema = z.object({
   deleted_at: registeredDbSchema.shape.deletedAt,
   user_id: registeredDbSchema.shape.userId,
   user_email: registeredDbSchema.shape.userEmail,
+  team_ordering: registeredDbSchema.shape.teamOrdering,
 });
 
 export const invitedDbSchema = z.object({
@@ -91,6 +93,7 @@ export const invitedDbRowSchema = z.object({
   deleted_at: invitedDbSchema.shape.deletedAt,
   user_id: invitedDbSchema.shape.userId,
   user_email: invitedDbSchema.shape.userEmail,
+  team_ordering: registeredDbSchema.shape.teamOrdering,
 });
 
 export const teamUserDbSchema = z.union([invitedDbSchema, registeredDbSchema]);
@@ -178,10 +181,21 @@ export const teamUserUpdateSchema = z.union([
 
 export type TeamUserUpdate = z.infer<typeof teamUserUpdateSchema>;
 
+const teamUserReorderBody = z.array(
+  z.object({ id: z.string(), teamOrdering: z.number().nonnegative() })
+);
+
+export const teamUserReorderRequest = z.object({
+  request: z.object({ body: teamUserReorderBody }),
+});
+
+export type TeamUserReorder = z.infer<typeof teamUserReorderBody>;
+
 export const teamUserDbTestBlank: TeamUserDb = {
   id: "team-user-1",
   teamId: "team-1",
   role: Role.VIEWER,
+  teamOrdering: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,

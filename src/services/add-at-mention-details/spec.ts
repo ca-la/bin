@@ -217,6 +217,7 @@ test("addAtMentionDetails adds details for deleted and non-registered team users
     const nonRegisteredTeamUser = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      teamOrdering: 0,
       label: null,
       userEmail: "testing@example.com",
       userId: null,

@@ -1707,6 +1707,7 @@ test("immediatelySendInviteTeamUser with a non-CALA user", async (t: tape.Test) 
       id: uuid.v4(),
       teamId: team.id,
       role: TeamUserRole.EDITOR,
+      teamOrdering: 0,
       userEmail: "example@example.com",
       userId: null,
       createdAt: new Date(),

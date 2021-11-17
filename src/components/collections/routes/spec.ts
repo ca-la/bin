@@ -232,6 +232,7 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: teamViewerSession.userId,
@@ -243,6 +244,7 @@ test("POST /collections with a teamId", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.TEAM_PARTNER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: teamPartnerSession.userId,

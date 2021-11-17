@@ -29,6 +29,7 @@ export type TeamDbRow = z.infer<typeof teamDbRowSchema>;
 export const teamSchema = teamDbSchema.extend({
   role: z.nativeEnum(TeamUserRole),
   teamUserId: z.string().nullable(),
+  teamOrdering: z.number().nonnegative(),
 });
 export type Team = z.infer<typeof teamSchema>;
 
@@ -73,6 +74,7 @@ export const teamTestBlank: Team = {
   teamUserId: "a-team-user-id",
   title: "A team",
   type: TeamType.DESIGNER,
+  teamOrdering: 0,
 };
 
 export interface TeamInput {

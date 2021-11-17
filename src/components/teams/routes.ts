@@ -172,6 +172,7 @@ function* findTeam(this: WithResponseBody<AuthedContext, Team | TeamDb>) {
       ...team,
       role: teamUser.role,
       teamUserId: teamUser.id,
+      teamOrdering: teamUser.teamOrdering,
     };
   } else {
     this.body = team;

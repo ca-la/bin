@@ -72,6 +72,7 @@ test("getRecipients* and getUsers*", async (t: Test) => {
     const tu2 = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.ADMIN,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: userForTeam2.id,
@@ -85,6 +86,7 @@ test("getRecipients* and getUsers*", async (t: Test) => {
     const tu3 = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.EDITOR,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: userForTeam3.id,
@@ -99,6 +101,7 @@ test("getRecipients* and getUsers*", async (t: Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: userForTeam4.id,
@@ -111,6 +114,7 @@ test("getRecipients* and getUsers*", async (t: Test) => {
     const teamUserWithoutUserId = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.EDITOR,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: null,
@@ -209,6 +213,7 @@ test("getRecipients* and getUsers*", async (t: Test) => {
     const teamUserAndCollaborator = await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.EDITOR,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: userAsTeamUserAndCollaborator.id,

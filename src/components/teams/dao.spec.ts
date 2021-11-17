@@ -31,6 +31,7 @@ async function setup() {
       userId: deletedTeamUser.id,
       userEmail: null,
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: "",
       createdAt: new Date(),
       deletedAt: new Date(),
@@ -214,7 +215,14 @@ test("TeamsDAO.findByUser: returns only related teams", async (t: Test) => {
 
     t.deepEquals(
       await TeamsDAO.findByUser(trx, user.id),
-      [{ ...team, role: teamUser.role, teamUserId: teamUser.id }],
+      [
+        {
+          ...team,
+          role: teamUser.role,
+          teamUserId: teamUser.id,
+          teamOrdering: teamUser.teamOrdering,
+        },
+      ],
       "Returns only initial team"
     );
     t.deepEquals(
@@ -224,6 +232,7 @@ test("TeamsDAO.findByUser: returns only related teams", async (t: Test) => {
           ...anotherTeam,
           role: anotherTeamUser.role,
           teamUserId: anotherTeamUser.id,
+          teamOrdering: teamUser.teamOrdering,
         },
       ],
       "Returns only another team"

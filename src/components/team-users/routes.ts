@@ -26,6 +26,7 @@ import {
   teamUserDomain,
   unsavedTeamUserSchema,
   TeamUserDb,
+  teamUserReorderRequest,
 } from "./types";
 import {
   createTeamUser,
@@ -33,6 +34,7 @@ import {
   updateTeamUser,
   requireTeamUserByTeamUserId,
   removeTeamUser,
+  reorderUserTeams,
   TeamUserRoleState,
   TeamUserState,
   RequireTeamRolesContext,
@@ -47,6 +49,9 @@ import {
 } from "../../services/pubsub/cala-events";
 import ConflictError from "../../errors/conflict";
 import { StrictContext } from "../../router-context";
+import { AuthedState } from "../../apollo";
+import { parseContext } from "../../services/parse-context";
+import Knex from "knex";
 
 interface FindTeamByTeamUserContext extends StrictContext {
   state: TeamUserState;
@@ -207,6 +212,22 @@ async function deleteTeamUser(ctx: DeleteContext) {
   ctx.status = 204;
 }
 
+interface ReorderContext extends StrictContext {
+  state: AuthedState & TeamUserState;
+}
+
+async function reorder(ctx: ReorderContext) {
+  const {
+    request: { body },
+  } = parseContext(ctx, teamUserReorderRequest);
+
+  await db.transaction(async (trx: Knex.Transaction) => {
+    await reorderUserTeams(trx, body);
+  });
+
+  ctx.status = 204;
+}
+
 interface CreateRequireTeamRolesContext extends RequireTeamRolesContext {
   state: RequireTeamRolesContext["state"] & SafeBodyState<UnsavedTeamUser>;
 }
@@ -285,6 +306,9 @@ export default {
         useTransaction,
         convert.back(deleteTeamUser),
       ],
+    },
+    "/reorder": {
+      patch: [requireAuth, convert.back(reorder)],
     },
   },
 };

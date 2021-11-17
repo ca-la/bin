@@ -730,6 +730,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.EDITOR,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: user2.id,
@@ -741,6 +742,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: user3.id,
@@ -752,6 +754,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.VIEWER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: user4.id,
@@ -763,6 +766,7 @@ test("#getDesignPermissions by team", async (t: tape.Test) => {
     await RawTeamUsersDAO.create(trx, {
       id: uuid.v4(),
       role: TeamUserRole.TEAM_PARTNER,
+      teamOrdering: 0,
       label: null,
       teamId: team.id,
       userId: user5.id,
@@ -1035,6 +1039,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await RawTeamUsersDAO.create(trx, {
     id: uuid.v4(),
     role: TeamUserRole.TEAM_PARTNER,
+    teamOrdering: 0,
     label: null,
     teamId: team.id,
     userId: user3.id,
@@ -1047,6 +1052,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await RawTeamUsersDAO.create(trx, {
     id: uuid.v4(),
     role: TeamUserRole.EDITOR,
+    teamOrdering: 0,
     label: null,
     teamId: team.id,
     userId: user4.id,
@@ -1059,6 +1065,7 @@ test("#getCollectionPermissions", async (t: tape.Test) => {
   await RawTeamUsersDAO.create(trx, {
     id: uuid.v4(),
     role: TeamUserRole.VIEWER,
+    teamOrdering: 0,
     label: null,
     teamId: team.id,
     userId: teamViewerUser.id,
