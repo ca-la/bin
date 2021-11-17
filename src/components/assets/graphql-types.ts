@@ -1,48 +1,19 @@
-import { GraphQLType } from "../../apollo/published-types/published-types";
+import { GraphQLType, schemaToGraphQLType } from "../../apollo/published-types";
+import { assetLinksSchema, assetSchema, attachmentSchema } from "./types";
 
-export const AssetLinks: GraphQLType = {
-  name: "AssetLinks",
-  type: "type",
-  body: {
-    assetId: "String",
-    assetLink: "String",
-    asset3xLink: "String",
-    downloadLink: "String!",
-    fileType: "String!",
-    thumbnail2xLink: "String",
-    thumbnailLink: "String",
-    originalWidthPx: "Int",
-    originalHeightPx: "Int",
-  },
-};
+export const AssetLinks: GraphQLType = schemaToGraphQLType(
+  "AssetLinks",
+  assetLinksSchema
+);
 
-export const Asset: GraphQLType = {
-  name: "Asset",
-  type: "type",
-  body: {
-    id: "String!",
-    createdAt: "GraphQLDateTime!",
-    description: "String",
-    mimeType: "String",
-    originalHeightPx: "Int",
-    originalWidthPx: "Int",
-    title: "String",
-    uploadCompletedAt: "GraphQLDateTime",
-    userId: "String",
-  },
-};
+export const Asset: GraphQLType = schemaToGraphQLType("Asset", assetSchema);
+export const Attachment: GraphQLType = schemaToGraphQLType(
+  "Attachment",
+  attachmentSchema
+);
 
-export const Attachment: GraphQLType = {
-  name: "Attachment",
-  type: "type",
-  body: {
-    ...Asset.body,
-    ...AssetLinks.body,
-  },
-};
-
-export const AttachmentInput: GraphQLType = {
-  name: "AttachmentInput",
-  type: "input",
-  body: Asset.body,
-};
+export const AttachmentInput: GraphQLType = schemaToGraphQLType(
+  "AttachmentInput",
+  assetSchema,
+  { type: "input" }
+);

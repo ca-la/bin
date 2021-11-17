@@ -127,6 +127,7 @@ test("createComment", async (t: Test) => {
         {
           id: "attachment-id",
           thumbnailLink: "tl",
+          mimeType: "image/png",
         },
       ],
     });
