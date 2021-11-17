@@ -23,8 +23,8 @@ export const THUMBNAIL_FORMAT: Partial<ImgixOptions> = { width: 160 };
 export const EMAIL_PREVIEW_FORMAT: Partial<ImgixOptions> = { height: 194 };
 const DESIGN_PREVIEW_THUMBNAIL: Partial<ImgixOptions> = {
   fit: "fill",
-  width: 104,
-  height: 104,
+  width: 208,
+  height: 160,
 };
 const ATTACHMENT_PREVIEW: Partial<ImgixOptions> = {
   fit: "fill",

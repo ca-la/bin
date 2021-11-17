@@ -138,11 +138,11 @@ test("addAssetLink returns aws link when component is of type sketch", async (t:
   );
   t.equal(
     enrichedComponent.thumbnailLink,
-    `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104`
+    `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=160&w=208`
   );
   t.equal(
     enrichedComponent.thumbnail2xLink,
-    `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
+    `https://imgix.example.com/${sketchId}?fm=jpg&fit=fill&h=160&w=208&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "png");
   t.equal(enrichedComponent.assetId, sketchId);
@@ -182,11 +182,11 @@ test("addAssetLink returns link when component is of type artwork", async (t: Te
   );
   t.equal(
     enrichedComponent.thumbnailLink,
-    `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104`
+    `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=160&w=208`
   );
   t.equal(
     enrichedComponent.thumbnail2xLink,
-    `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
+    `https://imgix.example.com/${artworkId}?fm=jpg&fit=fill&h=160&w=208&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "heic");
   t.equal(enrichedComponent.assetId, artworkId);
@@ -231,11 +231,11 @@ test("addAssetLink returns link when component is of type material", async (t: T
   );
   t.equal(
     enrichedComponent.thumbnailLink,
-    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104`
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=160&w=208`
   );
   t.equal(
     enrichedComponent.thumbnail2xLink,
-    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&dpr=2`
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=160&w=208&dpr=2`
   );
   t.equal(enrichedComponent.fileType, "psd");
   t.equal(enrichedComponent.assetId, materialImageId);
@@ -320,10 +320,10 @@ test("addAssetLink returns paginated links for components with pages", async (t:
   );
   t.equal(
     enrichedComponent.thumbnailLink,
-    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&page=2`
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=160&w=208&page=2`
   );
   t.equal(
     enrichedComponent.thumbnail2xLink,
-    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=104&w=104&dpr=2&page=2`
+    `https://imgix.example.com/${materialImageId}?fm=jpg&fit=fill&h=160&w=208&dpr=2&page=2`
   );
 });
