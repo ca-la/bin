@@ -359,6 +359,7 @@ test("PATCH /teams/:id as team OWNER", async (t: Test) => {
 
 test("PATCH /teams/:id as ADMIN", async (t: Test) => {
   const { updateStub } = setup({ role: "ADMIN" });
+  sandbox().stub(TeamUsersDAO, "findOne").resolves({ role: "OWNER" });
 
   const [response] = await patch("/teams/a-team-id", {
     headers: authHeader("a-session-id"),

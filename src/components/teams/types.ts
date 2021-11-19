@@ -48,6 +48,16 @@ export const unsavedTeamSchema = teamDbSchema.omit({
   type: true,
 });
 
+export const teamUpdateSchema = z.union([
+  z.object({ type: teamTypeSchema }),
+  z.object({ title: z.string().min(1) }),
+]);
+
+export const teamUpdateRequest = z.object({
+  request: z.object({ body: teamUpdateSchema }),
+  params: z.object({ id: z.string() }),
+});
+
 export const teamSubscriptionUpgradeSchema = z.object({
   planId: z.string(),
   stripeCardToken: z.string().nullable().optional(),

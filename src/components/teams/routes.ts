@@ -21,14 +21,10 @@ import {
   TeamType,
   teamSubscriptionUpgradeSchema,
   TeamSubscriptionUpgrade,
-  teamDbSchema,
   SubscriptionUpdateDetails,
+  teamUpdateRequest,
 } from "./types";
-import {
-  SafeBodyState,
-  typeGuardFromSchema,
-} from "../../middleware/type-guard";
-import { buildRouter } from "../../services/cala-component/cala-router";
+import { typeGuardFromSchema } from "../../middleware/type-guard";
 import { createTeamWithOwnerAndSubscription } from "./service";
 import {
   requireTeamRoles,
@@ -39,6 +35,8 @@ import filterError from "../../services/filter-error";
 import InvalidDataError from "../../errors/invalid-data";
 import { StrictContext } from "../../router-context";
 import { getTeamSubscriptionUpdateDetails } from "../subscriptions/get-update-details";
+import { parseContext } from "../../services/parse-context";
+import ResourceNotFoundError from "../../errors/resource-not-found";
 
 const domain = "Team" as "Team";
 
@@ -204,39 +202,50 @@ function* deleteTeam(this: TrxContext<AuthedContext>) {
   this.status = 200;
 }
 
-interface CheckUpdateRightsContext extends StrictContext {
-  state: SafeBodyState<Partial<TeamDb>> & AuthedState;
+interface UpdateTeamBody {
+  title: string;
+  type: string;
 }
 
-const checkUpdateRights = convert.back(
-  async (ctx: CheckUpdateRightsContext, next: () => Promise<any>) => {
-    if (ctx.state.safeBody.type !== undefined) {
-      if (ctx.state.role !== "ADMIN") {
-        ctx.throw(403);
-      }
+interface UpdateContext extends StrictContext<UpdateTeamBody> {
+  state: AuthedState;
+}
+
+async function updateTeam(ctx: UpdateContext) {
+  const {
+    request: { body },
+    params: { id },
+  } = parseContext(ctx, teamUpdateRequest);
+
+  const { userId } = ctx.state;
+
+  if (body.hasOwnProperty("type") && ctx.state.role !== "ADMIN") {
+    ctx.throw(403);
+  }
+
+  return db.transaction(async (trx: Knex.Transaction) => {
+    const { updated } = await TeamsDAO.update(trx, id, body).catch(
+      filterError(ResourceNotFoundError, (err: ResourceNotFoundError) => {
+        ctx.throw(404, err.message);
+      })
+    );
+
+    const teamUser = await TeamUsersDAO.findOne(db, { teamId: id, userId });
+
+    if (teamUser) {
+      ctx.body = {
+        ...updated,
+        role: teamUser.role,
+        teamUserId: teamUser.id,
+        teamOrdering: teamUser.teamOrdering,
+      };
+    } else {
+      ctx.body = updated;
     }
 
-    await next();
-  }
-);
-
-const standardRouter = buildRouter<TeamDb>("Team", "/teams", TeamsDAO, {
-  pickRoutes: ["update"],
-  routeOptions: {
-    update: {
-      middleware: [
-        requireAuth,
-        typeGuardFromSchema<Partial<TeamDb>>(teamDbSchema.partial()),
-        checkUpdateRights,
-        requireTeamRoles(
-          [TeamUserRole.ADMIN, TeamUserRole.OWNER, TeamUserRole.EDITOR],
-          findTeamById
-        ),
-      ],
-      allowedAttributes: ["type", "title"],
-    },
-  },
-});
+    ctx.status = 200;
+  });
+}
 
 function* upgradeTeamSubscriptionRouteHandler(
   this: TrxContext<AuthedContext<TeamSubscriptionUpgrade>>
@@ -297,7 +306,14 @@ export default {
       get: [requireAuth, findTeams],
     },
     "/:id": {
-      ...standardRouter.routes["/:id"],
+      patch: [
+        requireAuth,
+        requireTeamRoles(
+          [TeamUserRole.ADMIN, TeamUserRole.OWNER, TeamUserRole.EDITOR],
+          findTeamById
+        ),
+        convert.back(updateTeam),
+      ],
       get: [
         requireAuth,
         requireTeamRoles(Object.values(TeamUserRole), findTeamById),

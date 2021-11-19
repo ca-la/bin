@@ -213,7 +213,7 @@ async function deleteTeamUser(ctx: DeleteContext) {
 }
 
 interface ReorderContext extends StrictContext {
-  state: AuthedState & TeamUserState;
+  state: AuthedState;
 }
 
 async function reorder(ctx: ReorderContext) {
