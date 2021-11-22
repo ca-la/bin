@@ -137,7 +137,7 @@ test("schemaToGraphQLType", async (t: Test) => {
   } catch (err) {
     t.is(
       err.message,
-      'Found an unprocessable field ref2 when building a type "T1"'
+      'Found an unprocessable field ref2 when building the type "T1"'
     );
   }
 });

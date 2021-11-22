@@ -65,8 +65,11 @@ export async function createAll(
   );
 }
 
-export async function findById(assetId: string): Promise<Asset | null> {
-  const found = await db(TABLE_NAME)
+export async function findById(
+  assetId: string,
+  ktx: Knex = db
+): Promise<Asset | null> {
+  const found = await ktx(TABLE_NAME)
     .select("*")
     .where({ id: assetId })
     .catch(rethrow)

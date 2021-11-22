@@ -1,10 +1,12 @@
+import Knex from "knex";
 import { Component, ComponentType } from "./types";
 import * as AssetsDAO from "../../components/assets/dao";
 import OptionsDAO from "../../dao/product-design-options";
 import Asset from "../../components/assets/types";
 
 export default async function getAsset(
-  component: Component
+  component: Component,
+  trx?: Knex.Transaction
 ): Promise<Asset | null> {
   switch (component.type) {
     case ComponentType.Artwork: {
@@ -12,7 +14,7 @@ export default async function getAsset(
         throw new Error(`Component ${component.id} has no artwork_id.`);
       }
 
-      return await AssetsDAO.findById(component.artworkId);
+      return await AssetsDAO.findById(component.artworkId, trx);
     }
 
     case ComponentType.Sketch: {
@@ -20,12 +22,12 @@ export default async function getAsset(
         throw new Error(`Component ${component.id} has no sketch_id.`);
       }
 
-      return await AssetsDAO.findById(component.sketchId);
+      return await AssetsDAO.findById(component.sketchId, trx);
     }
 
     case ComponentType.Material: {
-      const option = await OptionsDAO.findById(component.materialId);
-      return await AssetsDAO.findById(option.previewImageId);
+      const option = await OptionsDAO.findById(component.materialId, trx);
+      return await AssetsDAO.findById(option.previewImageId, trx);
     }
   }
 }

@@ -1,17 +1,15 @@
 import Router from "koa-router";
 import Knex from "knex";
 import convert from "koa-convert";
+import { omit } from "lodash";
 import { z } from "zod";
 
 import * as CanvasesDAO from "./dao";
 import requireAuth = require("../../middleware/require-auth");
 import * as ComponentsDAO from "../components/dao";
-import ProductDesignOptionsDAO from "../../dao/product-design-options";
-import * as ProductDesignImagesDAO from "../assets/dao";
 import Canvas from "./domain-object";
 import {
   Component,
-  ComponentType,
   serializedComponentArraySchema,
   serializedComponentSchema,
 } from "../components/types";
@@ -19,21 +17,21 @@ import { nullableDateStringToNullableDate } from "../../services/zod-helpers";
 import * as EnrichmentService from "../../services/attach-asset-links";
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
-import ProductDesignImage from "../assets/types";
-import ProductDesignOption from "../../domain-objects/product-design-option";
 import { hasProperties } from "../../services/require-properties";
-import { omit } from "lodash";
 import { parseContext } from "../../services/parse-context";
 import { gatherChanges } from "./services/gather-changes";
-import { deserializeAsset } from "../assets/services/serializer";
-import { Serialized } from "../../types/serialized";
 import { NonSplittableComponentError } from "../components/split";
 import * as CanvasSplitService from "./services/split";
+import {
+  CanvasWithComponent,
+  createCanvasAndComponents,
+} from "./services/create-canvas-and-components";
 import { StrictContext } from "../../router-context";
 import useTransaction, {
   TransactionState,
 } from "../../middleware/use-transaction";
-import { logClientError, logServerError } from "../../services/logger";
+import { logClientError } from "../../services/logger";
+import { CanvasWithEnrichedComponents } from "./types";
 
 const router = new Router();
 
@@ -53,45 +51,6 @@ function isSaveableCanvas(obj: any): obj is MaybeUnsaved<Canvas> {
   );
 }
 
-const attachUser = (request: any, userId: string): any => {
-  return {
-    ...request,
-    createdBy: userId,
-  };
-};
-
-function* create(this: AuthedContext): Iterator<any, any, any> {
-  if (Array.isArray(this.request.body)) {
-    yield createWithComponents;
-  } else {
-    yield createCanvas;
-  }
-}
-
-function* createCanvas(this: AuthedContext): Iterator<any, any, any> {
-  const body = attachUser(this.request.body, this.state.userId);
-  if (!this.request.body || !isSaveableCanvas(body)) {
-    this.throw(400, "Request does not match Canvas");
-  }
-
-  const canvas = yield CanvasesDAO.create(body);
-  this.status = 201;
-  this.body = { ...canvas, components: [] };
-}
-
-type ComponentWithImageAndOption = Component & {
-  image: Serialized<ProductDesignImage>;
-  option?: ProductDesignOption;
-};
-
-type CanvasWithComponent = Canvas & {
-  components: ComponentWithImageAndOption[];
-};
-
-type CanvasWithEnrichedComponents = Canvas & {
-  components: EnrichmentService.EnrichedComponent[];
-};
-
 function isCanvasWithComponent(data: any): data is CanvasWithComponent {
   const isCanvasInstance = isSaveableCanvas(omit(data, "components"));
   const components = serializedComponentArraySchema.safeParse(data.components);
@@ -108,79 +67,39 @@ function isCanvasWithComponent(data: any): data is CanvasWithComponent {
   return isCanvasInstance && isComponents && isImages;
 }
 
-function* createWithComponents(this: AuthedContext): Iterator<any, any, any> {
-  const body: Unsaved<CanvasWithComponent>[] = this.request.body as any;
-
-  this.assert(body.length >= 1, 400, "At least one canvas must be provided");
-
-  const canvases: CanvasWithEnrichedComponents[] = yield Promise.all(
-    body.map(async (data: Unsaved<CanvasWithComponent>) =>
-      createCanvasAndComponents(this.state.userId, data)
-    )
-  );
-
-  if (canvases.length < 1) {
-    throw new Error("No canvases were succesfully created");
-  }
-
-  this.status = 201;
-  this.body = canvases;
+interface CreateCanvasContext
+  extends StrictContext<CanvasWithEnrichedComponents[]> {
+  state: AuthedState;
 }
 
-async function createCanvasAndComponents(
-  userId: string,
-  data: Unsaved<CanvasWithComponent>
-): Promise<Canvas & { components: EnrichmentService.EnrichedComponent[] }> {
-  if (!data || !isCanvasWithComponent(data)) {
-    throw new Error("Request does not match Schema");
-  }
+async function createWithComponents(ctx: CreateCanvasContext) {
+  // Schema is validated before creating
+  const body: Unsaved<CanvasWithComponent>[] = ctx.request.body as any;
 
-  const enrichedComponents = await Promise.all(
-    data.components.map(
-      async (
-        component: ComponentWithImageAndOption
-      ): Promise<EnrichmentService.EnrichedComponent> => {
-        return createComponent(component, userId);
+  ctx.assert(body.length >= 1, 400, "At least one canvas must be provided");
+
+  const canvases: CanvasWithEnrichedComponents[] = [];
+  await db.transaction(async (trx: Knex.Transaction) => {
+    for (const unsavedCanvas of body) {
+      if (!unsavedCanvas || !isCanvasWithComponent(unsavedCanvas)) {
+        throw new Error("Request does not match Schema");
       }
-    )
-  );
-  const canvasWithUser = attachUser(omit(data, "components"), userId);
-  const createdCanvas = await CanvasesDAO.create({
-    ...canvasWithUser,
-    deletedAt: null,
+
+      const canvas = await createCanvasAndComponents(
+        trx,
+        ctx.state.userId,
+        unsavedCanvas
+      );
+      canvases.push(canvas);
+    }
+
+    if (canvases.length !== body.length) {
+      throw new Error("Unable to create all canvases");
+    }
   });
 
-  return { ...createdCanvas, components: enrichedComponents };
-}
-
-async function createComponent(
-  component: ComponentWithImageAndOption,
-  userId: string
-): Promise<EnrichmentService.EnrichedComponent> {
-  const { image } = component;
-  const deserializedImgae = deserializeAsset(image);
-  await ProductDesignImagesDAO.create({
-    ...deserializedImgae,
-    userId,
-  });
-
-  if (component.type === ComponentType.Material) {
-    await ProductDesignOptionsDAO.create({
-      ...component.option,
-      deletedAt: null,
-    });
-  }
-
-  const safeComponent = serializedComponentSchema.safeParse(
-    attachUser(component, userId)
-  );
-  if (!safeComponent.success) {
-    logServerError(safeComponent.error);
-    throw new Error("Could not create component");
-  }
-
-  const created = await ComponentsDAO.create(safeComponent.data);
-  return EnrichmentService.addAssetLink(created);
+  ctx.status = 201;
+  ctx.body = canvases;
 }
 
 export const addComponentContextSchema = z.object({
@@ -217,7 +136,9 @@ async function addComponent(ctx: AddComponentContext) {
       });
       const components = await ComponentsDAO.findAllByCanvasId(canvas.id, trx);
       const enrichedComponents = await Promise.all(
-        components.map(EnrichmentService.addAssetLink)
+        components.map((unenrichedComponent: Component) =>
+          EnrichmentService.addAssetLink(unenrichedComponent, trx)
+        )
       );
 
       return { ...updatedCanvas, components: enrichedComponents };
@@ -276,7 +197,9 @@ async function update(ctx: UpdateCanvasContext) {
         trx
       );
       const enrichedComponents = await Promise.all(
-        components.map(EnrichmentService.addAssetLink)
+        components.map((component: Component) =>
+          EnrichmentService.addAssetLink(component, trx)
+        )
       );
 
       return {
@@ -325,7 +248,9 @@ function* getById(this: AuthedContext): Iterator<any, any, any> {
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
   const enrichedComponents = yield Promise.all(
-    components.map(EnrichmentService.addAssetLink)
+    components.map((component: Component) =>
+      EnrichmentService.addAssetLink(component)
+    )
   );
   const enrichedCanvas = { ...canvas, components: enrichedComponents };
 
@@ -406,7 +331,9 @@ async function updateCanvases(ctx: UpdateCanvasesListContext) {
           trx
         );
         const enrichedComponents = await Promise.all(
-          components.map(EnrichmentService.addAssetLink)
+          components.map((component: Component) =>
+            EnrichmentService.addAssetLink(component, trx)
+          )
         );
 
         return { ...canvas, components: enrichedComponents };
@@ -486,7 +413,9 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
         result: CanvasSplitService.Result
       ): Promise<CanvasWithEnrichedComponents> => {
         const enrichedComponents = await Promise.all(
-          result.components.map(EnrichmentService.addAssetLink)
+          result.components.map((component: Component) =>
+            EnrichmentService.addAssetLink(component, ctx.state.trx)
+          )
         );
         return { ...result.canvas, components: enrichedComponents };
       }
@@ -498,8 +427,7 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
   ctx.status = 201;
 }
 
-router.post("/", requireAuth, create);
-router.put("/:canvasId", requireAuth, create);
+router.post("/", requireAuth, convert.back(createWithComponents));
 router.patch("/:canvasId", requireAuth, convert.back(update));
 router.patch("/reorder", requireAuth, convert.back(reorder));
 

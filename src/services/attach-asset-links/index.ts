@@ -8,6 +8,8 @@ import Asset, {
   DesignImageAsset,
 } from "../../components/assets/types";
 import getAsset from "../../components/components/get-asset";
+import Knex from "knex";
+import { ComponentWithAssetLinks } from "../../components/canvases/types";
 
 interface ImgixOptions {
   fit: "max" | "fill" | null;
@@ -127,9 +129,10 @@ export function getLinksForAsset(asset: Asset): AssetLinks | null {
  * Adds in image links based off the given component.
  */
 async function getLink(
-  component: Component
+  component: Component,
+  trx?: Knex.Transaction
 ): Promise<AssetLinks & { mimeType: string }> {
-  const asset = await getAsset(component);
+  const asset = await getAsset(component, trx);
   if (asset && asset.uploadCompletedAt) {
     return {
       ...constructAssetLinks(asset, component.assetPageNumber),
@@ -160,9 +163,10 @@ export type EnrichedComponent = Component & AssetLinks;
  * @param component {Component} component to add link to
  */
 export async function addAssetLink(
-  component: Component
-): Promise<Component & AssetLinks & { mimeType: string }> {
-  const assetLink = await getLink(component);
+  component: Component,
+  trx?: Knex.Transaction
+): Promise<ComponentWithAssetLinks> {
+  const assetLink = await getLink(component, trx);
   return { ...component, ...assetLink };
 }
 

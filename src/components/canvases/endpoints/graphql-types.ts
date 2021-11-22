@@ -1,7 +1,11 @@
+import { z } from "zod";
 import {
   GraphQLType,
   schemaToGraphQLType,
 } from "../../../apollo/published-types";
+import { AttachmentInput } from "../../assets/graphql-types";
+import { assetSchema } from "../../assets/types";
+import { componentTypeSchema } from "../../components/types";
 import { AnnotationDb } from "../../product-design-canvas-annotations/types";
 import {
   ProductDesignCanvasMeasurement,
@@ -33,3 +37,20 @@ export interface CanvasAndEnvironment extends CanvasAndEnvironmentParent {
   annotations: AnnotationDb[];
   measurements: ProductDesignCanvasMeasurement[];
 }
+
+const canvasInputSchema = z.object({
+  id: z.string(),
+  asset: assetSchema,
+  title: z.string(),
+  designId: z.string(),
+  ordering: z.number(),
+  type: componentTypeSchema,
+});
+
+export const gtCanvasInput: GraphQLType = schemaToGraphQLType(
+  "CanvasInput",
+  canvasInputSchema,
+  { type: "input", depTypes: { asset: AttachmentInput } }
+);
+
+export type CanvasInput = z.infer<typeof canvasInputSchema>;

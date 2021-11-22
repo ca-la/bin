@@ -55,6 +55,16 @@ export async function attachDesignFromAnnotationInput<
   };
 }
 
+export async function attachDesignFromCanvasInput<
+  Args extends { canvas: { designId: string } },
+  Result
+>(args: Args, context: GraphQLContextBase<Result>) {
+  return {
+    ...context,
+    designId: args.canvas.designId,
+  };
+}
+
 export async function attachDesignFromFilter<
   Args extends { filter: any },
   Result

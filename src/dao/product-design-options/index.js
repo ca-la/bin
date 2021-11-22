@@ -42,9 +42,14 @@ function update(optionId, data) {
     .then(instantiate);
 }
 
-function findById(optionId) {
+function findById(optionId, trx) {
   return db("product_design_options")
     .where({ id: optionId })
+    .modify((query) => {
+      if (trx) {
+        query.transacting(trx);
+      }
+    })
     .then(first)
     .then(maybeInstantiate)
     .catch(rethrow)

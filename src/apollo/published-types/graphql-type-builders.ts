@@ -128,7 +128,7 @@ export function schemaToGraphQLType(
       }
 
       throw new Error(
-        `Found an unprocessable field ${key} when building a type "${name}"`
+        `Found an unprocessable field ${key} when building the type "${name}"`
       );
     },
     {
