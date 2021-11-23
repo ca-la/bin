@@ -63,6 +63,7 @@ function createDesignMachine(
       [DesignState.CHECKED_OUT]: {
         on: {
           COMMIT_PARTNER_PAIRING: DesignState.PAIRED,
+          REVERSE_CHECKOUT: DesignState.COSTED,
         },
       },
       [DesignState.PAIRED]: {
@@ -90,9 +91,6 @@ export interface DesignStateDependencies {
  */
 export function determineState(design: DesignStateDependencies): DesignState {
   const { costInputs, events, id: designId } = design;
-  const hasCommitted = events.some(
-    (event: DesignEvent): boolean => event.type === "COMMIT_QUOTE"
-  );
   const hasActiveCosts = hasActiveCostInputs(costInputs);
 
   const machine = createDesignMachine(designId);
@@ -100,14 +98,12 @@ export function determineState(design: DesignStateDependencies): DesignState {
 
   for (const event of events) {
     state = machine.transition(state, event.type);
+  }
 
-    if (
-      state.value === DesignState.COSTED &&
-      !hasActiveCosts &&
-      !hasCommitted
-    ) {
-      state = machine.transition(state, { type: "EXPIRE_COST_INPUT" });
-    }
+  // If we end the state machine in the costed state, but we have no active
+  // costs, transition with the expired event
+  if (state.value === DesignState.COSTED && !hasActiveCosts) {
+    state = machine.transition(state, { type: "EXPIRE_COST_INPUT" });
   }
 
   return state.value as DesignState;

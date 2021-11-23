@@ -11,6 +11,7 @@ const calaEvents = z.enum([
   "REMOVE_PARTNER",
   "COMMIT_PARTNER_PAIRING",
   "COSTING_EXPIRATION",
+  "REVERSE_CHECKOUT",
 ]);
 const partnerEvents = z.enum(["ACCEPT_SERVICE_BID", "REJECT_SERVICE_BID"]);
 const shipmentTrackingEvents = z.enum(["TRACKING_CREATION", "TRACKING_UPDATE"]);

@@ -1,4 +1,4 @@
-import { test, Test } from "../../../../test-helpers/simple";
+import { test, Test, sandbox } from "../../../../test-helpers/simple";
 import { PricingCostInput } from "../../../pricing-cost-inputs/types";
 import {
   Complexity,
@@ -9,8 +9,13 @@ import { DesignEvent, templateDesignEvent } from "../../../design-events/types";
 
 import { DesignState, determineState } from "./index";
 
+const testDate = new Date("2019-12-31");
+const expirationDate = new Date("2020-01-01");
+const afterExpirationDate = new Date("2020-01-02");
+
 function setup() {
-  const active: PricingCostInput = {
+  const clock = sandbox().useFakeTimers(testDate);
+  const costInput: PricingCostInput = {
     id: "active-pricing-cost-input",
     createdAt: new Date(),
     deletedAt: null,
@@ -29,11 +34,7 @@ function setup() {
     productMaterialsVersion: 0,
     productTypeVersion: 0,
     unitMaterialMultipleVersion: 0,
-    expiresAt: null,
-  };
-  const expired: PricingCostInput = {
-    ...active,
-    expiresAt: new Date("2019-04-23"),
+    expiresAt: expirationDate,
   };
 
   const submit: DesignEvent = {
@@ -77,18 +78,25 @@ function setup() {
     createdAt: new Date("2019-04-25"),
     type: "REJECT_DESIGN",
   };
+  const reverseCheckout: DesignEvent = {
+    ...templateDesignEvent,
+    designId: "a-design-id",
+    actorId: "a-user-id",
+    id: "design-event-reverse-checkout",
+    createdAt: new Date("2019-04-26"),
+    type: "REVERSE_CHECKOUT",
+  };
 
   return {
-    costInputs: {
-      active,
-      expired,
-    },
+    clock,
+    costInputs: [costInput],
     events: {
       submit,
       reject,
       commitCosts,
       commitQuote,
       commitPartners,
+      reverseCheckout,
     },
   };
 }
@@ -103,22 +111,24 @@ test("determineState works for designs with no events or cost inputs", async (t:
 });
 
 test("determineState: SUBMIT", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, events, clock } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit],
     }),
     DesignState.SUBMITTED,
     "INITIAL to SUBMITTED state"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit],
     }),
     DesignState.SUBMITTED,
@@ -127,22 +137,24 @@ test("determineState: SUBMIT", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> REJECT", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.reject],
     }),
     DesignState.INITIAL,
     "INITIAL -> SUBMITTED -> INITIAL"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.reject],
     }),
     DesignState.INITIAL,
@@ -151,22 +163,24 @@ test("determineState: SUBMIT -> REJECT", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> COST", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.commitCosts],
     }),
     DesignState.COSTED,
     "INITIAL -> COSTED"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.commitCosts],
     }),
     DesignState.INITIAL,
@@ -175,22 +189,24 @@ test("determineState: SUBMIT -> COST", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> COST -> REJECT", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.commitCosts, events.reject],
     }),
     DesignState.INITIAL,
     "INITIAL -> SUBMITTED -> COSTED -> INITIAL"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.commitCosts, events.reject],
     }),
     DesignState.INITIAL,
@@ -199,22 +215,24 @@ test("determineState: SUBMIT -> COST -> REJECT", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> COST -> REJECT -> SUBMIT", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.commitCosts, events.reject, events.submit],
     }),
     DesignState.SUBMITTED,
     "INITIAL -> SUBMITTED -> COSTED -> INITIAL -> SUBMITTED"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.commitCosts, events.reject, events.submit],
     }),
     DesignState.SUBMITTED,
@@ -223,22 +241,24 @@ test("determineState: SUBMIT -> COST -> REJECT -> SUBMIT", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> REJECT -> SUBMIT -> COST", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.reject, events.submit, events.commitCosts],
     }),
     DesignState.COSTED,
     "INITIAL -> SUBMITTED -> INITIAL -> COSTED"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.reject, events.submit, events.commitCosts],
     }),
     DesignState.INITIAL,
@@ -247,22 +267,24 @@ test("determineState: SUBMIT -> REJECT -> SUBMIT -> COST", async (t: Test) => {
 });
 
 test("determineState: SUBMIT -> COST -> CHECKOUT", async (t: Test) => {
-  const { costInputs, events } = setup();
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
       events: [events.submit, events.commitCosts, events.commitQuote],
     }),
     DesignState.CHECKED_OUT,
     "INITIAL -> COSTED -> CHECKED_OUT"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [events.submit, events.commitCosts, events.commitQuote],
     }),
     DesignState.CHECKED_OUT,
@@ -270,13 +292,49 @@ test("determineState: SUBMIT -> COST -> CHECKOUT", async (t: Test) => {
   );
 });
 
-test("determineState: SUBMIT -> COST -> CHECKOUT -> PAIRED", async (t: Test) => {
-  const { costInputs, events } = setup();
+test("determineState: SUBMIT -> COST -> CHECKOUT -> COST", async (t: Test) => {
+  const { costInputs, clock, events } = setup();
 
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.active],
+      costInputs,
+      events: [
+        events.submit,
+        events.commitCosts,
+        events.commitQuote,
+        events.reverseCheckout,
+      ],
+    }),
+    DesignState.COSTED,
+    "INITIAL -> COSTED -> CHECKED_OUT -> COST"
+  );
+
+  clock.setSystemTime(afterExpirationDate);
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs,
+      events: [
+        events.submit,
+        events.commitCosts,
+        events.commitQuote,
+        events.reverseCheckout,
+      ],
+    }),
+    DesignState.INITIAL,
+    "expired: INITIAL"
+  );
+});
+
+test("determineState: SUBMIT -> COST -> CHECKOUT -> PAIRED", async (t: Test) => {
+  const { costInputs, clock, events } = setup();
+
+  t.deepEqual(
+    determineState({
+      id: "a-design-id",
+      costInputs,
       events: [
         events.submit,
         events.commitCosts,
@@ -288,10 +346,12 @@ test("determineState: SUBMIT -> COST -> CHECKOUT -> PAIRED", async (t: Test) => 
     "INITIAL -> COSTED -> CHECKED_OUT -> PAIRED"
   );
 
+  clock.setSystemTime(afterExpirationDate);
+
   t.deepEqual(
     determineState({
       id: "a-design-id",
-      costInputs: [costInputs.expired],
+      costInputs,
       events: [
         events.submit,
         events.commitCosts,
