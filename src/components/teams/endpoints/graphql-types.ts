@@ -8,6 +8,7 @@ import { teamSchema, teamDbSchema, Team } from "../types";
 import { TeamUser } from "../../team-users/types";
 import { Collection } from "../../collections/types";
 
+export const gtTeamDb = schemaToGraphQLType("TeamDb", teamDbSchema);
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
 
 export const gtTeamList = buildGraphQLListType(gtTeam);

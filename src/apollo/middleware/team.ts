@@ -50,3 +50,23 @@ export async function attachTeamUserOrRequireAdmin<Args, Result>(
     teamUser: teamUser || null,
   };
 }
+
+export async function requireTeamAdminOrOwner<Args, Result>(
+  _: Args,
+  context: GraphQLContextWithTeamAndUser<Result>
+): Promise<GraphQLContextWithTeamAndUser<Result>> {
+  const {
+    teamUser,
+    session: { role },
+  } = context;
+
+  if (role === "ADMIN") {
+    return context;
+  }
+
+  if (teamUser && (teamUser.role === "ADMIN" || teamUser.role === "OWNER")) {
+    return context;
+  }
+
+  throw new ForbiddenError("Not authorized to perform this action on the team");
+}
