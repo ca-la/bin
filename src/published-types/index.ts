@@ -73,6 +73,7 @@ export const GraphQLTypes = {
   ...TeamGraphQLTypes,
   ...TeamUserGraphQLTypes,
   ...CollectionGraphQLTypes,
+  ...CanvasGraphQLTypes,
 };
 
 export { z } from "zod";
