@@ -75,6 +75,7 @@ export const SUPPORTED_FILE_TYPES: FileType[] = [
   { extension: "zip", mimeType: "application/x-zip" },
   { extension: "zip", mimeType: "application/x-zip-compressed" },
   { extension: "obj", mimeType: "model/obj" },
+  { extension: "fbx", mimeType: "model/fbx" },
 ];
 
 /**
