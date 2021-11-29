@@ -7,6 +7,7 @@ import {
 import { teamSchema, teamDbSchema, Team } from "../types";
 import { TeamUser } from "../../team-users/types";
 import { Collection } from "../../collections/types";
+import { SubscriptionWithPlan } from "../../subscriptions/types";
 
 export const gtTeamDb = schemaToGraphQLType("TeamDb", teamDbSchema);
 export const gtTeam = schemaToGraphQLType("Team", teamSchema);
@@ -41,13 +42,15 @@ export const gtTeamAndEnvironment: GraphQLType = {
       signature: "(limit: Int, offset: Int)",
       type: "[Collection]",
     },
+    subscriptions: "[SubscriptionWithPlan]",
   },
-  requires: ["Team", "TeamUser", "Collection"],
+  requires: ["Team", "TeamUser", "Collection", "SubscriptionWithPlan"],
 };
 
 export interface TeamAndEnvironment extends TeamAndEnvironmentParent {
   team: Team;
   collections: Collection[];
+  subscriptions: SubscriptionWithPlan[];
 }
 
 const teamInputSchema = teamDbSchema.pick({

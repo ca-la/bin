@@ -7,7 +7,7 @@ import { log, logServerError } from "../services/logger";
 import { green, reset } from "../services/colors";
 import db from "../services/db";
 import { findFreeAndDefaultForTeams } from "../components/plans/dao";
-import { Subscription } from "../components/subscriptions/domain-object";
+import { Subscription } from "../components/subscriptions/types";
 import * as SubscriptionsDAO from "../components/subscriptions/dao";
 
 function backfillTeamSubscriptions(args: string[]) {

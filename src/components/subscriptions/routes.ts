@@ -7,7 +7,7 @@ import canAccessUserResource = require("../../middleware/can-access-user-resourc
 import db from "../../services/db";
 import requireAuth = require("../../middleware/require-auth");
 import { hasProperties } from "../../services/require-properties";
-import { Subscription } from "./domain-object";
+import { Subscription } from "./types";
 import requireAdmin from "../../middleware/require-admin";
 
 function isUpdateRequest(body: any): body is { cancelledAt: Date } {

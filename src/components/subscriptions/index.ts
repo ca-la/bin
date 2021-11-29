@@ -1,5 +1,7 @@
 import * as SubscriptionsDAO from "./dao";
 
 export * from "./service";
-export * from "./domain-object";
+export * from "./adapter";
+export * from "./types";
+export * from "./graphql-types";
 export { SubscriptionsDAO };

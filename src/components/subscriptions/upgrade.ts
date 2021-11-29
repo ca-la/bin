@@ -3,7 +3,7 @@ import Knex from "knex";
 
 import * as PlansDAO from "../plans/dao";
 import * as SubscriptionsDAO from "./dao";
-import { Subscription } from "./domain-object";
+import { Subscription } from "./types";
 import TeamUsersDAO from "../team-users/dao";
 import InvalidDataError from "../../errors/invalid-data";
 import { upgradeSubscription as upgradeStripeSubscription } from "../../services/stripe/upgrade-subscription";

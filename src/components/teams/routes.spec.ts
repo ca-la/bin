@@ -15,7 +15,7 @@ import * as PlansDAO from "../plans/dao";
 import * as SubscriptionService from "../subscriptions/create";
 import * as SubscriptionUpgradeService from "../subscriptions/upgrade";
 import * as GetUpdateDetailsService from "../subscriptions/get-update-details";
-import { Subscription } from "../subscriptions/domain-object";
+import { Subscription } from "../subscriptions/types";
 import * as attachPlan from "../subscriptions/attach-plan";
 import InvalidDataError from "../../errors/invalid-data";
 

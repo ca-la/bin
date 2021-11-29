@@ -1,5 +1,5 @@
 import Knex from "knex";
-import { Subscription, SubscriptionWithPlan } from "./domain-object";
+import { Subscription, SubscriptionWithPlan } from "./types";
 import * as PlansDAO from "../plans/dao";
 import db from "../../services/db";
 

@@ -15,7 +15,7 @@ import { generateDesign } from "../../test-helpers/factories/product-design";
 import generateBid from "../../test-helpers/factories/bid";
 import generateDesignEvent from "../../test-helpers/factories/design-event";
 import generatePlan from "../../test-helpers/factories/plan";
-import { SubscriptionWithPlan } from "../subscriptions/domain-object";
+import { SubscriptionWithPlan } from "../subscriptions/types";
 import * as CancelSubscriptionService from "../../services/stripe/cancel-subscription";
 import generateCollection from "../../test-helpers/factories/collection";
 

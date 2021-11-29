@@ -15,6 +15,9 @@ import { gtTeamUser, gtTeamUserRole } from "../../team-users/graphql-types";
 import { gtUser, gtRole } from "../../users/graphql-types";
 import { gtCollection } from "../../collections";
 import { gtPermissions } from "../../permissions/graphql-types";
+import { gtSubscriptionWithPlan } from "../../subscriptions";
+import { gtPlan } from "../../plans";
+import { gtPlanStripePrice } from "../../plan-stripe-price/graphql-types";
 
 interface TeamAndEnvironmentArgs {
   teamId: string;
@@ -35,6 +38,9 @@ export const TeamAndEnvironmentEndpoint: GraphQLEndpoint<
     gtPermissions,
     gtCollection,
     gtTeamAndEnvironment,
+    gtSubscriptionWithPlan,
+    gtPlan,
+    gtPlanStripePrice,
   ],
   name: "TeamAndEnvironment",
   signature: `(teamId: String): TeamAndEnvironment`,

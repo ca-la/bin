@@ -10,7 +10,7 @@ import TeamsDAO from "./dao";
 import { PlanDb } from "../plans/types";
 import { TeamType, TeamDb } from "./types";
 import * as TeamsService from "./service";
-import { SubscriptionWithPlan } from "../subscriptions/domain-object";
+import { SubscriptionWithPlan } from "../subscriptions/types";
 import * as SubscriptionsDAO from "../subscriptions/dao";
 import * as CollectionsDAO from "../collections/dao";
 import * as PlansDAO from "../plans/dao";

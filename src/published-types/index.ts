@@ -6,6 +6,7 @@ export * from "../components/permissions/types";
 export * from "../components/canvases/types";
 export * from "../components/collections/realtime";
 export * from "../components/collections/types";
+export * from "../components/subscriptions/types";
 export * from "../components/product-designs/types";
 export * from "../components/product-design-variants/types";
 export * from "../components/product-design-canvas-annotations/types";
@@ -60,6 +61,9 @@ import * as AnnotationGraphQLTypes from "../components/product-design-canvas-ann
 import * as TeamGraphQLTypes from "../components/teams/endpoints/graphql-types";
 import * as TeamUserGraphQLTypes from "../components/team-users/graphql-types";
 import * as CollectionGraphQLTypes from "../components/collections/endpoints/graphql-types";
+import * as SubscriptionGraphQLTypes from "../components/subscriptions/graphql-types";
+import * as PlanGraphQLTypes from "../components/plans/graphql-types";
+import * as PlanStripePriceGraphQLTypes from "../components/plan-stripe-price/graphql-types";
 
 export const GraphQLTypes = {
   ...SessionsGraphQLTypes,
@@ -74,6 +78,9 @@ export const GraphQLTypes = {
   ...TeamUserGraphQLTypes,
   ...CollectionGraphQLTypes,
   ...CanvasGraphQLTypes,
+  ...SubscriptionGraphQLTypes,
+  ...PlanGraphQLTypes,
+  ...PlanStripePriceGraphQLTypes,
 };
 
 export { z } from "zod";

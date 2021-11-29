@@ -3,14 +3,8 @@ import Knex from "knex";
 import { omit } from "lodash";
 
 import first from "../../services/first";
-import {
-  dataAdapter,
-  isSubscriptionRow,
-  partialDataAdapter,
-  Subscription,
-  SubscriptionRow,
-  SubscriptionWithPlan,
-} from "./domain-object";
+import { dataAdapter, isSubscriptionRow, partialDataAdapter } from "./adapter";
+import { Subscription, SubscriptionRow, SubscriptionWithPlan } from "./types";
 import { dataAdapter as planDataAdapter } from "../plans/adapter";
 import { validate, validateEvery } from "../../services/validate-from-db";
 import db from "../../services/db";

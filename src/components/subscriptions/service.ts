@@ -1,4 +1,4 @@
-import { SubscriptionWithPlan } from "./domain-object";
+import { SubscriptionWithPlan } from "./types";
 import {
   Plan,
   TeamPlanOption,
