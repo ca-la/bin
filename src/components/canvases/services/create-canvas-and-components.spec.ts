@@ -7,7 +7,7 @@ import { generateDesign } from "../../../test-helpers/factories/product-design";
 import { db, sandbox, test } from "../../../test-helpers/fresh";
 import { ComponentType } from "../../components/types";
 import { generateComponent } from "../endpoints/canvas";
-import * as EnrichmentService from "../../../services/attach-asset-links";
+import * as EnrichmentService from "../../../services/enrich-component";
 import { createCanvasAndComponents } from "./create-canvas-and-components";
 
 interface SetupOptions {
@@ -40,7 +40,7 @@ async function setup({ type }: SetupOptions) {
   };
 
   sandbox()
-    .stub(EnrichmentService, "addAssetLink")
+    .stub(EnrichmentService, "enrichComponent")
     .resolves({ ...component, assetLink: "asset-link" });
 
   return { user, canvas, component };

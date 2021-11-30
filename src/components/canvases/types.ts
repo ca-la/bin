@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { tolerantComponentSchema } from "../components/types";
+import { tolerantComponentSchema } from "../../components/components/types";
+import { productDesignOptionSchema } from "../../components/product-design-options/types";
 import { assetLinksSchema } from "../assets/types";
 
 /**
@@ -43,8 +44,13 @@ export type ComponentWithAssetLinks = z.infer<
   typeof componentWithAssetLinksSchema
 >;
 
+export const enrichedComponentSchema = componentWithAssetLinksSchema.extend({
+  option: productDesignOptionSchema.nullable(),
+});
+export type EnrichedComponent = z.infer<typeof enrichedComponentSchema>;
+
 export const canvasWithEnrichedComponentsSchema = canvasSchema.extend({
-  components: z.array(componentWithAssetLinksSchema),
+  components: z.array(enrichedComponentSchema),
 });
 
 export type CanvasWithEnrichedComponents = z.infer<

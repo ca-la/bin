@@ -1,3 +1,4 @@
+import Knex from "knex";
 import { URL, URLSearchParams } from "url";
 import { USER_UPLOADS_BASE_URL, USER_UPLOADS_IMGIX_URL } from "../../config";
 import { Component } from "../../components/components/types";
@@ -8,8 +9,8 @@ import Asset, {
   DesignImageAsset,
 } from "../../components/assets/types";
 import getAsset from "../../components/components/get-asset";
-import Knex from "knex";
 import { ComponentWithAssetLinks } from "../../components/canvases/types";
+import db from "../../services/db";
 
 interface ImgixOptions {
   fit: "max" | "fill" | null;
@@ -128,11 +129,11 @@ export function getLinksForAsset(asset: Asset): AssetLinks | null {
 /**
  * Adds in image links based off the given component.
  */
-async function getLink(
+export async function getLink(
   component: Component,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<AssetLinks & { mimeType: string }> {
-  const asset = await getAsset(component, trx);
+  const asset = await getAsset(component, ktx);
   if (asset && asset.uploadCompletedAt) {
     return {
       ...constructAssetLinks(asset, component.assetPageNumber),
@@ -156,7 +157,6 @@ async function getLink(
 }
 
 export type EnrichedComponent = Component & AssetLinks;
-
 /**
  * addAssetLink simplifies the api for getting an image on a component that
  * will be displayed in the client.
@@ -164,9 +164,9 @@ export type EnrichedComponent = Component & AssetLinks;
  */
 export async function addAssetLink(
   component: Component,
-  trx?: Knex.Transaction
+  ktx: Knex = db
 ): Promise<ComponentWithAssetLinks> {
-  const assetLink = await getLink(component, trx);
+  const assetLink = await getLink(component, ktx);
   return { ...component, ...assetLink };
 }
 

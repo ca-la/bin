@@ -9,12 +9,11 @@ import requireAuth = require("../../middleware/require-auth");
 import * as ComponentsDAO from "../components/dao";
 import Canvas from "./domain-object";
 import {
-  Component,
   serializedComponentArraySchema,
   serializedComponentSchema,
 } from "../components/types";
 import { nullableDateStringToNullableDate } from "../../services/zod-helpers";
-import * as EnrichmentService from "../../services/attach-asset-links";
+import * as EnrichmentService from "../../services/enrich-component";
 import db from "../../services/db";
 import filterError = require("../../services/filter-error");
 import { hasProperties } from "../../services/require-properties";
@@ -135,10 +134,10 @@ async function addComponent(ctx: AddComponentContext) {
         componentId: component.id,
       });
       const components = await ComponentsDAO.findAllByCanvasId(canvas.id, trx);
-      const enrichedComponents = await Promise.all(
-        components.map((unenrichedComponent: Component) =>
-          EnrichmentService.addAssetLink(unenrichedComponent, trx)
-        )
+
+      const enrichedComponents = await EnrichmentService.enrichComponentsList(
+        trx,
+        components
       );
 
       return { ...updatedCanvas, components: enrichedComponents };
@@ -196,10 +195,10 @@ async function update(ctx: UpdateCanvasContext) {
         updatedCanvas.id,
         trx
       );
-      const enrichedComponents = await Promise.all(
-        components.map((component: Component) =>
-          EnrichmentService.addAssetLink(component, trx)
-        )
+
+      const enrichedComponents = await EnrichmentService.enrichComponentsList(
+        trx,
+        components
       );
 
       return {
@@ -247,11 +246,11 @@ function* getById(this: AuthedContext): Iterator<any, any, any> {
   const canvas = yield CanvasesDAO.findById(this.params.canvasId);
   this.assert(canvas, 404);
   const components = yield ComponentsDAO.findAllByCanvasId(canvas.id);
-  const enrichedComponents = yield Promise.all(
-    components.map((component: Component) =>
-      EnrichmentService.addAssetLink(component)
-    )
+  const enrichedComponents = yield EnrichmentService.enrichComponentsList(
+    db,
+    components
   );
+
   const enrichedCanvas = { ...canvas, components: enrichedComponents };
 
   this.status = 200;
@@ -309,36 +308,32 @@ async function updateCanvases(ctx: UpdateCanvasesListContext) {
   } = parseContext(ctx, canvasesListUpdateSchema);
 
   const updatedList = await db.transaction(async (trx: Knex.Transaction) => {
-    const updatedCanvases: Canvas[] = await Promise.all(
-      patchList.map(
-        async ({ id, ...patch }: CanvasGroupUpdate) =>
-          await CanvasesDAO.update(
-            trx,
-            id,
-            patch as MaybeUnsaved<Canvas>
-          ).catch(
-            filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
-              ctx.throw(404, err);
-            })
-          )
-      )
-    );
+    const updatedCanvases: Canvas[] = [];
+    for (const canvasGroupUpdate of patchList) {
+      const { id, ...patch } = canvasGroupUpdate;
+      const updatedCanvas = await CanvasesDAO.update(
+        trx,
+        id,
+        patch as MaybeUnsaved<Canvas>
+      ).catch(
+        filterError(CanvasNotFoundError, (err: CanvasNotFoundError) => {
+          ctx.throw(404, err);
+        })
+      );
 
-    const canvasWithComponentsList: CanvasWithEnrichedComponents[] = await Promise.all(
-      updatedCanvases.map(async (canvas: Canvas) => {
-        const components = await ComponentsDAO.findAllByCanvasId(
-          canvas.id,
-          trx
-        );
-        const enrichedComponents = await Promise.all(
-          components.map((component: Component) =>
-            EnrichmentService.addAssetLink(component, trx)
-          )
-        );
+      updatedCanvases.push(updatedCanvas);
+    }
 
-        return { ...canvas, components: enrichedComponents };
-      })
-    );
+    const canvasWithComponentsList: CanvasWithEnrichedComponents[] = [];
+    for (const canvas of updatedCanvases) {
+      const components = await ComponentsDAO.findAllByCanvasId(canvas.id, trx);
+      const enrichedComponents = await EnrichmentService.enrichComponentsList(
+        trx,
+        components
+      );
+      const enrichedCanvas = { ...canvas, components: enrichedComponents };
+      canvasWithComponentsList.push(enrichedCanvas);
+    }
 
     return canvasWithComponentsList;
   });
@@ -407,20 +402,20 @@ async function splitCanvasPages(ctx: SplitContext): Promise<void> {
       )
     );
 
-  const enrichedCanvases: CanvasWithEnrichedComponents[] = await Promise.all(
-    results.map(
-      async (
-        result: CanvasSplitService.Result
-      ): Promise<CanvasWithEnrichedComponents> => {
-        const enrichedComponents = await Promise.all(
-          result.components.map((component: Component) =>
-            EnrichmentService.addAssetLink(component, ctx.state.trx)
-          )
-        );
-        return { ...result.canvas, components: enrichedComponents };
-      }
-    )
-  );
+  const enrichedCanvases: CanvasWithEnrichedComponents[] = [];
+  for (const result of results) {
+    const enrichedComponents = await EnrichmentService.enrichComponentsList(
+      ctx.state.trx,
+      result.components
+    );
+
+    const enrichedCanvas = {
+      ...result.canvas,
+      components: enrichedComponents,
+    };
+
+    enrichedCanvases.push(enrichedCanvas);
+  }
 
   ctx.body = enrichedCanvases;
 

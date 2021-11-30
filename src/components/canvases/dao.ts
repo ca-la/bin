@@ -18,8 +18,7 @@ import {
   isCreatorMetadataRow,
 } from "./domain-object/creator-metadata";
 import * as ComponentsDAO from "../components/dao";
-import * as EnrichmentService from "../../services/attach-asset-links";
-import { Component } from "../components/types";
+import * as EnrichmentService from "../../services/enrich-component";
 
 const TABLE_NAME = "canvases";
 
@@ -230,15 +229,16 @@ export async function findAllWithEnrichedComponentsByDesignId(
   designId: string
 ): Promise<CanvasWithEnrichedComponents[]> {
   const canvases = await findAllByDesignId(designId);
-  const enrichedCanvasPromises = canvases.map(async (canvas: Canvas) => {
+  const enrichedCanvases = [];
+  for (const canvas of canvases) {
     const components = await ComponentsDAO.findAllByCanvasId(canvas.id);
-    const enrichedComponents = await Promise.all(
-      components.map((component: Component) =>
-        EnrichmentService.addAssetLink(component)
-      )
+    const enrichedComponents = await EnrichmentService.enrichComponentsList(
+      db,
+      components
     );
-    return { ...canvas, components: enrichedComponents };
-  });
+    const enrichedCanvas = { ...canvas, components: enrichedComponents };
+    enrichedCanvases.push(enrichedCanvas);
+  }
 
-  return Promise.all(enrichedCanvasPromises);
+  return enrichedCanvases;
 }

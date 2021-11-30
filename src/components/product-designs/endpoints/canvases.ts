@@ -2,7 +2,8 @@ import { GraphQLContextBase, GraphQLEndpoint } from "../../../apollo";
 import {
   DesignAndEnvironmentParent,
   gtCanvasWithEnrichedComponents,
-  gtComponentWithAssetLinks,
+  gtEnrichedComponent,
+  gtProductDesignOption,
 } from "./graphql-types";
 import { CanvasWithEnrichedComponents } from "../../canvases";
 import { findAllWithEnrichedComponentsByDesignId } from "../../canvases/dao";
@@ -14,7 +15,11 @@ export const CanvasesEndpoint: GraphQLEndpoint<
   DesignAndEnvironmentParent
 > = {
   endpointType: "DesignAndEnvironment",
-  types: [gtCanvasWithEnrichedComponents, gtComponentWithAssetLinks],
+  types: [
+    gtCanvasWithEnrichedComponents,
+    gtEnrichedComponent,
+    gtProductDesignOption,
+  ],
   name: "canvases",
   resolver: async (parent: DesignAndEnvironmentParent) => {
     const { designId } = parent;

@@ -9,6 +9,7 @@ import * as CanvasSplitService from "./services/split";
 import Logger from "../../services/logger";
 import { Component } from "../components/types";
 import Canvas from "./domain-object";
+import { EnrichedComponent } from "./types";
 
 import createUser from "../../test-helpers/create-user";
 import {
@@ -21,7 +22,7 @@ import {
 } from "../../test-helpers/http";
 import { sandbox, test, db } from "../../test-helpers/fresh";
 import createDesign from "../../services/create-design";
-import * as EnrichmentService from "../../services/attach-asset-links";
+import * as EnrichmentService from "../../services/enrich-component";
 import generateCanvas from "../../test-helpers/factories/product-design-canvas";
 import * as Changes from "./services/gather-changes";
 import generateAsset from "../../test-helpers/factories/asset";
@@ -94,9 +95,9 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
   const { user, session } = await createUser();
 
   sandbox()
-    .stub(EnrichmentService, "addAssetLink")
+    .stub(EnrichmentService, "enrichComponent")
     .callsFake(
-      async (c: Component): Promise<EnrichmentService.EnrichedComponent> => {
+      async (_: Knex.Transaction, c: Component): Promise<EnrichedComponent> => {
         return {
           ...c,
           assetLink: "https://foo.bar/test.png",
@@ -109,6 +110,8 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
           originalHeightPx: 480,
           assetId: "test",
           key: "test",
+          mimeType: "a-mime-type",
+          option: null,
         };
       }
     );
@@ -194,7 +197,9 @@ test("POST /product-design-canvases returns a Canvas with Components", async (t:
       "originalHeightPx",
       "originalWidthPx",
       "assetId",
-      "key"
+      "key",
+      "mimeType",
+      "option"
     ),
     omit(component, "image")
   );
@@ -227,13 +232,18 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
     originalHeightPx: 480,
   };
   sandbox()
-    .stub(EnrichmentService, "addAssetLink")
+    .stub(EnrichmentService, "enrichComponentsList")
     .callsFake(
-      async (c: Component): Promise<EnrichmentService.EnrichedComponent> => {
-        return {
+      async (
+        _: Knex.Transaction,
+        cList: Component[]
+      ): Promise<EnrichedComponent[]> => {
+        return cList.map((c: Component) => ({
           ...c,
           ...assetLink,
-        };
+          mimeType: "a-mime-type",
+          option: null,
+        }));
       }
     );
 
@@ -311,6 +321,8 @@ test("PATCH /product-design-canvases/:canvasId returns a Canvas", async (t: tape
           {
             ...component,
             ...assetLink,
+            mimeType: "a-mime-type",
+            option: null,
           },
         ],
       })
@@ -619,10 +631,13 @@ test("POST /:canvasId/split-pages splits pages", async (t: tape.Test) => {
     ]);
 
   sandbox()
-    .stub(EnrichmentService, "addAssetLink")
+    .stub(EnrichmentService, "enrichComponentsList")
     .callsFake(
-      async (component: Component): Promise<any> => {
-        return component;
+      async (
+        _: Knex.Transaction,
+        componentsList: Component[]
+      ): Promise<any> => {
+        return componentsList;
       }
     );
 
@@ -682,9 +697,9 @@ test("POST /:canvasId/split-pages returns and logs client error in case of Imgix
   const logClientErrorStub = sandbox().stub(Logger, "logClientError");
 
   sandbox()
-    .stub(EnrichmentService, "addAssetLink")
+    .stub(EnrichmentService, "enrichComponent")
     .callsFake(
-      async (component: Component): Promise<any> => {
+      async (_: Knex.Transaction, component: Component): Promise<any> => {
         return component;
       }
     );

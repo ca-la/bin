@@ -12,8 +12,9 @@ import { CollectionDb } from "../../collections/types";
 import {
   CanvasWithEnrichedComponents,
   canvasWithEnrichedComponentsSchema,
-  componentWithAssetLinksSchema,
+  enrichedComponentSchema,
 } from "../../canvases/types";
+import { productDesignOptionSchema } from "../../product-design-options/types";
 import { uploadPolicySchema } from "../../../services/upload-policy/types";
 import { gtApprovalStep } from "../../approval-steps/graphql-types";
 
@@ -31,9 +32,19 @@ export const gtBaseProductDesign: GraphQLType = schemaToGraphQLType(
   }
 );
 
-export const gtComponentWithAssetLinks = schemaToGraphQLType(
-  "ComponentWithAssetLinks",
-  componentWithAssetLinksSchema
+export const gtProductDesignOption = schemaToGraphQLType(
+  "ProductDesignOption",
+  productDesignOptionSchema
+);
+
+export const gtEnrichedComponent = schemaToGraphQLType(
+  "EnrichedComponent",
+  enrichedComponentSchema,
+  {
+    depTypes: {
+      option: gtProductDesignOption,
+    },
+  }
 );
 
 export const gtCanvasWithEnrichedComponents = schemaToGraphQLType(
@@ -41,7 +52,7 @@ export const gtCanvasWithEnrichedComponents = schemaToGraphQLType(
   canvasWithEnrichedComponentsSchema,
   {
     depTypes: {
-      components: gtComponentWithAssetLinks,
+      components: gtEnrichedComponent,
     },
   }
 );

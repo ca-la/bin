@@ -17,7 +17,7 @@ interface ComponentWithResources {
 }
 
 export default async function generateComponent(
-  options: Partial<Component>
+  options: Partial<Component> = {}
 ): Promise<ComponentWithResources> {
   const user = options.createdBy
     ? await findUserById(options.createdBy)
@@ -67,7 +67,7 @@ export default async function generateComponent(
         materialId: null,
         parentId: options.parentId || null,
         sketchId: null,
-        type: ComponentType.Sketch,
+        type: ComponentType.Artwork,
         assetPageNumber: null,
       });
       break;

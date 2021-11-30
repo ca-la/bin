@@ -18,10 +18,10 @@ import { deserializeAsset } from "../../assets/services/serializer";
 import { logServerError } from "../../../services/logger";
 import { Serialized } from "../../../types/serialized";
 import Canvas from "./../domain-object";
-import * as EnrichmentService from "../../../services/attach-asset-links";
+import * as EnrichmentService from "../../../services/enrich-component";
 import Knex from "knex";
 import { CanvasWithEnrichedComponents } from "../types";
-import { ComponentWithAssetLinks } from "..";
+import { EnrichedComponent } from "..";
 
 export type ComponentWithImageAndOption = Component & {
   image: Serialized<Asset>;
@@ -37,7 +37,7 @@ export async function createCanvasAndComponents(
   userId: string,
   data: MaybeUnsaved<CanvasWithComponent>
 ): Promise<CanvasWithEnrichedComponents> {
-  const enrichedComponents: ComponentWithAssetLinks[] = [];
+  const enrichedComponents: EnrichedComponent[] = [];
   for (const component of data.components) {
     const componentWithAssetLinks = await createComponent(
       trx,
@@ -95,5 +95,5 @@ async function createComponent(
     throw new Error("Could not create component");
   }
   const created = await ComponentsDAO.create(safeComponent.data, trx);
-  return EnrichmentService.addAssetLink(created, trx);
+  return EnrichmentService.enrichComponent(trx, created);
 }

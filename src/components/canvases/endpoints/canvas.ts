@@ -14,13 +14,13 @@ import {
 import * as CanvasesDAO from "../dao";
 import * as ComponentsDAO from "../../components/dao";
 import { CanvasWithEnrichedComponents } from "../types";
-import * as EnrichmentService from "../../../services/attach-asset-links";
+import * as EnrichmentService from "../../../services/enrich-component";
 import { gtCanvasWithEnrichedComponents } from "../../product-designs/endpoints/graphql-types";
 import {
   ComponentWithImageAndOption,
   createCanvasAndComponents,
 } from "../services/create-canvas-and-components";
-import { Component, ComponentType } from "../../components/types";
+import { ComponentType } from "../../components/types";
 import { CanvasInput, gtCanvasInput } from "./graphql-types";
 import Asset from "../../assets/types";
 
@@ -60,11 +60,11 @@ export const DeleteCanvasEndpoint: GraphQLEndpoint<
 
       const components = await ComponentsDAO.findAllByCanvasId(canvasId, trx);
 
-      const enrichedComponents = await Promise.all(
-        components.map((component: Component) =>
-          EnrichmentService.addAssetLink(component, trx)
-        )
+      const enrichedComponents = await EnrichmentService.enrichComponentsList(
+        trx,
+        components
       );
+
       await trx.commit();
       const enrichedCanvas: CanvasWithEnrichedComponents = {
         ...canvas,
