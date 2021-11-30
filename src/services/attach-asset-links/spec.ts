@@ -4,7 +4,7 @@ import Configuration from "../../config";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
 
 import { Component, ComponentType } from "../../components/components/types";
-import OptionsDAO from "../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../components/product-design-options/dao";
 import * as AssetsDAO from "../../components/assets/dao";
 import Asset from "../../components/assets/types";
 
@@ -210,7 +210,7 @@ test("addAssetLink returns link when component is of type material", async (t: T
     assetPageNumber: null,
   };
 
-  sandbox().stub(OptionsDAO, "findById").resolves({
+  sandbox().stub(ProductDesignOptionsDAO, "findById").resolves({
     previewImageId: materialImageId,
     uploadCompletedAt: new Date(),
   });
@@ -299,7 +299,7 @@ test("addAssetLink returns paginated links for components with pages", async (t:
     assetPageNumber: 2,
   };
 
-  sandbox().stub(OptionsDAO, "findById").resolves({
+  sandbox().stub(ProductDesignOptionsDAO, "findById").resolves({
     previewImageId: materialImageId,
     uploadCompletedAt: new Date(),
   });

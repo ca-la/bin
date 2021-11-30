@@ -1,7 +1,8 @@
 import Knex from "knex";
+import db from "../../services/db";
 import { Component, ComponentType } from "./types";
 import * as AssetsDAO from "../../components/assets/dao";
-import OptionsDAO from "../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../components/product-design-options/dao";
 import Asset from "../../components/assets/types";
 
 export default async function getAsset(
@@ -26,8 +27,13 @@ export default async function getAsset(
     }
 
     case ComponentType.Material: {
-      const option = await OptionsDAO.findById(component.materialId, trx);
-      return await AssetsDAO.findById(option.previewImageId, trx);
+      const option = await ProductDesignOptionsDAO.findById(
+        trx || db,
+        component.materialId
+      );
+      return option?.previewImageId
+        ? await AssetsDAO.findById(option.previewImageId, trx)
+        : null;
     }
   }
 }

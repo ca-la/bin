@@ -130,7 +130,7 @@ export function generateComponent({
         materialId: materialOptionId,
         artworkId: null,
         option: {
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
           id: materialOptionId,
           previewImageId: asset.id,
           title: asset.title || "",

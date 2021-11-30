@@ -24,7 +24,7 @@ import * as ProductDesignsDAO from "../../product-designs/dao/dao";
 import { del as deleteCanvas } from "../../canvases/dao";
 import * as CollaboratorsDAO from "../../collaborators/dao";
 import * as CollectionsDAO from "../../collections/dao";
-import * as ProductDesignOptionsDAO from "../../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../../components/product-design-options/dao";
 import * as ApprovalStepsDAO from "../../approval-steps/dao";
 import * as PricingProductTypesDAO from "../../pricing-product-types/dao";
 import * as PricingQuotesDAO from "../../../dao/pricing-quotes";
@@ -100,14 +100,19 @@ test("ProductDesignsDAO supports creation/retrieval, enriched with image links",
   });
 
   const { asset: material } = await generateAsset();
-  const mat1 = await ProductDesignOptionsDAO.create({
-    id: uuid.v4(),
-    isBuiltinOption: true,
-    createdAt: new Date(),
-    type: "FABRIC",
-    title: "A material",
-    previewImageId: material.id,
-  });
+  const mat1 = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignOptionsDAO.create(
+      trx,
+      ProductDesignOptionsDAO.getOptionDefaults({
+        id: uuid.v4(),
+        isBuiltinOption: true,
+        createdAt: new Date(),
+        type: "FABRIC",
+        title: "A material",
+        previewImageId: material.id,
+      })
+    )
+  );
   const { component: comp1 } = await generateComponent({
     artworkId: null,
     sketchId: null,

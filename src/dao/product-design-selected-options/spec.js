@@ -4,10 +4,11 @@ const pick = require("lodash/pick");
 const { create } = require("./index");
 
 const createDesign = require("../../services/create-design").default;
-const createOption = require("../product-design-options").create;
+const ProductDesignOptionsDAO = require("../../components/product-design-options/dao")
+  .default;
 const createSection = require("../product-design-sections").create;
 const createUser = require("../../test-helpers/create-user");
-const { test } = require("../../test-helpers/fresh");
+const { test, db } = require("../../test-helpers/fresh");
 
 function createPrerequisites() {
   let option;
@@ -16,11 +17,16 @@ function createPrerequisites() {
   return createUser({ withSession: false })
     .then(({ user }) => {
       return Promise.all([
-        createOption({
-          userId: user.id,
-          title: "No Image",
-          type: "FABRIC",
-        }),
+        db.transaction((trx) =>
+          ProductDesignOptionsDAO.create(
+            trx,
+            ProductDesignOptionsDAO.getOptionDefaults({
+              userId: user.id,
+              title: "No Image",
+              type: "FABRIC",
+            })
+          )
+        ),
         createDesign({
           title: "Plain White Tee",
           productType: "TEESHIRT",

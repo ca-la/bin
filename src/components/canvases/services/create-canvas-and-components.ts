@@ -2,9 +2,12 @@ import { omit } from "lodash";
 
 import * as CanvasesDAO from "../dao";
 import * as ComponentsDAO from "../../components/dao";
-import ProductDesignOption from "../../../domain-objects/product-design-option";
 import Asset from "../../assets/types";
-import ProductDesignOptionsDAO from "../../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../../components/product-design-options/dao";
+import {
+  createProductDesignOptionSchema,
+  CreateProductDesignOption,
+} from "../../../components/product-design-options/types";
 import * as AssetsDAO from "../../assets/dao";
 import {
   Component,
@@ -22,7 +25,7 @@ import { ComponentWithAssetLinks } from "..";
 
 export type ComponentWithImageAndOption = Component & {
   image: Serialized<Asset>;
-  option?: Partial<ProductDesignOption>;
+  option?: Serialized<CreateProductDesignOption>;
 };
 
 export type CanvasWithComponent = Canvas & {
@@ -70,13 +73,19 @@ async function createComponent(
   );
 
   if (component.type === ComponentType.Material) {
-    await ProductDesignOptionsDAO.create(
-      {
-        ...component.option,
-        deletedAt: null,
-      },
-      trx
+    const safeOption = createProductDesignOptionSchema.safeParse(
+      component.option
     );
+    if (!safeOption.success) {
+      logServerError(safeOption.error);
+      throw new Error("Could not create product design option");
+    }
+    await ProductDesignOptionsDAO.create(trx, {
+      deletedAt: null,
+      patternImageId: null,
+      isBuiltinOption: false,
+      ...safeOption.data,
+    });
   }
 
   const safeComponent = componentSchema.safeParse(component);

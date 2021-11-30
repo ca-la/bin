@@ -8,9 +8,10 @@ import createUser from "../create-user";
 import ProductDesignsDAO from "../../components/product-designs/dao";
 import createDesign from "../../services/create-design";
 import * as ComponentsDAO from "../../components/components/dao";
-import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../components/product-design-options/dao";
 import { Component } from "../../components/components/types";
 import generateComponent from "./component";
+import db from "../../services/db";
 
 interface ProductDesignCanvasWithResources {
   canvas: Canvas;
@@ -44,9 +45,12 @@ export default async function generateCanvas(
       asset = await findAssetById(component.artworkId);
     } else if (component && component.materialId) {
       const material = await ProductDesignOptionsDAO.findById(
+        db,
         component.materialId
       );
-      asset = await findAssetById(material.previewImageId);
+      asset = material?.previewImageId
+        ? await findAssetById(material.previewImageId)
+        : null;
     }
   }
 

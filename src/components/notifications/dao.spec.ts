@@ -23,7 +23,7 @@ import * as ComponentsDAO from "../components/dao";
 import * as CommentsDAO from "../../components/comments/dao";
 import { standardDao as TeamsDAO } from "../../components/teams/dao";
 import * as MeasurementsDAO from "../product-design-canvas-measurements/dao";
-import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
+import ProductDesignOptionsDAO from "../../components/product-design-options/dao";
 import { deleteById } from "../../test-helpers/designs";
 import { deleteByIds } from "../product-designs/dao/dao";
 import generateTask from "../../test-helpers/factories/task";
@@ -130,14 +130,19 @@ test("Notifications DAO supports finding by user id", async (t: tape.Test) => {
   });
 
   const { asset: a1 } = await generateAsset();
-  const mat1 = await ProductDesignOptionsDAO.create({
-    id: uuid.v4(),
-    isBuiltinOption: true,
-    createdAt: new Date(),
-    type: "FABRIC",
-    title: "A material",
-    previewImageId: a1.id,
-  });
+  const mat1 = await db.transaction((trx: Knex.Transaction) =>
+    ProductDesignOptionsDAO.create(
+      trx,
+      ProductDesignOptionsDAO.getOptionDefaults({
+        id: uuid.v4(),
+        isBuiltinOption: true,
+        createdAt: new Date(),
+        type: "FABRIC",
+        title: "A material",
+        previewImageId: a1.id,
+      })
+    )
+  );
   const comp1 = await ComponentsDAO.create({
     artworkId: null,
     sketchId: null,

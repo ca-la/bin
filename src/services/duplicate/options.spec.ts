@@ -4,9 +4,9 @@ import Knex from "knex";
 
 import db from "../../services/db";
 import { test } from "../../test-helpers/fresh";
-import createUser = require("../../test-helpers/create-user");
+import createUser from "../../test-helpers/create-user";
 
-import { create as createOption } from "../../dao/product-design-options";
+import ProductDesignsDAO from "../../components/product-design-options/dao";
 import { findAndDuplicateOption } from "./options";
 import generateAsset from "../../test-helpers/factories/asset";
 
@@ -19,9 +19,12 @@ test("findAndDuplicateOption without sub-resources", async (t: tape.Test) => {
     type: "FABRIC",
     userId: user.id,
   };
-  await createOption(optionData);
 
   await db.transaction(async (trx: Knex.Transaction) => {
+    await ProductDesignsDAO.create(
+      trx,
+      ProductDesignsDAO.getOptionDefaults(optionData)
+    );
     const duplicatedOption = await findAndDuplicateOption(optionId, trx);
     t.deepEqual(
       {
@@ -61,9 +64,12 @@ test("findAndDuplicateOption with sub-resources", async (t: tape.Test) => {
     type: "FABRIC",
     userId: user.id,
   };
-  await createOption(optionData);
-
   await db.transaction(async (trx: Knex.Transaction) => {
+    await ProductDesignsDAO.create(
+      trx,
+      ProductDesignsDAO.getOptionDefaults(optionData)
+    );
+
     const duplicatedOption = await findAndDuplicateOption(optionId, trx);
     t.deepEqual(
       {

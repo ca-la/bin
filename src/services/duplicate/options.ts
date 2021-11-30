@@ -1,7 +1,7 @@
 import Knex from "knex";
 
-import OptionsDAO = require("../../dao/product-design-options");
-import ProductDesignOption = require("../../domain-objects/product-design-option");
+import ProductDesignOptionDAO from "../../components/product-design-options/dao";
+import { ProductDesignOption } from "../../components/product-design-options/types";
 import prepareForDuplication from "./prepare-for-duplication";
 
 /**
@@ -12,7 +12,14 @@ export async function findAndDuplicateOption(
   optionId: string,
   trx: Knex.Transaction
 ): Promise<ProductDesignOption> {
-  const option = await OptionsDAO.findById(optionId);
+  const option = await ProductDesignOptionDAO.findById(trx, optionId);
 
-  return OptionsDAO.create(prepareForDuplication(option), trx);
+  if (!option) {
+    throw new Error(`Could not find product design option ${optionId}!`);
+  }
+
+  return ProductDesignOptionDAO.create(
+    trx,
+    ProductDesignOptionDAO.getOptionDefaults(prepareForDuplication(option))
+  );
 }

@@ -3,11 +3,12 @@ import { create } from "../../components/components/dao";
 import { Component, ComponentType } from "../../components/components/types";
 import { findById as findUserById } from "../../components/users/dao";
 import { findById as findAssetById } from "../../components/assets/dao";
-import * as ProductDesignOptionsDAO from "../../dao/product-design-options";
-import createUser = require("../create-user");
+import ProductDesignOptionsDAO from "../../components/product-design-options/dao";
+import { ProductDesignOption } from "../../components/product-design-options/types";
+import createUser from "../create-user";
 import Asset from "../../components/assets/types";
 import generateAsset from "./asset";
-import ProductDesignOption from "../../domain-objects/product-design-option";
+import db from "../../services/db";
 
 interface ComponentWithResources {
   component: Component;
@@ -30,9 +31,10 @@ export default async function generateComponent(
     : options.materialId
     ? {
         asset: await ProductDesignOptionsDAO.findById(
+          db,
           options.materialId
-        ).then(({ previewImageId }: ProductDesignOption) =>
-          previewImageId ? findAssetById(previewImageId) : null
+        ).then((option: ProductDesignOption | null) =>
+          option?.previewImageId ? findAssetById(option.previewImageId) : null
         ),
       }
     : await generateAsset();
