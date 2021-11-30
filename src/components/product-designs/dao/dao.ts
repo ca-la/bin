@@ -371,44 +371,20 @@ export function queryWithCostsAndEvents(ktx: Knex = db): Knex.QueryBuilder {
   return ktx
     .select([
       "d.*",
-      "cost_inputs.input_list AS cost_inputs",
-      "events.event_list AS events",
+      ktx.raw(`
+(
+  SELECT to_jsonb(array_remove(array_agg(i.* ORDER BY i.expires_at DESC NULLS FIRST), null))
+    FROM pricing_cost_inputs AS i
+   WHERE i.design_id = d.id
+) as cost_inputs`),
+      ktx.raw(`
+(
+  SELECT to_jsonb(array_remove(array_agg(e.* ORDER BY e.created_at ASC), null))
+    FROM design_events AS e
+   WHERE e.design_id = d.id
+) as events`),
     ])
     .from("product_designs AS d")
-    .joinRaw(
-      `
-left join (
-  select
-    e.design_id,
-    to_jsonb(
-      array_remove(
-        array_agg(
-          e.* ORDER BY e.created_at ASC
-        )
-      , null)
-    ) as event_list
-  from design_events as e
-  group by e.design_id
-) as events on events.design_id = d.id
-    `
-    )
-    .joinRaw(
-      `
-left join (
-  select
-    i.design_id,
-    to_jsonb(
-      array_remove(
-        array_agg(
-          i.* ORDER BY i.expires_at DESC NULLS FIRST
-        )
-      , null)
-    ) as input_list
-  from pricing_cost_inputs as i
-  group by i.design_id
-) as cost_inputs on cost_inputs.design_id = d.id
-    `
-    )
     .where({
       "d.deleted_at": null,
     })
