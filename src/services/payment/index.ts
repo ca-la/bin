@@ -34,8 +34,37 @@ import {
 import { CreditsDAO, CreditType } from "../../components/credits";
 import InvoiceFeesDAO from "../../components/invoice-fee/dao";
 import { InvoiceFeeType } from "../../components/invoice-fee/types";
+import {
+  determineState,
+  DesignState,
+} from "../../components/product-designs/services/state-machine";
+import { getDesignsMetaByCollection } from "../../components/collections/services/determine-submission-status";
+import { ProductDesignDataWithMeta } from "../../components/product-designs/domain-objects/with-meta";
 
 type CreateRequest = CreateQuotePayload[];
+
+/**
+ * Make sure every design is in the COSTED state. This ensures designs are not
+ * checked out multiple times and that we have active costing for every design
+ */
+
+async function areDesignsInValidState(
+  trx: Knex.Transaction,
+  collectionId: string
+): Promise<boolean> {
+  const designsWithMeta = (
+    await getDesignsMetaByCollection([collectionId], trx)
+  )[collectionId];
+
+  if (!designsWithMeta || designsWithMeta.length === 0) {
+    throw new Error(`Could not find meta for collection ${collectionId}`);
+  }
+
+  return designsWithMeta.every(
+    (design: ProductDesignDataWithMeta) =>
+      determineState(design) === DesignState.COSTED
+  );
+}
 
 async function payInvoice(
   cartDetails: CartDetails,
@@ -281,6 +310,12 @@ export default async function createAndPayInvoice(
     time("createAndPayInvoice");
     await createDesignPaymentLocks(trx, quoteRequests);
     timeLog("createAndPayInvoice", "createDesignPaymentLocks");
+
+    if (!(await areDesignsInValidState(trx, collection.id))) {
+      throw new InvalidDataError(
+        `There are designs in this collection (${collection.id}) which are in invalid states`
+      );
+    }
 
     const cartDetails = await getCartDetails(trx, quoteRequests, userId);
     const { dueNowCents, dueLaterCents, creditAppliedCents } = cartDetails;

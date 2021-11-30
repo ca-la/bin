@@ -12,15 +12,11 @@ import { findByAddressId } from "../../dao/invoice-addresses";
 import FinancingAccountsDAO from "../../components/financing-accounts/dao";
 import * as InvoicePaymentsDAO from "../../components/invoice-payments/dao";
 import * as LineItemsDAO from "../../dao/line-items";
-import * as PricingCostInputsDAO from "../../components/pricing-cost-inputs/dao";
 import * as ApprovalStepsDAO from "../../components/approval-steps/dao";
 import * as ApprovalStepSubmissionsDAO from "../../components/approval-step-submissions/dao";
 import * as RequireUserSubscription from "../../middleware/require-user-subscription";
 import * as SubscriptionsDAO from "../../components/subscriptions/dao";
-import createUser from "../../test-helpers/create-user";
 import EmailService = require("../../services/email");
-import generatePricingValues from "../../test-helpers/factories/pricing-values";
-import { generateProductDesignVariant } from "../../test-helpers/factories/product-design-variant";
 import Stripe = require("../../services/stripe");
 import { authHeader, post } from "../../test-helpers/http";
 import { sandbox, test, Test } from "../../test-helpers/fresh";
@@ -33,20 +29,15 @@ import createDesign from "../../services/create-design";
 import * as IrisService from "../../components/iris/send-message";
 import * as ApiWorker from "../../workers/api-worker/send-message";
 import * as RequestService from "../../services/stripe/make-request";
-import generateCollection from "../../test-helpers/factories/collection";
-import { generateTeam } from "../../test-helpers/factories/team";
 import { InvoicePayment } from "../../components/invoice-payments/domain-object";
 import DesignEventsDAO from "../../components/design-events/dao";
 import { DesignEventWithMeta } from "../../components/design-events/types";
 import { postProcessQuotePayment } from "../../workers/api-worker/tasks/post-process-quote-payment";
 import InvoiceFeesDAO from "../../components/invoice-fee/dao";
 import { InvoiceFeeType } from "../../components/invoice-fee/types";
-import {
-  Complexity,
-  MaterialCategory,
-  ProductType,
-  ScreenPrintingComplexity,
-} from "../../domain-objects/pricing";
+import { checkout } from "../../test-helpers/checkout-collection";
+import { costCollection } from "../../test-helpers/cost-collection";
+import ProductDesign = require("../../components/product-designs/domain-objects/product-design");
 
 const ADDRESS_BLANK = {
   companyName: "CALA",
@@ -68,49 +59,29 @@ function setupStubs() {
     .stub(attachSource, "default")
     .resolves({ id: "sourceId", last4: "1234" });
   sandbox().stub(RequireUserSubscription, "default").resolves();
-  const chargeStub = sandbox()
-    .stub(Stripe, "charge")
-    .resolves({ id: "chargeId" });
-  const emailStub = sandbox().stub(EmailService, "enqueueSend").resolves();
-  const sendApiWorkerMessageStub = sandbox()
+  const charge = sandbox().stub(Stripe, "charge").resolves({ id: "chargeId" });
+  const email = sandbox().stub(EmailService, "enqueueSend").resolves();
+  const sendApiWorkerMessage = sandbox()
     .stub(ApiWorker, "sendMessage")
     .resolves();
-  const irisStub = sandbox().stub(IrisService, "sendMessage").resolves();
-  return { chargeStub, emailStub, sendApiWorkerMessageStub, irisStub };
+  const iris = sandbox().stub(IrisService, "sendMessage").resolves();
+  return { charge, email, sendApiWorkerMessage, iris };
 }
 
 async function setup() {
-  const { user, session } = await createUser();
-  const admin = await createUser({ role: "ADMIN", withSession: false });
   const stubs = setupStubs();
+  const {
+    user: { designer, admin },
+    collection,
+    collectionDesigns,
+    team,
+  } = await costCollection();
 
-  const { team } = await generateTeam(
-    user.id,
-    {},
-    {},
-    { costOfGoodsShareBasisPoints: 2000 }
-  );
-  const { collection } = await generateCollection({ teamId: team.id });
-  const d1 = await createDesign({
-    productType: ProductType["ACCESSORIES - BACKPACK"],
-    title: "A design",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
-  const d2 = await createDesign({
-    productType: ProductType["ACCESSORIES - BANDANNA"],
-    title: "A design",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
   const address = await createAddress({
     ...ADDRESS_BLANK,
-    userId: user.id,
+    userId: designer.user.id,
   });
 
-  await generateProductDesignVariant({ designId: d1.id });
-  await generateProductDesignVariant({ designId: d2.id });
-  await generatePricingValues();
   await db.transaction(async (trx: Knex.Transaction) => {
     await CreditsDAO.create(trx, {
       type: CreditType.MANUAL,
@@ -118,82 +89,16 @@ async function setup() {
       createdBy: admin.user.id,
       description: "Manual credit grant",
       expiresAt: null,
-      givenTo: user.id,
+      givenTo: designer.user.id,
       financingAccountId: null,
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d1.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1000,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.SIMPLE,
-      productType: ProductType.TEESHIRT,
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d1.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.SIMPLE,
-      productType: ProductType.TEESHIRT,
-    });
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: d2.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.BLANK,
-      productType: ProductType.TEESHIRT,
     });
   });
 
   return {
-    ...stubs,
-    user,
-    session,
-    designs: [d1, d2],
+    stubs,
+    user: designer.user,
+    session: designer.session,
+    designs: collectionDesigns,
     address,
     collection,
     team,
@@ -203,9 +108,7 @@ async function setup() {
 test("/quote-payments POST generates quotes, payment method, invoice, lineItems, and charges", async (t: Test) => {
   const {
     session,
-    sendApiWorkerMessageStub,
-    irisStub,
-    chargeStub,
+    stubs,
     collection,
     designs: [d1, d2],
     team,
@@ -320,9 +223,9 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     "has a team financing credit payment"
   );
 
-  t.assert(chargeStub.calledOnce, "Stripe was charged");
+  t.assert(stubs.charge.calledOnce, "Stripe was charged");
   t.equals(
-    chargeStub.args[0][0].amountCents,
+    stubs.charge.args[0][0].amountCents,
     Math.round(14_458_00 * 1.2) - // Add production fee
     CREDIT_AMOUNT_CENTS - // Remove credit
       Math.round(5_000_00 / 1.1), // Remove financed amount
@@ -338,21 +241,23 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     "design events were created for quotes"
   );
 
-  const realtimeDesignEvents = irisStub.args.filter(
+  const realtimeDesignEvents = stubs.iris.args.filter(
     (arg: any) => arg[0].type === "design-event/created"
   );
-  const realtimeStepUpdates = irisStub.args.filter(
+  const realtimeStepUpdates = stubs.iris.args.filter(
     (arg: any) => arg[0].type === "approval-step/updated"
   );
-  const realtimeStepListUpdates = irisStub.args.filter(
+  const realtimeStepListUpdates = stubs.iris.args.filter(
     (arg: any) => arg[0].type === "approval-step-list/updated"
   );
-  const realtimeCollectionStatus = irisStub.args.filter(
+  const realtimeCollectionStatus = stubs.iris.args.filter(
     (arg: any) => arg[0].type === "collection/status-updated"
   );
-  t.deepEquals(
-    realtimeDesignEvents.map((message: any) => message[0].resource.type),
-    ["COMMIT_QUOTE", "COMMIT_QUOTE"],
+  t.equals(
+    realtimeDesignEvents.filter(
+      (message: any) => message[0].resource.type === "COMMIT_QUOTE"
+    ).length,
+    2,
     "Realtime message emitted for design checkout"
   );
 
@@ -419,7 +324,7 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
     t.is(blankSubmissions.length, 5, "adds blank approval submissions");
   });
   t.deepEqual(
-    sendApiWorkerMessageStub.args[0],
+    stubs.sendApiWorkerMessage.args[0],
     [
       {
         type: "POST_PROCESS_QUOTE_PAYMENT",
@@ -450,9 +355,8 @@ test("/quote-payments POST generates quotes, payment method, invoice, lineItems,
 
 test("/quote-payments POST with full financing", async (t: Test) => {
   const {
-    sendApiWorkerMessageStub,
+    stubs,
     session,
-    chargeStub,
     collection,
     designs: [d1, d2],
     team,
@@ -535,9 +439,9 @@ test("/quote-payments POST with full financing", async (t: Test) => {
     "has a team financing credit payment"
   );
 
-  t.equals(chargeStub.callCount, 0, "Stripe was not charged");
+  t.equals(stubs.charge.callCount, 0, "Stripe was not charged");
   t.deepEqual(
-    sendApiWorkerMessageStub.args[0],
+    stubs.sendApiWorkerMessage.args[0],
     [
       {
         type: "POST_PROCESS_QUOTE_PAYMENT",
@@ -569,8 +473,7 @@ test("/quote-payments POST with full financing", async (t: Test) => {
 test("/quote-payments POST with full financing and full credit", async (t: Test) => {
   const {
     session,
-    sendApiWorkerMessageStub,
-    chargeStub,
+    stubs,
     collection,
     designs: [d1, d2],
     team,
@@ -662,9 +565,9 @@ test("/quote-payments POST with full financing and full credit", async (t: Test)
     "has no team financing credit payment"
   );
 
-  t.equals(chargeStub.callCount, 0, "Stripe was not charged");
+  t.equals(stubs.charge.callCount, 0, "Stripe was not charged");
   t.deepEqual(
-    sendApiWorkerMessageStub.args,
+    stubs.sendApiWorkerMessage.args,
     [
       [
         {
@@ -743,52 +646,20 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 });
 
 test("/quote-payments POST does not generate quotes, payment method, invoice, lineItems on payment failure", async (t: Test) => {
-  const { user, session } = await createUser();
+  const {
+    stubs,
+    session,
+    collection,
+    designs: [design],
+    user,
+    address,
+  } = await setup();
 
-  const { chargeStub } = setupStubs();
-  chargeStub.rejects(new StripeError({ message: "Could not process payment" }));
+  stubs.charge.rejects(
+    new StripeError({ message: "Could not process payment" })
+  );
 
   const paymentMethodTokenId = uuid.v4();
-
-  const { team } = await generateTeam(user.id);
-  const { collection } = await generateCollection({ teamId: team.id });
-  const design = await createDesign({
-    productType: ProductType["ACCESSORIES - BANDANNA"],
-    title: "A design",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
-  await generateProductDesignVariant({ designId: design.id });
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.SIMPLE,
-      productType: ProductType.TEESHIRT,
-    });
-  });
 
   const [postResponse] = await post("/quote-payments", {
     body: {
@@ -809,54 +680,20 @@ test("/quote-payments POST does not generate quotes, payment method, invoice, li
 
   const invoices = await InvoicesDAO.findByUser(user.id);
   t.deepEquals(invoices, [], "No invoice exists for design");
-  t.assert(chargeStub.calledOnce, "Stripe was called");
+  t.assert(stubs.charge.calledOnce, "Stripe was called");
 });
 
 test("POST /quote-payments with full credit", async (t: Test) => {
-  const { user, session } = await createUser();
-  const { sendApiWorkerMessageStub } = setupStubs();
-
-  const { team } = await generateTeam(user.id);
-  const { collection } = await generateCollection({ teamId: team.id });
-
-  const design = await createDesign({
-    productType: ProductType["ACCESSORIES - BANDANNA"],
-    title: "A design",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
-  await generateProductDesignVariant({ designId: design.id });
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
+  const {
+    stubs,
+    user,
+    session,
+    address,
+    collection,
+    designs: [design],
+  } = await setup();
 
   await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.SIMPLE,
-      productType: ProductType.TEESHIRT,
-    });
-
     await CreditsDAO.create(trx, {
       type: CreditType.MANUAL,
       creditDeltaCents: 10000000,
@@ -893,7 +730,7 @@ test("POST /quote-payments with full credit", async (t: Test) => {
   t.equal(postResponse.status, 201, "successfully creates the invoice");
   t.equals(body.isPaid, true, "Invoice is paid");
   t.deepEqual(
-    sendApiWorkerMessageStub.args[0],
+    stubs.sendApiWorkerMessage.args[0],
     [
       {
         type: "POST_PROCESS_QUOTE_PAYMENT",
@@ -910,50 +747,12 @@ test("POST /quote-payments with full credit", async (t: Test) => {
 });
 
 test("POST /quote-payments fails with no payment method with balance due", async (t: Test) => {
-  const { user, session } = await createUser();
-  setupStubs();
-
-  const { team } = await generateTeam(user.id);
-  const { collection } = await generateCollection({ teamId: team.id });
-
-  const design = await createDesign({
-    productType: ProductType["ACCESSORIES - BANDANNA"],
-    title: "A design",
-    userId: user.id,
-    collectionIds: [collection.id],
-  });
-
-  const address = await createAddress({
-    ...ADDRESS_BLANK,
-    userId: user.id,
-  });
-
-  await generatePricingValues();
-
-  await db.transaction(async (trx: Knex.Transaction) => {
-    await PricingCostInputsDAO.create(trx, {
-      createdAt: new Date(),
-      deletedAt: null,
-      designId: design.id,
-      expiresAt: null,
-      id: uuid.v4(),
-      materialBudgetCents: 1200,
-      materialCategory: MaterialCategory.BASIC,
-      minimumOrderQuantity: 1,
-      processes: [
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-        {
-          complexity: ScreenPrintingComplexity["1_COLOR"],
-          name: "SCREEN_PRINT",
-        },
-      ],
-      productComplexity: Complexity.SIMPLE,
-      productType: ProductType.TEESHIRT,
-    });
-  });
+  const {
+    session,
+    collection,
+    designs: [design],
+    address,
+  } = await setup();
 
   const [postResponse, body] = await post("/quote-payments", {
     body: {
@@ -974,6 +773,45 @@ test("POST /quote-payments fails with no payment method with balance due", async
     body.message,
     "Cannot find Stripe payment method token for invoice with balance due"
   );
+});
+
+test("POST /quote-payments: with already checked out designs", async (t: Test) => {
+  const {
+    user: { designer },
+    collection,
+    collectionDesigns,
+  } = await checkout();
+
+  const address = await createAddress({
+    ...ADDRESS_BLANK,
+    userId: designer.user.id,
+  });
+
+  const newDesign = await createDesign({
+    productType: "A product type",
+    title: "A new design in a checked out collection",
+    userId: designer.user.id,
+    collectionIds: [collection.id],
+  });
+
+  const paymentMethodTokenId = uuid.v4();
+
+  const [postResponse] = await post("/quote-payments", {
+    body: {
+      collectionId: collection.id,
+      createQuotes: [...collectionDesigns, newDesign].map(
+        (d: ProductDesign) => ({
+          designId: d.id,
+          units: 300,
+        })
+      ),
+      paymentMethodTokenId,
+      addressId: address.id,
+    },
+    headers: authHeader(designer.session.id),
+  });
+
+  t.equal(postResponse.status, 400, "response errors");
 });
 
 test(
@@ -1174,7 +1012,7 @@ test("POST /quote-payments does not allow parallel requests to succeed", async (
   t.equal(failed[0].message, failed[1].message, "The errors are the same");
   t.equal(
     failed[0].message,
-    "Design has already been paid for",
+    `There are designs in this collection (${collection.id}) which are in invalid states`,
     "Error message interprets the error type"
   );
 });
@@ -1219,7 +1057,7 @@ test("POST /quote-payments does not allow consecutive requests to succeed", asyn
   t.equal(b1.message, b2.message);
   t.equal(
     b1.message,
-    "Design has already been paid for",
+    `There are designs in this collection (${collection.id}) which are in invalid states`,
     "Error message interprets the error type"
   );
 });
