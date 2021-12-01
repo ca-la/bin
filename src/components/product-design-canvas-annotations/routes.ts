@@ -13,15 +13,11 @@ import filterError = require("../../services/filter-error");
 import addAtMentionDetails from "../../services/add-at-mention-details";
 import { addAttachmentLinks } from "../../services/add-attachments-links";
 import { StrictContext } from "../../router-context";
-import {
-  SafeBodyState,
-  typeGuardFromSchema,
-} from "../../middleware/type-guard";
+import { parseContext } from "../../services/parse-context";
 import {
   dateStringToDate,
   nullableDateStringToNullableDate,
 } from "../../services/zod-helpers";
-import { parseContext } from "../../services/parse-context";
 
 const router = new Router();
 
@@ -32,37 +28,58 @@ const annotationFromIO = (request: Annotation, userId: string): Annotation => {
   };
 };
 
-const createOrUpdateAnnotationRequestSchema = z.object({
-  canvasId: z.string(),
-  createdAt: dateStringToDate,
-  createdBy: z.string(),
-  deletedAt: nullableDateStringToNullableDate,
-  id: z.string(),
-  x: z.number(),
-  y: z.number(),
+export const createAnnotationRequestSchema = z.object({
+  request: z.object({
+    body: z.object({
+      canvasId: z.string(),
+      createdAt: dateStringToDate,
+      createdBy: z.string(),
+      deletedAt: nullableDateStringToNullableDate,
+      resolvedAt: nullableDateStringToNullableDate.optional(),
+      id: z.string(),
+      x: z.number(),
+      y: z.number(),
+    }),
+  }),
 });
-type CreateOrUpdateAnnotationRequest = z.infer<
-  typeof createOrUpdateAnnotationRequestSchema
->;
 
-interface CreateOrUpdateAnnotationContext extends StrictContext<Annotation> {
-  state: AuthedState & SafeBodyState<CreateOrUpdateAnnotationRequest>;
-}
-
-async function createAnnotation(ctx: CreateOrUpdateAnnotationContext) {
-  const { safeBody } = ctx.state;
+async function createAnnotation(ctx: StrictContext<Annotation>) {
+  const {
+    request: { body },
+  } = parseContext(ctx, createAnnotationRequestSchema);
   const annotation = await db.transaction((trx: Knex.Transaction) =>
-    create(trx, annotationFromIO(safeBody, ctx.state.userId))
+    create(
+      trx,
+      // TODO: remove explicit setting of resolvedAt after all the clients are updated
+      annotationFromIO({ ...body, resolvedAt: null }, ctx.state.userId)
+    )
   );
   ctx.status = 201;
   ctx.body = annotation;
 }
 
-async function updateAnnotation(
-  ctx: CreateOrUpdateAnnotationContext & { params: { annotationId: string } }
-) {
-  const { safeBody } = ctx.state;
-  const annotation = await update(ctx.params.annotationId, safeBody);
+interface UpdateAnnotationContext extends StrictContext<Annotation> {
+  params: { annotationId: string };
+}
+
+export const updateAnnotationRequestSchema = z.object({
+  request: z.object({
+    body: z
+      .object({
+        resolvedAt: nullableDateStringToNullableDate,
+        canvasId: z.string(),
+        x: z.number(),
+        y: z.number(),
+      })
+      .partial(),
+  }),
+});
+
+async function updateAnnotation(ctx: UpdateAnnotationContext) {
+  const {
+    request: { body },
+  } = parseContext(ctx, updateAnnotationRequestSchema);
+  const annotation = await update(ctx.params.annotationId, body);
   ctx.status = 200;
   ctx.body = annotation;
 }
@@ -112,22 +129,8 @@ async function getAnnotationComments(ctx: AuthedContext) {
 }
 
 router.get("/", requireAuth, convert.back(getList));
-router.put(
-  "/:annotationId",
-  requireAuth,
-  typeGuardFromSchema<CreateOrUpdateAnnotationRequest>(
-    createOrUpdateAnnotationRequestSchema
-  ),
-  convert.back(createAnnotation)
-);
-router.patch(
-  "/:annotationId",
-  requireAuth,
-  typeGuardFromSchema<CreateOrUpdateAnnotationRequest>(
-    createOrUpdateAnnotationRequestSchema
-  ),
-  convert.back(updateAnnotation)
-);
+router.put("/:annotationId", requireAuth, convert.back(createAnnotation));
+router.patch("/:annotationId", requireAuth, convert.back(updateAnnotation));
 router.del("/:annotationId", requireAuth, convert.back(deleteAnnotation));
 
 router.get(

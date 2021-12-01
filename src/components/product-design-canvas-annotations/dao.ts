@@ -1,5 +1,4 @@
 import Knex from "knex";
-import { pick } from "lodash";
 import db from "../../services/db";
 import ResourceNotFoundError from "../../errors/resource-not-found";
 import first from "../../services/first";
@@ -13,12 +12,6 @@ import {
 import { adapter, rawAdapter } from "./adapter";
 
 const TABLE_NAME = "product_design_canvas_annotations";
-
-export const UPDATABLE_PROPERTIES: (keyof AnnotationDb)[] = [
-  "canvasId",
-  "x",
-  "y",
-];
 
 const withCounts = (ktx: Knex) => (query: Knex.QueryBuilder) =>
   query.select([
@@ -76,9 +69,9 @@ export async function create(
 
 export async function update(
   id: string,
-  data: AnnotationDb
+  data: Partial<AnnotationDb>
 ): Promise<Annotation> {
-  const rowData = rawAdapter.toDbPartial(pick(data, UPDATABLE_PROPERTIES));
+  const rowData = rawAdapter.toDbPartial(data);
   await db(TABLE_NAME).where({ id, deleted_at: null }).update(rowData);
 
   const updated = await findById(db, id);

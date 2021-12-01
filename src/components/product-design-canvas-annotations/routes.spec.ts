@@ -73,6 +73,7 @@ test(`PUT ${API_PATH}/:annotationId creates an Annotation`, async (t: Test) => {
     createdAt: new Date().toISOString(),
     createdBy: user.id,
     deletedAt: null,
+    resolvedAt: null,
     id: annotationId,
     x: 1,
     y: 1,
@@ -110,6 +111,7 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
       canvasId: designCanvas.id,
       createdBy: user.id,
       deletedAt: null,
+      resolvedAt: null,
       id: annotationId,
       x: 1,
       y: 1,
@@ -119,7 +121,7 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
     canvasId: designCanvas.id,
     createdAt: "something completely invalid",
     createdBy: "not a user id.",
-    deletedAt: "also really invalid",
+    resolvedAt: new Date().toISOString(),
     id: annotation.id,
     x: 33,
     y: 10,
@@ -138,6 +140,19 @@ test(`PATCH ${API_PATH}/:annotationId updates an Annotation`, async (t: Test) =>
     commentCount: 0,
     submissionCount: 0,
   });
+
+  const resolvedAtUpdate = { resolvedAt: new Date().toISOString() };
+
+  const [, updatedBody] = await patch(`${API_PATH}/${annotationId}`, {
+    body: resolvedAtUpdate,
+    headers: authHeader(session.id),
+  });
+
+  t.deepEqual(
+    updatedBody,
+    { ...body, ...resolvedAtUpdate },
+    "correctly updates existing resolved_at value"
+  );
 });
 
 test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) => {
@@ -149,6 +164,7 @@ test(`DELETE ${API_PATH}/:annotationId deletes an Annotation`, async (t: Test) =
     createdAt: "",
     createdBy: user.id,
     deletedAt: new Date().toISOString(),
+    resolvedAt: null,
     id: annotationId,
     x: 1,
     y: 1,

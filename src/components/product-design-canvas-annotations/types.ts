@@ -7,6 +7,7 @@ export const annotationDbSchema = z.object({
   createdAt: z.date(),
   createdBy: z.string(),
   deletedAt: z.date().nullable(),
+  resolvedAt: z.date().nullable(),
   x: z.number(),
   y: z.number(),
 });
@@ -24,6 +25,7 @@ export const annotationDbRowSchema = z.object({
   created_at: annotationDbSchema.shape.createdAt,
   created_by: annotationDbSchema.shape.createdBy,
   deleted_at: annotationDbSchema.shape.deletedAt,
+  resolved_at: annotationDbSchema.shape.resolvedAt,
   x: z.union([numberStringToNumber, z.number()]),
   y: z.union([numberStringToNumber, z.number()]),
 });

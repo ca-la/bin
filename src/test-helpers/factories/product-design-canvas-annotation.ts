@@ -47,6 +47,7 @@ export default async function generateAnnotation(
       canvasId: canvas.id,
       createdBy: user.id,
       deletedAt: null,
+      resolvedAt: null,
       id: options.id || uuid.v4(),
       x: options.x || 0,
       y: options.y || 0,

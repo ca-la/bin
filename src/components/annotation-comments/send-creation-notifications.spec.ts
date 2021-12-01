@@ -80,6 +80,7 @@ async function setup(): Promise<{
       canvasId: designCanvas.id,
       createdBy: ownerUser.id,
       deletedAt: null,
+      resolvedAt: null,
       id: uuid.v4(),
       x: 1,
       y: 1,

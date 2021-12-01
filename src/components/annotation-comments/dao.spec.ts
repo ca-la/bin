@@ -47,6 +47,7 @@ async function setup() {
       canvasId: designCanvas.id,
       createdBy: user.id,
       deletedAt: null,
+      resolvedAt: null,
       id: uuid.v4(),
       x: 20,
       y: 10,

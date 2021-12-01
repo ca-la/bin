@@ -59,6 +59,7 @@ const CreateAnnotationEndpoint: GraphQLEndpoint<
       const annotation = await AnnotationsDAO.create(trx, {
         ...pick(input, "id", "canvasId", "x", "y"),
         deletedAt: null,
+        resolvedAt: null,
         createdBy: userId,
       });
 

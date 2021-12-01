@@ -63,6 +63,7 @@ test(`PUT ${API_PATH}/:annotationId/comment/:commentId creates a comment`, async
     createdAt: new Date(),
     createdBy: "me",
     deletedAt: null,
+    resolvedAt: null,
     id: annotationId,
     x: 1,
     y: 1,
