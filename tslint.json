@@ -27,12 +27,7 @@
       "allow-pascal-case",
       "allow-leading-underscore"
     ],
-    "typedef": [
-      true,
-      "parameter",
-      "arrow-parameter",
-      "property-declaration"
-    ],
+    "typedef": [false],
     "object-shorthand-properties-first": [false],
     "no-empty-interface": [false],
     "array-type": [true, "array"],
@@ -48,6 +43,7 @@
     "ter-func-call-spacing": [false],
     "ter-computed-property-spacing": [false],
     "ter-indent": [false],
+    "ter-arrow-parens": [false],
     "max-line-length": [false],
     "whitespace": [false],
     "object-literal-key-quotes": [true, "as-needed"],

@@ -2,8 +2,8 @@ import db from "../../services/db";
 import Knex from "knex";
 
 // former invoice_with_payments_view
-export function getInvoicesBuilder(): Knex.QueryBuilder {
-  return db
+export function getInvoicesBuilder(ktx: Knex = db): Knex.QueryBuilder {
+  return ktx
     .select(
       "i.id",
       "i.created_at",
@@ -17,9 +17,9 @@ export function getInvoicesBuilder(): Knex.QueryBuilder {
       "i.collection_id",
       "i.short_id",
       "i.invoice_address_id",
-      db.raw("SUM(coalesce(p.total_cents, 0)) AS total_paid"),
-      db.raw("SUM(coalesce(p.total_cents, 0)) >= i.total_cents AS is_paid"),
-      db.raw("MAX(p.created_at) AS paid_at")
+      ktx.raw("SUM(coalesce(p.total_cents, 0)) AS total_paid"),
+      ktx.raw("SUM(coalesce(p.total_cents, 0)) >= i.total_cents AS is_paid"),
+      ktx.raw("MAX(p.created_at) AS paid_at")
     )
     .from("invoices as i")
     .joinRaw(

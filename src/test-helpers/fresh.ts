@@ -15,6 +15,8 @@ const TABLES = [
   "cohort_users",
   "cohorts",
   "collaborators",
+  "credit_notes",
+  "credit_note_line_items",
   "design_approval_step_comments",
   "design_approval_step_tasks",
   "design_approval_steps",

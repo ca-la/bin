@@ -23,6 +23,7 @@ import commentRoutes from "./components/comments/routes";
 import componentRelationshipRoutes from "./components/component-relationships/routes";
 import componentRoutes from "./components/components/routes";
 import creditRoutes from "./components/credits/routes";
+import creditNoteRoutes from "./components/credit-notes/routes";
 import designQuoteRoutes from "./components/design-quotes/routes";
 import duplicationRoutes from "./components/duplication/routes";
 import financingAccountsRouter from "./components/financing-accounts/routes";
@@ -141,5 +142,6 @@ plugComponentRouter(router, teamUserComponent.router);
 plugComponentRouter(router, participantRouter);
 plugComponentRouter(router, financingAccountsRouter);
 plugComponentRouter(router, userFeaturesRouter);
+plugComponentRouter(router, creditNoteRoutes);
 
 export default router;

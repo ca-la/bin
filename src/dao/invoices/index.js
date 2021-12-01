@@ -18,8 +18,8 @@ const { dataMapper } = Invoice;
 
 const TABLE_NAME = "invoices";
 
-async function findByCollection(collectionId) {
-  return getInvoicesBuilder()
+async function findByCollection(collectionId, ktx = db) {
+  return getInvoicesBuilder(ktx)
     .where({
       collection_id: collectionId,
       deleted_at: null,
