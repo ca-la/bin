@@ -51,13 +51,17 @@ run() {
 
   git checkout main
 
-  local recent_tags=$(git for-each-ref --sort=-creatordate --format '%(refname)' refs/tags | head -n 2)
+  local recent_tags=$(git for-each-ref --sort=-creatordate --format '%(refname:lstrip=2)' refs/tags | head -n 2)
   local previous_tag=$(echo "$recent_tags" | tail -n 1)
   local this_tag=$(echo "$recent_tags" | head -n 1)
 
   if [[ "$previous_tag" != '' && $this_tag != '' ]]; then
     echo "ℹ️ Changes in this release (please share a changelog with the team):"
-    git --no-pager log --pretty=format:'- %ad (%an) %s' --date=short $previous_tag..$this_tag^
+    echo
+    echo $(git show-ref -s --abbrev $previous_tag)...$(git show-ref -s --abbrev $this_tag) $this_tag
+    echo
+    git --no-pager log --pretty=tformat:'- %ad (%an) %s' --date=short $previous_tag..$this_tag^
+    echo
   fi
 }
 
