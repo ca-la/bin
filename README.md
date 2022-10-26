@@ -2,6 +2,16 @@
 
 A selection of useful scripts to include in new projects.
 
+## Releasing
+
+Release by running the appropriate npm run script based on the semver change:
+
+```
+$ npm run release-minor
+# or
+$ npm run release-patch
+```
+
 ## License
 
 ```
