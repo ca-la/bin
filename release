@@ -38,6 +38,7 @@ run() {
 
   preauth_pgp_signature
 
+  git fetch origin --tags
   git pull --ff-only origin main
 
   npm version $release_type
